@@ -39,7 +39,7 @@ export default function HomePage() {
     const difference = targetTime - now;
 
     if (difference <= 0) {
-      return "Refresh  now!";
+      return "Refresh now!";
     }
 
     const days = Math.floor(difference / (1000 * 60 * 60 * 24));
