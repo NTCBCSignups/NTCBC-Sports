@@ -188,7 +188,7 @@ export default function HomePage() {
                       <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3"></div>
                       <span>
                         <span className="font-medium">8:15-10:30 PM</span> -
-                        Intermediate/Advanced (Must know 5-1)
+                        Intermediate+ (Must know 5-1)
                       </span>
                     </li>
                   </ul>
