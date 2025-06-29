@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, Clock, Lock, MapPin } from "lucide-react";
 import { getScheduleData } from "./schedule-utils";
 import CountdownTimer from "./countdown-timer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function HomePage() {
   // Fetch schedule data on the server
@@ -45,15 +44,12 @@ export default async function HomePage() {
       )}
 
       <div className="max-w-4xl mx-auto mb-8 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>📖 Verse of the Week</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-gray-700">
-            <h1 className="font-semibold">{scheduleData?.verse_ref}</h1>
-            <p>{scheduleData?.verse_text}</p>
-          </CardContent>
-        </Card>
+        <div className="text-sm text-gray-700">
+          <h1 className="font-semibold">{scheduleData?.verse_ref}</h1>
+          <p className="text-sm text-gray-500 italic">
+            {scheduleData?.verse_text}
+          </p>
+        </div>
         <h2 className="font-semibold text-gray-900 text-left">
           About our sign-ups
         </h2>
