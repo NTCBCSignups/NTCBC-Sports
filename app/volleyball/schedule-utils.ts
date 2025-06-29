@@ -2,6 +2,8 @@ interface ScheduleData {
   form_open: string;
   form_close: string;
   link: string;
+  verse_ref: string;
+  verse_text: string;
 }
 
 export async function getScheduleData(): Promise<{
@@ -11,7 +13,7 @@ export async function getScheduleData(): Promise<{
   try {
     const SHEET_ID = process.env.GOOGLE_SHEET_ID;
     const API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
-    const RANGE = 'Sheet1!A2:C300';
+    const RANGE = 'Sheet1!A2:E300';
     
     if (!SHEET_ID || !API_KEY) {
       console.error('Missing Google Sheets configuration');
@@ -43,6 +45,7 @@ export async function getScheduleData(): Promise<{
     
     // First, look for currently active form
     for (const row of data.values) {
+        console.log(row)
       if (row.length < 3) continue;
       
       const openTime = new Date(row[0]);
@@ -87,7 +90,9 @@ export async function getScheduleData(): Promise<{
         scheduleData: {
           form_open: '2099-12-31T23:59:59',
           form_close: '2099-12-31T23:59:59',
-          link: ''
+          link: '',
+          verse_ref: '',
+          verse_text: ''
         },
         isFormOpen: false
       };
@@ -98,7 +103,9 @@ export async function getScheduleData(): Promise<{
     const scheduleData = {
       form_open: selectedRow[0],
       form_close: selectedRow[1], 
-      link: isFormOpen ? (selectedRow[2] || '') : ''
+      link: isFormOpen ? (selectedRow[2] || '') : '',
+      verse_ref: selectedRow[3],
+      verse_text: selectedRow[4]
     };
     
     return { scheduleData, isFormOpen };
