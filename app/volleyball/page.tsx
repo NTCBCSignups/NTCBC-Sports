@@ -1,100 +1,11 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowBigRight,
-  CalendarDays,
-  Clock,
-  Lock,
-  MapPin,
-  RefreshCcw,
-} from "lucide-react";
+import { CalendarDays, Clock, Lock, MapPin } from "lucide-react";
+import { getScheduleData } from "./schedule-utils";
+import CountdownTimer from "./countdown-timer";
 
-interface ScheduleData {
-  form_open: string;
-  form_close: string;
-  link: string;
-}
-
-export default function HomePage() {
-  const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [countdown, setCountdown] = useState<string>("");
-
-  // Function to check if form is currently open
-  const checkFormStatus = (data: ScheduleData) => {
-    const now = new Date();
-    const openTime = new Date(data.form_open);
-    const closeTime = new Date(data.form_close);
-
-    return now >= openTime && now <= closeTime;
-  };
-
-  // Function to calculate countdown to next opening
-  const calculateCountdown = (openTime: string) => {
-    const now = new Date().getTime();
-    const targetTime = new Date(openTime).getTime();
-    const difference = targetTime - now;
-
-    if (difference <= 0) {
-      return "Refresh now!";
-    }
-
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor(
-      (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-    );
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
-    }
-  };
-
-  // Fetch schedule data from Google Sheets
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const response = await fetch("/api/schedule");
-        const data = await response.json();
-        console.log(data);
-
-        setScheduleData(data);
-        setIsFormOpen(checkFormStatus(data));
-      } catch (error) {
-        console.error("Error fetching schedule:", error);
-        // Fallback to closed state if error
-        setIsFormOpen(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSchedule();
-  }, []);
-
-  // Update countdown every second when form is closed
-  useEffect(() => {
-    if (scheduleData && !isFormOpen) {
-      const interval = setInterval(() => {
-        setCountdown(calculateCountdown(scheduleData.form_open));
-      }, 1000);
-
-      // Initial countdown calculation
-      setCountdown(calculateCountdown(scheduleData.form_open));
-
-      return () => clearInterval(interval);
-    }
-  }, [scheduleData, isFormOpen]);
+export default async function HomePage() {
+  // Fetch schedule data on the server
+  const { scheduleData, isFormOpen } = await getScheduleData();
 
   return (
     <div className="min-h-screen bg-blue-100">
@@ -110,30 +21,18 @@ export default function HomePage() {
                 <span>Sign-ups open from Monday 10 PM - Tuesday 5 PM</span>
               </div>
             </div>
-            {/* Countdown when form is closed */}
-            {!loading && scheduleData && !isFormOpen && (
-              <div className="flex gap-6 text-sm text-gray-500 mb-2">
-                <div className="flex items-center gap-2">
-                  <ArrowBigRight className="h-4 w-4" />
-                  <span>Next registration opens in: </span>
-                  <span className="font-mono text-blue-500">{countdown}</span>
-                </div>
-              </div>
-            )}
-            {!loading && scheduleData && !isFormOpen && (
-              <div className="flex gap-6 text-sm text-gray-500 mb-2">
-                <div className="flex items-center gap-2">
-                  <RefreshCcw className="h-4 w-4" />
-                  <span>Refresh when time's up!</span>
-                </div>
-              </div>
+
+            {/* Client-side countdown timer (only shows when form is closed) */}
+            {scheduleData && (
+              <CountdownTimer
+                openTime={scheduleData.form_open}
+                isFormOpen={isFormOpen}
+              />
             )}
           </div>
-          {loading ? (
-            <Button disabled className="w-full">
-              Loading...
-            </Button>
-          ) : isFormOpen && scheduleData ? (
+
+          {/* Button - rendered with correct state immediately */}
+          {isFormOpen && scheduleData?.link ? (
             <Button asChild className="w-full">
               <a
                 href={scheduleData.link}
@@ -149,6 +48,7 @@ export default function HomePage() {
               Registration Closed
             </Button>
           )}
+
           <div className="max-w-4xl mx-auto mb-8">
             <h2 className=" font-semibold text-gray-900 mb-4 text-left">
               About our sign-ups
