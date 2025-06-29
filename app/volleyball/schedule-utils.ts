@@ -93,13 +93,13 @@ export async function getScheduleData(): Promise<{
       };
     }
     
+    const isFormOpen = checkFormStatus(now, selectedRow[0], selectedRow[1]);
+    
     const scheduleData = {
       form_open: selectedRow[0],
       form_close: selectedRow[1], 
-      link: selectedRow[2] || ''
+      link: isFormOpen ? (selectedRow[2] || '') : ''
     };
-    
-    const isFormOpen = checkFormStatus(now, scheduleData);
     
     return { scheduleData, isFormOpen };
     
@@ -109,9 +109,9 @@ export async function getScheduleData(): Promise<{
   }
 }
 
-function checkFormStatus(now: Date, data: ScheduleData): boolean {
-  const openTime = new Date(data.form_open);
-  const closeTime = new Date(data.form_close);
+function checkFormStatus(now: Date, formOpen: string, formClose: string): boolean {
+  const openTime = new Date(formOpen);
+  const closeTime = new Date(formClose);
 
   return now >= openTime && now <= closeTime;
 } 
