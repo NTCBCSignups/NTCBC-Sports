@@ -59,7 +59,7 @@ export default function Home() {
               <div className="flex justify-between">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>8:15 PM- 10:30 PM</span>
+                  <span>8:15 PM - 10:30 PM</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
