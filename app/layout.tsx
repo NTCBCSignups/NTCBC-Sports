@@ -32,6 +32,7 @@ export default function RootLayout({
           <div className="container mx-auto px-4 py-8">{children}</div>
         </div>
       </body>
+      <Analytics />
     </html>
   );
 }
