@@ -44,7 +44,7 @@ export default function Home() {
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                <span>Every Wednesday Night</span>
+                <span>Wednesday Nights</span>
               </div>
               <div className="flex justify-between">
                 <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export default function Home() {
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                <span>Every Monday Night</span>
+                <span>Monday Nights</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
