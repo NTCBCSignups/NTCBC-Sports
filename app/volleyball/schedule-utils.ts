@@ -1,3 +1,5 @@
+import { fromZonedTime } from 'date-fns-tz';
+
 interface ScheduleData {
   form_open: string;
   form_close: string;
@@ -53,12 +55,11 @@ export async function getScheduleData(): Promise<{
     
     // First, look for currently active form
     for (const row of data.values) {
-        console.log(row)
       if (row.length < 3) continue;
       
-      const openTime = new Date(row[0]);
-      const closeTime = new Date(row[1]);
-      
+      const openTime = parseInEasternTime(row[0]);
+      const closeTime = parseInEasternTime(row[1]);
+
       if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime())) {
         continue;
       }
@@ -78,7 +79,7 @@ export async function getScheduleData(): Promise<{
       for (const row of data.values) {
         if (row.length < 3) continue;
         
-        const openTime = new Date(row[0]);
+        const openTime = parseInEasternTime(row[0]);
         if (isNaN(openTime.getTime())) continue;
         
         if (openTime > now) {
@@ -108,9 +109,13 @@ export async function getScheduleData(): Promise<{
     
     const isFormOpen = checkFormStatus(now, selectedRow[0], selectedRow[1]);
     
+    // Convert dates to UTC ISO strings for consistent client-side parsing
+    const openTimeUTC = parseInEasternTime(selectedRow[0]).toISOString();
+    const closeTimeUTC = parseInEasternTime(selectedRow[1]).toISOString();
+    
     const scheduleData = {
-      form_open: selectedRow[0],
-      form_close: selectedRow[1], 
+      form_open: openTimeUTC,
+      form_close: closeTimeUTC, 
       link: isFormOpen ? (selectedRow[2] || '') : '',
       verse_ref: selectedRow[3],
       verse_text: selectedRow[4]
@@ -133,17 +138,8 @@ function checkFormStatus(now: Date, formOpen: string, formClose: string): boolea
 
 // Force dates to be interpreted in Eastern Time
 const parseInEasternTime = (dateString: string) => {
-    // Assume dates in sheet are Eastern Time
-    const eastern = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "America/Toronto",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    });
-
-    // Parse assuming Eastern timezone
-    return new Date(dateString + " EST");
+    // Google Sheets dates are in format: "6/30/2025 22:00:00"
+    // Parse as if the string represents Eastern Time
+    // We'll append timezone info to force the interpretation
+    return fromZonedTime(new Date(dateString), 'America/Toronto');
 };

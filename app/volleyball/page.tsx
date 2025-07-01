@@ -16,7 +16,9 @@ export default async function HomePage() {
         <div className="flex gap-6 text-sm text-gray-500 mb-2">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            <span>Sign-ups open from Monday 10 PM - Tuesday 5 PM</span>
+            <span>
+              Sign-ups open from Monday 10 PM - Tuesday 5 PM (Eastern Time)
+            </span>
           </div>
         </div>
 
@@ -24,6 +26,7 @@ export default async function HomePage() {
         {scheduleData && (
           <CountdownTimer
             openTime={scheduleData.form_open}
+            closeTime={scheduleData.form_close}
             isFormOpen={isFormOpen}
           />
         )}
