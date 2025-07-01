@@ -123,8 +123,25 @@ export async function getScheduleData(): Promise<{
 }
 
 function checkFormStatus(now: Date, formOpen: string, formClose: string): boolean {
-  const openTime = new Date(formOpen);
-  const closeTime = new Date(formClose);
+  const openTime = parseInEasternTime(formOpen);
+  const closeTime = parseInEasternTime(formClose);
 
   return now >= openTime && now <= closeTime;
 } 
+
+// Force dates to be interpreted in Eastern Time
+const parseInEasternTime = (dateString: string) => {
+    // Assume dates in sheet are Eastern Time
+    const eastern = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Toronto",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+
+    // Parse assuming Eastern timezone
+    return new Date(dateString + " EST");
+};
