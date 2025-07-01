@@ -13,7 +13,13 @@ export async function getScheduleData(): Promise<{
   try {
     const SHEET_ID = process.env.GOOGLE_SHEET_ID;
     const API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
-    const RANGE = 'Sheet1!A2:E300';
+    
+    // Use different sheet tabs based on environment
+    const isProd = process.env.NODE_ENV === 'production';
+    const SHEET_TAB = isProd ? 'prod' : 'dev';
+    const RANGE = `${SHEET_TAB}!A2:E300`;
+    
+    console.log(`Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
     
     if (!SHEET_ID || !API_KEY) {
       console.error('Missing Google Sheets configuration');
