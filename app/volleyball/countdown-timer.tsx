@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowBigRight, RefreshCcw } from "lucide-react";
+import { ArrowBigRight } from "lucide-react";
 
 interface CountdownTimerProps {
   openTime: string;
+  closeTime: string;
   isFormOpen: boolean;
 }
 
 export default function CountdownTimer({
   openTime,
+  closeTime,
   isFormOpen,
 }: CountdownTimerProps) {
   const [countdown, setCountdown] = useState<string>("");
@@ -43,9 +45,18 @@ export default function CountdownTimer({
     }
   };
 
-  // Update countdown every second when form is closed
+  // Update countdown every second when form is closed / open
   useEffect(() => {
-    if (!isFormOpen) {
+    if (isFormOpen) {
+      const interval = setInterval(() => {
+        setCountdown(calculateCountdown(closeTime));
+      }, 1000);
+
+      // Initial countdown calculation
+      setCountdown(calculateCountdown(closeTime));
+
+      return () => clearInterval(interval);
+    } else {
       const interval = setInterval(() => {
         setCountdown(calculateCountdown(openTime));
       }, 1000);
@@ -55,17 +66,18 @@ export default function CountdownTimer({
 
       return () => clearInterval(interval);
     }
-  }, [openTime, isFormOpen]);
-
-  // Don't render anything if form is open
-  if (isFormOpen) return null;
+  }, [openTime, closeTime, isFormOpen]);
 
   return (
     <>
       <div className="flex gap-6 text-sm text-gray-500 mb-2">
         <div className="flex items-center gap-2">
           <ArrowBigRight className="h-4 w-4" />
-          <span>Next registration opens in: </span>
+          {isFormOpen ? (
+            <span>Registration closes in: </span>
+          ) : (
+            <span>Next registration opens in: </span>
+          )}
           <span className="font-mono text-blue-500">{countdown}</span>
         </div>
       </div>
