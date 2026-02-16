@@ -3,6 +3,8 @@ import { CalendarDays, Clock, Lock, MapPin } from "lucide-react";
 import { getScheduleData } from "./schedule-utils";
 import CountdownTimer from "./countdown-timer";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   // Fetch schedule data on the server
   const { scheduleData, isFormOpen } = await getScheduleData();

@@ -21,7 +21,7 @@ export async function getScheduleData(): Promise<{
     const environment = process.env.VERCEL_ENV || 'development';
     const isProd = environment === 'production';
     const SHEET_TAB = isProd ? 'prod' : 'dev';
-    const RANGE = `${SHEET_TAB}!A2:E300`;
+    const RANGE = `${SHEET_TAB}!A2:G`;
     
     console.log(`Environment: ${environment}, Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
     
@@ -57,8 +57,8 @@ export async function getScheduleData(): Promise<{
     for (const row of data.values) {
       if (row.length < 3) continue;
       
-      const openTime = parseInEasternTime(row[0]);
-      const closeTime = parseInEasternTime(row[1]);
+      const openTime = parseInEasternTime(row[1]);
+      const closeTime = parseInEasternTime(row[2]);
 
       if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime())) {
         continue;
@@ -79,7 +79,7 @@ export async function getScheduleData(): Promise<{
       for (const row of data.values) {
         if (row.length < 3) continue;
         
-        const openTime = parseInEasternTime(row[0]);
+        const openTime = parseInEasternTime(row[1]);
         if (isNaN(openTime.getTime())) continue;
         
         if (openTime > now) {
@@ -107,16 +107,16 @@ export async function getScheduleData(): Promise<{
       };
     }
     
-    const isFormOpen = checkFormStatus(now, selectedRow[0], selectedRow[1]);
+    const isFormOpen = checkFormStatus(now, selectedRow[1], selectedRow[2]);
     
     // Convert dates to UTC ISO strings for consistent client-side parsing
-    const openTimeUTC = parseInEasternTime(selectedRow[0]).toISOString();
-    const closeTimeUTC = parseInEasternTime(selectedRow[1]).toISOString();
+    const openTimeUTC = parseInEasternTime(selectedRow[1]).toISOString();
+    const closeTimeUTC = parseInEasternTime(selectedRow[2]).toISOString();
     
     const scheduleData = {
       form_open: openTimeUTC,
       form_close: closeTimeUTC, 
-      link: isFormOpen ? (selectedRow[2] || '') : '',
+      link: isFormOpen ? (selectedRow[5] || '') : '',
       verse_ref: selectedRow[3],
       verse_text: selectedRow[4]
     };
