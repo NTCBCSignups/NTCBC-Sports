@@ -72,7 +72,7 @@ export default function CountdownTimer({
     <>
       <div className="flex gap-6 text-sm text-gray-500 mb-2">
         <div className="flex items-center gap-2">
-          <ArrowBigRight className="h-4 w-4" />
+          <ArrowBigRight className="h-4 w-4 flex-shrink-0" />
           {isFormOpen ? (
             <span>Registration closes in: </span>
           ) : (
@@ -84,3 +84,4 @@ export default function CountdownTimer({
     </>
   );
 }
+

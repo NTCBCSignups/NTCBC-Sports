@@ -1,19 +1,43 @@
-import { fromZonedTime } from 'date-fns-tz';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 
-interface ScheduleData {
+export interface ScheduleData {
+  date: string;
   form_open: string;
   form_close: string;
-  link: string;
+  form_open_display: string;
+  form_close_display: string;
   verse_ref: string;
   verse_text: string;
+  link: string;
+  response_sheet_id: string;
 }
 
-export async function getScheduleData(): Promise<{
+export type Sport = 'volleyball' | 'basketball' | 'softball';
+
+export interface FormResponseColumn {
+  index: number;
+  header: string;
+}
+
+export async function getScheduleData(sport: Sport): Promise<{
   scheduleData: ScheduleData | null;
   isFormOpen: boolean;
 }> {
   try {
-    const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+    // Each sport has its own Google Sheet, but they share the same API key
+    let SHEET_ID: string | undefined;
+    switch (sport) {
+      case 'volleyball':
+        SHEET_ID = process.env.GOOGLE_SHEET_ID_VOLLEYBALL;
+        break;
+      case 'basketball':
+        SHEET_ID = process.env.GOOGLE_SHEET_ID_BASKETBALL;
+        break;
+      case 'softball':
+        SHEET_ID = process.env.GOOGLE_SHEET_ID_SOFTBALL;
+        break;
+    }
+    
     const API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
     
     // Use different sheet tabs based on environment
@@ -21,12 +45,12 @@ export async function getScheduleData(): Promise<{
     const environment = process.env.VERCEL_ENV || 'development';
     const isProd = environment === 'production';
     const SHEET_TAB = isProd ? 'prod' : 'dev';
-    const RANGE = `${SHEET_TAB}!A2:G`;
+    const RANGE = `${SHEET_TAB}!A2:H`;
     
-    console.log(`Environment: ${environment}, Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
+    console.log(`[${sport}] Environment: ${environment}, Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
     
     if (!SHEET_ID || !API_KEY) {
-      console.error('Missing Google Sheets configuration');
+      console.error(`Missing Google Sheets configuration for ${sport}`);
       return { scheduleData: null, isFormOpen: false };
     }
 
@@ -97,11 +121,15 @@ export async function getScheduleData(): Promise<{
       // No forms found, return far future date
       return {
         scheduleData: {
+          date: '',
           form_open: '2099-12-31T23:59:59',
           form_close: '2099-12-31T23:59:59',
-          link: '',
+          form_open_display: '',
+          form_close_display: '',
           verse_ref: '',
-          verse_text: ''
+          verse_text: '',
+          link: '',
+          response_sheet_id: ''
         },
         isFormOpen: false
       };
@@ -114,11 +142,15 @@ export async function getScheduleData(): Promise<{
     const closeTimeUTC = parseInEasternTime(selectedRow[2]).toISOString();
     
     const scheduleData = {
+      date: selectedRow[0],
       form_open: openTimeUTC,
-      form_close: closeTimeUTC, 
-      link: isFormOpen ? (selectedRow[5] || '') : '',
+      form_close: closeTimeUTC,
+      form_open_display: formatDateDisplay(openTimeUTC),
+      form_close_display: formatDateDisplay(closeTimeUTC),
       verse_ref: selectedRow[3],
-      verse_text: selectedRow[4]
+      verse_text: selectedRow[4],
+      link: isFormOpen ? (selectedRow[5] || '') : '',
+      response_sheet_id: selectedRow[6] || ''
     };
     
     return { scheduleData, isFormOpen };
@@ -126,6 +158,47 @@ export async function getScheduleData(): Promise<{
   } catch (error) {
     console.error('Error fetching schedule:', error);
     return { scheduleData: null, isFormOpen: false };
+  }
+}
+
+export async function getFormResponses(
+  responseSheetId: string,
+  sheetTab: string,
+  columns: FormResponseColumn[]
+): Promise<Record<string, string>[]> {
+  try {
+    const API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
+
+    if (!responseSheetId || !API_KEY) {
+      return [];
+    }
+
+    const encodedTab = `'${sheetTab.replace(/ /g, '%20')}'`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${responseSheetId}/values/${encodedTab}!A2:Z?key=${API_KEY}`;
+
+    const response = await fetch(url, { cache: 'no-store' });
+
+    if (!response.ok) {
+      console.error(`Form responses fetch error: ${response.status} (sheet "${responseSheetId}", tab "${sheetTab}")`);
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (!data.values || data.values.length === 0) {
+      return [];
+    }
+
+    return data.values.map((row: string[]) => {
+      const entry: Record<string, string> = {};
+      for (const col of columns) {
+        entry[col.header] = row[col.index] || '';
+      }
+      return entry;
+    });
+  } catch (error) {
+    console.error('Error fetching form responses:', error);
+    return [];
   }
 }
 
@@ -143,3 +216,10 @@ const parseInEasternTime = (dateString: string) => {
     // We'll append timezone info to force the interpretation
     return fromZonedTime(new Date(dateString), 'America/Toronto');
 };
+
+// Format a UTC ISO string to a human-readable Eastern Time display like "Monday, Feb 17 at 10:00 PM"
+function formatDateDisplay(utcDateString: string): string {
+  const date = new Date(utcDateString);
+  return formatInTimeZone(date, 'America/Toronto', "EEEE, MMM d 'at' h:mm a");
+}
+
