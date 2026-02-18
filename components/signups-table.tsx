@@ -39,6 +39,12 @@ export default function SignupsTable({
     ? responses.filter((r) => r[filterColumn.header] === filterColumn.value)
     : responses;
 
+  const sorted = [...filtered].sort((a, b) => {
+    const tsA = a["Timestamp"] ? new Date(a["Timestamp"]).getTime() : 0;
+    const tsB = b["Timestamp"] ? new Date(b["Timestamp"]).getTime() : 0;
+    return tsA - tsB;
+  });
+
   const hiddenHeaders = new Set(["Timestamp"]);
   if (filterColumn) hiddenHeaders.add(filterColumn.header);
 
@@ -47,7 +53,7 @@ export default function SignupsTable({
   );
   const hasTimestamp = columns.some((col) => col.header === "Timestamp");
 
-  if (filtered.length === 0) {
+  if (sorted.length === 0) {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -66,7 +72,7 @@ export default function SignupsTable({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-gray-900">
-          Responses ({filtered.length})
+          Sign-ups ({sorted.length})
         </h2>
       </div>
       <div className="overflow-hidden rounded-lg border bg-white">
@@ -78,23 +84,16 @@ export default function SignupsTable({
               {displayColumns.map((col) => (
                 <TableHead key={col.header}>{col.header}</TableHead>
               ))}
-              <TableHead className="sticky right-0 bg-muted/50 text-right">
+              <TableHead className="sticky right-0 bg-muted/50 border-l">
                 Status
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((response, index) => {
+            {sorted.map((response, index) => {
               const isConfirmed = index < playerCap;
               return (
-                <TableRow
-                  key={index}
-                  className={
-                    isConfirmed
-                      ? "bg-green-100 hover:bg-green-200"
-                      : "bg-amber-100 hover:bg-amber-200"
-                  }
-                >
+                <TableRow key={index}>
                   <TableCell className="font-mono text-xs">
                     {index + 1}
                   </TableCell>
@@ -108,15 +107,17 @@ export default function SignupsTable({
                       {response[col.header]}
                     </TableCell>
                   ))}
-                  {isConfirmed ? (
-                    <TableCell className="sticky right-0 text-right bg-green-100">
-                      <p className="text-green-800">Confirmed</p>
-                    </TableCell>
-                  ) : (
-                    <TableCell className="sticky right-0 text-right bg-amber-100">
-                      <p className="text-amber-800">Waitlist</p>
-                    </TableCell>
-                  )}
+                  <TableCell className="sticky right-0 bg-white border-l">
+                    {isConfirmed ? (
+                      <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
+                        Confirmed
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
+                        Waitlist
+                      </Badge>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}
