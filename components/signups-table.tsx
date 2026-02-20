@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { FormResponseColumn } from "@/lib/schedule-utils";
 
 interface SignupsTableProps {
+  label: string;
   responses: Record<string, string>[];
   columns: FormResponseColumn[];
   playerCap: number;
@@ -30,6 +31,7 @@ function formatTimestamp(raw: string): string {
 }
 
 export default function SignupsTable({
+  label,
   responses,
   columns,
   playerCap,
@@ -57,7 +59,8 @@ export default function SignupsTable({
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">Sign-ups</h2>
+          <h2 className="font-semibold text-gray-900">{label}</h2>
+          <h2 className="text-gray-700">Cap: {playerCap}</h2>
         </div>
         <div className="rounded-lg border bg-white">
           <div className="p-6 text-center text-sm text-muted-foreground">
@@ -72,8 +75,9 @@ export default function SignupsTable({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-gray-900">
-          Sign-ups ({sorted.length})
+          {label} ({sorted.length})
         </h2>
+        <h2 className="text-gray-700">Cap: {playerCap}</h2>
       </div>
       <div className="overflow-hidden rounded-lg border bg-white">
         <Table>

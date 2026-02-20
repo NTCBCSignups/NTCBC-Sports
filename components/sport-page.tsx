@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, Lock, MapPin } from "lucide-react";
+import { CalendarDays, Clock, Lock, MapPin, UserStar } from "lucide-react";
 import { ScheduleData } from "@/lib/schedule-utils";
 import { SportConfig } from "@/lib/sports-config";
 import CountdownTimer from "@/components/countdown-timer";
@@ -33,7 +33,7 @@ export default function SportPage({
         {signUpTimeRange && (
           <div className="flex gap-6 text-sm text-gray-500 mb-2">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 flex-shrink-0" />
+              <Clock className="h-4 w-4 shrink-0" />
               <span>
                 {isFormOpen
                   ? `Sign-ups open from ${signUpTimeRange}`
@@ -78,14 +78,19 @@ export default function SportPage({
         </Button>
       )}
 
-      {isFormOpen && config.responseTable && formResponses && (
-        <SignupsTable
-          responses={formResponses}
-          columns={config.responseTable.columns}
-          playerCap={config.responseTable.playerCap}
-          filterColumn={config.responseTable.filterColumn}
-        />
-      )}
+      {isFormOpen &&
+        config.responseTable &&
+        formResponses &&
+        config.responseTable.tables.map((table) => (
+          <SignupsTable
+            key={table.label}
+            label={table.label}
+            responses={formResponses}
+            columns={config.responseTable!.columns}
+            playerCap={table.playerCap}
+            filterColumn={table.filterColumn}
+          />
+        ))}
 
       <div className="mb-8 space-y-6">
         <div>
@@ -107,7 +112,7 @@ export default function SportPage({
               <span>{config.day}</span>
             </div>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 mb-4">
             {config.sessions.map((session) => (
               <div
                 key={session.time}
@@ -119,6 +124,12 @@ export default function SportPage({
                 </div>
               </div>
             ))}
+          </div>
+          <div className="flex gap-6 text-sm mb-4 text-gray-700">
+            <div className="flex items-center gap-2">
+              <UserStar className="h-4 w-4 shrink-0" />
+              <span>{config.organizers}</span>
+            </div>
           </div>
         </div>
 

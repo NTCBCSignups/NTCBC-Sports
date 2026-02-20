@@ -4,11 +4,16 @@ export interface SportSession {
   time: string;
 }
 
+export interface ResponseTableEntry {
+  label: string;
+  playerCap: number;
+  filterColumn?: { header: string; value: string };
+}
+
 export interface ResponseTableConfig {
   sheetTab: string;
   columns: FormResponseColumn[];
-  playerCap: number;
-  filterColumn?: { header: string; value: string };
+  tables: ResponseTableEntry[];
 }
 
 export interface SportConfig {
@@ -48,8 +53,28 @@ export const sportsConfig: Record<string, SportConfig> = {
       "We have two sessions. You may sign up to one or both.",
       "Don't play volleyball in the basement foyer as you may break the lights.",
       "Don't cross the centre line, as this can cause serious injuries.",
-      "By filling out the form, you are signing up to attend this session. If you can no longer attend please notify the group chat or DM the organizers (Jonathan Wong, Jonathan Leung, Christa Ng)."
+      "By filling out the form, you are signing up to attend this session. If you can no longer attend please notify the group chat or DM the organizers."
     ],
+    // responseTable: {
+    //   sheetTab: "Form Responses 1",
+    //   columns: [
+    //     { index: 0, header: "Timestamp" },
+    //     { index: 2, header: "Name" },
+    //     { index: 7, header: "Attending" },
+    //   ],
+    //   tables: [
+    //     {
+    //       label: "6:00 PM - 8:15 PM (Casual)",
+    //       playerCap: 21,
+    //       filterColumn: { header: "Attending", value: "Yes" },
+    //     },
+    //     {
+    //       label: "8:15 PM - 10:30 PM (Intermediate+, must know 5-1)",
+    //       playerCap: 18,
+    //       filterColumn: { header: "Attending", value: "Yes" },
+    //     },
+    //   ],
+    // },
   },
   basketball: {
     id: "basketball",
@@ -61,7 +86,7 @@ export const sportsConfig: Record<string, SportConfig> = {
     },
     day: "Monday Nights",
     sessions: [{ time: "7:30 PM - 10:00 PM" }],
-    organizers: "Phoebe Chow, Daniel Ye, or Brandon Cho",
+    organizers: "Phoebe Chow, Daniel Ye, Brandon Cho",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
     additionalNotes: [
@@ -74,8 +99,13 @@ export const sportsConfig: Record<string, SportConfig> = {
         { index: 2, header: "Name" },
         { index: 5, header: "Attending" },
       ],
-      playerCap: 20,
-      filterColumn: { header: "Attending", value: "Yes" },
+      tables: [
+        {
+          label: "Sign-ups",
+          playerCap: 20,
+          filterColumn: { header: "Attending", value: "Yes" },
+        },
+      ],
     },
   },
 };
