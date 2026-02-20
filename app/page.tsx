@@ -7,8 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
+import { CalendarDays, Clock, Users } from "lucide-react";
 
 export default function Home() {
   return (
@@ -77,12 +76,9 @@ export default function Home() {
         </Card>
 
         {/* Basketball Card */}
-        <Card className="relative overflow-hidden opacity-75">
+        <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">🏀 Basketball</CardTitle>
-              <Badge variant="secondary">Coming Soon</Badge>
-            </div>
+            <CardTitle className="text-2xl">🏀 Basketball</CardTitle>
             <CardDescription>Basketball drop-in sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -102,8 +98,8 @@ export default function Home() {
             </div>
 
             <div className="pt-2">
-              <Button disabled className="w-full">
-                Please use our WhatsApp group to sign up
+              <Button asChild className="w-full">
+                <Link href="/basketball">View sign up</Link>
               </Button>
             </div>
           </CardContent>
