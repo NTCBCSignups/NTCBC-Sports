@@ -40,7 +40,7 @@ export default function Home() {
             <CardDescription>Volleyball drop-in sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span>Wednesday Nights</span>
@@ -82,7 +82,7 @@ export default function Home() {
             <CardDescription>Basketball drop-in sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span>Monday Nights</span>

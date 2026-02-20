@@ -29,7 +29,7 @@ export default function CountdownTimer({
 
     const days = Math.floor(difference / (1000 * 60 * 60 * 24));
     const hours = Math.floor(
-      (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
     );
     const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((difference % (1000 * 60)) / 1000);
@@ -72,7 +72,7 @@ export default function CountdownTimer({
     <>
       <div className="flex gap-6 text-sm text-gray-500 mb-2">
         <div className="flex items-center gap-2">
-          <ArrowBigRight className="h-4 w-4 flex-shrink-0" />
+          <ArrowBigRight className="h-4 w-4 shrink-0" />
           {isFormOpen ? (
             <span>Registration closes in: </span>
           ) : (
@@ -84,4 +84,3 @@ export default function CountdownTimer({
     </>
   );
 }
-
