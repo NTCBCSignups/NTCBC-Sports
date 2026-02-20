@@ -61,15 +61,19 @@ export default function SportPage({
         </div>
       )}
 
-      {isFormOpen && scheduleData?.link ? (
+      {isFormOpen && scheduleData?.form_link ? (
         <Button asChild className="w-full">
-          <a href={scheduleData.link} target="_blank" rel="noopener noreferrer">
+          <a
+            href={scheduleData.form_link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Sign up for {scheduleData.date}
           </a>
         </Button>
       ) : (
         <Button disabled className="w-full">
-          <Lock className="w-4 h-4 flex-shrink-0" />
+          <Lock className="w-4 h-4 shrink-0" />
           Registration Closed
         </Button>
       )}
@@ -90,7 +94,7 @@ export default function SportPage({
           </h2>
           <div className="flex gap-6 text-sm mb-4 text-gray-700">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 flex-shrink-0" />
+              <MapPin className="h-4 w-4 shrink-0" />
               <div className="flex flex-col">
                 <span>{config.location.name}</span>
                 <span>{config.location.address}</span>
@@ -99,7 +103,7 @@ export default function SportPage({
           </div>
           <div className="flex gap-6 text-sm mb-4 text-gray-700">
             <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 flex-shrink-0" />
+              <CalendarDays className="h-4 w-4 shrink-0" />
               <span>{config.day}</span>
             </div>
           </div>
@@ -110,7 +114,7 @@ export default function SportPage({
                 className="flex gap-6 text-sm text-gray-700"
               >
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <Clock className="h-4 w-4 shrink-0" />
                   <span>{session.time}</span>
                 </div>
               </div>
@@ -123,7 +127,7 @@ export default function SportPage({
           <ul className="space-y-2.5 ml-4 text-gray-700">
             {config.waiverLink && (
               <li className="flex items-start text-sm">
-                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
                 <span>
                   If this is your first time coming, please fill out this{" "}
                   <a
@@ -139,15 +143,7 @@ export default function SportPage({
               </li>
             )}
             <li className="flex items-start text-sm">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 flex-shrink-0"></div>
-              <span>
-                By filling out the form, you are signing up to attend this
-                session. If you can no longer attend please notify the group
-                chat or DM the organizers ({config.organizers}).
-              </span>
-            </li>
-            <li className="flex items-start text-sm">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
               <span>
                 This {config.name.toLowerCase()} session is part of our church
                 ministry. It&apos;s a great time for us to connect not only
@@ -158,7 +154,7 @@ export default function SportPage({
             </li>
             {config.additionalNotes.map((note) => (
               <li key={note} className="flex items-start text-sm">
-                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
                 <span>{note}</span>
               </li>
             ))}

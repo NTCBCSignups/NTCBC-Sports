@@ -8,7 +8,7 @@ export interface ScheduleData {
   form_close_display: string;
   verse_ref: string;
   verse_text: string;
-  link: string;
+  form_link: string;
   response_sheet_id: string;
 }
 
@@ -45,7 +45,7 @@ export async function getScheduleData(sport: Sport): Promise<{
     const environment = process.env.VERCEL_ENV || 'development';
     const isProd = environment === 'production';
     const SHEET_TAB = isProd ? 'prod' : 'dev';
-    const RANGE = `${SHEET_TAB}!A2:H`;
+    const RANGE = `${SHEET_TAB}!A2:I`;
     
     console.log(`[${sport}] Environment: ${environment}, Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
     
@@ -77,18 +77,21 @@ export async function getScheduleData(sport: Sport): Promise<{
     // Find current active form OR next upcoming form
     let selectedRow = null;
     
+    // Column layout: A=date, B=skip_day, C=form_open, D=form_close,
+    // E=verse_ref, F=verse_text, G=form_link, H=response_sheet_id
+
     // First, look for currently active form
     for (const row of data.values) {
-      if (row.length < 3) continue;
+      if (row.length < 4) continue;
+      if ((row[1] || '').toLowerCase().trim() === 'x') continue;
       
-      const openTime = parseInEasternTime(row[1]);
-      const closeTime = parseInEasternTime(row[2]);
+      const openTime = parseInEasternTime(row[2]);
+      const closeTime = parseInEasternTime(row[3]);
 
       if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime())) {
         continue;
       }
       
-      // If form is currently open, use it
       if (now >= openTime && now <= closeTime) {
         selectedRow = row;
         break;
@@ -101,9 +104,10 @@ export async function getScheduleData(sport: Sport): Promise<{
       let earliestTime = null;
       
       for (const row of data.values) {
-        if (row.length < 3) continue;
+        if (row.length < 4) continue;
+        if ((row[1] || '').toLowerCase().trim() === 'x') continue;
         
-        const openTime = parseInEasternTime(row[1]);
+        const openTime = parseInEasternTime(row[2]);
         if (isNaN(openTime.getTime())) continue;
         
         if (openTime > now) {
@@ -128,18 +132,18 @@ export async function getScheduleData(sport: Sport): Promise<{
           form_close_display: '',
           verse_ref: '',
           verse_text: '',
-          link: '',
+          form_link: '',
           response_sheet_id: ''
         },
         isFormOpen: false
       };
     }
     
-    const isFormOpen = checkFormStatus(now, selectedRow[1], selectedRow[2]);
+    const isFormOpen = checkFormStatus(now, selectedRow[2], selectedRow[3]);
     
     // Convert dates to UTC ISO strings for consistent client-side parsing
-    const openTimeUTC = parseInEasternTime(selectedRow[1]).toISOString();
-    const closeTimeUTC = parseInEasternTime(selectedRow[2]).toISOString();
+    const openTimeUTC = parseInEasternTime(selectedRow[2]).toISOString();
+    const closeTimeUTC = parseInEasternTime(selectedRow[3]).toISOString();
     
     const scheduleData = {
       date: selectedRow[0],
@@ -147,10 +151,10 @@ export async function getScheduleData(sport: Sport): Promise<{
       form_close: closeTimeUTC,
       form_open_display: formatDateDisplay(openTimeUTC),
       form_close_display: formatDateDisplay(closeTimeUTC),
-      verse_ref: selectedRow[3],
-      verse_text: selectedRow[4],
-      link: isFormOpen ? (selectedRow[5] || '') : '',
-      response_sheet_id: selectedRow[6] || ''
+      verse_ref: selectedRow[4],
+      verse_text: selectedRow[5],
+      form_link: isFormOpen ? (selectedRow[6] || '') : '',
+      response_sheet_id: selectedRow[7] || ''
     };
     
     return { scheduleData, isFormOpen };

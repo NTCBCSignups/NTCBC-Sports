@@ -48,6 +48,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       "We have two sessions. You may sign up to one or both.",
       "Don't play volleyball in the basement foyer as you may break the lights.",
       "Don't cross the centre line, as this can cause serious injuries.",
+      "By filling out the form, you are signing up to attend this session. If you can no longer attend please notify the group chat or DM the organizers (Jonathan Wong, Jonathan Leung, Christa Ng)."
     ],
   },
   basketball: {
@@ -63,7 +64,9 @@ export const sportsConfig: Record<string, SportConfig> = {
     organizers: "Phoebe Chow, Daniel Ye, or Brandon Cho",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
-    additionalNotes: [],
+    additionalNotes: [
+      "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
+    ],
     responseTable: {
       sheetTab: "Form Responses 1",
       columns: [
