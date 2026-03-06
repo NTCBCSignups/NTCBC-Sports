@@ -69,18 +69,14 @@ export default function CountdownTimer({
   }, [openTime, closeTime, isFormOpen]);
 
   return (
-    <>
-      <div className="flex gap-6 text-sm text-gray-500 mb-2">
-        <div className="flex items-center gap-2">
-          <ArrowBigRight className="h-4 w-4 shrink-0" />
-          {isFormOpen ? (
-            <span>Registration closes in: </span>
-          ) : (
-            <span>Next registration opens in: </span>
-          )}
-          <span className="font-mono text-blue-500">{countdown}</span>
-        </div>
+    <div className="flex items-start gap-2 text-sm">
+      <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+      <div className="flex flex-col">
+        <span className="font-medium text-gray-900">
+          {isFormOpen ? "Sign-ups close in" : "Sign-ups open in"}
+        </span>
+        <span className="font-mono text-blue-500">{countdown}</span>
       </div>
-    </>
+    </div>
   );
 }

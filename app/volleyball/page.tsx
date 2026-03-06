@@ -1,4 +1,4 @@
-import { getScheduleData } from "@/lib/schedule-utils";
+import { getScheduleData, getFormResponses } from "@/lib/schedule-utils";
 import { sportsConfig } from "@/lib/sports-config";
 import SportPage from "@/components/sport-page";
 
@@ -9,11 +9,23 @@ const config = sportsConfig.volleyball;
 export default async function VolleyballPage() {
   const { scheduleData, isFormOpen } = await getScheduleData(config.id);
 
+  const formResponses =
+    isFormOpen &&
+    scheduleData?.response_sheet_id &&
+    config.responseTable
+      ? await getFormResponses(
+          scheduleData.response_sheet_id,
+          config.responseTable.sheetTab,
+          config.responseTable.columns
+        )
+      : [];
+
   return (
     <SportPage
       config={config}
       scheduleData={scheduleData}
       isFormOpen={isFormOpen}
+      formResponses={formResponses}
     />
   );
 }

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,14 +8,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CalendarDays, Clock, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 
 export default function Home() {
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">NTCBC Sports</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3 font-editorial">
+          <Image
+            src="/favicon.ico"
+            alt="NTCBC"
+            width={36}
+            height={36}
+            className="rounded-sm"
+          />
+          NTCBC Sports
+        </h1>
       </div>
 
       {/* About Section */}
@@ -37,7 +47,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">🏐 Volleyball</CardTitle>
             </div>
-            <CardDescription>Volleyball drop-in sessions</CardDescription>
+            <CardDescription>Drop-in sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm text-gray-500">
@@ -68,8 +78,10 @@ export default function Home() {
             </div>
 
             <div className="pt-2">
-              <Button asChild className="w-full">
-                <Link href="/volleyball">View sign up</Link>
+              <Button asChild className="w-full rounded-full has-[>svg]:px-8">
+                <Link href="/volleyball">
+                  View sign-ups <ArrowRight className="w-4 h-4 shrink-0" />
+                </Link>
               </Button>
             </div>
           </CardContent>
@@ -79,7 +91,7 @@ export default function Home() {
         <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="text-2xl">🏀 Basketball</CardTitle>
-            <CardDescription>Basketball drop-in sessions</CardDescription>
+            <CardDescription>Drop-in sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm text-gray-500">
@@ -98,8 +110,10 @@ export default function Home() {
             </div>
 
             <div className="pt-2">
-              <Button asChild className="w-full">
-                <Link href="/basketball">View sign up</Link>
+              <Button asChild className="w-full rounded-full has-[>svg]:px-8">
+                <Link href="/basketball">
+                  View sign-ups <ArrowRight className="w-4 h-4 shrink-0" />
+                </Link>
               </Button>
             </div>
           </CardContent>
