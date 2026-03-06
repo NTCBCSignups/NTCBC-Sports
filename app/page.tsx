@@ -15,7 +15,7 @@ export default function Home() {
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3 font-editorial">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3">
           <Image
             src="/favicon.ico"
             alt="NTCBC"

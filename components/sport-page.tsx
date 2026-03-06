@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  ArrowRight,
   CalendarDays,
   Clock,
+  ExternalLink,
   Lock,
   MapPin,
   UserStar,
@@ -47,85 +47,94 @@ export default function SportPage({
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       {/* Title + info bullets */}
-      <div className="space-y-4">
-        <h1 className="text-4xl font-bold text-gray-900 font-editorial">
-          {config.emoji} {config.name} <br />
-          <span className="text-2xl text-gray-900">Drop-In Sessions</span>
+      <div className="space-y-6">
+        <h1 className="text-4xl font-bold text-gray-900">
+          {config.emoji} {config.name}
         </h1>
 
-        <div className="space-y-2 text-sm">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">Location</span>
-              {config.location.mapsLink ? (
-                <a
-                  href={config.location.mapsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-700 underline underline-offset-2 hover:text-gray-900"
-                >
-                  {config.location.name} <br /> {config.location.address}
-                </a>
-              ) : (
-                <>
-                  <span className="text-gray-700">{config.location.name}</span>
-                  <span className="text-gray-700">
-                    {config.location.address}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">Date</span>
-              <span className="text-gray-700">{config.day}</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">Time</span>
-              {config.sessions.map((session) => (
-                <span key={session.time} className="text-gray-700">
-                  {session.time}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">Admins</span>
-              <span className="text-gray-700">{config.organizers}</span>
-            </div>
-          </div>
-          {scheduleData?.form_open_display &&
-            scheduleData?.form_close_display && (
-              <div className="flex items-start gap-2">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">
-                    Sign-ups open from
-                  </span>
-                  <span className="text-gray-700">
-                    {scheduleData.form_open_display}
-                  </span>
-                  <span className="text-gray-700">
-                    {scheduleData.form_close_display}
-                  </span>
-                </div>
+        <h2 className="font-semibold text-gray-900">Drop-In Sessions</h2>
+        <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
+          {/* Left stack */}
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Location</span>
+                {config.location.mapsLink ? (
+                  <a
+                    href={config.location.mapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                  >
+                    {config.location.name} <br /> {config.location.address}
+                  </a>
+                ) : (
+                  <>
+                    <span className="text-gray-700">
+                      {config.location.name}
+                    </span>
+                    <span className="text-gray-700">
+                      {config.location.address}
+                    </span>
+                  </>
+                )}
               </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Date</span>
+                <span className="text-gray-700">{config.day}</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Time</span>
+                {config.sessions.map((session) => (
+                  <span key={session.time} className="text-gray-700">
+                    {session.time}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right stack */}
+          <div className="space-y-2 mt-2 sm:mt-0">
+            <div className="flex items-start gap-2">
+              <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Admins</span>
+                <span className="text-gray-700">{config.organizers}</span>
+              </div>
+            </div>
+            {scheduleData?.form_open_display &&
+              scheduleData?.form_close_display && (
+                <div className="flex items-start gap-2">
+                  <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">
+                      Sign-ups open from
+                    </span>
+                    <span className="text-gray-700">
+                      {scheduleData.form_open_display}
+                    </span>
+                    <span className="text-gray-700">
+                      {scheduleData.form_close_display}
+                    </span>
+                  </div>
+                </div>
+              )}
+            {scheduleData && (
+              <CountdownTimer
+                openTime={scheduleData.form_open}
+                closeTime={scheduleData.form_close}
+                isFormOpen={isFormOpen}
+              />
             )}
-          {scheduleData && (
-            <CountdownTimer
-              openTime={scheduleData.form_open}
-              closeTime={scheduleData.form_close}
-              isFormOpen={isFormOpen}
-            />
-          )}
+          </div>
         </div>
       </div>
 
@@ -149,7 +158,7 @@ export default function SportPage({
             rel="noopener noreferrer"
           >
             Sign-up for {formatDate(scheduleData.date)}
-            <ArrowRight className="w-4 h-4 shrink-0" />
+            <ExternalLink className="w-4 h-4 shrink-0" />
           </a>
         </Button>
       ) : (
