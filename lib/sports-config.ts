@@ -30,8 +30,8 @@ export interface SportConfig {
   day: string;
   sessions: SportSession[];
   organizers: string;
-  waiverLink: string;
-  additionalNotes: string[];
+  waiverLink?: string;
+  notes: string[];
   responseTable?: ResponseTableConfig;
 }
 
@@ -45,19 +45,21 @@ export const sportsConfig: Record<string, SportConfig> = {
       address: "88 Finch Ave W, North York",
       mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
     },
-    day: "Wednesday Nights",
+    day: "Wednesday nights",
     sessions: [
       { time: "6:00 PM - 8:15 PM (All levels)" },
       { time: "8:15 PM - 10:30 PM (Intermediate+)" },
     ],
-    organizers: "Jonathan Wong, Jonathan Leung, Christa Ng",
+    organizers: "Jonathan Wong, Jonathan Leung",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
-    additionalNotes: [
-      "We have two sessions. You may sign-up to one or both.",
+    notes: [
+      "This volleyball session is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
+      "We have two sessions. You may sign up to one or both.",
       "Don't play volleyball in the basement foyer as you may break the lights.",
       "Don't cross the centre line, as this can cause serious injuries.",
-      "By filling out the form, you are signing up to attend this session. If you can no longer attend please notify the group chat or DM the organizers."
+      "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
+      "Please contact the admins if you have any questions.",
     ],
     responseTable: {
       sheetTab: "Form Responses 1",
@@ -94,13 +96,15 @@ export const sportsConfig: Record<string, SportConfig> = {
       address: "88 Finch Ave W, North York",
       mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
     },
-    day: "Monday Nights",
+    day: "Monday nights",
     sessions: [{ time: "7:30 PM - 10:00 PM" }],
     organizers: "Phoebe Chow, Daniel Ye, Brandon Cho",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
-    additionalNotes: [
+    notes: [
+      "This basketball session is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
       "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
+      "Please contact the admins if you have any questions.",
     ],
     responseTable: {
       sheetTab: "Form Responses 1",

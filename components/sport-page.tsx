@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -46,6 +48,13 @@ export default function SportPage({
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+      >
+        <Image src="/favicon.ico" alt="NTCBC" width={18} height={18} className="rounded-sm" />
+        NTCBC Sports
+      </Link>
       {/* Title + info bullets */}
       <div className="space-y-6">
         <h1 className="text-4xl font-bold text-gray-900">
@@ -228,21 +237,7 @@ export default function SportPage({
                 </span>
               </li>
             )}
-            <li className="flex items-start text-sm">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-              <span>Please contact the admins if you have any questions.</span>
-            </li>
-            <li className="flex items-start text-sm">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-              <span>
-                This {config.name.toLowerCase()} session is part of our church
-                ministry. It&apos;s a great time for us to connect not only
-                through the game but also with each other and the message of the
-                gospel. Everyone, regardless of your faith background, is
-                welcome to join.
-              </span>
-            </li>
-            {config.additionalNotes.map((note) => (
+            {config.notes.map((note) => (
               <li key={note} className="flex items-start text-sm">
                 <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
                 <span>{note}</span>

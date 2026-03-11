@@ -47,13 +47,13 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">🏐 Volleyball</CardTitle>
             </div>
-            <CardDescription>Drop-in sessions</CardDescription>
+            <CardDescription>Drop-in Sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                <span>Wednesday Nights</span>
+                <span>Wednesday nights</span>
               </div>
               <div className="flex justify-between">
                 <div className="flex items-center gap-2">
@@ -91,13 +91,13 @@ export default function Home() {
         <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="text-2xl">🏀 Basketball</CardTitle>
-            <CardDescription>Drop-in sessions</CardDescription>
+            <CardDescription>Drop-in Sessions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                <span>Monday Nights</span>
+                <span>Monday nights</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
