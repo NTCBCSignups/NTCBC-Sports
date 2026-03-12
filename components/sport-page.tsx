@@ -61,7 +61,7 @@ export default function SportPage({
           {config.emoji} {config.name}
         </h1>
 
-        <h2 className="font-semibold text-gray-900">Drop-In Sessions</h2>
+        <h2 className="font-semibold text-gray-900">Drop-in Sessions</h2>
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           {/* Left stack */}
           <div className="space-y-2">
