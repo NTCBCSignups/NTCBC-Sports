@@ -15,6 +15,8 @@ interface SignupsTableProps {
   columns: FormResponseColumn[];
   playerCap: number;
   filterColumn?: { header: string; value: string };
+  hiddenColumns?: string[];
+  description?: string;
 }
 
 function formatTimestamp(raw: string): string {
@@ -36,6 +38,8 @@ export default function SignupsTable({
   columns,
   playerCap,
   filterColumn,
+  hiddenColumns = [],
+  description,
 }: SignupsTableProps) {
   const filtered = filterColumn
     ? responses.filter((r) => r[filterColumn.header] === filterColumn.value)
@@ -47,7 +51,7 @@ export default function SignupsTable({
     return tsA - tsB;
   });
 
-  const hiddenHeaders = new Set(["Timestamp"]);
+  const hiddenHeaders = new Set(["Timestamp", ...hiddenColumns]);
   if (filterColumn) hiddenHeaders.add(filterColumn.header);
 
   const displayColumns = columns.filter(
@@ -55,14 +59,35 @@ export default function SignupsTable({
   );
   const hasTimestamp = columns.some((col) => col.header === "Timestamp");
 
+  const isOverCap = sorted.length > playerCap;
+
+  const infoTiles = (
+    <div className="flex border-b">
+      <div className="flex-1 px-4 py-3 border-r">
+        <p className="text-xs text-muted-foreground mb-0.5">Capacity</p>
+        <p
+          className={`text-sm font-semibold ${isOverCap ? "text-amber-600" : "text-gray-900"}`}
+        >
+          {sorted.length} / {playerCap}
+        </p>
+      </div>
+      {description && (
+        <div className="flex-1 px-4 py-3">
+          <p className="text-xs text-muted-foreground mb-0.5">Skill Level</p>
+          <p className="text-sm font-semibold text-gray-900">{description}</p>
+        </div>
+      )}
+    </div>
+  );
+
   if (sorted.length === 0) {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-gray-900">{label}</h2>
-          <h2 className="text-gray-700">Cap: {playerCap}</h2>
         </div>
-        <div className="rounded-lg border bg-white">
+        <div className="overflow-hidden rounded-lg border bg-white">
+          {infoTiles}
           <div className="p-6 text-center text-sm text-muted-foreground">
             No sign-ups yet.
           </div>
@@ -73,13 +98,8 @@ export default function SignupsTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">
-          {label} ({sorted.length})
-        </h2>
-        <h2 className="text-gray-700">Cap: {playerCap}</h2>
-      </div>
       <div className="overflow-hidden rounded-lg border bg-white">
+        {infoTiles}
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
