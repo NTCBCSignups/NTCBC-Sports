@@ -86,8 +86,8 @@ export const sportsConfig: Record<string, SportConfig> = {
     },
     day: "Wednesday nights",
     sessions: [
-      { time: "6:00 PM - 8:15 PM (All levels)" },
-      { time: "8:15 PM - 10:30 PM (Intermediate+)" },
+      { time: "6:00 PM - 8:15 PM" },
+      { time: "8:15 PM - 10:30 PM" },
     ],
     organizers: "Jonathan Wong, Jonathan Leung",
     waiverLink:
