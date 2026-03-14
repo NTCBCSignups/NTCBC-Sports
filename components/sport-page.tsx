@@ -52,7 +52,13 @@ export default function SportPage({
         href="/"
         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
       >
-        <Image src="/favicon.ico" alt="NTCBC" width={18} height={18} className="rounded-sm" />
+        <Image
+          src="/favicon.ico"
+          alt="NTCBC"
+          width={18}
+          height={18}
+          className="rounded-sm"
+        />
         NTCBC Sports
       </Link>
       {/* Title + info bullets */}
@@ -61,7 +67,7 @@ export default function SportPage({
           {config.emoji} {config.name}
         </h1>
 
-        <h2 className="font-semibold text-gray-900">Drop-in Sessions</h2>
+        <h2 className="font-semibold text-gray-900">{config.type}</h2>
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           {/* Left stack */}
           <div className="space-y-2">
@@ -208,7 +214,6 @@ export default function SportPage({
                   filterColumn={table.filterColumn}
                   hiddenColumns={table.hiddenColumns}
                   description={table.description}
-                  showLabel={false}
                 />
               </TabsContent>
             ))}

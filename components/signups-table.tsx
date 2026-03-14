@@ -16,7 +16,6 @@ interface SignupsTableProps {
   playerCap: number;
   filterColumn?: { header: string; value: string };
   hiddenColumns?: string[];
-  showLabel?: boolean;
   description?: string;
 }
 
@@ -40,7 +39,6 @@ export default function SignupsTable({
   playerCap,
   filterColumn,
   hiddenColumns = [],
-  showLabel = true,
   description,
 }: SignupsTableProps) {
   const filtered = filterColumn
@@ -63,7 +61,7 @@ export default function SignupsTable({
 
   const isOverCap = sorted.length > playerCap;
 
-  const infoTiles = !showLabel && (
+  const infoTiles = (
     <div className="flex border-b">
       <div className="flex-1 px-4 py-3 border-r">
         <p className="text-xs text-muted-foreground mb-0.5">Capacity</p>
@@ -85,16 +83,9 @@ export default function SignupsTable({
   if (sorted.length === 0) {
     return (
       <div className="space-y-3">
-        {showLabel && (
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">{label}</h2>
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-              <span>0 signed up</span>
-              <span className="text-gray-400">·</span>
-              <span>Cap: {playerCap}</span>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900">{label}</h2>
+        </div>
         <div className="overflow-hidden rounded-lg border bg-white">
           {infoTiles}
           <div className="p-6 text-center text-sm text-muted-foreground">
@@ -107,16 +98,6 @@ export default function SignupsTable({
 
   return (
     <div className="space-y-3">
-      {showLabel && (
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">{label}</h2>
-          <div className="flex items-center gap-1.5 text-sm text-gray-600">
-            <span>{sorted.length} signed up</span>
-            <span className="text-gray-400">·</span>
-            <span>Cap: {playerCap}</span>
-          </div>
-        </div>
-      )}
       <div className="overflow-hidden rounded-lg border bg-white">
         {infoTiles}
         <Table>

@@ -22,6 +22,7 @@ export interface SportConfig {
   id: Sport;
   emoji: string;
   name: string;
+  type: string;
   location: {
     name: string;
     address: string;
@@ -36,10 +37,48 @@ export interface SportConfig {
 }
 
 export const sportsConfig: Record<string, SportConfig> = {
+  basketball: {
+    id: "basketball",
+    emoji: "🏀",
+    name: "Basketball",
+    type: "Drop-in Sessions",
+    location: {
+      name: "North Toronto Chinese Baptist Church",
+      address: "88 Finch Ave W, North York",
+      mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
+    },
+    day: "Monday nights",
+    sessions: [{ time: "7:30 PM - 10:00 PM" }],
+    organizers: "Phoebe Chow, Daniel Ye, Brandon Cho",
+    waiverLink:
+      "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
+    notes: [
+      "This basketball session is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
+      "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
+      "Please contact the admins if you have any questions.",
+    ],
+    responseTable: {
+      sheetTab: "Form Responses 1",
+      columns: [
+        { index: 0, header: "Timestamp" },
+        { index: 2, header: "Name" },
+        { index: 5, header: "Attending" },
+      ],
+      tables: [
+        {
+          label: "7:30 PM - 10:00 PM",
+          playerCap: 20,
+          description: "All levels",
+          filterColumn: { header: "Attending", value: "Yes" },
+        },
+      ],
+    },
+  },
   volleyball: {
     id: "volleyball",
     emoji: "🏐",
     name: "Volleyball",
+    type: "Drop-in Sessions",
     location: {
       name: "North Toronto Chinese Baptist Church",
       address: "88 Finch Ave W, North York",
@@ -83,42 +122,6 @@ export const sportsConfig: Record<string, SportConfig> = {
           description: "Intermediate+",
           filterColumn: { header: "8:15 PM - 10:30 PM", value: "Yes" },
           hiddenColumns: ["6:00 PM - 8:15 PM"],
-        },
-      ],
-    },
-  },
-  basketball: {
-    id: "basketball",
-    emoji: "🏀",
-    name: "Basketball",
-    location: {
-      name: "North Toronto Chinese Baptist Church",
-      address: "88 Finch Ave W, North York",
-      mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
-    },
-    day: "Monday nights",
-    sessions: [{ time: "7:30 PM - 10:00 PM" }],
-    organizers: "Phoebe Chow, Daniel Ye, Brandon Cho",
-    waiverLink:
-      "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
-    notes: [
-      "This basketball session is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
-      "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
-      "Please contact the admins if you have any questions.",
-    ],
-    responseTable: {
-      sheetTab: "Form Responses 1",
-      columns: [
-        { index: 0, header: "Timestamp" },
-        { index: 2, header: "Name" },
-        { index: 5, header: "Attending" },
-      ],
-      tables: [
-        {
-          label: "7:30 PM - 10:00 PM",
-          playerCap: 20,
-          description: "All levels",
-          filterColumn: { header: "Attending", value: "Yes" },
         },
       ],
     },
