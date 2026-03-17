@@ -49,31 +49,28 @@ export default function Home() {
               <CardTitle className="text-2xl">
                 {sport.emoji} {sport.name}
               </CardTitle>
-              <CardDescription>{sport.type}</CardDescription>
+              <CardDescription className="text-gray-700">
+                {sport.type}
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-1 space-y-4">
-              <div className="flex-1 space-y-2 text-sm text-gray-500">
+              <div className="flex-1 space-y-2 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
                   <span>{sport.day}</span>
                 </div>
-                {sport.sessions.map((session, i) => {
-                  const cap = sport.responseTable?.tables[i]?.playerCap;
-                  return (
-                    <div key={session.time} className="flex justify-between">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{session.time}</span>
-                      </div>
-                      {cap && (
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          <span>{cap} player cap</span>
-                        </div>
-                      )}
+                {sport.responseTable?.sessions.map((session) => (
+                  <div key={session.time} className="flex justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{session.time}</span>
                     </div>
-                  );
-                })}
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>{session.playerCap} player cap</span>
+                    </div>
+                  </div>
+                ))}
               </div>
               <Button asChild className="w-full rounded-full has-[>svg]:px-8">
                 <Link href={`/${sport.id}`}>

@@ -107,9 +107,12 @@ export default function SportPage({
               <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
                 <span className="font-medium text-gray-900">Time</span>
-                {config.sessions.map((session) => (
+                {config.responseTable?.sessions.map((session) => (
                   <span key={session.time} className="text-gray-700">
                     {session.time}
+                    {session.description && (
+                      <span> · {session.description}</span>
+                    )}
                   </span>
                 ))}
               </div>
@@ -190,30 +193,30 @@ export default function SportPage({
         <div className="space-y-2">
           <h2 className="font-semibold text-gray-900">Attendance</h2>
           <Tabs
-            defaultValue={config.responseTable.tables[0].label}
+            defaultValue={config.responseTable.sessions[0].time}
             className="gap-4"
           >
             <TabsList className="max-sm:w-full rounded-full">
-              {config.responseTable.tables.map((table) => (
+              {config.responseTable.sessions.map((session) => (
                 <TabsTrigger
-                  key={table.label}
-                  value={table.label}
+                  key={session.time}
+                  value={session.time}
                   className="max-sm:flex-1 rounded-full px-5"
                 >
-                  {table.label}
+                  {session.time}
                 </TabsTrigger>
               ))}
             </TabsList>
-            {config.responseTable.tables.map((table) => (
-              <TabsContent key={table.label} value={table.label}>
+            {config.responseTable.sessions.map((session) => (
+              <TabsContent key={session.time} value={session.time}>
                 <SignupsTable
-                  label={table.label}
+                  label={session.time}
                   responses={formResponses}
                   columns={config.responseTable!.columns}
-                  playerCap={table.playerCap}
-                  filterColumn={table.filterColumn}
-                  hiddenColumns={table.hiddenColumns}
-                  description={table.description}
+                  playerCap={session.playerCap}
+                  filterColumn={session.filterColumn}
+                  hiddenColumns={session.hiddenColumns}
+                  description={session.description}
                 />
               </TabsContent>
             ))}

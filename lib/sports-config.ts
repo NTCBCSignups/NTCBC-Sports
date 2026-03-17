@@ -1,11 +1,7 @@
 import { Sport, FormResponseColumn } from "./schedule-utils";
 
-export interface SportSession {
-  time: string;
-}
-
 export interface ResponseTableEntry {
-  label: string;
+  time: string;
   playerCap: number;
   description?: string;
   filterColumn?: { header: string; value: string };
@@ -15,7 +11,7 @@ export interface ResponseTableEntry {
 export interface ResponseTableConfig {
   sheetTab: string;
   columns: FormResponseColumn[];
-  tables: ResponseTableEntry[];
+  sessions: ResponseTableEntry[];
 }
 
 export interface SportConfig {
@@ -29,7 +25,6 @@ export interface SportConfig {
     mapsLink?: string;
   };
   day: string;
-  sessions: SportSession[];
   organizers: string;
   waiverLink?: string;
   notes: string[];
@@ -48,7 +43,6 @@ export const sportsConfig: Record<string, SportConfig> = {
       mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
     },
     day: "Monday nights",
-    sessions: [{ time: "7:30 PM - 10:00 PM" }],
     organizers: "Phoebe Chow, Daniel Ye, Brandon Cho",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
@@ -64,9 +58,9 @@ export const sportsConfig: Record<string, SportConfig> = {
         { index: 2, header: "Name" },
         { index: 5, header: "Attending" },
       ],
-      tables: [
+      sessions: [
         {
-          label: "7:30 PM - 10:00 PM",
+          time: "7:30 PM - 10:00 PM",
           playerCap: 20,
           description: "All levels",
           filterColumn: { header: "Attending", value: "Yes" },
@@ -85,10 +79,6 @@ export const sportsConfig: Record<string, SportConfig> = {
       mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
     },
     day: "Wednesday nights",
-    sessions: [
-      { time: "6:00 PM - 8:15 PM" },
-      { time: "8:15 PM - 10:30 PM" },
-    ],
     organizers: "Jonathan Wong, Jonathan Leung",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
@@ -108,16 +98,16 @@ export const sportsConfig: Record<string, SportConfig> = {
         { index: 3, header: "6:00 PM - 8:15 PM" },
         { index: 4, header: "8:15 PM - 10:30 PM" },
       ],
-      tables: [
+      sessions: [
         {
-          label: "6:00 PM - 8:15 PM",
+          time: "6:00 PM - 8:15 PM",
           playerCap: 21,
           description: "All levels",
           filterColumn: { header: "6:00 PM - 8:15 PM", value: "Yes" },
           hiddenColumns: ["8:15 PM - 10:30 PM"],
         },
         {
-          label: "8:15 PM - 10:30 PM",
+          time: "8:15 PM - 10:30 PM",
           playerCap: 18,
           description: "Intermediate+",
           filterColumn: { header: "8:15 PM - 10:30 PM", value: "Yes" },
