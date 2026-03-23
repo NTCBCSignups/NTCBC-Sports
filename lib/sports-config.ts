@@ -79,7 +79,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       mapsLink: "https://maps.app.goo.gl/RRBF3EAJWLkAU64W6",
     },
     day: "Wednesday nights",
-    organizers: "Jonathan Wong",
+    organizers: "Jonathan Wong, Jonathan Leung",
     waiverLink:
       "https://docs.google.com/forms/d/e/1FAIpQLSdNYPEtVxNSR2XQ_tAT0UpCRr2FnuG9MAEGPkUFk1noRxSx_w/viewform",
     notes: [
