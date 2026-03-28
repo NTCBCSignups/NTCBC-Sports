@@ -71,6 +71,9 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+                {sport.description && !sport.responseTable && (
+                  <p className="text-gray-500">{sport.description}</p>
+                )}
               </div>
               <Button asChild className="w-full rounded-full has-[>svg]:px-8">
                 <Link href={`/${sport.id}`}>

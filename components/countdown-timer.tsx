@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowBigRight } from "lucide-react";
 
 interface CountdownTimerProps {
@@ -15,58 +15,61 @@ export default function CountdownTimer({
   isFormOpen,
 }: CountdownTimerProps) {
   const [countdown, setCountdown] = useState<string>("");
+  const [expired, setExpired] = useState(false);
 
-  // Function to calculate countdown to next opening
-  const calculateCountdown = (targetTime: string) => {
-    const now = new Date().getTime();
-    const targetTimeMs = new Date(targetTime).getTime();
-    const difference = targetTimeMs - now;
+  const targetTime = isFormOpen ? closeTime : openTime;
+  const now = Date.now();
+  const targetMs = new Date(targetTime).getTime();
+  const alreadyPast = targetMs <= now;
 
-    if (difference <= 0) {
-      window.location.reload();
-      return "Refreshing...";
-    }
+  const calculateCountdown = useCallback(
+    (target: string) => {
+      const nowMs = Date.now();
+      const targetTimeMs = new Date(target).getTime();
+      const difference = targetTimeMs - nowMs;
 
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor(
-      (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-    );
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      if (difference <= 0) {
+        setExpired(true);
+        window.location.reload();
+        return "Refreshing...";
+      }
 
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
-    }
-  };
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
+      const minutes = Math.floor(
+        (difference % (1000 * 60 * 60)) / (1000 * 60),
+      );
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-  // Update countdown every second when form is closed / open
+      if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      } else if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+      } else if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+      } else {
+        return `${seconds}s`;
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (isFormOpen) {
-      const interval = setInterval(() => {
-        setCountdown(calculateCountdown(closeTime));
-      }, 1000);
+    if (alreadyPast) return;
 
-      // Initial countdown calculation
-      setCountdown(calculateCountdown(closeTime));
+    setCountdown(calculateCountdown(targetTime));
+    const interval = setInterval(() => {
+      setCountdown(calculateCountdown(targetTime));
+    }, 1000);
 
-      return () => clearInterval(interval);
-    } else {
-      const interval = setInterval(() => {
-        setCountdown(calculateCountdown(openTime));
-      }, 1000);
+    return () => clearInterval(interval);
+  }, [targetTime, alreadyPast, calculateCountdown]);
 
-      // Initial countdown calculation
-      setCountdown(calculateCountdown(openTime));
-
-      return () => clearInterval(interval);
-    }
-  }, [openTime, closeTime, isFormOpen]);
+  if (alreadyPast && !expired) {
+    return null;
+  }
 
   return (
     <div className="flex items-start gap-2 text-sm">
