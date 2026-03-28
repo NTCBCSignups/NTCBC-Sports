@@ -16,6 +16,7 @@ import type {
     YecTicket,
 } from "./ccsa-types";
 
+// export types for external use (e.g. in scripts) without importing from ccsa-types directly
 export type {
     AdminInfo,
     ChurchListItem,
