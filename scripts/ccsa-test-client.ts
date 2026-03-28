@@ -1,7 +1,7 @@
 /**
  * Shared CCSA API helper for scripts.
- * Persists session cookies to a temp file so sessions
- * survive across script runs.
+ * Injects a cookie-aware fetch into ccsa-api so all typed API
+ * methods work from Node.js with persistent sessions.
  */
 
 import * as fs from "fs";
@@ -9,7 +9,8 @@ import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 
-const API_BASE = "https://dashboard.ccsasoftball.net/api/v2";
+import { setFetchImpl, auth } from "../lib/ccsa-api";
+
 const COOKIE_FILE = path.join(os.tmpdir(), "ccsa-cookies.json");
 
 // -----------
@@ -27,8 +28,8 @@ function loadCookies(): string[] {
     return [];
 }
 
-function saveCookies(cookies: string[]) {
-    fs.writeFileSync(COOKIE_FILE, JSON.stringify(cookies), { encoding: "utf-8", mode: 0o600 });
+function saveCookies(jar: string[]) {
+    fs.writeFileSync(COOKIE_FILE, JSON.stringify(jar), { encoding: "utf-8", mode: 0o600 });
 }
 
 function captureCookies(response: Response) {
@@ -45,63 +46,24 @@ function captureCookies(response: Response) {
 let cookies: string[] = loadCookies();
 
 // -----------
-// HTTP
+// Cookie-aware fetch & registration
 // -----------
 
-function buildUrl(endpoint: string, data?: Record<string, unknown>): string {
-    let url = `${API_BASE}${endpoint}`;
-    if (data) {
-        const qs = new URLSearchParams(
-            Object.fromEntries(
-                Object.entries(data).map(([k, v]) => [k, String(v)])
-            )
-        ).toString();
-        if (qs) url += `?${qs}`;
-    }
-    return url;
-}
+const cookieFetch: typeof globalThis.fetch = async (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (cookies.length) headers.set("Cookie", cookies.join("; "));
 
-function buildHeaders(method: "GET" | "POST"): Record<string, string> {
-    const headers: Record<string, string> = { Accept: "application/json" };
-    if (cookies.length) headers["Cookie"] = cookies.join("; ");
-    if (method === "POST") headers["Content-Type"] = "application/json; charset=UTF-8";
-    return headers;
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-    if (response.status === 204) return undefined as T;
-    const text = await response.text();
-    try {
-        return JSON.parse(text) as T;
-    } catch {
-        return text as T;
-    }
-}
-
-export async function api<T = unknown>(
-    method: "GET" | "POST",
-    endpoint: string,
-    data?: Record<string, unknown>,
-): Promise<T> {
-    const isPost = method === "POST";
-    const url = isPost ? `${API_BASE}${endpoint}` : buildUrl(endpoint, data);
-
-    const response = await fetch(url, {
-        method,
-        headers: buildHeaders(method),
+    const response = await globalThis.fetch(input, {
+        ...init,
+        headers,
         redirect: "manual",
-        body: isPost ? JSON.stringify(data ?? {}) : undefined,
     });
 
     captureCookies(response);
+    return response;
+};
 
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`API ${response.status} ${response.statusText} on ${endpoint}: ${text}`);
-    }
-
-    return parseResponse<T>(response);
-}
+setFetchImpl(cookieFetch);
 
 // -----------
 // CLI helpers
@@ -121,34 +83,11 @@ export function prompt(question: string): Promise<string> {
 // Auth
 // -----------
 
-async function isSessionValid(): Promise<boolean> {
-    if (!cookies.length) return false;
-    try {
-        const info = await api<Record<string, unknown>>("GET", "/auth/info");
-        if (info?.playerid) {
-            const { firstname, lastname } = info as { firstname: string; lastname: string };
-            console.log(`Already authenticated as ${firstname} ${lastname}`);
-            return true;
-        }
-    } catch {
-        // Session expired or invalid
-    }
-    return false;
-}
-
 export async function ensureAuth(email: string): Promise<void> {
-    if (await isSessionValid()) return;
-
-    console.log(`Requesting login code for ${email}...`);
-    await api("POST", "/auth/requestlogincode", { ident: email, dest: "email" });
-
-    const otp = await prompt("Enter the login code from your email: ");
-    if (!otp) {
-        throw new Error("No login code entered, aborting.");
-    }
-
-    const result = await api("POST", "/auth/postlogin", { ident: email, otp });
-    console.log("Logged in:", JSON.stringify(result, null, 2));
+    const result = await auth.ensureAuth(email, () =>
+        prompt("Enter the login code from your email: ")
+    );
+    console.log(`Authenticated as ${result.firstname} ${result.lastname}`);
 }
 
 export function clearSession() {

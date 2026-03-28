@@ -11,7 +11,8 @@
  * On subsequent runs, it reuses the saved session cookie from /tmp.
  */
 
-import { api, ensureAuth } from "./ccsa-test-client";
+import { ensureAuth } from "./ccsa-test-client";
+import { team } from "../lib/ccsa-api";
 
 // ── Profile access code parsing ──────────────────────────────────
 
@@ -27,14 +28,6 @@ function parseProfileAccessCode(code: string): { playerId: number; playerPw: str
     return { playerId: parseInt(match[1], 10), playerPw: match[2] };
 }
 
-// ── Team lookup ──────────────────────────────────────────────────
-
-async function getTeamId(): Promise<number | null> {
-    const userTeam = (await api("GET", "/team/userteam")) as Record<string, unknown>;
-    const teamId = userTeam?.teamid ?? userTeam?.team_id ?? userTeam?.id;
-    return teamId ? Number(teamId) : null;
-}
-
 // ── Main ─────────────────────────────────────────────────────────
 
 async function run(email: string, profileAccessCode: string) {
@@ -42,18 +35,15 @@ async function run(email: string, profileAccessCode: string) {
 
     await ensureAuth(email);
 
-    const teamId = await getTeamId();
+    const userTeam = await team.userTeam();
+    const teamId = userTeam?.teamid;
     if (!teamId) {
         console.error("Could not determine your team ID.");
         return;
     }
 
     console.log(`Adding player ${playerId} to team ${teamId}...`);
-    const result = await api(
-        "POST",
-        `/team/${encodeURIComponent(teamId)}/addplayer`,
-        { playerid: playerId, playerpw: playerPw, active: "player" },
-    );
+    const result = await team.addPlayer(teamId, playerId, playerPw);
     console.log("Result:", JSON.stringify(result, null, 2));
 }
 

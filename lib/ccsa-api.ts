@@ -39,7 +39,19 @@ export type {
 // HTTP helpers
 // -----------
 
-function buildUrl(endpoint: string, data?: Record<string, unknown>): string {
+type FetchFn = typeof globalThis.fetch;
+
+let _fetch: FetchFn = globalThis.fetch;
+
+/**
+ * Override the fetch implementation used by all API methods.
+ * Useful for injecting cookie-aware fetch in Node.js scripts.
+ */
+export function setFetchImpl(fn: FetchFn) {
+    _fetch = fn;
+}
+
+export function buildUrl(endpoint: string, data?: Record<string, unknown>): string {
     let url = `${API_BASE}${endpoint}`;
     if (data) {
         const qs = new URLSearchParams(
@@ -72,7 +84,7 @@ async function parseResponse<T>(response: Response, url: string): Promise<T> {
 
 function get<T = unknown>(endpoint: string, data?: Record<string, unknown>) {
     const url = buildUrl(endpoint, data);
-    return fetch(url, {
+    return _fetch(url, {
         method: "GET",
         headers: { Accept: "application/json" },
         credentials: "include",
@@ -82,7 +94,7 @@ function get<T = unknown>(endpoint: string, data?: Record<string, unknown>) {
 
 function post<T = unknown>(endpoint: string, data?: Record<string, unknown>) {
     const url = `${API_BASE}${endpoint}`;
-    return fetch(url, {
+    return _fetch(url, {
         method: "POST",
         headers: {
             Accept: "application/json",
@@ -140,6 +152,29 @@ export const auth = {
             otp,
             target_playerid: targetPlayerId,
         }),
+
+    /**
+     * Check if there's a valid session, request a login code if not,
+     * and authenticate using the OTP returned by `getOtp`.
+     *
+     * `getOtp` is a callback so the caller decides how to obtain the
+     * code (CLI prompt, browser modal, etc.).
+     */
+    ensureAuth: async (
+        email: string,
+        getOtp: () => Promise<string>,
+    ): Promise<PlayerProfile> => {
+        try {
+            const info = await auth.info();
+            if (info?.playerid) return info;
+        } catch {
+            // session expired or missing — continue to login
+        }
+        await auth.requestLoginCode(email, "email");
+        const otp = await getOtp();
+        if (!otp) throw new Error("No login code provided.");
+        return auth.postLogin(email, otp);
+    },
 
     webauthn: {
         generateRegistrationOptions: () =>
