@@ -220,7 +220,7 @@ export default async function AdminPage({
   const { data: accessRequests } = await supabase
     .from("team_access_requests")
     .select(
-      "*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)",
+      "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
     )
     .eq("sport", SPORT)
     .order("created_at", { ascending: false });

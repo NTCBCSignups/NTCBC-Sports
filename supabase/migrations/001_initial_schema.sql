@@ -30,13 +30,9 @@ as $$
   );
 $$;
 
-create policy "Users can read own profile"
+create policy "Authenticated users can read all profiles"
   on public.profiles for select
-  using (auth.uid() = id);
-
-create policy "Admins can read all profiles"
-  on public.profiles for select
-  using (public.is_admin(auth.uid()));
+  using (auth.uid() is not null);
 
 create policy "Users can update own profile"
   on public.profiles for update
@@ -221,101 +217,8 @@ create policy "Sport admins can manage all signups"
     )
   );
 
--- Auto-set signup status based on capacity (with row locking to prevent race conditions)
-create or replace function public.handle_new_signup()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-declare
-  cap integer;
-  current_confirmed integer;
-begin
-  select player_cap into cap
-  from public.sessions
-  where id = new.session_id
-  for update;
-
-  if cap is null then
-    new.status := 'confirmed';
-    return new;
-  end if;
-
-  select count(*) into current_confirmed
-  from public.signups
-  where session_id = new.session_id and status = 'confirmed';
-
-  if current_confirmed >= cap then
-    new.status := 'waitlisted';
-  else
-    new.status := 'confirmed';
-  end if;
-
-  return new;
-end;
-$$;
-
-create trigger on_signup_created
-  before insert on public.signups
-  for each row execute function public.handle_new_signup();
-
--- When a signup is cancelled, promote the earliest waitlisted user
-create or replace function public.promote_from_waitlist()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-declare
-  cap integer;
-  current_confirmed integer;
-  next_waitlisted uuid;
-begin
-  if old.status = 'confirmed' and new.status = 'cancelled' then
-    select player_cap into cap
-    from public.sessions
-    where id = new.session_id;
-
-    if cap is null then
-      select id into next_waitlisted
-      from public.signups
-      where session_id = new.session_id and status = 'waitlisted'
-      order by created_at asc
-      limit 1;
-
-      if next_waitlisted is not null then
-        update public.signups
-        set status = 'confirmed'
-        where id = next_waitlisted;
-      end if;
-      return new;
-    end if;
-
-    select count(*) into current_confirmed
-    from public.signups
-    where session_id = new.session_id and status = 'confirmed';
-
-    if current_confirmed < cap then
-      select id into next_waitlisted
-      from public.signups
-      where session_id = new.session_id and status = 'waitlisted'
-      order by created_at asc
-      limit 1;
-
-      if next_waitlisted is not null then
-        update public.signups
-        set status = 'confirmed'
-        where id = next_waitlisted;
-      end if;
-    end if;
-  end if;
-
-  return new;
-end;
-$$;
-
-create trigger on_signup_cancelled
-  after update on public.signups
-  for each row execute function public.promote_from_waitlist();
+-- Signup capacity, waitlist promotion, and access-request side effects are implemented
+-- in the Next.js server (lib/signup-capacity.ts and server actions).
 
 
 -- 5. Team Access Requests ---------------------------------------------
@@ -348,29 +251,3 @@ create policy "Sport admins can read all requests"
 create policy "Sport admins can update requests"
   on public.team_access_requests for update
   using (public.is_sport_admin(auth.uid(), sport));
-
--- When a request is approved, upsert sport_roles with is_team_member = true
-create or replace function public.handle_access_request_update()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-begin
-  if new.status = 'approved' and old.status != 'approved' then
-    insert into public.sport_roles (user_id, sport, is_team_member)
-    values (new.user_id, new.sport, true)
-    on conflict (user_id, sport)
-    do update set is_team_member = true;
-  end if;
-  if new.status = 'rejected' and old.status = 'approved' then
-    update public.sport_roles
-    set is_team_member = false
-    where user_id = new.user_id and sport = new.sport;
-  end if;
-  return new;
-end;
-$$;
-
-create trigger on_access_request_updated
-  after update on public.team_access_requests
-  for each row execute function public.handle_access_request_update();

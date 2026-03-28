@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
 
 const SPORT = "softball";
 
@@ -42,9 +44,46 @@ export async function signUpForSession(sessionId: string) {
     }
   }
 
+  const { data: existingSignup } = await supabase
+    .from("signups")
+    .select("id, status")
+    .eq("session_id", sessionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (
+    existingSignup?.status &&
+    existingSignup.status !== "cancelled"
+  ) {
+    return { error: "Already signed up" };
+  }
+
+  let status: "confirmed" | "waitlisted";
+  try {
+    status = await resolveSignupStatus(supabase, sessionId);
+  } catch (e) {
+    return {
+      error: e instanceof Error ? e.message : "Could not resolve signup status",
+    };
+  }
+
+  if (existingSignup?.status === "cancelled") {
+    const { error: reactivateError } = await supabase
+      .from("signups")
+      .update({ status })
+      .eq("id", existingSignup.id);
+
+    if (reactivateError) return { error: reactivateError.message };
+
+    revalidatePath(`/${SPORT}/session/${sessionId}`);
+    revalidatePath(`/${SPORT}`);
+    return { success: true };
+  }
+
   const { error } = await supabase.from("signups").insert({
     session_id: sessionId,
     user_id: user.id,
+    status,
   });
 
   if (error) {
@@ -65,14 +104,46 @@ export async function cancelSignup(sessionId: string) {
 
   if (!user) return { error: "Not authenticated" };
 
+  const { data: row, error: fetchError } = await supabase
+    .from("signups")
+    .select("id, status")
+    .eq("session_id", sessionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (fetchError) return { error: fetchError.message };
+  if (!row || row.status === "cancelled") {
+    revalidatePath(`/${SPORT}/session/${sessionId}`);
+    revalidatePath(`/${SPORT}`);
+    return { success: true };
+  }
+
+  const wasConfirmed = row.status === "confirmed";
+
   const { error } = await supabase
     .from("signups")
     .update({ status: "cancelled" })
-    .eq("session_id", sessionId)
-    .eq("user_id", user.id)
-    .neq("status", "cancelled");
+    .eq("id", row.id);
 
   if (error) return { error: error.message };
+
+  if (wasConfirmed) {
+    try {
+      const admin = createAdminClient();
+      const { error: promoError } = await promoteOneFromWaitlist(
+        admin,
+        sessionId,
+      );
+      if (promoError) return { error: promoError };
+    } catch (e) {
+      return {
+        error:
+          e instanceof Error
+            ? e.message
+            : "Could not promote waitlist (check server configuration)",
+      };
+    }
+  }
 
   revalidatePath(`/${SPORT}/session/${sessionId}`);
   revalidatePath(`/${SPORT}`);
@@ -110,12 +181,30 @@ export async function adminUpdateSignupStatus(
 
   if (!isAdmin) return { error: "Not authorized" };
 
+  const { data: before, error: beforeError } = await supabase
+    .from("signups")
+    .select("session_id, status")
+    .eq("id", signupId)
+    .single();
+
+  if (beforeError || !before) {
+    return { error: beforeError?.message ?? "Signup not found" };
+  }
+
   const { error } = await supabase
     .from("signups")
     .update({ status })
     .eq("id", signupId);
 
   if (error) return { error: error.message };
+
+  if (before.status === "confirmed" && status === "cancelled") {
+    const { error: promoError } = await promoteOneFromWaitlist(
+      supabase,
+      before.session_id,
+    );
+    if (promoError) return { error: promoError };
+  }
 
   revalidatePath(`/${SPORT}/session/${sessionId}`);
   revalidatePath(`/${SPORT}/admin`);

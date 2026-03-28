@@ -60,6 +60,7 @@ export default async function SoftballPage() {
     .from("sessions")
     .select("*, signups(count)")
     .eq("sport", SPORT)
+    .neq("signups.status", "cancelled")
     .gte("date", new Date().toISOString().split("T")[0])
     .order("date", { ascending: true });
 
@@ -94,7 +95,12 @@ export default async function SoftballPage() {
         </Link>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+            >
               <Link href="/softball/admin">
                 <Settings className="h-4 w-4" />
                 Admin
@@ -106,7 +112,7 @@ export default async function SoftballPage() {
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-gray-900">Softball</h1>
+        <h1 className="text-4xl font-bold text-gray-900">🥎 Softball</h1>
         <p className="text-sm text-gray-700">
           Join us for scheduled games or drop-in practice sessions. Sign in with
           Google to view and sign up for upcoming sessions.
@@ -180,8 +186,8 @@ export default async function SoftballPage() {
           <li className="flex items-start text-sm">
             <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
             <span>
-              Softball has two session types: Scheduled Games (team members only)
-              and Drop-in Practice (open to all).
+              Softball has two session types: Scheduled Games (team members
+              only) and Drop-in Practice (open to all).
             </span>
           </li>
           <li className="flex items-start text-sm">
@@ -190,9 +196,7 @@ export default async function SoftballPage() {
           </li>
           <li className="flex items-start text-sm">
             <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-            <span>
-              Please contact the admins if you have any questions.
-            </span>
+            <span>Please contact the admins if you have any questions.</span>
           </li>
         </ul>
       </div>
