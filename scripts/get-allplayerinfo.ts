@@ -2,7 +2,7 @@
  * Test script to login to CCSA API and pull allPlayerInfo.
  *
  * Usage:
- *   npx tsx scripts/test-allplayerinfo.ts <email>
+ *   npx tsx scripts/get-allplayerinfo.ts <email>
  *
  * On first run, it requests a login code and prompts for it.
  * On subsequent runs, it reuses the saved session cookie from /tmp.
@@ -44,5 +44,5 @@ const args = process.argv.slice(2);
 if (args.length >= 1) {
     run(args[0]).catch(console.error);
 } else {
-    console.log("Usage: npx tsx scripts/test-allplayerinfo.ts <email>");
+    console.log("Usage: npx tsx scripts/get-allplayerinfo.ts <email>");
 }

@@ -1,15 +1,16 @@
 /**
  * Shared CCSA API helper for scripts.
- * Persists session cookies to /tmp/ccsa-cookies.json so sessions
+ * Persists session cookies to a temp file so sessions
  * survive across script runs.
  */
 
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 
 const API_BASE = "https://dashboard.ccsasoftball.net/api/v2";
-const COOKIE_FILE = path.join("/tmp", "ccsa-cookies.json");
+const COOKIE_FILE = path.join(os.tmpdir(), "ccsa-cookies.json");
 
 // -----------
 // Cookie I/O
@@ -27,7 +28,7 @@ function loadCookies(): string[] {
 }
 
 function saveCookies(cookies: string[]) {
-    fs.writeFileSync(COOKIE_FILE, JSON.stringify(cookies), "utf-8");
+    fs.writeFileSync(COOKIE_FILE, JSON.stringify(cookies), { encoding: "utf-8", mode: 0o600 });
 }
 
 function captureCookies(response: Response) {
@@ -143,8 +144,7 @@ export async function ensureAuth(email: string): Promise<void> {
 
     const otp = await prompt("Enter the login code from your email: ");
     if (!otp) {
-        console.error("No code entered, aborting.");
-        process.exit(1);
+        throw new Error("No login code entered, aborting.");
     }
 
     const result = await api("POST", "/auth/postlogin", { ident: email, otp });
