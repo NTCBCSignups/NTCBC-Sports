@@ -29,6 +29,8 @@ export interface SportConfig {
   waiverLink?: string;
   notes: string[];
   responseTable?: ResponseTableConfig;
+  customRoute?: boolean;
+  description?: string;
 }
 
 export const sportsConfig: Record<string, SportConfig> = {
@@ -115,5 +117,25 @@ export const sportsConfig: Record<string, SportConfig> = {
         },
       ],
     },
+  },
+  softball: {
+    id: "softball",
+    emoji: "🥎",
+    name: "Softball",
+    type: "Scheduled Games & Drop-in Practice",
+    location: {
+      name: "Various locations",
+      address: "See individual sessions",
+    },
+    day: "See schedule",
+    organizers: "Daniel Ye",
+    notes: [
+      "Softball has two session types: Scheduled Games (team members only) and Drop-in Practice (open to all).",
+      "Sign in with Google to sign up for sessions.",
+      "Please contact the admins if you have any questions.",
+    ],
+    customRoute: true,
+    description:
+      "Join us for scheduled games or drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
   },
 };
