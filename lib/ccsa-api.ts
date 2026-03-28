@@ -342,7 +342,7 @@ export const team = {
                 ...data,
                 approvalcode: secret,
             }),
-        existingTeamNames: (churchId: number) =>
+        existingTeamNames: (churchId: string | number) =>
             get<{ teams: { teamid: number; name: string; division: string }[] }>("/team/registration/existingteamnames", { churchid: churchId }),
     },
 };
@@ -354,7 +354,7 @@ export const church = {
     list: () => get<ChurchListItem[]>("/church/list"),
     create: (formdata: Record<string, unknown>) =>
         post<{ churchid: string }>("/church/create", formdata),
-    applyForAdmin: (churchId: number, data: Record<string, unknown>) =>
+    applyForAdmin: (churchId: string | number, data: Record<string, unknown>) =>
         post<{ success: boolean }>(`/church/${encodeURIComponent(churchId)}/applyforadmin`, data),
     listAdminRequests: () => get<Record<string, unknown>[]>("/church/listadminrequests"),
     approveAdmin: (requestId: number) =>
@@ -492,7 +492,7 @@ export const infosys = {
         list: () => get<Record<string, unknown>[]>("/infosys/churches/list"),
         leaders: {
             add: (
-                churchId: number,
+                churchId: string | number,
                 opts: { playerid: number; type: string; contact: string }
             ) =>
                 post<{ success: boolean }>(

@@ -22,7 +22,7 @@ function parseProfileAccessCode(code: string): { playerId: number; playerPw: str
     const match = code.trim().toUpperCase().match(PAC_RE);
     if (!match) {
         throw new Error(
-            `Invalid profile access code "${code}". Expected format: P00000-AAAAAAAAAAAA`,
+            "Invalid profile access code. Expected format: P00000-AAAAAAAAAAAA",
         );
     }
     return { playerId: parseInt(match[1], 10), playerPw: match[2] };
@@ -44,7 +44,7 @@ async function run(email: string, profileAccessCode: string) {
 
     console.log(`Adding player ${playerId} to team ${teamId}...`);
     const result = await team.addPlayer(teamId, playerId, playerPw);
-    console.log("Result:", JSON.stringify(result, null, 2));
+    console.log(`Added: ${result.firstname} ${result.lastname} (ID ${result.playerid})`);
 }
 
 // ── CLI ──────────────────────────────────────────────────────────
