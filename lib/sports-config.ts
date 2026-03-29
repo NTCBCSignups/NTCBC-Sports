@@ -123,7 +123,7 @@ export const sportsConfig: Record<string, SportConfig> = {
   },
   softball: {
     id: "softball",
-    authEnabled: true,
+    authEnabled: false,
     emoji: "🥎",
     name: "Softball",
     type: "Scheduled Games & Drop-in Practice",

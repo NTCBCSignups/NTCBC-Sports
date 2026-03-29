@@ -7,20 +7,25 @@ import AuthButton from "@/components/sports/auth-button";
 import SessionCard from "@/components/sports/session-card";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import { Button } from "@/components/ui/button";
+import { sportsConfig } from "@/lib/sports-config";
 
 export const dynamic = "force-dynamic";
 
 const SPORT = "softball";
+const config = sportsConfig[SPORT];
 
 export default async function SoftballPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  let user = null;
   let isAdmin = false;
   let isTeamMember = false;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
+
+  const supabase = await createClient();
+
+  if (config.authEnabled) {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
 
   if (user) {
     const { data: profile } = await supabase
@@ -107,7 +112,7 @@ export default async function SoftballPage() {
               </Link>
             </Button>
           )}
-          <AuthButton user={user} sport={SPORT} />
+          {config.authEnabled && <AuthButton user={user} sport={SPORT} />}
         </div>
       </div>
 
@@ -119,7 +124,7 @@ export default async function SoftballPage() {
         </p>
       </div>
 
-      {!user ? (
+      {config.authEnabled && !user ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center space-y-3">
           <p className="text-gray-700 font-medium">
             Sign in to view and sign up for sessions

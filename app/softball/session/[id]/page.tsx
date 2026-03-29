@@ -19,6 +19,7 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import CountdownTimer from "@/components/countdown-timer";
+import { sportsConfig } from "@/lib/sports-config";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -59,10 +60,13 @@ export default async function SessionDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const sportConfig = sportsConfig["softball"];
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  if (sportConfig?.authEnabled) {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
 
   const { data: session } = await supabase
     .from("sessions")
@@ -144,7 +148,7 @@ export default async function SessionDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Back to Softball
         </Link>
-        <AuthButton user={user} sport={session.sport} />
+        {sportConfig?.authEnabled && <AuthButton user={user} sport={session.sport} />}
       </div>
 
       <div className="space-y-6">
