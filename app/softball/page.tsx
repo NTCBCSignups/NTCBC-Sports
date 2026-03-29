@@ -8,6 +8,7 @@ import SessionCard from "@/components/sports/session-card";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -15,17 +16,17 @@ const SPORT = "softball";
 const config = sportsConfig[SPORT];
 
 export default async function SoftballPage() {
-  let user = null;
-  let isAdmin = false;
-  let isTeamMember = false;
-  let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
-
   const supabase = await createClient();
 
-  if (config.authEnabled) {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  }
+  // ── Auth ───────────────────────────────────────────────────────
+  const user = config.authEnabled
+    ? (await supabase.auth.getUser()).data.user
+    : null;
+
+  // ── Roles & access ─────────────────────────────────────────────
+  let isAdmin = false;
+  let isTeamMember = true;
+  let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (user) {
     const { data: profile } = await supabase
@@ -34,34 +35,36 @@ export default async function SoftballPage() {
       .eq("id", user.id)
       .single();
 
-    isAdmin = profile?.role === "admin";
+    const { data: sportRole } = await supabase
+      .from("sport_roles")
+      .select("role, is_team_member")
+      .eq("user_id", user.id)
+      .eq("sport", SPORT)
+      .single();
 
-    if (!isAdmin) {
-      const { data: sportRole } = await supabase
-        .from("sport_roles")
-        .select("role, is_team_member")
-        .eq("user_id", user.id)
-        .eq("sport", SPORT)
-        .single();
+    isAdmin = profile?.role === "admin" || sportRole?.role === "admin";
 
-      isAdmin = sportRole?.role === "admin";
-      isTeamMember = sportRole?.is_team_member || isAdmin;
-    } else {
-      isTeamMember = true;
-    }
+    if (config.restrictedAccessEnabled) {
+      isTeamMember = isAdmin || !!sportRole?.is_team_member;
 
-    if (!isTeamMember) {
-      const { data: request } = await supabase
-        .from("team_access_requests")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("sport", SPORT)
-        .single();
-      accessRequestStatus = request?.status ?? null;
+      if (!isTeamMember) {
+        const { data: request } = await supabase
+          .from("team_access_requests")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("sport", SPORT)
+          .single();
+        accessRequestStatus = request?.status ?? null;
+      }
     }
   }
 
-  const { data: sessions } = await supabase
+  // ── Sessions ───────────────────────────────────────────────────
+  // RLS requires an authenticated user; fall back to the admin client
+  // when auth is disabled so the query still returns rows.
+  const queryClient = user ? supabase : createAdminClient();
+
+  const { data: sessions } = await queryClient
     .from("sessions")
     .select("*, signups(count)")
     .eq("sport", SPORT)
@@ -151,8 +154,8 @@ export default async function SoftballPage() {
           </TabsList>
 
           <TabsContent value="scheduled_game" className="space-y-4">
-            {!isTeamMember && (
-              <TeamAccessBanner requestStatus={accessRequestStatus} />
+            {config.restrictedAccessEnabled && !isTeamMember && (
+              <TeamAccessBanner requestStatus={accessRequestStatus} sport={SPORT} />
             )}
             {isTeamMember ? (
               scheduledGames.length > 0 ? (

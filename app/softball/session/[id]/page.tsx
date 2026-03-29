@@ -77,7 +77,7 @@ export default async function SessionDetailPage({
   if (!session) notFound();
 
   let isAdmin = false;
-  let isTeamMember = false;
+  let isTeamMember = !sportConfig?.restrictedAccessEnabled;
   let userSignupStatus: SignupStatus | null = null;
 
   if (user) {
@@ -98,7 +98,9 @@ export default async function SessionDetailPage({
         .single();
 
       isAdmin = sportRole?.role === "admin";
-      isTeamMember = sportRole?.is_team_member || isAdmin;
+      isTeamMember = sportConfig?.restrictedAccessEnabled
+        ? sportRole?.is_team_member || isAdmin
+        : true;
     } else {
       isTeamMember = true;
     }
@@ -130,8 +132,9 @@ export default async function SessionDetailPage({
     now >= new Date(session.signup_open) &&
     now <= new Date(session.signup_close);
 
-  const isEligible =
-    session.session_type === "drop_in_practice" || isTeamMember;
+  const isEligible = sportConfig?.restrictedAccessEnabled
+    ? session.session_type === "drop_in_practice" || isTeamMember
+    : true;
 
   const sessionTypeLabel =
     session.session_type === "scheduled_game"

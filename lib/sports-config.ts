@@ -14,7 +14,7 @@ export interface ResponseTableConfig {
   sessions: ResponseTableEntry[];
 }
 
-export interface SportConfig {
+interface SportConfigBase {
   id: Sport;
   emoji: string;
   name: string;
@@ -30,9 +30,15 @@ export interface SportConfig {
   notes: string[];
   responseTable?: ResponseTableConfig;
   multiSession?: boolean;
-  authEnabled?: boolean;
   description?: string;
 }
+
+export type SportConfig = SportConfigBase &
+  // Feature Flag Validation
+  (
+    | { authEnabled: true; restrictedAccessEnabled?: boolean }
+    | { authEnabled?: false; restrictedAccessEnabled?: false }
+  );
 
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
@@ -123,7 +129,8 @@ export const sportsConfig: Record<string, SportConfig> = {
   },
   softball: {
     id: "softball",
-    authEnabled: false,
+    authEnabled: true,
+    restrictedAccessEnabled: true,
     emoji: "🥎",
     name: "Softball",
     type: "Scheduled Games & Drop-in Practice",
@@ -141,4 +148,4 @@ export const sportsConfig: Record<string, SportConfig> = {
     description:
       "Join us for scheduled games or drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
   },
-};
+} satisfies Record<string, SportConfig>;

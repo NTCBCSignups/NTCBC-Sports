@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const SPORT = "softball";
 
-export async function requestTeamAccess() {
+export async function requestTeamAccess(sport: string = SPORT) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -15,7 +15,7 @@ export async function requestTeamAccess() {
 
   const { error } = await supabase.from("team_access_requests").insert({
     user_id: user.id,
-    sport: SPORT,
+    sport,
   });
 
   if (error) {
@@ -23,7 +23,7 @@ export async function requestTeamAccess() {
     return { error: error.message };
   }
 
-  revalidatePath(`/${SPORT}`);
+  revalidatePath(`/${sport}`);
   return { success: true };
 }
 
