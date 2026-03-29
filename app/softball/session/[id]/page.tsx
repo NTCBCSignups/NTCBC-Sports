@@ -144,7 +144,7 @@ export default async function SessionDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Back to Softball
         </Link>
-        <AuthButton user={user} />
+        <AuthButton user={user} sport={session.sport} />
       </div>
 
       <div className="space-y-6">

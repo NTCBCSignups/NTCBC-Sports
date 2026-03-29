@@ -107,7 +107,7 @@ export default async function SoftballPage() {
               </Link>
             </Button>
           )}
-          <AuthButton user={user} />
+          <AuthButton user={user} sport={SPORT} />
         </div>
       </div>
 

@@ -29,13 +29,15 @@ export interface SportConfig {
   waiverLink?: string;
   notes: string[];
   responseTable?: ResponseTableConfig;
-  customRoute?: boolean;
+  multiSession?: boolean;
+  authEnabled?: boolean;
   description?: string;
 }
 
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
     id: "basketball",
+    authEnabled: false,
     emoji: "🏀",
     name: "Basketball",
     type: "Drop-in Sessions",
@@ -72,6 +74,7 @@ export const sportsConfig: Record<string, SportConfig> = {
   },
   volleyball: {
     id: "volleyball",
+    authEnabled: false,
     emoji: "🏐",
     name: "Volleyball",
     type: "Drop-in Sessions",
@@ -120,6 +123,7 @@ export const sportsConfig: Record<string, SportConfig> = {
   },
   softball: {
     id: "softball",
+    authEnabled: true,
     emoji: "🥎",
     name: "Softball",
     type: "Scheduled Games & Drop-in Practice",
@@ -134,7 +138,6 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Sign in with Google to sign up for sessions.",
       "Please contact the admins if you have any questions.",
     ],
-    customRoute: true,
     description:
       "Join us for scheduled games or drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
   },

@@ -14,12 +14,15 @@ import { ScheduleData } from "@/lib/schedule-utils";
 import { SportConfig } from "@/lib/sports-config";
 import CountdownTimer from "@/components/countdown-timer";
 import SignupsTable from "@/components/signups-table";
+import AuthButton from "@/components/sports/auth-button";
+import type { User } from "@supabase/supabase-js";
 
 interface SportPageProps {
   config: SportConfig;
   scheduleData: ScheduleData | null;
   isFormOpen: boolean;
   formResponses?: Record<string, string>[];
+  user?: User | null;
 }
 
 export default function SportPage({
@@ -27,6 +30,7 @@ export default function SportPage({
   scheduleData,
   isFormOpen,
   formResponses,
+  user,
 }: SportPageProps) {
   function formatDate(dateStr: string): string {
     if (!dateStr) return dateStr;
@@ -48,19 +52,22 @@ export default function SportPage({
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-      >
-        <Image
-          src="/favicon.ico"
-          alt="NTCBC"
-          width={18}
-          height={18}
-          className="rounded-sm"
-        />
-        NTCBC Sports
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          <Image
+            src="/favicon.ico"
+            alt="NTCBC"
+            width={18}
+            height={18}
+            className="rounded-sm"
+          />
+          NTCBC Sports
+        </Link>
+        {config.authEnabled && <AuthButton user={user ?? null} sport={config.id} />}
+      </div>
       {/* Title + info bullets */}
       <div className="space-y-6">
         <h1 className="text-4xl font-bold text-gray-900">
