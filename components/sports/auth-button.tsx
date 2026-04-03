@@ -7,23 +7,24 @@ import type { User } from "@supabase/supabase-js";
 
 interface AuthButtonProps {
   user: User | null;
+  sport: string;
 }
 
-export default function AuthButton({ user }: AuthButtonProps) {
+export default function AuthButton({ user, sport }: AuthButtonProps) {
   const supabase = createClient();
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/softball`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/${sport}`,
       },
     });
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/softball";
+    window.location.href = `/${sport}`;
   };
 
   if (!user) {

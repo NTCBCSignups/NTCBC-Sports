@@ -8,17 +8,19 @@ import type { AccessRequestStatus } from "@/lib/supabase/types";
 
 interface TeamAccessBannerProps {
   requestStatus: AccessRequestStatus | null;
+  sport: string;
 }
 
 export default function TeamAccessBanner({
   requestStatus,
+  sport,
 }: TeamAccessBannerProps) {
   const [pending, setPending] = useState(false);
   const [localStatus, setLocalStatus] = useState(requestStatus);
 
   const handleRequest = async () => {
     setPending(true);
-    const result = await requestTeamAccess();
+    const result = await requestTeamAccess(sport);
     if (result.success) {
       setLocalStatus("pending");
     }

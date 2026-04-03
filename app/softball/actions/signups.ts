@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
+import { sportsConfig } from "@/lib/sports-config";
 
 const SPORT = "softball";
 
@@ -23,7 +24,9 @@ export async function signUpForSession(sessionId: string) {
 
   if (!session) return { error: "Session not found" };
 
-  if (session.session_type === "scheduled_game") {
+  const sportConfig = sportsConfig[session.sport];
+
+  if (sportConfig?.restrictedAccessEnabled && session.session_type === "scheduled_game") {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")

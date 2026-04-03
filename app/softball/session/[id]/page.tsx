@@ -19,6 +19,7 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import CountdownTimer from "@/components/countdown-timer";
+import { sportsConfig } from "@/lib/sports-config";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -59,10 +60,13 @@ export default async function SessionDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const sportConfig = sportsConfig["softball"];
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  if (sportConfig?.authEnabled) {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
 
   const { data: session } = await supabase
     .from("sessions")
@@ -73,7 +77,7 @@ export default async function SessionDetailPage({
   if (!session) notFound();
 
   let isAdmin = false;
-  let isTeamMember = false;
+  let isTeamMember = !sportConfig?.restrictedAccessEnabled;
   let userSignupStatus: SignupStatus | null = null;
 
   if (user) {
@@ -94,7 +98,9 @@ export default async function SessionDetailPage({
         .single();
 
       isAdmin = sportRole?.role === "admin";
-      isTeamMember = sportRole?.is_team_member || isAdmin;
+      isTeamMember = sportConfig?.restrictedAccessEnabled
+        ? sportRole?.is_team_member || isAdmin
+        : true;
     } else {
       isTeamMember = true;
     }
@@ -126,8 +132,9 @@ export default async function SessionDetailPage({
     now >= new Date(session.signup_open) &&
     now <= new Date(session.signup_close);
 
-  const isEligible =
-    session.session_type === "drop_in_practice" || isTeamMember;
+  const isEligible = sportConfig?.restrictedAccessEnabled
+    ? session.session_type === "drop_in_practice" || isTeamMember
+    : true;
 
   const sessionTypeLabel =
     session.session_type === "scheduled_game"
@@ -144,7 +151,7 @@ export default async function SessionDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Back to Softball
         </Link>
-        <AuthButton user={user} />
+        {sportConfig?.authEnabled && <AuthButton user={user} sport={session.sport} />}
       </div>
 
       <div className="space-y-6">

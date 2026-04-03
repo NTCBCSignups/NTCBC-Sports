@@ -7,19 +7,25 @@ import AuthButton from "@/components/sports/auth-button";
 import SessionCard from "@/components/sports/session-card";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import { Button } from "@/components/ui/button";
+import { sportsConfig } from "@/lib/sports-config";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
 const SPORT = "softball";
+const config = sportsConfig[SPORT];
 
 export default async function SoftballPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
+  // ── Auth ───────────────────────────────────────────────────────
+  const user = config.authEnabled
+    ? (await supabase.auth.getUser()).data.user
+    : null;
+
+  // ── Roles & access ─────────────────────────────────────────────
   let isAdmin = false;
-  let isTeamMember = false;
+  let isTeamMember = true;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (user) {
@@ -29,34 +35,36 @@ export default async function SoftballPage() {
       .eq("id", user.id)
       .single();
 
-    isAdmin = profile?.role === "admin";
+    const { data: sportRole } = await supabase
+      .from("sport_roles")
+      .select("role, is_team_member")
+      .eq("user_id", user.id)
+      .eq("sport", SPORT)
+      .single();
 
-    if (!isAdmin) {
-      const { data: sportRole } = await supabase
-        .from("sport_roles")
-        .select("role, is_team_member")
-        .eq("user_id", user.id)
-        .eq("sport", SPORT)
-        .single();
+    isAdmin = profile?.role === "admin" || sportRole?.role === "admin";
 
-      isAdmin = sportRole?.role === "admin";
-      isTeamMember = sportRole?.is_team_member || isAdmin;
-    } else {
-      isTeamMember = true;
-    }
+    if (config.restrictedAccessEnabled) {
+      isTeamMember = isAdmin || !!sportRole?.is_team_member;
 
-    if (!isTeamMember) {
-      const { data: request } = await supabase
-        .from("team_access_requests")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("sport", SPORT)
-        .single();
-      accessRequestStatus = request?.status ?? null;
+      if (!isTeamMember) {
+        const { data: request } = await supabase
+          .from("team_access_requests")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("sport", SPORT)
+          .single();
+        accessRequestStatus = request?.status ?? null;
+      }
     }
   }
 
-  const { data: sessions } = await supabase
+  // ── Sessions ───────────────────────────────────────────────────
+  // RLS requires an authenticated user; fall back to the admin client
+  // when auth is disabled so the query still returns rows.
+  const queryClient = user ? supabase : createAdminClient();
+
+  const { data: sessions } = await queryClient
     .from("sessions")
     .select("*, signups(count)")
     .eq("sport", SPORT)
@@ -107,7 +115,7 @@ export default async function SoftballPage() {
               </Link>
             </Button>
           )}
-          <AuthButton user={user} />
+          {config.authEnabled && <AuthButton user={user} sport={SPORT} />}
         </div>
       </div>
 
@@ -119,7 +127,7 @@ export default async function SoftballPage() {
         </p>
       </div>
 
-      {!user ? (
+      {config.authEnabled && !user ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center space-y-3">
           <p className="text-gray-700 font-medium">
             Sign in to view and sign up for sessions
@@ -146,8 +154,8 @@ export default async function SoftballPage() {
           </TabsList>
 
           <TabsContent value="scheduled_game" className="space-y-4">
-            {!isTeamMember && (
-              <TeamAccessBanner requestStatus={accessRequestStatus} />
+            {config.restrictedAccessEnabled && !isTeamMember && (
+              <TeamAccessBanner requestStatus={accessRequestStatus} sport={SPORT} />
             )}
             {isTeamMember ? (
               scheduledGames.length > 0 ? (

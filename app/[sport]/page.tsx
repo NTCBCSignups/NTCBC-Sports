@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getScheduleData, getFormResponses } from "@/lib/schedule-utils";
 import { sportsConfig } from "@/lib/sports-config";
+import { createClient } from "@/lib/supabase/server";
 import SportPage from "@/components/sport-page";
 
 export const dynamic = "force-dynamic";
@@ -26,12 +27,20 @@ export default async function SportRoute({
         )
       : [];
 
+  let user = null;
+  if (config.authEnabled) {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
+
   return (
     <SportPage
       config={config}
       scheduleData={scheduleData}
       isFormOpen={isFormOpen}
       formResponses={formResponses}
+      user={user}
     />
   );
 }
