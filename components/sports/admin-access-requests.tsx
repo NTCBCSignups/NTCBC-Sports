@@ -56,7 +56,7 @@ export default function AdminAccessRequests({
             <TableHead>Email</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Requested</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -91,8 +91,8 @@ export default function AdminAccessRequests({
                   day: "numeric",
                 })}
               </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
+              <TableCell>
+                <div className="flex justify-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
