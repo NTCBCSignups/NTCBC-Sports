@@ -28,14 +28,19 @@ export default function SessionForm() {
     setSuccess(false);
 
     const form = new FormData(e.currentTarget);
+    const date = form.get("date") as string;
     const timeStart = form.get("time_start") as string;
     const timeEnd = form.get("time_end") as string;
     const signupOpen = new Date(form.get("signup_open") as string);
     const signupClose = new Date(form.get("signup_close") as string);
 
+    // Create datetime objects for session start/end
+    const sessionStart = new Date(`${date}T${timeStart}`);
+    const sessionEnd = new Date(`${date}T${timeEnd}`);
+
     // Validate time ranges
     if (timeStart >= timeEnd) {
-      setError("Start time must be before end time");
+      setError("Session start time must be before end time");
       setPending(false);
       return;
     }
@@ -46,10 +51,22 @@ export default function SessionForm() {
       return;
     }
 
+    if (signupOpen > sessionStart) {
+      setError("Sign-up open time cannot be after session start time");
+      setPending(false);
+      return;
+    }
+
+    if (signupClose > sessionEnd) {
+      setError("Sign-up close time must be before or at session end time");
+      setPending(false);
+      return;
+    }
+
     const result = await createSession({
       session_type: sessionType,
       title: (form.get("title") as string) || undefined,
-      date: form.get("date") as string,
+      date: date,
       time_start: timeStart,
       time_end: timeEnd,
       location_name: form.get("location_name") as string,
