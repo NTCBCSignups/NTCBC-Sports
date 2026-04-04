@@ -98,7 +98,7 @@ export default function AdminAccessRequests({
                     size="sm"
                     onClick={() => handleReview(request.id, "approved")}
                     disabled={pending === request.id || request.status === "approved"}
-                    className="text-green-600 hover:text-green-700 disabled:opacity-50"
+                    className="text-green-600 hover:text-green-700 disabled:opacity-20"
                     title="Approve"
                   >
                     <Check className="h-4 w-4" />
@@ -108,7 +108,7 @@ export default function AdminAccessRequests({
                     size="sm"
                     onClick={() => handleReview(request.id, "rejected")}
                     disabled={pending === request.id || request.status === "rejected"}
-                    className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                    className="text-red-600 hover:text-red-700 disabled:opacity-20"
                     title="Reject"
                   >
                     <X className="h-4 w-4" />
