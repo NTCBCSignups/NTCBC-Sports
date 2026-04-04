@@ -28,18 +28,36 @@ export default function SessionForm() {
     setSuccess(false);
 
     const form = new FormData(e.currentTarget);
+    const timeStart = form.get("time_start") as string;
+    const timeEnd = form.get("time_end") as string;
+    const signupOpen = new Date(form.get("signup_open") as string);
+    const signupClose = new Date(form.get("signup_close") as string);
+
+    // Validate time ranges
+    if (timeStart >= timeEnd) {
+      setError("Start time must be before end time");
+      setPending(false);
+      return;
+    }
+
+    if (signupOpen >= signupClose) {
+      setError("Sign-up open time must be before sign-up close time");
+      setPending(false);
+      return;
+    }
+
     const result = await createSession({
       session_type: sessionType,
       title: (form.get("title") as string) || undefined,
       date: form.get("date") as string,
-      time_start: form.get("time_start") as string,
-      time_end: form.get("time_end") as string,
+      time_start: timeStart,
+      time_end: timeEnd,
       location_name: form.get("location_name") as string,
       location_address: form.get("location_address") as string,
       location_maps_link: (form.get("location_maps_link") as string) || undefined,
       player_cap: (form.get("player_cap") as string) ? parseInt(form.get("player_cap") as string) : null,
-      signup_open: new Date(form.get("signup_open") as string).toISOString(),
-      signup_close: new Date(form.get("signup_close") as string).toISOString(),
+      signup_open: signupOpen.toISOString(),
+      signup_close: signupClose.toISOString(),
       notes: (form.get("notes") as string) || undefined,
     });
 
