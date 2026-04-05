@@ -251,7 +251,7 @@ export default async function AdminPage({
 
   const { data: ccsaPlayers } = await supabase
     .from("ccsa_players")
-    .select("email, waiver_status");
+    .select("email, first_name, last_name, waiver_status");
 
   const waiverByEmail = new Map<string, WaiverStatus>();
   for (const cp of ccsaPlayers ?? []) {
@@ -342,7 +342,16 @@ export default async function AdminPage({
                 CCSA Sync
               </h2>
               <div className="rounded-lg border bg-white p-6">
-                <CcsaSyncButton lastSyncedAt={lastSync?.synced_at ?? null} hasSession={(await hasCcsaSession()).hasCookies} />
+                <CcsaSyncButton
+                  lastSyncedAt={lastSync?.synced_at ?? null}
+                  hasSession={(await hasCcsaSession()).hasCookies}
+                  initialPlayers={(ccsaPlayers ?? []).map((p) => ({
+                    email: p.email,
+                    first_name: p.first_name,
+                    last_name: p.last_name,
+                    waiver_status: p.waiver_status,
+                  }))}
+                />
               </div>
             </section>
           )}

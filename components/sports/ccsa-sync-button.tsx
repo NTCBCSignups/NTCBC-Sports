@@ -22,9 +22,10 @@ interface SyncedPlayer {
 interface CcsaSyncButtonProps {
     lastSyncedAt: string | null;
     hasSession: boolean;
+    initialPlayers?: SyncedPlayer[];
 }
 
-export default function CcsaSyncButton({ lastSyncedAt, hasSession }: CcsaSyncButtonProps) {
+export default function CcsaSyncButton({ lastSyncedAt, hasSession, initialPlayers = [] }: CcsaSyncButtonProps) {
     const [step, setStep] = useState<"idle" | "email" | "otp">(
         "idle",
     );
@@ -35,13 +36,12 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession }: CcsaSyncBut
     const [syncResult, setSyncResult] = useState<string | null>(null);
     const [approveResult, setApproveResult] = useState<string | null>(null);
     const [loggedIn, setLoggedIn] = useState(hasSession);
-    const [players, setPlayers] = useState<SyncedPlayer[]>([]);
+    const [players, setPlayers] = useState<SyncedPlayer[]>(initialPlayers);
 
     const handleQuickSync = async () => {
         setPending(true);
         setError(null);
         setSyncResult(null);
-        setPlayers([]);
         const result = await syncCcsaWaivers();
         if (result.players) setPlayers(result.players);
         if (result.error) {
