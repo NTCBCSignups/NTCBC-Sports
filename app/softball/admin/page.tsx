@@ -15,6 +15,7 @@ import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import AdminAccessRequests from "@/components/sports/admin-access-requests";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
 import AdminSidebar from "@/components/sports/admin-sidebar";
+import CcsaSyncButton from "@/components/sports/ccsa-sync-button";
 import type {
   Profile,
   SignupStatus,
@@ -237,6 +238,13 @@ export default async function AdminPage({
     (r) => r.status === "pending",
   );
 
+  const { data: lastSync } = await supabase
+    .from("ccsa_players")
+    .select("synced_at")
+    .order("synced_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const today = new Date().toISOString().split("T")[0];
   const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
@@ -310,6 +318,17 @@ export default async function AdminPage({
                 signupsBySession={signupsBySession}
                 muted
               />
+            </section>
+          )}
+
+          {tab === "ccsa" && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-gray-900">
+                CCSA Sync
+              </h2>
+              <div className="rounded-lg border bg-white p-6">
+                <CcsaSyncButton lastSyncedAt={lastSync?.synced_at ?? null} />
+              </div>
             </section>
           )}
         </div>
