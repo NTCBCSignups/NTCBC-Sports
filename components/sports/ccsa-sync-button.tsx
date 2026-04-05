@@ -4,13 +4,20 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, UserCheck } from "lucide-react";
+import { RefreshCw, UserCheck, ShieldCheck, ShieldAlert } from "lucide-react";
 import {
     requestCcsaLogin,
     completeCcsaLogin,
     syncCcsaWaivers,
     approveCcsaPlayersForTeam,
 } from "@/app/softball/actions/ccsa-sync";
+
+interface SyncedPlayer {
+    email: string;
+    first_name: string;
+    last_name: string;
+    waiver_status: string;
+}
 
 interface CcsaSyncButtonProps {
     lastSyncedAt: string | null;
@@ -28,19 +35,23 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession }: CcsaSyncBut
     const [syncResult, setSyncResult] = useState<string | null>(null);
     const [approveResult, setApproveResult] = useState<string | null>(null);
     const [loggedIn, setLoggedIn] = useState(hasSession);
+    const [players, setPlayers] = useState<SyncedPlayer[]>([]);
 
     const handleQuickSync = async () => {
         setPending(true);
         setError(null);
         setSyncResult(null);
+        setPlayers([]);
         const result = await syncCcsaWaivers();
+        if (result.players) setPlayers(result.players);
         if (result.error) {
             setError(result.error);
             // Session expired — show login flow
             if (result.error.includes("session") || result.error.includes("expired") || result.error.includes("log in")) {
                 setLoggedIn(false);
             }
-        } else {
+        }
+        if (result.count) {
             setSyncResult(`Synced ${result.count} players`);
         }
         setPending(false);
@@ -68,11 +79,13 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession }: CcsaSyncBut
             setLoggedIn(true);
             setStep("idle");
             // Auto-sync after login
-            const syncResult = await syncCcsaWaivers();
-            if (syncResult.error) {
-                setError(syncResult.error);
-            } else {
-                setSyncResult(`Synced ${syncResult.count} players`);
+            const syncRes = await syncCcsaWaivers();
+            if (syncRes.players) setPlayers(syncRes.players);
+            if (syncRes.error) {
+                setError(syncRes.error);
+            }
+            if (syncRes.count) {
+                setSyncResult(`Synced ${syncRes.count} players`);
             }
         }
         setPending(false);
@@ -120,7 +133,7 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession }: CcsaSyncBut
                                     className="rounded-full"
                                 >
                                     <RefreshCw className={`h-4 w-4 mr-2 ${pending ? "animate-spin" : ""}`} />
-                                    {pending ? "Syncing..." : "Sync Waivers"}
+                                    {pending ? "Syncing..." : "Sync"}
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -221,9 +234,47 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession }: CcsaSyncBut
                 </div>
             )}
 
-            {syncResult && <p className="text-sm text-green-600 font-medium">{syncResult}</p>}
+            {(syncResult || error) && (
+                <div className="flex flex-wrap items-center gap-2">
+                    {syncResult && <p className="text-sm text-green-600 font-medium">{syncResult}</p>}
+                    {error && <p className="text-sm text-red-600">{error}</p>}
+                </div>
+            )}
             {approveResult && <p className="text-sm text-green-600 font-medium">{approveResult}</p>}
-            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            {players.length > 0 && (
+                <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
+                            <tr>
+                                <th className="px-4 py-2">Name</th>
+                                <th className="px-4 py-2">Email</th>
+                                <th className="px-4 py-2">Waiver</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                            {players.map((p) => (
+                                <tr key={p.email}>
+                                    <td className="px-4 py-2">{p.first_name} {p.last_name}</td>
+                                    <td className="px-4 py-2 text-gray-500">{p.email}</td>
+                                    <td className="px-4 py-2">
+                                        {p.waiver_status === "valid" ? (
+                                            <span className="inline-flex items-center gap-1 text-green-600">
+                                                <ShieldCheck className="h-4 w-4" /> Valid
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 text-amber-600">
+                                                <ShieldAlert className="h-4 w-4" />
+                                                {p.waiver_status === "needs_paper" ? "Needs Paper" : "Needs Online"}
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }

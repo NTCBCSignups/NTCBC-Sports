@@ -134,6 +134,13 @@ export async function syncCcsaWaivers() {
         const admin = createAdminClient();
         const now = new Date().toISOString();
 
+        const playerRows = players.map((p) => ({
+            email: p.email.toLowerCase(),
+            first_name: p.firstname,
+            last_name: p.lastname,
+            waiver_status: mapWaiverStatus(p.needwaiver),
+        }));
+
         const rows = players.map((p) => ({
             email: p.email.toLowerCase(),
             ccsa_player_id: p.playerid,
@@ -148,12 +155,12 @@ export async function syncCcsaWaivers() {
             .upsert(rows, { onConflict: "email" });
 
         if (upsertError) {
-            return { error: upsertError.message };
+            return { error: `DB sync failed: ${upsertError.message}`, players: playerRows, count: players.length };
         }
 
         revalidatePath(`/${SPORT}/admin`);
         revalidatePath(`/${SPORT}`);
-        return { success: true, count: players.length };
+        return { success: true, count: players.length, players: playerRows };
     } catch (e) {
         // Session likely expired
         await clearCcsaCookies();
