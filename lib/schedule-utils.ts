@@ -37,35 +37,34 @@ export async function getScheduleData(sport: Sport): Promise<{
         SHEET_ID = process.env.GOOGLE_SHEET_ID_SOFTBALL;
         break;
     }
-    
+
     const API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
-    
+
     // Use different sheet tabs based on environment
-    // VERCEL_ENV: 'production' | 'preview' | 'development'
-    const environment = process.env.VERCEL_ENV || 'development';
+    const environment = process.env.NODE_ENV || 'development';
     const isProd = environment === 'production';
     const SHEET_TAB = isProd ? 'prod' : 'dev';
     const RANGE = `${SHEET_TAB}!A2:I`;
-    
+
     console.log(`[${sport}] Environment: ${environment}, Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
-    
+
     if (!SHEET_ID || !API_KEY) {
       console.error(`Missing Google Sheets configuration for ${sport}`);
       return { scheduleData: null, isFormOpen: false };
     }
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
-    
+
     const response = await fetch(url, {
       // Important: Don't cache this request
       cache: 'no-store'
     });
-    
+
     if (!response.ok) {
       console.error('Google Sheets API error:', response.status);
       return { scheduleData: null, isFormOpen: false };
     }
-    
+
     const data = await response.json();
 
     if (!data.values || data.values.length === 0) {
@@ -73,10 +72,10 @@ export async function getScheduleData(sport: Sport): Promise<{
     }
 
     const now = new Date();
-    
+
     // Find current active form OR next upcoming form
     let selectedRow = null;
-    
+
     // Column layout: A=date, B=skip_day, C=form_open, D=form_close,
     // E=verse_ref, F=verse_text, G=form_link, H=response_sheet_id
 
@@ -84,32 +83,32 @@ export async function getScheduleData(sport: Sport): Promise<{
     for (const row of data.values) {
       if (row.length < 4) continue;
       if ((row[1] || '').toLowerCase().trim() === 'x') continue;
-      
+
       const openTime = parseInEasternTime(row[2]);
       const closeTime = parseInEasternTime(row[3]);
 
       if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime())) {
         continue;
       }
-      
+
       if (now >= openTime && now <= closeTime) {
         selectedRow = row;
         break;
       }
     }
-    
+
     // If no active form, find the next upcoming one
     if (!selectedRow) {
       let nextForm = null;
       let earliestTime = null;
-      
+
       for (const row of data.values) {
         if (row.length < 4) continue;
         if ((row[1] || '').toLowerCase().trim() === 'x') continue;
-        
+
         const openTime = parseInEasternTime(row[2]);
         if (isNaN(openTime.getTime())) continue;
-        
+
         if (openTime > now) {
           if (!earliestTime || openTime < earliestTime) {
             earliestTime = openTime;
@@ -117,10 +116,10 @@ export async function getScheduleData(sport: Sport): Promise<{
           }
         }
       }
-      
+
       selectedRow = nextForm;
     }
-    
+
     if (!selectedRow) {
       // No forms found, return far future date
       return {
@@ -138,13 +137,13 @@ export async function getScheduleData(sport: Sport): Promise<{
         isFormOpen: false
       };
     }
-    
+
     const isFormOpen = checkFormStatus(now, selectedRow[2], selectedRow[3]);
-    
+
     // Convert dates to UTC ISO strings for consistent client-side parsing
     const openTimeUTC = parseInEasternTime(selectedRow[2]).toISOString();
     const closeTimeUTC = parseInEasternTime(selectedRow[3]).toISOString();
-    
+
     const scheduleData = {
       date: selectedRow[0],
       form_open: openTimeUTC,
@@ -156,9 +155,9 @@ export async function getScheduleData(sport: Sport): Promise<{
       form_link: isFormOpen ? (selectedRow[6] || '') : '',
       response_sheet_id: selectedRow[7] || ''
     };
-    
+
     return { scheduleData, isFormOpen };
-    
+
   } catch (error) {
     console.error('Error fetching schedule:', error);
     return { scheduleData: null, isFormOpen: false };
@@ -211,14 +210,14 @@ function checkFormStatus(now: Date, formOpen: string, formClose: string): boolea
   const closeTime = parseInEasternTime(formClose);
 
   return now >= openTime && now <= closeTime;
-} 
+}
 
 // Force dates to be interpreted in Eastern Time
 const parseInEasternTime = (dateString: string) => {
-    // Google Sheets dates are in format: "6/30/2025 22:00:00"
-    // Parse as if the string represents Eastern Time
-    // We'll append timezone info to force the interpretation
-    return fromZonedTime(new Date(dateString), 'America/Toronto');
+  // Google Sheets dates are in format: "6/30/2025 22:00:00"
+  // Parse as if the string represents Eastern Time
+  // We'll append timezone info to force the interpretation
+  return fromZonedTime(new Date(dateString), 'America/Toronto');
 };
 
 // Format a UTC ISO string to a human-readable Eastern Time display like "Monday, Feb 17 at 10:00 PM"
