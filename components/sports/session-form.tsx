@@ -21,6 +21,42 @@ export default function SessionForm() {
   const [success, setSuccess] = useState(false);
   const [sessionType, setSessionType] = useState<SessionType>("drop_in_practice");
 
+  const autoFillSignupClose = (form: HTMLFormElement) => {
+    const date = (form.elements.namedItem("date") as HTMLInputElement)?.value;
+    const timeStart = (form.elements.namedItem("time_start") as HTMLInputElement)?.value;
+    const signupCloseInput = form.elements.namedItem("signup_close") as HTMLInputElement;
+    const signupOpenInput = form.elements.namedItem("signup_open") as HTMLInputElement;
+
+    // Auto-fill signup_close if it's empty and we have both date and time_start
+    if (date && timeStart && signupCloseInput && !signupCloseInput.value) {
+      const signupCloseValue = `${date}T${timeStart}`;
+      signupCloseInput.value = signupCloseValue;
+
+      // Also auto-fill signup_open to one week before signup_close if it's empty
+      if (signupOpenInput && !signupOpenInput.value) {
+        const signupCloseDate = new Date(signupCloseValue);
+        const signupOpenDate = new Date(signupCloseDate);
+        signupOpenDate.setDate(signupOpenDate.getDate() - 7); // One week before
+
+        // Format as datetime-local: YYYY-MM-DDTHH:mm
+        const year = signupOpenDate.getFullYear();
+        const month = String(signupOpenDate.getMonth() + 1).padStart(2, '0');
+        const day = String(signupOpenDate.getDate()).padStart(2, '0');
+        const hours = String(signupOpenDate.getHours()).padStart(2, '0');
+        const minutes = String(signupOpenDate.getMinutes()).padStart(2, '0');
+
+        signupOpenInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+    }
+  };
+
+  const handleDateOrTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const form = e.currentTarget.form;
+    if (form) {
+      autoFillSignupClose(form);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
@@ -28,18 +64,53 @@ export default function SessionForm() {
     setSuccess(false);
 
     const form = new FormData(e.currentTarget);
+    const date = form.get("date") as string;
+    const timeStart = form.get("time_start") as string;
+    const timeEnd = form.get("time_end") as string;
+    const signupOpen = new Date(form.get("signup_open") as string);
+    const signupClose = new Date(form.get("signup_close") as string);
+
+    // Create datetime objects for session start/end
+    const sessionStart = new Date(`${date}T${timeStart}`);
+    const sessionEnd = new Date(`${date}T${timeEnd}`);
+
+    // Validate time ranges
+    if (timeStart >= timeEnd) {
+      setError("Session start time must be before end time");
+      setPending(false);
+      return;
+    }
+
+    if (signupOpen >= signupClose) {
+      setError("Sign-up open time must be before sign-up close time");
+      setPending(false);
+      return;
+    }
+
+    if (signupOpen > sessionStart) {
+      setError("Sign-up open time cannot be after session start time");
+      setPending(false);
+      return;
+    }
+
+    if (signupClose > sessionEnd) {
+      setError("Sign-up close time must be before or at session end time");
+      setPending(false);
+      return;
+    }
+
     const result = await createSession({
       session_type: sessionType,
       title: (form.get("title") as string) || undefined,
-      date: form.get("date") as string,
-      time_start: form.get("time_start") as string,
-      time_end: form.get("time_end") as string,
+      date: date,
+      time_start: timeStart,
+      time_end: timeEnd,
       location_name: form.get("location_name") as string,
       location_address: form.get("location_address") as string,
       location_maps_link: (form.get("location_maps_link") as string) || undefined,
       player_cap: (form.get("player_cap") as string) ? parseInt(form.get("player_cap") as string) : null,
-      signup_open: new Date(form.get("signup_open") as string).toISOString(),
-      signup_close: new Date(form.get("signup_close") as string).toISOString(),
+      signup_open: signupOpen.toISOString(),
+      signup_close: signupClose.toISOString(),
       notes: (form.get("notes") as string) || undefined,
     });
 
@@ -79,7 +150,13 @@ export default function SessionForm() {
 
         <div className="space-y-2">
           <Label htmlFor="date">Date</Label>
-          <Input id="date" name="date" type="date" required />
+          <Input
+            id="date"
+            name="date"
+            type="date"
+            required
+            onChange={handleDateOrTimeChange}
+          />
         </div>
 
         <div className="space-y-2">
@@ -95,7 +172,13 @@ export default function SessionForm() {
 
         <div className="space-y-2">
           <Label htmlFor="time_start">Start Time</Label>
-          <Input id="time_start" name="time_start" type="time" required />
+          <Input
+            id="time_start"
+            name="time_start"
+            type="time"
+            required
+            onChange={handleDateOrTimeChange}
+          />
         </div>
 
         <div className="space-y-2">
