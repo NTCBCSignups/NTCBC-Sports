@@ -1,34 +1,41 @@
 /**
- * Ephemeral cookie-aware fetch for server-side CCSA API calls.
- * Cookies live only in memory for the duration of the request.
+ * Cookie-aware fetch for server-side CCSA API calls.
+ * Accepts initial cookies (e.g. from a browser cookie) and
+ * returns captured cookies after responses so they can be persisted.
  */
 
 import { setFetchImpl } from "./ccsa-api";
 
-export function installEphemeralCookieFetch(): void {
-  let cookies: string[] = [];
+let _capturedCookies: string[] = [];
 
-  const cookieFetch: typeof globalThis.fetch = async (input, init) => {
-    const headers = new Headers(init?.headers);
-    if (cookies.length) headers.set("Cookie", cookies.join("; "));
+export function installCookieFetch(initialCookies: string[] = []): void {
+    _capturedCookies = [...initialCookies];
 
-    const response = await globalThis.fetch(input, {
-      ...init,
-      headers,
-      redirect: "manual",
-    });
+    const cookieFetch: typeof globalThis.fetch = async (input, init) => {
+        const headers = new Headers(init?.headers);
+        if (_capturedCookies.length) headers.set("Cookie", _capturedCookies.join("; "));
 
-    // Capture Set-Cookie headers
-    const setCookies = response.headers.getSetCookie?.() ?? [];
-    for (const sc of setCookies) {
-      const nameVal = sc.split(";")[0];
-      const name = nameVal.split("=")[0];
-      cookies = cookies.filter((c) => !c.startsWith(`${name}=`));
-      cookies.push(nameVal);
-    }
+        const response = await globalThis.fetch(input, {
+            ...init,
+            headers,
+            redirect: "manual",
+        });
 
-    return response;
-  };
+        // Capture Set-Cookie headers
+        const setCookies = response.headers.getSetCookie?.() ?? [];
+        for (const sc of setCookies) {
+            const nameVal = sc.split(";")[0];
+            const name = nameVal.split("=")[0];
+            _capturedCookies = _capturedCookies.filter((c) => !c.startsWith(`${name}=`));
+            _capturedCookies.push(nameVal);
+        }
 
-  setFetchImpl(cookieFetch);
+        return response;
+    };
+
+    setFetchImpl(cookieFetch);
+}
+
+export function getCapturedCookies(): string[] {
+    return _capturedCookies;
 }

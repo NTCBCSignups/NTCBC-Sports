@@ -126,9 +126,9 @@ export default async function SessionDetailPage({
 
   const { data: ccsaPlayers } = signupEmails.length
     ? await supabase
-        .from("ccsa_players")
-        .select("email, waiver_status")
-        .in("email", signupEmails)
+      .from("ccsa_players")
+      .select("email, waiver_status")
+      .in("email", signupEmails)
     : { data: [] };
 
   const waiverByEmail = new Map<string, WaiverStatus>();

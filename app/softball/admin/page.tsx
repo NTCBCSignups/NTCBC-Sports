@@ -16,10 +16,12 @@ import AdminAccessRequests from "@/components/sports/admin-access-requests";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
 import AdminSidebar from "@/components/sports/admin-sidebar";
 import CcsaSyncButton from "@/components/sports/ccsa-sync-button";
+import { hasCcsaSession } from "@/app/softball/actions/ccsa-sync";
 import type {
   Profile,
   SignupStatus,
-  AccessRequestStatus,  WaiverStatus,} from "@/lib/supabase/types";
+  AccessRequestStatus, WaiverStatus,
+} from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -340,7 +342,7 @@ export default async function AdminPage({
                 CCSA Sync
               </h2>
               <div className="rounded-lg border bg-white p-6">
-                <CcsaSyncButton lastSyncedAt={lastSync?.synced_at ?? null} />
+                <CcsaSyncButton lastSyncedAt={lastSync?.synced_at ?? null} hasSession={(await hasCcsaSession()).hasCookies} />
               </div>
             </section>
           )}
