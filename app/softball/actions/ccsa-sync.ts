@@ -127,6 +127,12 @@ export async function hasCcsaSession() {
     return { hasCookies: stored.length > 0, email };
 }
 
+export async function logoutCcsa() {
+    await requireSportAdmin();
+    await clearCcsaCookies();
+    return { success: true };
+}
+
 export async function syncCcsaWaivers() {
     await requireSportAdmin();
 

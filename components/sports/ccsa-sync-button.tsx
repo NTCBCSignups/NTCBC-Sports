@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, UserCheck, ShieldCheck, ShieldAlert } from "lucide-react";
+import { RefreshCw, UserCheck, ShieldCheck, ShieldAlert, LogOut } from "lucide-react";
 import {
     requestCcsaLogin,
     completeCcsaLogin,
     syncCcsaWaivers,
+    logoutCcsa,
     approveCcsaPlayersForTeam,
 } from "@/app/softball/actions/ccsa-sync";
 
@@ -81,15 +82,6 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, sessionEmail,
             setLoggedIn(true);
             setLoggedInEmail(email);
             setStep("idle");
-            // Auto-sync after login
-            const syncRes = await syncCcsaWaivers();
-            if (syncRes.players) setPlayers(syncRes.players);
-            if (syncRes.error) {
-                setError(syncRes.error);
-            }
-            if (syncRes.count) {
-                setSyncResult(`Synced ${syncRes.count} players`);
-            }
         }
         setPending(false);
     };
@@ -146,6 +138,19 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, sessionEmail,
                                 >
                                     <UserCheck className="h-4 w-4 mr-2" />
                                     {pending ? "Approving..." : "Approve All for Team Access"}
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    onClick={async () => {
+                                        await logoutCcsa();
+                                        setLoggedIn(false);
+                                        setLoggedInEmail("");
+                                    }}
+                                    disabled={pending}
+                                    className="rounded-full text-gray-500"
+                                >
+                                    <LogOut className="h-4 w-4 mr-2" />
+                                    Logout from CCSA
                                 </Button>
                             </div>
                         </>
@@ -222,8 +227,7 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, sessionEmail,
                             disabled={pending || !otp}
                             className="rounded-full"
                         >
-                            <RefreshCw className={`h-4 w-4 mr-2 ${pending ? "animate-spin" : ""}`} />
-                            {pending ? "Verifying..." : "Verify & Sync"}
+                            {pending ? "Logging in..." : "Login"}
                         </Button>
                         <Button
                             variant="outline"
