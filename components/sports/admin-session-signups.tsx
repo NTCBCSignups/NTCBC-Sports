@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
@@ -43,6 +43,12 @@ export default function AdminSessionSignups({
   const handlePromote = async (signupId: string) => {
     setPending(signupId);
     await adminUpdateSignupStatus(signupId, "confirmed", sessionId);
+    setPending(null);
+  };
+
+  const handleDemote = async (signupId: string) => {
+    setPending(signupId);
+    await adminUpdateSignupStatus(signupId, "waitlisted", sessionId);
     setPending(null);
   };
 
@@ -114,6 +120,17 @@ export default function AdminSessionSignups({
                       title="Promote to confirmed"
                     >
                       <ArrowUp className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {signup.status === "confirmed" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDemote(signup.id)}
+                      disabled={pending === signup.id}
+                      title="Move to waitlist"
+                    >
+                      <ArrowDown className="h-4 w-4" />
                     </Button>
                   )}
                   <Button
