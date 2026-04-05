@@ -19,8 +19,7 @@ import CcsaSyncButton from "@/components/sports/ccsa-sync-button";
 import type {
   Profile,
   SignupStatus,
-  AccessRequestStatus,
-} from "@/lib/supabase/types";
+  AccessRequestStatus,  WaiverStatus,} from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +46,7 @@ function formatTime(time: string): string {
 function SessionAccordion({
   sessions,
   signupsBySession,
+  waiverByEmail,
   muted,
 }: {
   sessions: Record<string, unknown>[];
@@ -60,6 +60,7 @@ function SessionAccordion({
       profiles: Profile | null;
     }[]
   >;
+  waiverByEmail: Map<string, WaiverStatus>;
   muted?: boolean;
 }) {
   if (sessions.length === 0) {
@@ -135,6 +136,7 @@ function SessionAccordion({
                   sessionId={session.id as string}
                   signups={sessionSignups}
                   playerCap={session.player_cap as number | null}
+                  waiverByEmail={waiverByEmail}
                 />
               </div>
             </AccordionContent>
@@ -245,6 +247,15 @@ export default async function AdminPage({
     .limit(1)
     .maybeSingle();
 
+  const { data: ccsaPlayers } = await supabase
+    .from("ccsa_players")
+    .select("email, waiver_status");
+
+  const waiverByEmail = new Map<string, WaiverStatus>();
+  for (const cp of ccsaPlayers ?? []) {
+    waiverByEmail.set(cp.email, cp.waiver_status as WaiverStatus);
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
@@ -304,6 +315,7 @@ export default async function AdminPage({
               <SessionAccordion
                 sessions={upcomingSessions}
                 signupsBySession={signupsBySession}
+                waiverByEmail={waiverByEmail}
               />
             </section>
           )}
@@ -316,6 +328,7 @@ export default async function AdminPage({
               <SessionAccordion
                 sessions={pastSessions}
                 signupsBySession={signupsBySession}
+                waiverByEmail={waiverByEmail}
                 muted
               />
             </section>
