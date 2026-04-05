@@ -10,6 +10,7 @@ import type { WaiverStatus } from "@/lib/supabase/types";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
+const CCSA_EMAIL_COOKIE = "ccsa_email";
 
 async function requireSportAdmin() {
     const supabase = await createClient();
@@ -71,6 +72,23 @@ async function saveCcsaCookies(ccsaCookies: string[]): Promise<void> {
 async function clearCcsaCookies(): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.delete(CCSA_COOKIE_NAME);
+    cookieStore.delete(CCSA_EMAIL_COOKIE);
+}
+
+async function saveCcsaEmail(email: string): Promise<void> {
+    const cookieStore = await cookies();
+    cookieStore.set(CCSA_EMAIL_COOKIE, email, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+    });
+}
+
+async function loadCcsaEmail(): Promise<string | null> {
+    const cookieStore = await cookies();
+    return cookieStore.get(CCSA_EMAIL_COOKIE)?.value ?? null;
 }
 
 export async function requestCcsaLogin(email: string) {
@@ -94,6 +112,7 @@ export async function completeCcsaLogin(email: string, otp: string) {
     try {
         await auth.postLogin(email, otp);
         await saveCcsaCookies(getCapturedCookies());
+        await saveCcsaEmail(email);
         return { success: true };
     } catch (e) {
         await clearCcsaCookies();
@@ -104,7 +123,8 @@ export async function completeCcsaLogin(email: string, otp: string) {
 export async function hasCcsaSession() {
     await requireSportAdmin();
     const stored = await loadCcsaCookies();
-    return { hasCookies: stored.length > 0 };
+    const email = await loadCcsaEmail();
+    return { hasCookies: stored.length > 0, email };
 }
 
 export async function syncCcsaWaivers() {

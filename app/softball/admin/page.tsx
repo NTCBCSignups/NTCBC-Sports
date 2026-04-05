@@ -336,25 +336,29 @@ export default async function AdminPage({
             </section>
           )}
 
-          {tab === "ccsa" && (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-gray-900">
-                CCSA Sync
-              </h2>
-              <div className="rounded-lg border bg-white p-6">
-                <CcsaSyncButton
-                  lastSyncedAt={lastSync?.synced_at ?? null}
-                  hasSession={(await hasCcsaSession()).hasCookies}
-                  initialPlayers={(ccsaPlayers ?? []).map((p) => ({
-                    email: p.email,
-                    first_name: p.first_name,
-                    last_name: p.last_name,
-                    waiver_status: p.waiver_status,
-                  }))}
-                />
-              </div>
-            </section>
-          )}
+          {tab === "ccsa" && await (async () => {
+            const ccsaSession = await hasCcsaSession();
+            return (
+              <section className="space-y-3">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  CCSA Sync
+                </h2>
+                <div className="rounded-lg border bg-white p-6">
+                  <CcsaSyncButton
+                    lastSyncedAt={lastSync?.synced_at ?? null}
+                    hasSession={ccsaSession.hasCookies}
+                    sessionEmail={ccsaSession.email ?? undefined}
+                    initialPlayers={(ccsaPlayers ?? []).map((p) => ({
+                      email: p.email,
+                      first_name: p.first_name,
+                      last_name: p.last_name,
+                      waiver_status: p.waiver_status,
+                    }))}
+                  />
+                </div>
+              </section>
+            );
+          })()}
         </div>
       </div>
     </div>

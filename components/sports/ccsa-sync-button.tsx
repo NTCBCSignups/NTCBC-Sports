@@ -22,10 +22,11 @@ interface SyncedPlayer {
 interface CcsaSyncButtonProps {
     lastSyncedAt: string | null;
     hasSession: boolean;
+    sessionEmail?: string;
     initialPlayers?: SyncedPlayer[];
 }
 
-export default function CcsaSyncButton({ lastSyncedAt, hasSession, initialPlayers = [] }: CcsaSyncButtonProps) {
+export default function CcsaSyncButton({ lastSyncedAt, hasSession, sessionEmail, initialPlayers = [] }: CcsaSyncButtonProps) {
     const [step, setStep] = useState<"idle" | "email" | "otp">(
         "idle",
     );
@@ -36,6 +37,7 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, initialPlayer
     const [syncResult, setSyncResult] = useState<string | null>(null);
     const [approveResult, setApproveResult] = useState<string | null>(null);
     const [loggedIn, setLoggedIn] = useState(hasSession);
+    const [loggedInEmail, setLoggedInEmail] = useState(sessionEmail ?? "");
     const [players, setPlayers] = useState<SyncedPlayer[]>(initialPlayers);
 
     const handleQuickSync = async () => {
@@ -77,6 +79,7 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, initialPlayer
             setError(result.error);
         } else {
             setLoggedIn(true);
+            setLoggedInEmail(email);
             setStep("idle");
             // Auto-sync after login
             const syncRes = await syncCcsaWaivers();
@@ -124,7 +127,7 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, initialPlayer
                     {loggedIn ? (
                         <>
                             <p className="text-sm text-gray-600">
-                                CCSA session active. Sync to pull the latest roster and waiver data.
+                                CCSA logged in as <span className="font-medium">{loggedInEmail}</span>. Sync to pull the latest roster and waiver data.
                             </p>
                             <div className="flex flex-wrap gap-2">
                                 <Button
