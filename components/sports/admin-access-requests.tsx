@@ -43,7 +43,7 @@ export default function AdminAccessRequests({
 
   if (requests.length === 0) {
     return (
-      <p className="text-sm text-gray-500 py-4">No pending access requests.</p>
+      <p className="text-sm text-gray-500 py-4">No access requests.</p>
     );
   }
 
@@ -56,7 +56,7 @@ export default function AdminAccessRequests({
             <TableHead>Email</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Requested</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -91,31 +91,29 @@ export default function AdminAccessRequests({
                   day: "numeric",
                 })}
               </TableCell>
-              <TableCell className="text-right">
-                {request.status === "pending" && (
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleReview(request.id, "approved")}
-                      disabled={pending === request.id}
-                      className="text-green-600 hover:text-green-700"
-                      title="Approve"
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleReview(request.id, "rejected")}
-                      disabled={pending === request.id}
-                      className="text-red-600 hover:text-red-700"
-                      title="Reject"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+              <TableCell>
+                <div className="flex justify-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleReview(request.id, "approved")}
+                    disabled={pending === request.id || request.status === "approved"}
+                    className="text-green-600 hover:text-green-700 disabled:opacity-20"
+                    title="Approve"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleReview(request.id, "rejected")}
+                    disabled={pending === request.id || request.status === "rejected"}
+                    className="text-red-600 hover:text-red-700 disabled:opacity-20"
+                    title="Reject"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
