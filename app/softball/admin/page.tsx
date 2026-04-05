@@ -187,12 +187,12 @@ export default async function AdminPage({
 
   const { data: allSignups } = sessionIds.length
     ? await supabase
-        .from("signups")
-        .select(
-          "*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)",
-        )
-        .in("session_id", sessionIds)
-        .order("created_at", { ascending: true })
+      .from("signups")
+      .select(
+        "*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)",
+      )
+      .in("session_id", sessionIds)
+      .order("created_at", { ascending: true })
     : { data: [] };
 
   const signupsBySession = new Map<
