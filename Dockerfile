@@ -14,7 +14,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# Stage 3: Production image (used when BUILD_MODE=production)
+# Stage 3: Production image (used when BUILD_ENV=production)
 FROM base AS runner-production
 WORKDIR /app
 ENV NODE_ENV=production
@@ -30,7 +30,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
 
-# Stage 4: Dev image (used when BUILD_MODE=development)
+# Stage 4: Dev image (used when BUILD_ENV=development)
 FROM base AS runner-development
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -42,6 +42,6 @@ ENV HOSTNAME="0.0.0.0"
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-# Stage 5: Final stage — select based on BUILD_MODE
-ARG BUILD_MODE=production
-FROM runner-${BUILD_MODE} AS final
+# Stage 5: Final stage — select based on BUILD_ENV
+ARG BUILD_ENV=production
+FROM runner-${BUILD_ENV} AS final
