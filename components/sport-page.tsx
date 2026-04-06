@@ -66,7 +66,9 @@ export default function SportPage({
           />
           NTCBC Sports
         </Link>
-        {config.authEnabled && <AuthButton user={user ?? null} sport={config.id} />}
+        {config.authEnabled && (
+          <AuthButton user={user ?? null} sport={config.id} />
+        )}
       </div>
       {/* Title + info bullets */}
       <div className="space-y-6">
@@ -239,16 +241,19 @@ export default function SportPage({
               <li className="flex items-start text-sm">
                 <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
                 <span>
-                  If this is your first time coming, please fill out this{" "}
+                  By signing up, you acknowledge that you have read and
+                  understood the{" "}
                   <a
                     className="text-blue-500 underline"
                     href={config.waiverLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    waiver
+                    safety waiver
                   </a>
-                  .
+                  , accept the risks associated with participation in gym and
+                  league activities, and agree to abide by all facility
+                  rules.{" "}
                 </span>
               </li>
             )}
