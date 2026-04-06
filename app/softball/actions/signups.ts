@@ -73,7 +73,7 @@ export async function signUpForSession(sessionId: string) {
   if (existingSignup?.status === "cancelled") {
     const { error: reactivateError } = await supabase
       .from("signups")
-      .update({ status })
+      .update({ status, created_at: new Date().toISOString() })
       .eq("id", existingSignup.id);
 
     if (reactivateError) return { error: reactivateError.message };
