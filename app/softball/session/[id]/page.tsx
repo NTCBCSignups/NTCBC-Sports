@@ -19,6 +19,7 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import CountdownTimer from "@/components/countdown-timer";
+import LocalTimestamp from "@/components/local-timestamp";
 import { sportsConfig } from "@/lib/sports-config";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
@@ -40,17 +41,6 @@ function formatTime(time: string): string {
   const ampm = hour >= 12 ? "PM" : "AM";
   const hour12 = hour % 12 || 12;
   return `${hour12}:${m} ${ampm}`;
-}
-
-function formatTimestamp(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 export default async function SessionDetailPage({
@@ -286,7 +276,7 @@ export default async function SessionDetailPage({
                         {p?.full_name ?? p?.email ?? "Unknown"}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {formatTimestamp(signup.created_at)}
+                        <LocalTimestamp date={signup.created_at} />
                       </TableCell>
                       <TableCell className="sticky right-0 bg-white border-l">
                         {signup.status === "confirmed" ? (
