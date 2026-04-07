@@ -26,7 +26,25 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refresh the session — this is the critical call that keeps tokens alive
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Forward the authenticated user to server components via a request header
+  // so pages never need to call getSession() / getUser() themselves.
+  // Always set the header (empty when unauthenticated) to prevent client spoofing.
+  request.headers.set(
+    "x-supabase-user",
+    user ? JSON.stringify(user) : "",
+  );
+
+  // Rebuild the response so it picks up the new request header,
+  // then copy over any Set-Cookie headers from the token refresh.
+  const setCookies = supabaseResponse.headers.getSetCookie();
+  supabaseResponse = NextResponse.next({ request });
+  setCookies.forEach((c) =>
+    supabaseResponse.headers.append("Set-Cookie", c),
+  );
 
   return supabaseResponse;
 }

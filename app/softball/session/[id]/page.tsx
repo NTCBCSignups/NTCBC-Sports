@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -52,12 +53,8 @@ export default async function SessionDetailPage({
   const supabase = await createClient();
   const sportConfig = sportsConfig["softball"];
 
-  let user = null;
-  if (sportConfig?.authEnabled) {
-    // Middleware already validated the JWT; getSession() reads it locally (no network call)
-    const { data } = await supabase.auth.getSession();
-    user = data.session?.user ?? null;
-  }
+  // Middleware validates the JWT and forwards the user via request header.
+  const user = sportConfig?.authEnabled ? await getUser() : null;
 
   const { data: session } = await supabase
     .from("sessions")

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -151,11 +152,8 @@ export default async function AdminPage({
 }) {
   const { tab = "upcoming" } = await searchParams;
   const supabase = await createClient();
-  // Middleware already validated the JWT; getSession() reads it locally (no network call)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user;
+  // Middleware validates the JWT and forwards the user via request header.
+  const user = await getUser();
 
   if (!user) redirect(`/${SPORT}`);
 

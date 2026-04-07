@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/user";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
@@ -19,10 +20,8 @@ export default async function SoftballPage() {
   const supabase = await createClient();
 
   // ── Auth ───────────────────────────────────────────────────────
-  // Middleware already validated the JWT; getSession() reads it locally (no network call)
-  const user = config.authEnabled
-    ? (await supabase.auth.getSession()).data.session?.user ?? null
-    : null;
+  // Middleware validates the JWT and forwards the user via request header.
+  const user = config.authEnabled ? await getUser() : null;
 
   // ── Roles & access ─────────────────────────────────────────────
   let isAdmin = false;
