@@ -64,52 +64,52 @@ export default async function SessionDetailPage({
 
   if (!session) notFound();
 
-  let isAdmin = false;
-  let isTeamMember = !sportConfig?.restrictedAccessEnabled;
-  let userSignupStatus: SignupStatus | null = null;
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    isAdmin = profile?.role === "admin";
-
-    if (!isAdmin) {
-      const { data: sportRole } = await supabase
-        .from("sport_roles")
-        .select("role, is_team_member")
-        .eq("user_id", user.id)
-        .eq("sport", session.sport)
-        .single();
-
-      isAdmin = sportRole?.role === "admin";
-      isTeamMember = sportConfig?.restrictedAccessEnabled
-        ? sportRole?.is_team_member || isAdmin
-        : true;
-    } else {
-      isTeamMember = true;
-    }
-
-    const { data: signup } = await supabase
-      .from("signups")
-      .select("status")
-      .eq("session_id", id)
-      .eq("user_id", user.id)
-      .neq("status", "cancelled")
-      .single();
-
-    userSignupStatus = (signup?.status as SignupStatus) ?? null;
-  }
-
-  const { data: signups } = await supabase
+  // Run user-role queries and the public signups query in parallel
+  const signupsPromise = supabase
     .from("signups")
     .select("*, profiles(full_name, email)")
     .eq("session_id", id)
     .neq("status", "cancelled")
     .order("created_at", { ascending: true });
+
+  let isAdmin = false;
+  let isTeamMember = !sportConfig?.restrictedAccessEnabled;
+  let userSignupStatus: SignupStatus | null = null;
+
+  if (user) {
+    const [profileResult, sportRoleResult, userSignupResult] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("sport_roles")
+          .select("role, is_team_member")
+          .eq("user_id", user.id)
+          .eq("sport", session.sport)
+          .single(),
+        supabase
+          .from("signups")
+          .select("status")
+          .eq("session_id", id)
+          .eq("user_id", user.id)
+          .neq("status", "cancelled")
+          .single(),
+      ]);
+
+    isAdmin =
+      profileResult.data?.role === "admin" ||
+      sportRoleResult.data?.role === "admin";
+    isTeamMember = sportConfig?.restrictedAccessEnabled
+      ? isAdmin || !!sportRoleResult.data?.is_team_member
+      : true;
+    userSignupStatus =
+      (userSignupResult.data?.status as SignupStatus) ?? null;
+  }
+
+  const { data: signups } = await signupsPromise;
 
   const allSignups = signups ?? [];
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
