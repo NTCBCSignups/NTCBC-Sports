@@ -151,9 +151,11 @@ export default async function AdminPage({
 }) {
   const { tab = "upcoming" } = await searchParams;
   const supabase = await createClient();
+  // Middleware already validated the JWT; getSession() reads it locally (no network call)
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) redirect(`/${SPORT}`);
 

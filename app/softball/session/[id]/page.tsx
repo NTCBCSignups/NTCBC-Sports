@@ -54,8 +54,9 @@ export default async function SessionDetailPage({
 
   let user = null;
   if (sportConfig?.authEnabled) {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    // Middleware already validated the JWT; getSession() reads it locally (no network call)
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   }
 
   const { data: session } = await supabase

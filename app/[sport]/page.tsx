@@ -30,8 +30,9 @@ export default async function SportRoute({
   let user = null;
   if (config.authEnabled) {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    // Middleware already validated the JWT; getSession() reads it locally (no network call)
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   }
 
   return (

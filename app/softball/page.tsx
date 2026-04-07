@@ -19,8 +19,9 @@ export default async function SoftballPage() {
   const supabase = await createClient();
 
   // ── Auth ───────────────────────────────────────────────────────
+  // Middleware already validated the JWT; getSession() reads it locally (no network call)
   const user = config.authEnabled
-    ? (await supabase.auth.getUser()).data.user
+    ? (await supabase.auth.getSession()).data.session?.user ?? null
     : null;
 
   // ── Roles & access ─────────────────────────────────────────────
