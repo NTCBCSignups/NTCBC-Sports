@@ -262,3 +262,16 @@ export async function approveCcsaPlayersForTeam() {
     revalidatePath(`/${SPORT}`);
     return { success: true, count: approvedCount };
 }
+
+export async function deleteAllCcsaPlayers() {
+    await requireSportAdmin();
+
+    const admin = createAdminClient();
+    const { error } = await admin.from("ccsa_players").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (error) return { error: error.message };
+
+    revalidatePath(`/${SPORT}/admin`);
+    revalidatePath(`/${SPORT}`);
+    return { success: true };
+}

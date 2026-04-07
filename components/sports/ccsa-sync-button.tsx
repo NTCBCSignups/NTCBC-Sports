@@ -4,14 +4,26 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, UserCheck, ShieldCheck, ShieldAlert, LogOut } from "lucide-react";
+import { RefreshCw, UserCheck, ShieldCheck, ShieldAlert, LogOut, Trash2 } from "lucide-react";
 import {
     requestCcsaLogin,
     completeCcsaLogin,
     syncCcsaWaivers,
     logoutCcsa,
     approveCcsaPlayersForTeam,
+    deleteAllCcsaPlayers,
 } from "@/app/softball/actions/ccsa-sync";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SyncedPlayer {
     email: string;
@@ -250,6 +262,7 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, sessionEmail,
             {approveResult && <p className="text-sm text-green-600 font-medium">{approveResult}</p>}
 
             {players.length > 0 && (
+                <div className="space-y-3">
                 <div className="rounded-lg border overflow-hidden">
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
@@ -280,6 +293,51 @@ export default function CcsaSyncButton({ lastSyncedAt, hasSession, sessionEmail,
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={pending}
+                                className="rounded-full"
+                            >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete All Synced Data
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete all CCSA synced data?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently remove all {players.length} synced players from the database.
+                                    Waiver badges will no longer appear until you sync again.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    className="bg-red-600 hover:bg-red-700"
+                                    onClick={async () => {
+                                        setPending(true);
+                                        setError(null);
+                                        setSyncResult(null);
+                                        const result = await deleteAllCcsaPlayers();
+                                        if (result.error) {
+                                            setError(result.error);
+                                        } else {
+                                            setPlayers([]);
+                                            setSyncResult("All synced data deleted");
+                                        }
+                                        setPending(false);
+                                    }}
+                                >
+                                    Delete All
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             )}
         </div>
