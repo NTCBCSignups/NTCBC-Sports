@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getScheduleData, getFormResponses } from "@/lib/schedule-utils";
 import { sportsConfig } from "@/lib/sports-config";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/user";
 import SportPage from "@/components/sport-page";
 
 export const dynamic = "force-dynamic";
@@ -21,18 +21,14 @@ export default async function SportRoute({
   const formResponses =
     isFormOpen && scheduleData?.response_sheet_id && config.responseTable
       ? await getFormResponses(
-          scheduleData.response_sheet_id,
-          config.responseTable.sheetTab,
-          config.responseTable.columns,
-        )
+        scheduleData.response_sheet_id,
+        config.responseTable.sheetTab,
+        config.responseTable.columns,
+      )
       : [];
 
-  let user = null;
-  if (config.authEnabled) {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  }
+  // Middleware validates the JWT and forwards the user via request header.
+  const user = config.authEnabled ? await getUser() : null;
 
   return (
     <SportPage
