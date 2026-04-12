@@ -137,7 +137,7 @@ export default async function SoftballPage() {
           </p>
         </div>
       ) : (
-        <Tabs defaultValue="scheduled_game" className="gap-4">
+        <Tabs defaultValue="drop_in_practice" className="gap-4">
           <TabsList className="max-sm:w-full rounded-full">
             <TabsTrigger
               value="scheduled_game"
