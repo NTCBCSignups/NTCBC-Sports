@@ -18,8 +18,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
-import SignupButton from "@/components/sports/signup-button";
-import SignInPrompt from "@/components/sports/sign-in-prompt";
+import SignupButton from "@/components/softball/signup-button";
+import SignInPrompt from "@/components/softball/sign-in-prompt";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { sportsConfig } from "@/lib/sports-config";

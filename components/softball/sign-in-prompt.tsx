@@ -1,4 +1,4 @@
-import SoftballPageShell from "@/components/sports/softball-page-shell";
+import SoftballPageShell from "@/components/softball/softball-page-shell";
 
 interface SignInPromptProps {
     sport: string;
