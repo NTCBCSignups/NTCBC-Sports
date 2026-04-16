@@ -1,13 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/user";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings } from "lucide-react";
-import AuthButton from "@/components/sports/auth-button";
 import SessionCard from "@/components/sports/session-card";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInPrompt from "@/components/sports/sign-in-prompt";
+import SoftballPageShell from "@/components/sports/softball-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -90,97 +89,66 @@ export default async function SoftballPage() {
     (s) => s.session_type === "drop_in_practice",
   );
 
+  const adminButton = isAdmin ? (
+    <Button asChild variant="outline" size="sm" className="rounded-full">
+      <Link href="/softball/admin">
+        <Settings className="h-4 w-4" />
+        Admin
+      </Link>
+    </Button>
+  ) : null;
+
   return (
-    <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <div className="flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          <Image
-            src="/favicon.ico"
-            alt="NTCBC"
-            width={18}
-            height={18}
-            className="rounded-sm"
-          />
-          NTCBC Sports
-        </Link>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-            >
-              <Link href="/softball/admin">
-                <Settings className="h-4 w-4" />
-                Admin
-              </Link>
-            </Button>
-          )}
-          {config.authEnabled && <AuthButton user={user} sport={SPORT} />}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-gray-900">🥎 Softball</h1>
-        <p className="text-sm text-gray-700">
-          Join us for scheduled games or drop-in practice sessions. Sign in with
-          Google to view and sign up for upcoming sessions.
-        </p>
-      </div>
-
+    <SoftballPageShell user={user} sport={SPORT} actions={adminButton}>
       <Tabs defaultValue="drop_in_practice" className="gap-4">
-          <TabsList className="max-sm:w-full rounded-full">
-            <TabsTrigger
-              value="scheduled_game"
-              className="max-sm:flex-1 rounded-full px-5"
-            >
-              Scheduled Games
-            </TabsTrigger>
-            <TabsTrigger
-              value="drop_in_practice"
-              className="max-sm:flex-1 rounded-full px-5"
-            >
-              Drop-in Practice
-            </TabsTrigger>
-          </TabsList>
+        <TabsList className="max-sm:w-full rounded-full">
+          <TabsTrigger
+            value="scheduled_game"
+            className="max-sm:flex-1 rounded-full px-5"
+          >
+            Scheduled Games
+          </TabsTrigger>
+          <TabsTrigger
+            value="drop_in_practice"
+            className="max-sm:flex-1 rounded-full px-5"
+          >
+            Drop-in Practice
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="scheduled_game" className="space-y-4">
-            {config.restrictedAccessEnabled && !isTeamMember && (
-              <TeamAccessBanner requestStatus={accessRequestStatus} sport={SPORT} />
-            )}
-            {isTeamMember ? (
-              scheduledGames.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {scheduledGames.map((session) => (
-                    <SessionCard key={session.id} session={session} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 py-8 text-center">
-                  No upcoming scheduled games.
-                </p>
-              )
-            ) : null}
-          </TabsContent>
-
-          <TabsContent value="drop_in_practice" className="space-y-4">
-            {dropInPractices.length > 0 ? (
+        <TabsContent value="scheduled_game" className="space-y-4">
+          {config.restrictedAccessEnabled && !isTeamMember && (
+            <TeamAccessBanner requestStatus={accessRequestStatus} sport={SPORT} />
+          )}
+          {isTeamMember ? (
+            scheduledGames.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                {dropInPractices.map((session) => (
+                {scheduledGames.map((session) => (
                   <SessionCard key={session.id} session={session} />
                 ))}
               </div>
             ) : (
               <p className="text-sm text-gray-500 py-8 text-center">
-                No upcoming drop-in practices.
+                No upcoming scheduled games.
               </p>
-            )}
-          </TabsContent>
-        </Tabs>
+            )
+          ) : null}
+        </TabsContent>
+
+        <TabsContent value="drop_in_practice" className="space-y-4">
+          {dropInPractices.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {dropInPractices.map((session) => (
+                <SessionCard key={session.id} session={session} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 py-8 text-center">
+              No upcoming drop-in practices.
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <div>
         <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>
@@ -202,6 +170,6 @@ export default async function SoftballPage() {
           </li>
         </ul>
       </div>
-    </div>
+    </SoftballPageShell>
   );
 }
