@@ -11,11 +11,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
-import SessionForm from "@/components/sports/session-form";
-import AdminSessionSignups from "@/components/sports/admin-session-signups";
-import AdminAccessRequests from "@/components/sports/admin-access-requests";
-import DeleteSessionButton from "@/components/sports/delete-session-button";
-import AdminSidebar from "@/components/sports/admin-sidebar";
+import SessionForm from "@/components/softball/session-form";
+import AdminSessionSignups from "@/components/softball/admin-session-signups";
+import AdminAccessRequests from "@/components/softball/admin-access-requests";
+import DeleteSessionButton from "@/components/softball/delete-session-button";
+import AdminSidebar from "@/components/softball/admin-sidebar";
 import type {
   Profile,
   SignupStatus,
