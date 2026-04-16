@@ -16,13 +16,15 @@ import {
   Clock,
   MapPin,
   ArrowLeft,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { sportsConfig } from "@/lib/sports-config";
-import type { Profile, SignupStatus } from "@/lib/supabase/types";
+import type { Profile, SignupStatus, WaiverStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +100,23 @@ export default async function SessionDetailPage({
   const allSignups = signups ?? [];
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
+
+  // Fetch waiver data for signed-up players
+  const signupEmails = allSignups
+    .map((s) => (s.profiles as unknown as Profile | null)?.email)
+    .filter((e): e is string => !!e);
+
+  const { data: ccsaPlayers } = signupEmails.length
+    ? await supabase
+      .from("ccsa_players")
+      .select("email, waiver_status")
+      .in("email", signupEmails)
+    : { data: [] };
+
+  const waiverByEmail = new Map<string, WaiverStatus>();
+  for (const cp of ccsaPlayers ?? []) {
+    waiverByEmail.set(cp.email, cp.waiver_status as WaiverStatus);
+  }
 
   const now = new Date();
   const isOpen =
@@ -240,6 +259,7 @@ export default async function SessionDetailPage({
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-12">#</TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>Waiver</TableHead>
                   <TableHead>Signed up</TableHead>
                   <TableHead className="sticky right-0 bg-muted/50 border-l">
                     Status
@@ -256,6 +276,24 @@ export default async function SessionDetailPage({
                       </TableCell>
                       <TableCell>
                         {p?.full_name ?? p?.email ?? "Unknown"}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const waiver = p?.email ? waiverByEmail.get(p.email) : undefined;
+                          if (!waiver) return <span className="text-xs text-gray-400">—</span>;
+                          if (waiver === "valid") {
+                            return (
+                              <span className="inline-flex items-center text-green-700" title="Waiver signed">
+                                <ShieldCheck className="h-4 w-4" />
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center text-amber-600" title={waiver === "needs_paper" ? "Needs paper waiver" : "Needs online waiver"}>
+                              <ShieldAlert className="h-4 w-4" />
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-xs">
                         <LocalTimestamp date={signup.created_at} />
