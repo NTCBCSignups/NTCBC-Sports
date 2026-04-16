@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Calendar, History, RefreshCw } from "lucide-react";
+import { ClipboardList, Plus, Calendar, History } from "lucide-react";
 
 interface AdminSidebarProps {
   pendingRequestCount: number;
@@ -14,7 +14,6 @@ const tabs = [
   { id: "create", label: "Create Session", icon: Plus },
   { id: "upcoming", label: "Upcoming Sessions", icon: Calendar },
   { id: "past", label: "Past Sessions", icon: History },
-  { id: "ccsa", label: "CCSA Sync", icon: RefreshCw },
 ] as const;
 
 export type AdminTab = (typeof tabs)[number]["id"];
