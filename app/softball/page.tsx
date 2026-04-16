@@ -7,6 +7,7 @@ import { Settings } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SessionCard from "@/components/sports/session-card";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
+import SignInPrompt from "@/components/sports/sign-in-prompt";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -22,6 +23,10 @@ export default async function SoftballPage() {
   // ── Auth ───────────────────────────────────────────────────────
   // Middleware validates the JWT and forwards the user via request header.
   const user = config.authEnabled ? await getUser() : null;
+
+  if (config.authEnabled && !user) {
+    return <SignInPrompt sport={SPORT} />;
+  }
 
   // ── Roles & access ─────────────────────────────────────────────
   let isAdmin = false;
@@ -127,17 +132,7 @@ export default async function SoftballPage() {
         </p>
       </div>
 
-      {config.authEnabled && !user ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center space-y-3">
-          <p className="text-gray-700 font-medium">
-            Sign in to view and sign up for sessions
-          </p>
-          <p className="text-sm text-gray-500">
-            Use your Google account to get started.
-          </p>
-        </div>
-      ) : (
-        <Tabs defaultValue="drop_in_practice" className="gap-4">
+      <Tabs defaultValue="drop_in_practice" className="gap-4">
           <TabsList className="max-sm:w-full rounded-full">
             <TabsTrigger
               value="scheduled_game"
@@ -186,7 +181,6 @@ export default async function SoftballPage() {
             )}
           </TabsContent>
         </Tabs>
-      )}
 
       <div>
         <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
+import SignInPrompt from "@/components/sports/sign-in-prompt";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { sportsConfig } from "@/lib/sports-config";
@@ -55,6 +56,10 @@ export default async function SessionDetailPage({
 
   // Middleware validates the JWT and forwards the user via request header.
   const user = sportConfig?.authEnabled ? await getUser() : null;
+
+  if (sportConfig?.authEnabled && !user) {
+    return <SignInPrompt sport="softball" />;
+  }
 
   const { data: session } = await supabase
     .from("sessions")
