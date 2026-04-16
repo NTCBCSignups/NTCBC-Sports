@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
 import { sportsConfig } from "@/lib/sports-config";
+import { getUserSportRole } from "@/lib/supabase/user";
 
 const SPORT = "softball";
 
@@ -27,23 +28,10 @@ export async function signUpForSession(sessionId: string) {
   const sportConfig = sportsConfig[session.sport];
 
   if (sportConfig?.restrictedAccessEnabled && session.session_type === "scheduled_game") {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { isTeamMember } = await getUserSportRole(supabase, user.id, session.sport);
 
-    if (profile?.role !== "admin") {
-      const { data: sportRole } = await supabase
-        .from("sport_roles")
-        .select("role, is_team_member")
-        .eq("user_id", user.id)
-        .eq("sport", session.sport)
-        .single();
-
-      if (!sportRole?.is_team_member && sportRole?.role !== "admin") {
-        return { error: "Only team members can sign up for scheduled games" };
-      }
+    if (!isTeamMember) {
+      return { error: "Only team members can sign up for scheduled games" };
     }
   }
 
