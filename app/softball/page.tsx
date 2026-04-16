@@ -33,7 +33,11 @@ export default async function SoftballPage() {
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (user) {
-    ({ isAdmin, isTeamMember } = await getUserSportRole(supabase, user.id, SPORT));
+    ({ isAdmin, isTeamMember } = await getUserSportRole(
+      supabase,
+      user.id,
+      SPORT,
+    ));
 
     if (config.restrictedAccessEnabled && !isTeamMember) {
       const { data: request } = await supabase
@@ -101,7 +105,10 @@ export default async function SoftballPage() {
 
         <TabsContent value="scheduled_game" className="space-y-4">
           {config.restrictedAccessEnabled && !isTeamMember && (
-            <TeamAccessBanner requestStatus={accessRequestStatus} sport={SPORT} />
+            <TeamAccessBanner
+              requestStatus={accessRequestStatus}
+              sport={SPORT}
+            />
           )}
           {isTeamMember ? (
             scheduledGames.length > 0 ? (
@@ -150,7 +157,8 @@ export default async function SoftballPage() {
           <li className="flex items-start text-sm">
             <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
             <span>
-              Admins: Joshua Wong, Brandon Cho, Isaac Ng.
+              Please contact the admins if you have any questions: Joshua Wong,
+              Brandon Cho, Isaac Ng.
             </span>
           </li>
         </ul>
