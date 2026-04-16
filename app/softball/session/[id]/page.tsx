@@ -16,12 +16,14 @@ import {
   Clock,
   MapPin,
   ArrowLeft,
+  Settings,
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
+import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
@@ -106,8 +108,8 @@ export default async function SessionDetailPage({
 
   const now = new Date();
   const isOpen =
-    now >= new Date(session.signup_open) &&
-    now <= new Date(session.signup_close);
+    (!session.signup_open || now >= new Date(session.signup_open)) &&
+    (!session.signup_close || now <= new Date(session.signup_close));
 
   const isEligible = sportConfig?.restrictedAccessEnabled
     ? session.session_type === "drop_in_practice" || isTeamMember
@@ -128,7 +130,17 @@ export default async function SessionDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Back to Softball
         </Link>
-        {sportConfig?.authEnabled && <AuthButton user={user} sport={session.sport} />}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/softball/admin">
+                <Settings className="h-4 w-4" />
+                Admin
+              </Link>
+            </Button>
+          )}
+          {sportConfig?.authEnabled && <AuthButton user={user} sport={session.sport} />}
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -189,11 +201,13 @@ export default async function SessionDetailPage({
                 )}
               </div>
             </div>
-            <CountdownTimer
-              openTime={session.signup_open}
-              closeTime={session.signup_close}
-              isFormOpen={isOpen}
-            />
+            {session.signup_open && session.signup_close && (
+              <CountdownTimer
+                openTime={session.signup_open}
+                closeTime={session.signup_close}
+                isFormOpen={isOpen}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -220,9 +234,9 @@ export default async function SessionDetailPage({
         <div className="overflow-hidden rounded-lg border bg-white">
           <div className="flex border-b">
             <div className="flex-1 px-4 py-3 border-r">
-              <p className="text-xs text-muted-foreground mb-0.5">Capacity</p>
+              <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
               <p
-                className={`text-sm font-semibold ${session.player_cap && allSignups.length > session.player_cap ? "text-amber-600" : "text-gray-900"}`}
+                className={`text-sm font-semibold ${session.player_cap && confirmedSignups.length > session.player_cap ? "text-amber-600" : "text-gray-900"}`}
               >
                 {confirmedSignups.length}{session.player_cap ? ` / ${session.player_cap}` : ""}
               </p>

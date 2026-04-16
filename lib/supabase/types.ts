@@ -35,8 +35,8 @@ export interface SportSession {
   location_address: string;
   location_maps_link: string | null;
   player_cap: number | null;
-  signup_open: string;
-  signup_close: string;
+  signup_open: string | null;
+  signup_close: string | null;
   notes: string | null;
   created_by: string | null;
   created_at: string;

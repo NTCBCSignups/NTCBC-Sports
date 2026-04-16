@@ -105,7 +105,7 @@ export default async function SoftballPage() {
           )}
           {isTeamMember ? (
             scheduledGames.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 {scheduledGames.map((session) => (
                   <SessionCard key={session.id} session={session} />
                 ))}
@@ -120,7 +120,7 @@ export default async function SoftballPage() {
 
         <TabsContent value="drop_in_practice" className="space-y-4">
           {dropInPractices.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               {dropInPractices.map((session) => (
                 <SessionCard key={session.id} session={session} />
               ))}
@@ -149,7 +149,9 @@ export default async function SoftballPage() {
           </li>
           <li className="flex items-start text-sm">
             <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-            <span>Please contact the admins if you have any questions.</span>
+            <span>
+              Admins: Joshua Wong, Brandon Cho, Isaac Ng.
+            </span>
           </li>
         </ul>
       </div>
