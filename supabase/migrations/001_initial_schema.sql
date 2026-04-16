@@ -150,8 +150,8 @@ create table public.sessions (
   location_address text not null,
   location_maps_link text,
   player_cap      integer,
-  signup_open     timestamptz not null,
-  signup_close    timestamptz not null,
+  signup_open     timestamptz,
+  signup_close    timestamptz,
   notes           text,
   created_by      uuid references public.profiles(id),
   created_at      timestamptz not null default now()
