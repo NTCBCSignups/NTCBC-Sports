@@ -17,7 +17,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/${sport}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${window.location.pathname}`,
       },
     });
   };
