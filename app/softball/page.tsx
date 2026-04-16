@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/supabase/user";
+import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
@@ -29,33 +29,16 @@ export default async function SoftballPage() {
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    ({ isAdmin, isTeamMember } = await getUserSportRole(supabase, user.id, SPORT));
 
-    const { data: sportRole } = await supabase
-      .from("sport_roles")
-      .select("role, is_team_member")
-      .eq("user_id", user.id)
-      .eq("sport", SPORT)
-      .single();
-
-    isAdmin = profile?.role === "admin" || sportRole?.role === "admin";
-
-    if (config.restrictedAccessEnabled) {
-      isTeamMember = isAdmin || !!sportRole?.is_team_member;
-
-      if (!isTeamMember) {
-        const { data: request } = await supabase
-          .from("team_access_requests")
-          .select("status")
-          .eq("user_id", user.id)
-          .eq("sport", SPORT)
-          .single();
-        accessRequestStatus = request?.status ?? null;
-      }
+    if (config.restrictedAccessEnabled && !isTeamMember) {
+      const { data: request } = await supabase
+        .from("team_access_requests")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("sport", SPORT)
+        .single();
+      accessRequestStatus = request?.status ?? null;
     }
   }
 

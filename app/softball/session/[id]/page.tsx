@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/supabase/user";
+import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -77,34 +77,18 @@ export default async function SessionDetailPage({
   let userSignupStatus: SignupStatus | null = null;
 
   if (user) {
-    const [profileResult, sportRoleResult, userSignupResult] =
-      await Promise.all([
-        supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single(),
-        supabase
-          .from("sport_roles")
-          .select("role, is_team_member")
-          .eq("user_id", user.id)
-          .eq("sport", session.sport)
-          .single(),
-        supabase
-          .from("signups")
-          .select("status")
-          .eq("session_id", id)
-          .eq("user_id", user.id)
-          .neq("status", "cancelled")
-          .single(),
-      ]);
+    const [roleResult, userSignupResult] = await Promise.all([
+      getUserSportRole(supabase, user.id, session.sport),
+      supabase
+        .from("signups")
+        .select("status")
+        .eq("session_id", id)
+        .eq("user_id", user.id)
+        .neq("status", "cancelled")
+        .single(),
+    ]);
 
-    isAdmin =
-      profileResult.data?.role === "admin" ||
-      sportRoleResult.data?.role === "admin";
-    isTeamMember = sportConfig?.restrictedAccessEnabled
-      ? isAdmin || !!sportRoleResult.data?.is_team_member
-      : true;
+    ({ isAdmin, isTeamMember } = roleResult);
     userSignupStatus =
       (userSignupResult.data?.status as SignupStatus) ?? null;
   }
