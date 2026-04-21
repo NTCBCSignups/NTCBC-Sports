@@ -25,27 +25,10 @@ import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
+import { formatDate, formatTime, displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
-
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${m} ${ampm}`;
-}
 
 export default async function SessionDetailPage({
   params,
@@ -149,7 +132,7 @@ export default async function SessionDetailPage({
             <Badge variant="secondary">{sessionTypeLabel}</Badge>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">
-            {session.title || formatDate(session.date)}
+            {session.title || formatDate(session.date, "long")}
           </h1>
         </div>
 
@@ -159,7 +142,7 @@ export default async function SessionDetailPage({
               <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
                 <span className="font-medium text-gray-900">Date</span>
-                <span className="text-gray-700">{formatDate(session.date)}</span>
+                <span className="text-gray-700">{formatDate(session.date, "long")}</span>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -274,7 +257,7 @@ export default async function SessionDetailPage({
                         {index + 1}
                       </TableCell>
                       <TableCell>
-                        {p?.full_name ?? p?.email ?? "Unknown"}
+                        {displayName(p)}
                       </TableCell>
                       <TableCell className="text-xs">
                         <LocalTimestamp date={signup.created_at} />

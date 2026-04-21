@@ -10,28 +10,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import CountdownTimer from "@/components/countdown-timer";
+import { formatDate, formatTime } from "@/lib/format";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
   session: SportSession & { signup_count: number };
-}
-
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${m} ${ampm}`;
 }
 
 function getSignupStatus(session: SportSession): {

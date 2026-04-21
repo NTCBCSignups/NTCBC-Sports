@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
 import { reviewTeamAccessRequest } from "@/app/softball/actions/team-access";
+import { displayName } from "@/lib/format";
 import type { Profile, AccessRequestStatus } from "@/lib/supabase/types";
 
 interface AccessRequestRow {
@@ -63,7 +64,7 @@ export default function AdminAccessRequests({
           {requests.map((request) => (
             <TableRow key={request.id}>
               <TableCell>
-                {request.profiles?.full_name ?? "Unknown"}
+                {displayName(request.profiles)}
               </TableCell>
               <TableCell className="text-sm text-gray-500">
                 {request.profiles?.email ?? "—"}

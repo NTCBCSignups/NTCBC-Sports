@@ -16,6 +16,7 @@ import AdminSessionSignups from "@/components/softball/admin-session-signups";
 import AdminAccessRequests from "@/components/softball/admin-access-requests";
 import DeleteSessionButton from "@/components/softball/delete-session-button";
 import AdminSidebar from "@/components/softball/admin-sidebar";
+import { formatDate, formatTime } from "@/lib/format";
 import type {
   Profile,
   SignupStatus,
@@ -25,24 +26,6 @@ import type {
 export const dynamic = "force-dynamic";
 
 const SPORT = "softball";
-
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${m} ${ampm}`;
-}
 
 function SessionAccordion({
   sessions,

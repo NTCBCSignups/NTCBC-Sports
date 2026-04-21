@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
+import { displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 interface SignupRow {
@@ -88,9 +89,7 @@ export default function AdminSessionSignups({
             <TableRow key={signup.id}>
               <TableCell className="font-mono text-xs">{index + 1}</TableCell>
               <TableCell>
-                {signup.profiles?.full_name ??
-                  signup.profiles?.email ??
-                  "Unknown"}
+                {displayName(signup.profiles)}
               </TableCell>
               <TableCell>
                 {signup.status === "confirmed" ? (
