@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/status-badge";
 import { FormResponseColumn } from "@/lib/schedule-utils";
 
 interface SignupsTableProps {
@@ -132,15 +132,7 @@ export default function SignupsTable({
                     </TableCell>
                   ))}
                   <TableCell className="sticky right-0 bg-white border-l">
-                    {isConfirmed ? (
-                      <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                        Confirmed
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                        Waitlist
-                      </Badge>
-                    )}
+                    <StatusBadge status={isConfirmed ? "confirmed" : "waitlisted"} />
                   </TableCell>
                 </TableRow>
               );
