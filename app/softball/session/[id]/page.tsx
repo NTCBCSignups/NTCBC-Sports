@@ -21,6 +21,7 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
+import SignupSummaryHeader from "@/components/softball/signup-summary-header";
 import StatusBadge from "@/components/status-badge";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
@@ -218,22 +219,11 @@ export default async function SessionDetailPage({
       <div className="space-y-2">
         <h2 className="font-semibold text-gray-900">Attendance</h2>
         <div className="overflow-hidden rounded-lg border bg-white">
-          <div className="flex border-b">
-            <div className="flex-1 px-4 py-3 border-r">
-              <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
-              <p
-                className={`text-sm font-semibold ${session.player_cap && confirmedSignups.length > session.player_cap ? "text-amber-600" : "text-gray-900"}`}
-              >
-                {confirmedSignups.length}{session.player_cap ? ` / ${session.player_cap}` : ""}
-              </p>
-            </div>
-            <div className="flex-1 px-4 py-3">
-              <p className="text-xs text-muted-foreground mb-0.5">Waitlist</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {waitlistedSignups.length}
-              </p>
-            </div>
-          </div>
+          <SignupSummaryHeader
+            confirmedCount={confirmedSignups.length}
+            waitlistedCount={waitlistedSignups.length}
+            playerCap={session.player_cap}
+          />
 
           {allSignups.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">

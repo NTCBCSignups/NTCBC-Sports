@@ -13,6 +13,7 @@ import {
 import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
 import StatusBadge from "@/components/status-badge";
+import SignupSummaryHeader from "@/components/softball/signup-summary-header";
 import { displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
@@ -61,20 +62,11 @@ export default function AdminSessionSignups({
 
   return (
     <div className="overflow-hidden rounded-lg border bg-white">
-      <div className="flex border-b">
-        <div className="flex-1 px-4 py-3 border-r">
-          <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
-          <p className="text-sm font-semibold text-gray-900">
-            {confirmed.length}{playerCap ? ` / ${playerCap}` : ""}
-          </p>
-        </div>
-        <div className="flex-1 px-4 py-3">
-          <p className="text-xs text-muted-foreground mb-0.5">Waitlisted</p>
-          <p className="text-sm font-semibold text-gray-900">
-            {waitlisted.length}
-          </p>
-        </div>
-      </div>
+      <SignupSummaryHeader
+        confirmedCount={confirmed.length}
+        waitlistedCount={waitlisted.length}
+        playerCap={playerCap}
+      />
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">

@@ -18,6 +18,8 @@ export default function SoftballPageShell({
     actions,
     children,
 }: SoftballPageShellProps) {
+    const config = sportsConfig[sport];
+
     return (
         <div className="max-w-4xl mx-auto mb-12 space-y-6">
             <div className="flex items-center justify-between">
