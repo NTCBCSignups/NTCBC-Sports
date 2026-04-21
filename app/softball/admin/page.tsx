@@ -19,6 +19,7 @@ import AdminSidebar from "@/components/softball/admin-sidebar";
 import { formatDate, formatTime } from "@/lib/format";
 import type {
   Profile,
+  SportSession,
   SignupStatus,
   AccessRequestStatus,
 } from "@/lib/supabase/types";
@@ -32,7 +33,7 @@ function SessionAccordion({
   signupsBySession,
   muted,
 }: {
-  sessions: Record<string, unknown>[];
+  sessions: SportSession[];
   signupsBySession: Map<
     string,
     {
@@ -53,16 +54,16 @@ function SessionAccordion({
 
   return (
     <Accordion type="multiple" className="space-y-2">
-      {sessions.map((session: Record<string, unknown>) => {
+      {sessions.map((session) => {
         const sessionSignups =
-          signupsBySession.get(session.id as string) ?? [];
+          signupsBySession.get(session.id) ?? [];
         const activeCount = sessionSignups.filter(
           (s) => s.status !== "cancelled",
         ).length;
         return (
           <AccordionItem
-            key={session.id as string}
-            value={session.id as string}
+            key={session.id}
+            value={session.id}
             className="!border-b rounded-lg border bg-white px-4"
           >
             <AccordionTrigger className="hover:no-underline py-3">
@@ -72,32 +73,31 @@ function SessionAccordion({
                     <div
                       className={`font-medium ${muted ? "text-gray-500" : ""}`}
                     >
-                      {(session.title as string) ||
-                        formatDate(session.date as string)}
+                      {session.title || formatDate(session.date)}
                     </div>
                     <div
                       className={`text-xs flex items-center gap-3 mt-0.5 ${muted ? "text-gray-400" : "text-gray-500"}`}
                     >
                       <span className="flex items-center gap-1">
                         <CalendarDays className="h-3 w-3" />
-                        {formatDate(session.date as string)}
+                        {formatDate(session.date)}
                       </span>
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {session.location_name as string}
+                        {session.location_name}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">
-                    {(session.session_type as string) === "scheduled_game"
+                    {session.session_type === "scheduled_game"
                       ? "Game"
                       : "Practice"}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     {activeCount}
-                    {(session.player_cap as number | null)
+                    {session.player_cap
                       ? ` / ${session.player_cap}`
                       : ""}
                   </Badge>
@@ -108,16 +108,16 @@ function SessionAccordion({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    {formatTime(session.time_start as string)} –{" "}
-                    {formatTime(session.time_end as string)} ·{" "}
-                    {session.location_address as string}
+                    {formatTime(session.time_start)} –{" "}
+                    {formatTime(session.time_end)} ·{" "}
+                    {session.location_address}
                   </div>
-                  <DeleteSessionButton sessionId={session.id as string} />
+                  <DeleteSessionButton sessionId={session.id} />
                 </div>
                 <AdminSessionSignups
-                  sessionId={session.id as string}
+                  sessionId={session.id}
                   signups={sessionSignups}
-                  playerCap={session.player_cap as number | null}
+                  playerCap={session.player_cap}
                 />
               </div>
             </AccordionContent>
