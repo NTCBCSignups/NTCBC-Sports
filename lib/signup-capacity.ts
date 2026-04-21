@@ -8,28 +8,29 @@ export async function resolveSignupStatus(
   supabase: SupabaseClient,
   sessionId: string,
 ): Promise<"confirmed" | "waitlisted"> {
-  const { data: session, error: sessionError } = await supabase
-    .from("sessions")
-    .select("player_cap")
-    .eq("id", sessionId)
-    .single();
+  const [{ data: session, error: sessionError }, { count, error: countError }] =
+    await Promise.all([
+      supabase
+        .from("sessions")
+        .select("player_cap")
+        .eq("id", sessionId)
+        .single(),
+      supabase
+        .from("signups")
+        .select("*", { count: "exact", head: true })
+        .eq("session_id", sessionId)
+        .eq("status", "confirmed"),
+    ]);
 
   if (sessionError || !session) {
     throw new Error(sessionError?.message ?? "Session not found");
   }
+  if (countError) {
+    throw new Error(countError.message);
+  }
 
   if (session.player_cap == null) {
     return "confirmed";
-  }
-
-  const { count, error: countError } = await supabase
-    .from("signups")
-    .select("*", { count: "exact", head: true })
-    .eq("session_id", sessionId)
-    .eq("status", "confirmed");
-
-  if (countError) {
-    throw new Error(countError.message);
   }
 
   return (count ?? 0) >= session.player_cap ? "waitlisted" : "confirmed";
@@ -43,29 +44,38 @@ export async function promoteOneFromWaitlist(
   supabase: SupabaseClient,
   sessionId: string,
 ): Promise<{ error?: string }> {
-  const { data: session, error: sessionError } = await supabase
-    .from("sessions")
-    .select("player_cap")
-    .eq("id", sessionId)
-    .single();
+  // Fetch session cap, confirmed count, and first waitlisted player in parallel
+  const [{ data: session, error: sessionError }, { count, error: countError }, { data: next, error: nextError }] =
+    await Promise.all([
+      supabase
+        .from("sessions")
+        .select("player_cap")
+        .eq("id", sessionId)
+        .single(),
+      supabase
+        .from("signups")
+        .select("*", { count: "exact", head: true })
+        .eq("session_id", sessionId)
+        .eq("status", "confirmed"),
+      supabase
+        .from("signups")
+        .select("id")
+        .eq("session_id", sessionId)
+        .eq("status", "waitlisted")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   if (sessionError || !session) {
     return { error: sessionError?.message ?? "Session not found" };
   }
+  if (countError) return { error: countError.message };
+  if (nextError) return { error: nextError.message };
+  if (!next) return {};
 
-  if (session.player_cap == null) {
-    const { data: next, error: nextError } = await supabase
-      .from("signups")
-      .select("id")
-      .eq("session_id", sessionId)
-      .eq("status", "waitlisted")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (nextError) return { error: nextError.message };
-    if (!next) return {};
-
+  // No cap or room available — promote
+  if (session.player_cap == null || (count ?? 0) < session.player_cap) {
     const { error: upError } = await supabase
       .from("signups")
       .update({ status: "confirmed" })
@@ -74,34 +84,5 @@ export async function promoteOneFromWaitlist(
     return upError ? { error: upError.message } : {};
   }
 
-  const { count, error: countError } = await supabase
-    .from("signups")
-    .select("*", { count: "exact", head: true })
-    .eq("session_id", sessionId)
-    .eq("status", "confirmed");
-
-  if (countError) return { error: countError.message };
-
-  if ((count ?? 0) >= session.player_cap) {
-    return {};
-  }
-
-  const { data: next, error: nextError } = await supabase
-    .from("signups")
-    .select("id")
-    .eq("session_id", sessionId)
-    .eq("status", "waitlisted")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (nextError) return { error: nextError.message };
-  if (!next) return {};
-
-  const { error: upError } = await supabase
-    .from("signups")
-    .update({ status: "confirmed" })
-    .eq("id", next.id);
-
-  return upError ? { error: upError.message } : {};
+  return {};
 }
