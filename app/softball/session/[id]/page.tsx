@@ -21,6 +21,7 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
+import { isSignupOpen } from "@/lib/signup-capacity";
 import SignupSummaryHeader from "@/components/softball/signup-summary-header";
 import StatusBadge from "@/components/status-badge";
 import CountdownTimer from "@/components/countdown-timer";
@@ -93,10 +94,7 @@ export default async function SessionDetailPage({
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
 
-  const now = new Date();
-  const isOpen =
-    (!session.signup_open || now >= new Date(session.signup_open)) &&
-    (!session.signup_close || now <= new Date(session.signup_close));
+  const isOpen = isSignupOpen(session);
 
   const isEligible = sportConfig?.restrictedAccessEnabled
     ? session.session_type === "drop_in_practice" || isTeamMember

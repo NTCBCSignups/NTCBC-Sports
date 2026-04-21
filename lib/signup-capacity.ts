@@ -1,6 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
+ * Returns whether signup is currently open for a session based on its
+ * `signup_open` and `signup_close` timestamps.
+ */
+export function isSignupOpen(session: {
+    signup_open: string | null;
+    signup_close: string | null;
+}): boolean {
+    const now = new Date();
+    return (
+        (!session.signup_open || now >= new Date(session.signup_open)) &&
+        (!session.signup_close || now <= new Date(session.signup_close))
+    );
+}
+
+/**
  * Decides confirmed vs waitlisted for a new or reactivated signup (same rules as the old DB trigger).
  * Caller must use a client that can read `sessions` and `signups` for this session.
  */

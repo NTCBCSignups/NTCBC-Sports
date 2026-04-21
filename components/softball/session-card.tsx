@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import CountdownTimer from "@/components/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
+import { isSignupOpen } from "@/lib/signup-capacity";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -32,10 +33,7 @@ function getSignupStatus(session: SportSession): {
 
 export default function SessionCard({ session }: SessionCardProps) {
   const status = getSignupStatus(session);
-  const now = new Date();
-  const isOpen =
-    (!session.signup_open || now >= new Date(session.signup_open)) &&
-    (!session.signup_close || now <= new Date(session.signup_close));
+  const isOpen = isSignupOpen(session);
 
   return (
     <Link href={`/${session.sport}/session/${session.id}`} className="block h-full">
