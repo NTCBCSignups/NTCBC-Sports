@@ -5,14 +5,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * `signup_open` and `signup_close` timestamps.
  */
 export function isSignupOpen(session: {
-    signup_open: string | null;
-    signup_close: string | null;
+  signup_open: string | null;
+  signup_close: string | null;
 }): boolean {
-    const now = new Date();
-    return (
-        (!session.signup_open || now >= new Date(session.signup_open)) &&
-        (!session.signup_close || now <= new Date(session.signup_close))
-    );
+  const now = new Date();
+  return (
+    (!session.signup_open || now >= new Date(session.signup_open)) &&
+    (!session.signup_close || now <= new Date(session.signup_close))
+  );
 }
 
 /**
