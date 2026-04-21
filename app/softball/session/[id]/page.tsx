@@ -31,6 +31,8 @@ import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
+const SPORT = "softball";
+
 export default async function SessionDetailPage({
   params,
 }: {
@@ -38,13 +40,13 @@ export default async function SessionDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const sportConfig = sportsConfig["softball"];
+  const sportConfig = sportsConfig[SPORT];
 
   // Middleware validates the JWT and forwards the user via request header.
   const user = sportConfig?.authEnabled ? await getUser() : null;
 
   if (sportConfig?.authEnabled && !user) {
-    return <SignInPrompt sport="softball" />;
+    return <SignInPrompt sport={SPORT} />;
   }
 
   const { data: session } = await supabase
@@ -108,16 +110,16 @@ export default async function SessionDetailPage({
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <div className="flex items-center justify-between">
         <Link
-          href="/softball"
+          href={`/${SPORT}`}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Softball
+          Back to {sportConfig?.name ?? "Softball"}
         </Link>
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href="/softball/admin">
+              <Link href={`/${SPORT}/admin`}>
                 <Settings className="h-4 w-4" />
                 Admin
               </Link>

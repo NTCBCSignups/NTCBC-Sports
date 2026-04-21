@@ -3,6 +3,7 @@ import Link from "next/link";
 import AuthButton from "@/components/sports/auth-button";
 import type { User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
+import { sportsConfig } from "@/lib/sports-config";
 
 interface SoftballPageShellProps {
     user: User | null;
@@ -40,11 +41,12 @@ export default function SoftballPageShell({
             </div>
 
             <div className="space-y-2">
-                <h1 className="text-4xl font-bold text-gray-900">🥎 Softball</h1>
-                <p className="text-sm text-gray-700">
-                    Join us for scheduled games or drop-in practice sessions. Sign in with
-                    Google to view and sign up for upcoming sessions.
-                </p>
+                <h1 className="text-4xl font-bold text-gray-900">{config?.emoji} {config?.name ?? sport}</h1>
+                {config?.description && (
+                    <p className="text-sm text-gray-700">
+                        {config.description}
+                    </p>
+                )}
             </div>
 
             {children}

@@ -38,7 +38,7 @@ export default function SessionCard({ session }: SessionCardProps) {
     (!session.signup_close || now <= new Date(session.signup_close));
 
   return (
-    <Link href={`/softball/session/${session.id}`} className="block h-full">
+    <Link href={`/${session.sport}/session/${session.id}`} className="block h-full">
       <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
         <CardHeader className="pb-1.5">
           <div className="flex items-start justify-between gap-2">
