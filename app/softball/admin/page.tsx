@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/supabase/user";
+import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -157,32 +157,26 @@ export default async function AdminPage({
 
   if (!user) redirect(`/${SPORT}`);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  let isAdmin = profile?.role === "admin";
-
-  if (!isAdmin) {
-    const { data: sportRole } = await supabase
-      .from("sport_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("sport", SPORT)
-      .single();
-    isAdmin = sportRole?.role === "admin";
-  }
-
+  const { isAdmin } = await getUserSportRole(supabase, user.id, SPORT);
   if (!isAdmin) redirect(`/${SPORT}`);
 
-  const { data: sessions } = await supabase
-    .from("sessions")
-    .select("*")
-    .eq("sport", SPORT)
-    .order("date", { ascending: false });
+  // ── Fetch sessions & access requests in parallel ───────────────
+  const [{ data: sessions }, { data: accessRequests }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("sport", SPORT)
+      .order("date", { ascending: false }),
+    supabase
+      .from("team_access_requests")
+      .select(
+        "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
+      )
+      .eq("sport", SPORT)
+      .order("created_at", { ascending: false }),
+  ]);
 
+  // ── Fetch signups for all sessions ─────────────────────────────
   const sessionIds = (sessions ?? []).map((s) => s.id);
 
   const { data: allSignups } = sessionIds.length
@@ -216,14 +210,6 @@ export default async function AdminPage({
     });
     signupsBySession.set(signup.session_id, list);
   }
-
-  const { data: accessRequests } = await supabase
-    .from("team_access_requests")
-    .select(
-      "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
-    )
-    .eq("sport", SPORT)
-    .order("created_at", { ascending: false });
 
   const formattedRequests = (accessRequests ?? []).map((r) => ({
     id: r.id,
