@@ -51,46 +51,60 @@ export default async function SessionDetailPage({
     return <SignInPrompt sport={SPORT} />;
   }
 
-  const { data: session } = await supabase
+  // Run session, signups, and user-specific queries in parallel
+  const sessionPromise = supabase
     .from("sessions")
     .select("*")
     .eq("id", id)
-    .single();
+    .single()
+    .then((r) => r);
 
-  if (!session) notFound();
-
-  // Run user-role queries and the public signups query in parallel
   const signupsPromise = supabase
     .from("signups")
     .select("*, profiles(full_name, email)")
     .eq("session_id", id)
     .neq("status", "cancelled")
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .then((r) => r);
 
   let isAdmin = false;
   let isTeamMember = !sportConfig?.restrictedAccessEnabled;
   let userSignupStatus: SignupStatus | null = null;
 
-  if (user) {
-    const [roleResult, userSignupResult] = await Promise.all([
-      getUserSportRole(supabase, user.id, session.sport),
-      supabase
-        .from("signups")
-        .select("status")
-        .eq("session_id", id)
-        .eq("user_id", user.id)
-        .neq("status", "cancelled")
-        .single(),
-    ]);
+  const [sessionResult, signupsResult, ...userResults] = await Promise.all([
+    sessionPromise,
+    signupsPromise,
+    ...(user
+      ? [
+        getUserSportRole(supabase, user.id, SPORT),
+        supabase
+          .from("signups")
+          .select("status")
+          .eq("session_id", id)
+          .eq("user_id", user.id)
+          .neq("status", "cancelled")
+          .single()
+          .then((r) => r),
+      ]
+      : []),
+  ]);
 
+  if (!sessionResult.data) notFound();
+  const session = sessionResult.data;
+  const allSignups = signupsResult.data ?? [];
+
+  if (user && userResults.length === 2) {
+    const roleResult = userResults[0] as Awaited<
+      ReturnType<typeof getUserSportRole>
+    >;
+    const userSignupResult = userResults[1] as {
+      data: { status: string } | null;
+    };
     ({ isAdmin, isTeamMember } = roleResult);
     userSignupStatus =
       (userSignupResult.data?.status as SignupStatus) ?? null;
   }
 
-  const { data: signups } = await signupsPromise;
-
-  const allSignups = signups ?? [];
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
 
