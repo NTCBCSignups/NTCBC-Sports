@@ -21,6 +21,7 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
+import StatusBadge from "@/components/status-badge";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
@@ -263,15 +264,7 @@ export default async function SessionDetailPage({
                         <LocalTimestamp date={signup.created_at} />
                       </TableCell>
                       <TableCell className="sticky right-0 bg-white border-l">
-                        {signup.status === "confirmed" ? (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                            Confirmed
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                            Waitlist
-                          </Badge>
-                        )}
+                        <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
                       </TableCell>
                     </TableRow>
                   );

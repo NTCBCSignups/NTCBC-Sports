@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
 import { reviewTeamAccessRequest } from "@/app/softball/actions/team-access";
+import StatusBadge from "@/components/status-badge";
 import { displayName } from "@/lib/format";
 import type { Profile, AccessRequestStatus } from "@/lib/supabase/types";
 
@@ -70,21 +70,7 @@ export default function AdminAccessRequests({
                 {request.profiles?.email ?? "—"}
               </TableCell>
               <TableCell>
-                {request.status === "pending" && (
-                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                    Pending
-                  </Badge>
-                )}
-                {request.status === "approved" && (
-                  <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                    Approved
-                  </Badge>
-                )}
-                {request.status === "rejected" && (
-                  <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
-                    Rejected
-                  </Badge>
-                )}
+                <StatusBadge status={request.status} />
               </TableCell>
               <TableCell className="text-xs text-gray-500">
                 {new Date(request.created_at).toLocaleDateString("en-US", {

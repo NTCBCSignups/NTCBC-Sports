@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
+import StatusBadge from "@/components/status-badge";
 import { displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
@@ -92,15 +92,7 @@ export default function AdminSessionSignups({
                 {displayName(signup.profiles)}
               </TableCell>
               <TableCell>
-                {signup.status === "confirmed" ? (
-                  <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                    Confirmed
-                  </Badge>
-                ) : (
-                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                    Waitlist
-                  </Badge>
-                )}
+                <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
