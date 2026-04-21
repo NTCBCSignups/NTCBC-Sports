@@ -6,7 +6,7 @@ import { Settings } from "lucide-react";
 import SessionCard from "@/components/softball/session-card";
 import TeamAccessBanner from "@/components/softball/team-access-banner";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
-import SoftballPageShell from "@/components/softball/softball-page-shell";
+import SportPageShell from "@/components/softball/softball-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -80,7 +80,7 @@ export default async function SoftballPage() {
   ) : null;
 
   return (
-    <SoftballPageShell user={user} sport={SPORT} actions={adminButton}>
+    <SportPageShell user={user} sport={SPORT} actions={adminButton}>
       <Tabs defaultValue="drop_in_practice" className="gap-4">
         <TabsList className="max-sm:w-full rounded-full">
           <TabsTrigger
@@ -157,6 +157,6 @@ export default async function SoftballPage() {
           </li>
         </ul>
       </div>
-    </SoftballPageShell>
+    </SportPageShell>
   );
 }

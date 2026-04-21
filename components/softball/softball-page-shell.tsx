@@ -5,19 +5,19 @@ import type { User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
 import { sportsConfig } from "@/lib/sports-config";
 
-interface SoftballPageShellProps {
+interface SportPageShellProps {
     user: User | null;
     sport: string;
     actions?: ReactNode;
     children: ReactNode;
 }
 
-export default function SoftballPageShell({
+export default function SportPageShell({
     user,
     sport,
     actions,
     children,
-}: SoftballPageShellProps) {
+}: SportPageShellProps) {
     const config = sportsConfig[sport];
 
     return (
