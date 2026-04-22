@@ -222,6 +222,18 @@ export default async function AdminPage({
     .from("ccsa_players")
     .select("email, first_name, last_name, waiver_status");
 
+  // Fetch all team members for CCSA matching
+  const { data: teamMembers } = await supabase
+    .from("sport_roles")
+    .select("user_id, is_team_member, profiles!sport_roles_user_id_fkey(full_name, email)")
+    .eq("sport", SPORT)
+    .eq("is_team_member", true);
+
+  // Fetch all profiles for account-exists detection
+  const { data: allProfiles } = await supabase
+    .from("profiles")
+    .select("full_name, email");
+
   const ccsaSession = await hasCcsaSession();
 
   const waiverByEmail = new Map<string, WaiverStatus>();
@@ -322,6 +334,14 @@ export default async function AdminPage({
                     first_name: p.first_name,
                     last_name: p.last_name,
                     waiver_status: p.waiver_status,
+                  }))}
+                  teamMembers={(teamMembers ?? []).map((m) => ({
+                    email: (m.profiles as unknown as { email: string })?.email ?? "",
+                    full_name: (m.profiles as unknown as { full_name: string })?.full_name ?? "",
+                  }))}
+                  allProfiles={(allProfiles ?? []).map((p) => ({
+                    email: p.email ?? "",
+                    full_name: p.full_name ?? "",
                   }))}
                 />
               </div>
