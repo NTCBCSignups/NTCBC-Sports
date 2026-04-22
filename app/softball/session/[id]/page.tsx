@@ -18,7 +18,6 @@ import {
   ArrowLeft,
   Settings,
   ShieldCheck,
-  ShieldAlert,
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
@@ -31,7 +30,7 @@ import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
 import { formatDate, formatTime, displayName } from "@/lib/format";
-import type { Profile, SignupStatus, WaiverStatus } from "@/lib/supabase/types";
+import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -110,22 +109,17 @@ export default async function SessionDetailPage({
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
 
-  // Fetch waiver data for signed-up players
-  const signupEmails = allSignups
-    .map((s) => (s.profiles as unknown as Profile | null)?.email)
-    .filter((e): e is string => !!e);
-
-  const { data: ccsaPlayers } = signupEmails.length
+  // Fetch team membership for signed-up players
+  const signupUserIds = allSignups.map((s) => s.user_id);
+  const { data: teamRoles } = signupUserIds.length
     ? await supabase
-      .from("ccsa_players")
-      .select("email, waiver_status")
-      .in("email", signupEmails)
+      .from("sport_roles")
+      .select("user_id")
+      .eq("sport", SPORT)
+      .eq("is_team_member", true)
+      .in("user_id", signupUserIds)
     : { data: [] };
-
-  const waiverByEmail = new Map<string, WaiverStatus>();
-  for (const cp of ccsaPlayers ?? []) {
-    waiverByEmail.set(cp.email, cp.waiver_status as WaiverStatus);
-  }
+  const teamMemberIds = new Set((teamRoles ?? []).map((r) => r.user_id));
 
   const isOpen = isSignupOpen(session);
 
@@ -265,8 +259,8 @@ export default async function SessionDetailPage({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-12">#</TableHead>
+                  <TableHead className="w-8 px-1"></TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Waiver</TableHead>
                   <TableHead>Signed up</TableHead>
                   <TableHead className="sticky right-0 bg-muted/50 border-l">
                     Status
@@ -281,26 +275,15 @@ export default async function SessionDetailPage({
                       <TableCell className="font-mono text-xs">
                         {index + 1}
                       </TableCell>
-                      <TableCell>
-                        {displayName(p)}
+                      <TableCell className="px-1 align-middle">
+                        {teamMemberIds.has(signup.user_id) && (
+                          <span className="flex items-center justify-center text-green-600" title="Team member">
+                            <ShieldCheck className="h-4 w-4" />
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        {(() => {
-                          const waiver = p?.email ? waiverByEmail.get(p.email) : undefined;
-                          if (!waiver) return <span className="text-xs text-gray-400">—</span>;
-                          if (waiver === "valid") {
-                            return (
-                              <span className="inline-flex items-center text-green-700" title="Waiver signed">
-                                <ShieldCheck className="h-4 w-4" />
-                              </span>
-                            );
-                          }
-                          return (
-                            <span className="inline-flex items-center text-amber-600" title={waiver === "needs_paper" ? "Needs paper waiver" : "Needs online waiver"}>
-                              <ShieldAlert className="h-4 w-4" />
-                            </span>
-                          );
-                        })()}
+                        {displayName(p)}
                       </TableCell>
                       <TableCell className="text-xs">
                         <LocalTimestamp date={signup.created_at} />

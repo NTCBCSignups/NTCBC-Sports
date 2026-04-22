@@ -34,6 +34,7 @@ function SessionAccordion({
   sessions,
   signupsBySession,
   waiverByEmail,
+  teamMemberIds,
   muted,
 }: {
   sessions: SportSession[];
@@ -48,6 +49,7 @@ function SessionAccordion({
     }[]
   >;
   waiverByEmail: Map<string, WaiverStatus>;
+  teamMemberIds: Set<string>;
   muted?: boolean;
 }) {
   if (sessions.length === 0) {
@@ -122,7 +124,7 @@ function SessionAccordion({
                   sessionId={session.id}
                   signups={sessionSignups}
                   playerCap={session.player_cap}
-                  waiverByEmail={waiverByEmail}
+                  teamMemberIds={teamMemberIds}
                 />
               </div>
             </AccordionContent>
@@ -244,9 +246,10 @@ export default async function AdminPage({
   const today = new Date().toISOString().split("T")[0];
   const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
+  const teamMemberIds = new Set((teamMembers ?? []).map((m) => m.user_id));
 
   return (
-    <div className="max-w-5xl mx-auto mb-12 space-y-6">
+    <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
       <div className="flex items-center justify-between">
         <Link
           href={`/${SPORT}`}
@@ -301,6 +304,7 @@ export default async function AdminPage({
                 sessions={upcomingSessions}
                 signupsBySession={signupsBySession}
                 waiverByEmail={waiverByEmail}
+                teamMemberIds={teamMemberIds}
               />
             </section>
           )}
@@ -314,6 +318,7 @@ export default async function AdminPage({
                 sessions={pastSessions}
                 signupsBySession={signupsBySession}
                 waiverByEmail={waiverByEmail}
+                teamMemberIds={teamMemberIds}
                 muted
               />
             </section>

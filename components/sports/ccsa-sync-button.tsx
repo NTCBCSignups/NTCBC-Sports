@@ -370,12 +370,12 @@ export default function CcsaSyncButton({
 
             {players.length > 0 && (
                 <div className="space-y-3">
-                    <div className="rounded-lg border overflow-hidden">
+                    <div className="rounded-lg border overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
                                 <tr>
                                     <th className="px-4 py-2">Name</th>
-                                    <th className="px-4 py-2">CCSA Email</th>
+                                    <th className="px-4 py-2 hidden xl:table-cell">CCSA Email</th>
                                     <th className="px-4 py-2">Waiver</th>
                                     <th className="px-4 py-2">Team Access</th>
                                 </tr>
@@ -392,16 +392,16 @@ export default function CcsaSyncButton({
 
                                     return (
                                         <tr key={p.email}>
-                                            <td className="px-4 py-2">{p.first_name} {p.last_name}</td>
-                                            <td className="px-4 py-2 text-gray-500">{p.email}</td>
-                                            <td className="px-4 py-2">
+                                            <td className="px-4 py-2 whitespace-nowrap">{p.first_name} {p.last_name}</td>
+                                            <td className="px-4 py-2 text-gray-500 hidden xl:table-cell">{p.email}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap">
                                                 {p.waiver_status === "valid" ? (
                                                     <span className="inline-flex items-center gap-1 text-green-600">
                                                         <ShieldCheck className="h-4 w-4" /> Valid
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center gap-1 text-amber-600">
-                                                        <ShieldAlert className="h-4 w-4" />
+                                                        <ShieldAlert className="h-4 w-4 shrink-0" />
                                                         {p.waiver_status === "needs_paper" ? "Needs Paper" : "Needs Online"}
                                                     </span>
                                                 )}
@@ -410,7 +410,7 @@ export default function CcsaSyncButton({
                                                 {/* On team — exact email */}
                                                 {access.status === "on-team" && access.via === "exact" && (
                                                     <span className="inline-flex items-center gap-1 text-green-600">
-                                                        <Check className="h-4 w-4" />
+                                                        <Check className="h-4 w-4 shrink-0" />
                                                         <span className="text-xs">On team</span>
                                                     </span>
                                                 )}
