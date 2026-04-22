@@ -141,7 +141,8 @@ export const sportsConfig: Record<string, SportConfig> = {
     day: "Click to see schedule",
     organizers: "Brandon Cho, Joshua Wong, Isaac Ng",
     notes: [
-      "This softball program is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
+      "Our team plays in the CCSA (Christian Community Softball Association), a Toronto-area church softball league that runs during the summer with Senior and Junior divisions.",
+      "Team registration for the 2026 season is now closed, but you're welcome to join our drop-in practice sessions! It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome.",
       "Softball has two session types: Drop-in Practice (open to all) & Scheduled Games (team members only).",
       "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
       "Please contact the admins if you have any questions.",
