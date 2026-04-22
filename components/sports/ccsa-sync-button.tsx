@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, UserCheck, ShieldCheck, ShieldAlert, LogOut, Trash2, Check } from "lucide-react";
+import { RefreshCw, UserCheck, LogOut, Trash2, Check } from "lucide-react";
+import { WaiverBadge } from "@/components/badges";
+import type { WaiverStatus } from "@/lib/supabase/types";
+import { colors, statusColors, feedback } from "@/lib/styles";
 import { Badge } from "@/components/ui/badge";
 import {
     Select,
@@ -362,11 +365,11 @@ export default function CcsaSyncButton({
 
             {(syncResult || error) && (
                 <div className="flex flex-wrap items-center gap-2">
-                    {syncResult && <p className="text-sm text-green-600 font-medium">{syncResult}</p>}
-                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    {syncResult && <p className={feedback.success}>{syncResult}</p>}
+                    {error && <p className={feedback.error}>{error}</p>}
                 </div>
             )}
-            {approveResult && <p className="text-sm text-green-600 font-medium">{approveResult}</p>}
+            {approveResult && <p className={feedback.success}>{approveResult}</p>}
 
             {players.length > 0 && (
                 <div className="space-y-3">
@@ -395,21 +398,12 @@ export default function CcsaSyncButton({
                                             <td className="px-4 py-2 whitespace-nowrap">{p.first_name} {p.last_name}</td>
                                             <td className="px-4 py-2 text-gray-500 hidden xl:table-cell">{p.email}</td>
                                             <td className="px-4 py-2 whitespace-nowrap">
-                                                {p.waiver_status === "valid" ? (
-                                                    <span className="inline-flex items-center gap-1 text-green-600">
-                                                        <ShieldCheck className="h-4 w-4" /> Valid
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 text-amber-600">
-                                                        <ShieldAlert className="h-4 w-4 shrink-0" />
-                                                        {p.waiver_status === "needs_paper" ? "Needs Paper" : "Needs Online"}
-                                                    </span>
-                                                )}
+                                                <WaiverBadge status={p.waiver_status as WaiverStatus} />
                                             </td>
                                             <td className="px-4 py-2">
                                                 {/* On team — exact email */}
                                                 {access.status === "on-team" && access.via === "exact" && (
-                                                    <span className="inline-flex items-center gap-1 text-green-600">
+                                                    <span className={`inline-flex items-center gap-1 ${colors.success}`}>
                                                         <Check className="h-4 w-4 shrink-0" />
                                                         <span className="text-xs">On team</span>
                                                     </span>
@@ -425,7 +419,7 @@ export default function CcsaSyncButton({
                                                             }
                                                         }}
                                                     >
-                                                        <SelectTrigger className="h-7 w-auto gap-1 text-xs text-green-600 border-green-200 bg-green-50 px-2 [&>svg]:h-3 [&>svg]:w-3">
+                                                        <SelectTrigger className={`h-7 w-auto gap-1 text-xs ${statusColors.green.text} ${statusColors.green.border} ${statusColors.green.bg} px-2 [&>svg]:h-3 [&>svg]:w-3`}>
                                                             <Check className="h-3 w-3 shrink-0" />
                                                             <SelectValue />
                                                         </SelectTrigger>
@@ -442,7 +436,7 @@ export default function CcsaSyncButton({
 
                                                 {/* Has account — exact email, not on team */}
                                                 {access.status === "has-account" && access.via === "exact" && (
-                                                    <span className="inline-flex items-center gap-1 text-amber-600">
+                                                    <span className={`inline-flex items-center gap-1 ${colors.warning}`}>
                                                         <UserCheck className="h-4 w-4" />
                                                         <span className="text-xs">Has account</span>
                                                     </span>
@@ -458,7 +452,7 @@ export default function CcsaSyncButton({
                                                             }
                                                         }}
                                                     >
-                                                        <SelectTrigger className="h-7 w-auto gap-1 text-xs text-amber-600 border-amber-200 bg-amber-50 px-2 [&>svg]:h-3 [&>svg]:w-3">
+                                                        <SelectTrigger className={`h-7 w-auto gap-1 text-xs ${statusColors.amber.text} ${statusColors.amber.border} ${statusColors.amber.bg} px-2 [&>svg]:h-3 [&>svg]:w-3`}>
                                                             <UserCheck className="h-3 w-3 shrink-0" />
                                                             <SelectValue />
                                                         </SelectTrigger>

@@ -17,14 +17,13 @@ import {
   MapPin,
   ArrowLeft,
   Settings,
-  ShieldCheck,
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SignupSummaryHeader from "@/components/softball/signup-summary-header";
-import StatusBadge from "@/components/status-badge";
+import { TeamMemberBadge, StatusBadge } from "@/components/badges";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
@@ -276,11 +275,7 @@ export default async function SessionDetailPage({
                         {index + 1}
                       </TableCell>
                       <TableCell className="px-1 align-middle">
-                        {teamMemberIds.has(signup.user_id) && (
-                          <span className="flex items-center justify-center text-green-600" title="Team member">
-                            <ShieldCheck className="h-4 w-4" />
-                          </span>
-                        )}
+                        {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
                       </TableCell>
                       <TableCell>
                         {displayName(p)}
