@@ -10,11 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUp, X, ShieldCheck } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
-import StatusBadge from "@/components/status-badge";
+import { StatusBadge, TeamMemberBadge } from "@/components/badges";
 import SignupSummaryHeader from "@/components/softball/signup-summary-header";
 import { displayName } from "@/lib/format";
+import { colors } from "@/lib/styles";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 interface SignupRow {
@@ -84,11 +85,7 @@ export default function AdminSessionSignups({
             <TableRow key={signup.id}>
               <TableCell className="font-mono text-xs">{index + 1}</TableCell>
               <TableCell className="px-1 align-middle">
-                {teamMemberIds?.has(signup.user_id) && (
-                  <span className="flex items-center justify-center text-green-600" title="Team member">
-                    <ShieldCheck className="h-4 w-4" />
-                  </span>
-                )}
+                {teamMemberIds?.has(signup.user_id) && <TeamMemberBadge />}
               </TableCell>
               <TableCell>
                 {displayName(signup.profiles)}
@@ -115,7 +112,7 @@ export default function AdminSessionSignups({
                     onClick={() => handleCancel(signup.id)}
                     disabled={pending === signup.id}
                     title="Remove signup"
-                    className="text-red-600 hover:text-red-700"
+                    className={colors.destructiveHover}
                   >
                     <X className="h-4 w-4" />
                   </Button>

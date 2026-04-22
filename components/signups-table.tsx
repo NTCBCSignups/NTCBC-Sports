@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import StatusBadge from "@/components/status-badge";
+import { StatusBadge } from "@/components/badges";
 import { FormResponseColumn } from "@/lib/schedule-utils";
 
 interface SignupsTableProps {

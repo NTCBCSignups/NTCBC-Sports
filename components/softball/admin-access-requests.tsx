@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { colors } from "@/lib/styles";
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
 import { reviewTeamAccessRequest } from "@/app/softball/actions/team-access";
-import StatusBadge from "@/components/status-badge";
+import { StatusBadge } from "@/components/badges";
 import { displayName } from "@/lib/format";
 import type { Profile, AccessRequestStatus } from "@/lib/supabase/types";
 
@@ -85,7 +86,7 @@ export default function AdminAccessRequests({
                     size="sm"
                     onClick={() => handleReview(request.id, "approved")}
                     disabled={pending === request.id || request.status === "approved"}
-                    className="text-green-600 hover:text-green-700 disabled:opacity-20"
+                    className={`${colors.successHover} disabled:opacity-20`}
                     title="Approve"
                   >
                     <Check className="h-4 w-4" />
@@ -95,7 +96,7 @@ export default function AdminAccessRequests({
                     size="sm"
                     onClick={() => handleReview(request.id, "rejected")}
                     disabled={pending === request.id || request.status === "rejected"}
-                    className="text-red-600 hover:text-red-700 disabled:opacity-20"
+                    className={`${colors.destructiveHover} disabled:opacity-20`}
                     title="Reject"
                   >
                     <X className="h-4 w-4" />
