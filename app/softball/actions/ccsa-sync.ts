@@ -178,31 +178,72 @@ export async function approveCcsaPlayersForTeam() {
 
     const { data: ccsaPlayers, error: fetchError } = await admin
         .from("ccsa_players")
-        .select("email");
+        .select("email, first_name, last_name");
 
     if (fetchError || !ccsaPlayers) {
         return { error: fetchError?.message ?? "No CCSA players found" };
     }
 
-    const emails = ccsaPlayers.map((p) => p.email);
-
-    // Find matching profiles
-    const { data: profiles, error: profileError } = await admin
+    // Fetch all profiles for both exact and fuzzy matching
+    const { data: allProfiles, error: profileError } = await admin
         .from("profiles")
-        .select("id, email")
-        .in("email", emails);
+        .select("id, email, full_name");
 
-    if (profileError || !profiles) {
+    if (profileError || !allProfiles) {
         return { error: profileError?.message ?? "Could not look up profiles" };
     }
 
+    // Match each CCSA player to a profile: exact email first, then fuzzy name
+    const matchedProfileIds = new Set<string>();
+    const profilesByEmail = new Map(allProfiles.map((p) => [p.email?.toLowerCase(), p]));
+
+    for (const cp of ccsaPlayers) {
+        // Exact email match
+        const emailMatch = profilesByEmail.get(cp.email.toLowerCase());
+        if (emailMatch) {
+            matchedProfileIds.add(emailMatch.id);
+            continue;
+        }
+
+        // Fuzzy name match
+        const pFirst = cp.first_name.toLowerCase().trim();
+        const pLast = cp.last_name.toLowerCase().trim();
+        for (const profile of allProfiles) {
+            const parts = (profile.full_name ?? "").toLowerCase().trim().split(/\s+/);
+            if (parts.length < 2) continue;
+            const mFirst = parts[0];
+            const mLast = parts[parts.length - 1];
+            if (mLast === pLast && (mFirst.includes(pFirst) || pFirst.includes(mFirst))) {
+                matchedProfileIds.add(profile.id);
+                break;
+            }
+        }
+    }
+
+    const profiles = allProfiles.filter((p) => matchedProfileIds.has(p.id));
+
     const userIds = profiles.map((p) => p.id);
 
-    // Batch upsert sport_roles
+    // Find who is already a team member so we can skip them
+    const { data: existingRoles } = await admin
+        .from("sport_roles")
+        .select("user_id")
+        .in("user_id", userIds)
+        .eq("sport", SPORT)
+        .eq("is_team_member", true);
+
+    const alreadyApproved = new Set(existingRoles?.map((r) => r.user_id) ?? []);
+    const newProfiles = profiles.filter((p) => !alreadyApproved.has(p.id));
+
+    if (newProfiles.length === 0) {
+        return { success: true, count: 0 };
+    }
+
+    // Batch upsert sport_roles for new members only
     const { error: rolesError } = await admin
         .from("sport_roles")
         .upsert(
-            profiles.map((p) => ({
+            newProfiles.map((p) => ({
                 user_id: p.id,
                 sport: SPORT,
                 is_team_member: true,
@@ -212,6 +253,8 @@ export async function approveCcsaPlayersForTeam() {
 
     if (rolesError) return { error: `Failed to update roles: ${rolesError.message}` };
 
+    const newUserIds = newProfiles.map((p) => p.id);
+
     // Batch approve pending team_access_requests
     await admin
         .from("team_access_requests")
@@ -220,13 +263,13 @@ export async function approveCcsaPlayersForTeam() {
             reviewed_by: user.id,
             reviewed_at: new Date().toISOString(),
         })
-        .in("user_id", userIds)
+        .in("user_id", newUserIds)
         .eq("sport", SPORT)
         .eq("status", "pending");
 
     revalidatePath(`/${SPORT}/admin`);
     revalidatePath(`/${SPORT}`);
-    return { success: true, count: profiles.length };
+    return { success: true, count: newProfiles.length };
 }
 
 export async function deleteAllCcsaPlayers() {
