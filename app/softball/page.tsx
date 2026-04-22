@@ -137,24 +137,12 @@ export default async function SoftballPage() {
       <div>
         <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>
         <ul className="space-y-2.5 ml-4 text-gray-700">
-          <li className="flex items-start text-sm">
-            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-            <span>
-              Softball has two session types: Scheduled Games (team members
-              only) and Drop-in Practice (open to all).
-            </span>
-          </li>
-          <li className="flex items-start text-sm">
-            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-            <span>Sign in with Google to sign up for sessions.</span>
-          </li>
-          <li className="flex items-start text-sm">
-            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
-            <span>
-              Please contact the admins if you have any questions: Joshua Wong,
-              Brandon Cho, Isaac Ng.
-            </span>
-          </li>
+          {config.notes?.map((note) => (
+            <li key={note} className="flex items-start text-sm">
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
+              <span>{note}</span>
+            </li>
+          ))}
         </ul>
       </div>
     </SportPageShell>
