@@ -10,12 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, X, ShieldCheck, ShieldAlert } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
 import StatusBadge from "@/components/status-badge";
 import SignupSummaryHeader from "@/components/softball/signup-summary-header";
 import { displayName } from "@/lib/format";
-import type { Profile, SignupStatus } from "@/lib/supabase/types";
+import type { Profile, SignupStatus, WaiverStatus } from "@/lib/supabase/types";
 
 interface SignupRow {
   id: string;
@@ -29,12 +29,14 @@ interface AdminSessionSignupsProps {
   sessionId: string;
   signups: SignupRow[];
   playerCap: number | null;
+  waiverByEmail?: Map<string, WaiverStatus>;
 }
 
 export default function AdminSessionSignups({
   sessionId,
   signups,
   playerCap,
+  waiverByEmail,
 }: AdminSessionSignupsProps) {
   const [pending, setPending] = useState<string | null>(null);
 
@@ -72,6 +74,7 @@ export default function AdminSessionSignups({
           <TableRow className="bg-muted/50">
             <TableHead className="w-12">#</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>Waiver</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -82,6 +85,25 @@ export default function AdminSessionSignups({
               <TableCell className="font-mono text-xs">{index + 1}</TableCell>
               <TableCell>
                 {displayName(signup.profiles)}
+              </TableCell>
+              <TableCell>
+                {(() => {
+                  const email = signup.profiles?.email;
+                  const waiver = email ? waiverByEmail?.get(email) : undefined;
+                  if (!waiver) return <span className="text-xs text-gray-400">—</span>;
+                  if (waiver === "valid") {
+                    return (
+                      <span className="inline-flex items-center gap-1 text-green-700" title="Waiver signed">
+                        <ShieldCheck className="h-4 w-4" />
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="inline-flex items-center gap-1 text-amber-600" title={waiver === "needs_paper" ? "Needs paper waiver" : "Needs online waiver"}>
+                      <ShieldAlert className="h-4 w-4" />
+                    </span>
+                  );
+                })()}
               </TableCell>
               <TableCell>
                 <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />

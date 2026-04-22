@@ -16,12 +16,14 @@ import AdminSessionSignups from "@/components/softball/admin-session-signups";
 import AdminAccessRequests from "@/components/softball/admin-access-requests";
 import DeleteSessionButton from "@/components/softball/delete-session-button";
 import AdminSidebar from "@/components/softball/admin-sidebar";
+import CcsaSyncButton from "@/components/sports/ccsa-sync-button";
 import { formatDate, formatTime } from "@/lib/format";
+import { hasCcsaSession } from "@/app/softball/actions/ccsa-sync";
 import type {
   Profile,
   SportSession,
   SignupStatus,
-  AccessRequestStatus,
+  AccessRequestStatus, WaiverStatus,
 } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,7 @@ const SPORT = "softball";
 function SessionAccordion({
   sessions,
   signupsBySession,
+  waiverByEmail,
   muted,
 }: {
   sessions: SportSession[];
@@ -44,6 +47,7 @@ function SessionAccordion({
       profiles: Profile | null;
     }[]
   >;
+  waiverByEmail: Map<string, WaiverStatus>;
   muted?: boolean;
 }) {
   if (sessions.length === 0) {
@@ -118,6 +122,7 @@ function SessionAccordion({
                   sessionId={session.id}
                   signups={sessionSignups}
                   playerCap={session.player_cap}
+                  waiverByEmail={waiverByEmail}
                 />
               </div>
             </AccordionContent>
@@ -206,6 +211,24 @@ export default async function AdminPage({
     (r) => r.status === "pending",
   );
 
+  const { data: lastSync } = await supabase
+    .from("ccsa_players")
+    .select("synced_at")
+    .order("synced_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: ccsaPlayers } = await supabase
+    .from("ccsa_players")
+    .select("email, first_name, last_name, waiver_status");
+
+  const ccsaSession = await hasCcsaSession();
+
+  const waiverByEmail = new Map<string, WaiverStatus>();
+  for (const cp of ccsaPlayers ?? []) {
+    waiverByEmail.set(cp.email, cp.waiver_status as WaiverStatus);
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
@@ -265,6 +288,7 @@ export default async function AdminPage({
               <SessionAccordion
                 sessions={upcomingSessions}
                 signupsBySession={signupsBySession}
+                waiverByEmail={waiverByEmail}
               />
             </section>
           )}
@@ -277,8 +301,30 @@ export default async function AdminPage({
               <SessionAccordion
                 sessions={pastSessions}
                 signupsBySession={signupsBySession}
+                waiverByEmail={waiverByEmail}
                 muted
               />
+            </section>
+          )}
+
+          {tab === "ccsa" && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-gray-900">
+                CCSA Sync
+              </h2>
+              <div className="rounded-lg border bg-white p-6">
+                <CcsaSyncButton
+                  lastSyncedAt={lastSync?.synced_at ?? null}
+                  hasSession={ccsaSession.hasCookies}
+                  sessionEmail={ccsaSession.email ?? undefined}
+                  initialPlayers={(ccsaPlayers ?? []).map((p) => ({
+                    email: p.email,
+                    first_name: p.first_name,
+                    last_name: p.last_name,
+                    waiver_status: p.waiver_status,
+                  }))}
+                />
+              </div>
             </section>
           )}
         </div>
