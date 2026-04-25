@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { feedback } from "@/lib/styles";
 import {
   Select,
   SelectContent,
@@ -270,9 +269,9 @@ export default function SessionForm() {
         />
       </div>
 
-      {error && <p className={feedback.error}>{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
       {success && (
-        <p className={feedback.success}>Session created successfully.</p>
+        <p className="text-sm text-green-600">Session created successfully.</p>
       )}
 
       <Button type="submit" disabled={pending} className="rounded-full">

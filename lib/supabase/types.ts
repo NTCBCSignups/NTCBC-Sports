@@ -65,15 +65,3 @@ export interface TeamAccessRequest {
   reviewed_at: string | null;
   profiles?: Profile;
 }
-
-export type WaiverStatus = "valid" | "needs_paper" | "needs_online";
-
-export interface CcsaPlayer {
-  id: string;
-  email: string;
-  ccsa_player_id: number;
-  first_name: string;
-  last_name: string;
-  waiver_status: WaiverStatus;
-  synced_at: string;
-}

@@ -7,7 +7,6 @@ import {
   cancelSignup,
 } from "@/app/softball/actions/signups";
 import type { SignupStatus } from "@/lib/supabase/types";
-import { feedback } from "@/lib/styles";
 
 interface SignupButtonProps {
   sessionId: string;
@@ -96,7 +95,7 @@ export default function SignupButton({
           {pending ? "Signing up..." : "Sign up"}
         </Button>
       )}
-      {error && <p className={feedback.error}>{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }
