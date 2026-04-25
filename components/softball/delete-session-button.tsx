@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteSession } from "@/app/softball/actions/sessions";
+import { colors } from "@/lib/styles";
 
 interface DeleteSessionButtonProps {
   sessionId: string;
@@ -25,7 +26,7 @@ export default function DeleteSessionButton({
   if (confirming) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm text-red-600">Delete?</span>
+        <span className={`text-sm ${colors.destructive}`}>Delete?</span>
         <Button
           variant="destructive"
           size="sm"
@@ -51,7 +52,7 @@ export default function DeleteSessionButton({
       variant="ghost"
       size="sm"
       onClick={() => setConfirming(true)}
-      className="text-red-600 hover:text-red-700"
+      className={colors.destructiveHover}
       title="Delete session"
     >
       <Trash2 className="h-4 w-4" />

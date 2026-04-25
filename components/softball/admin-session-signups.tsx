@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/table";
 import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
-import StatusBadge from "@/components/status-badge";
+import { StatusBadge, TeamMemberBadge } from "@/components/badges";
 import SignupSummaryHeader from "@/components/softball/signup-summary-header";
 import { displayName } from "@/lib/format";
+import { colors } from "@/lib/styles";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 interface SignupRow {
@@ -29,12 +30,14 @@ interface AdminSessionSignupsProps {
   sessionId: string;
   signups: SignupRow[];
   playerCap: number | null;
+  teamMemberIds?: Set<string>;
 }
 
 export default function AdminSessionSignups({
   sessionId,
   signups,
   playerCap,
+  teamMemberIds,
 }: AdminSessionSignupsProps) {
   const [pending, setPending] = useState<string | null>(null);
 
@@ -71,6 +74,7 @@ export default function AdminSessionSignups({
         <TableHeader>
           <TableRow className="bg-muted/50">
             <TableHead className="w-12">#</TableHead>
+            <TableHead className="w-8 px-1"></TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -80,6 +84,9 @@ export default function AdminSessionSignups({
           {activeSignups.map((signup, index) => (
             <TableRow key={signup.id}>
               <TableCell className="font-mono text-xs">{index + 1}</TableCell>
+              <TableCell className="px-1 align-middle">
+                {teamMemberIds?.has(signup.user_id) && <TeamMemberBadge />}
+              </TableCell>
               <TableCell>
                 {displayName(signup.profiles)}
               </TableCell>
@@ -105,7 +112,7 @@ export default function AdminSessionSignups({
                     onClick={() => handleCancel(signup.id)}
                     disabled={pending === signup.id}
                     title="Remove signup"
-                    className="text-red-600 hover:text-red-700"
+                    className={colors.destructiveHover}
                   >
                     <X className="h-4 w-4" />
                   </Button>

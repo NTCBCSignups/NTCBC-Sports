@@ -133,19 +133,21 @@ export const sportsConfig: Record<string, SportConfig> = {
     restrictedAccessEnabled: true,
     emoji: "🥎",
     name: "Softball",
-    type: "Scheduled Games & Drop-in Practice",
+    type: "Drop-in Practice & Scheduled CCSA Games",
     location: {
       name: "Various locations",
       address: "See individual sessions",
     },
-    day: "See schedule",
-    organizers: "Daniel Ye",
+    day: "Click to see schedule",
+    organizers: "Brandon Cho, Joshua Wong, Isaac Ng",
     notes: [
-      "Softball has two session types: Scheduled Games (team members only) and Drop-in Practice (open to all).",
-      "Sign in with Google to sign up for sessions.",
+      "Our team plays in the CCSA (Christian Community Softball Association), a Toronto-area church softball league that runs during the summer with Senior and Junior divisions.",
+      "Team registration for the 2026 season is now closed, but you're welcome to join our drop-in practice sessions! It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome.",
+      "Softball has two session types: Drop-in Practice (open to all) & Scheduled Games (team members only).",
+      "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
       "Please contact the admins if you have any questions.",
     ],
     description:
-      "Join us for scheduled games or drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
+      "Join us for drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
   },
 } satisfies Record<string, SportConfig>;

@@ -17,13 +17,14 @@ import {
   MapPin,
   ArrowLeft,
   Settings,
+  UserStar,
 } from "lucide-react";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SignupSummaryHeader from "@/components/softball/signup-summary-header";
-import StatusBadge from "@/components/status-badge";
+import { TeamMemberBadge, StatusBadge } from "@/components/badges";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
@@ -42,12 +43,12 @@ export default async function SessionDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const sportConfig = sportsConfig[SPORT];
+  const config = sportsConfig[SPORT];
 
   // Middleware validates the JWT and forwards the user via request header.
-  const user = sportConfig?.authEnabled ? await getUser() : null;
+  const user = config?.authEnabled ? await getUser() : null;
 
-  if (sportConfig?.authEnabled && !user) {
+  if (config?.authEnabled && !user) {
     return <SignInPrompt sport={SPORT} />;
   }
 
@@ -68,7 +69,7 @@ export default async function SessionDetailPage({
     .then((r) => r);
 
   let isAdmin = false;
-  let isTeamMember = !sportConfig?.restrictedAccessEnabled;
+  let isTeamMember = !config?.restrictedAccessEnabled;
   let userSignupStatus: SignupStatus | null = null;
 
   const [sessionResult, signupsResult, ...userResults] = await Promise.all([
@@ -108,9 +109,21 @@ export default async function SessionDetailPage({
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
 
+  // Fetch team membership for signed-up players
+  const signupUserIds = allSignups.map((s) => s.user_id);
+  const { data: teamRoles } = signupUserIds.length
+    ? await supabase
+      .from("sport_roles")
+      .select("user_id")
+      .eq("sport", SPORT)
+      .eq("is_team_member", true)
+      .in("user_id", signupUserIds)
+    : { data: [] };
+  const teamMemberIds = new Set((teamRoles ?? []).map((r) => r.user_id));
+
   const isOpen = isSignupOpen(session);
 
-  const isEligible = sportConfig?.restrictedAccessEnabled
+  const isEligible = config?.restrictedAccessEnabled
     ? session.session_type === "drop_in_practice" || isTeamMember
     : true;
 
@@ -127,7 +140,7 @@ export default async function SessionDetailPage({
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to {sportConfig?.name ?? "Softball"}
+          Back to {config?.name ?? "Softball"}
         </Link>
         <div className="flex items-center gap-2">
           {isAdmin && (
@@ -138,7 +151,7 @@ export default async function SessionDetailPage({
               </Link>
             </Button>
           )}
-          {sportConfig?.authEnabled && <AuthButton user={user} sport={session.sport} />}
+          {config?.authEnabled && <AuthButton user={user} sport={session.sport} />}
         </div>
       </div>
 
@@ -207,6 +220,13 @@ export default async function SessionDetailPage({
                 isFormOpen={isOpen}
               />
             )}
+            <div className="flex items-start gap-2">
+              <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Admins</span>
+                <span className="text-gray-700">{config?.organizers}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -246,6 +266,7 @@ export default async function SessionDetailPage({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-12">#</TableHead>
+                  <TableHead className="w-8 px-1"></TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Signed up</TableHead>
                   <TableHead className="sticky right-0 bg-muted/50 border-l">
@@ -260,6 +281,9 @@ export default async function SessionDetailPage({
                     <TableRow key={signup.id}>
                       <TableCell className="font-mono text-xs">
                         {index + 1}
+                      </TableCell>
+                      <TableCell className="px-1 align-middle">
+                        {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
                       </TableCell>
                       <TableCell>
                         {displayName(p)}
