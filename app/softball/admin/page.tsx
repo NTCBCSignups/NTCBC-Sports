@@ -16,12 +16,14 @@ import AdminSessionSignups from "@/components/softball/admin-session-signups";
 import AdminAccessRequests from "@/components/softball/admin-access-requests";
 import DeleteSessionButton from "@/components/softball/delete-session-button";
 import AdminSidebar from "@/components/softball/admin-sidebar";
+import CcsaSyncButton from "@/components/sports/ccsa-sync-button";
 import { formatDate, formatTime } from "@/lib/format";
+import { hasCcsaSession } from "@/app/softball/actions/ccsa-sync";
 import type {
   Profile,
   SportSession,
   SignupStatus,
-  AccessRequestStatus,
+  AccessRequestStatus, WaiverStatus,
 } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,8 @@ const SPORT = "softball";
 function SessionAccordion({
   sessions,
   signupsBySession,
+  waiverByEmail,
+  teamMemberIds,
   muted,
 }: {
   sessions: SportSession[];
@@ -44,6 +48,8 @@ function SessionAccordion({
       profiles: Profile | null;
     }[]
   >;
+  waiverByEmail: Map<string, WaiverStatus>;
+  teamMemberIds: Set<string>;
   muted?: boolean;
 }) {
   if (sessions.length === 0) {
@@ -118,6 +124,7 @@ function SessionAccordion({
                   sessionId={session.id}
                   signups={sessionSignups}
                   playerCap={session.player_cap}
+                  teamMemberIds={teamMemberIds}
                 />
               </div>
             </AccordionContent>
@@ -206,12 +213,43 @@ export default async function AdminPage({
     (r) => r.status === "pending",
   );
 
+  const { data: lastSync } = await supabase
+    .from("ccsa_players")
+    .select("synced_at")
+    .order("synced_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: ccsaPlayers } = await supabase
+    .from("ccsa_players")
+    .select("email, first_name, last_name, waiver_status");
+
+  // Fetch all team members for CCSA matching
+  const { data: teamMembers } = await supabase
+    .from("sport_roles")
+    .select("user_id, is_team_member, profiles!sport_roles_user_id_fkey(full_name, email)")
+    .eq("sport", SPORT)
+    .eq("is_team_member", true);
+
+  // Fetch all profiles for account-exists detection
+  const { data: allProfiles } = await supabase
+    .from("profiles")
+    .select("full_name, email");
+
+  const ccsaSession = await hasCcsaSession();
+
+  const waiverByEmail = new Map<string, WaiverStatus>();
+  for (const cp of ccsaPlayers ?? []) {
+    waiverByEmail.set(cp.email, cp.waiver_status as WaiverStatus);
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
+  const teamMemberIds = new Set((teamMembers ?? []).map((m) => m.user_id));
 
   return (
-    <div className="max-w-5xl mx-auto mb-12 space-y-6">
+    <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
       <div className="flex items-center justify-between">
         <Link
           href={`/${SPORT}`}
@@ -265,6 +303,8 @@ export default async function AdminPage({
               <SessionAccordion
                 sessions={upcomingSessions}
                 signupsBySession={signupsBySession}
+                waiverByEmail={waiverByEmail}
+                teamMemberIds={teamMemberIds}
               />
             </section>
           )}
@@ -277,8 +317,39 @@ export default async function AdminPage({
               <SessionAccordion
                 sessions={pastSessions}
                 signupsBySession={signupsBySession}
+                waiverByEmail={waiverByEmail}
+                teamMemberIds={teamMemberIds}
                 muted
               />
+            </section>
+          )}
+
+          {tab === "ccsa" && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-gray-900">
+                CCSA Sync
+              </h2>
+              <div className="rounded-lg border bg-white p-6">
+                <CcsaSyncButton
+                  lastSyncedAt={lastSync?.synced_at ?? null}
+                  hasSession={ccsaSession.hasCookies}
+                  sessionEmail={ccsaSession.email ?? undefined}
+                  initialPlayers={(ccsaPlayers ?? []).map((p) => ({
+                    email: p.email,
+                    first_name: p.first_name,
+                    last_name: p.last_name,
+                    waiver_status: p.waiver_status,
+                  }))}
+                  teamMembers={(teamMembers ?? []).map((m) => ({
+                    email: (m.profiles as unknown as { email: string })?.email ?? "",
+                    full_name: (m.profiles as unknown as { full_name: string })?.full_name ?? "",
+                  }))}
+                  allProfiles={(allProfiles ?? []).map((p) => ({
+                    email: p.email ?? "",
+                    full_name: p.full_name ?? "",
+                  }))}
+                />
+              </div>
             </section>
           )}
         </div>
