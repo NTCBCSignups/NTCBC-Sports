@@ -10,28 +10,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import CountdownTimer from "@/components/countdown-timer";
+import { formatDate, formatTime } from "@/lib/format";
+import { isSignupOpen } from "@/lib/signup-capacity";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
   session: SportSession & { signup_count: number };
-}
-
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${m} ${ampm}`;
 }
 
 function getSignupStatus(session: SportSession): {
@@ -49,13 +33,10 @@ function getSignupStatus(session: SportSession): {
 
 export default function SessionCard({ session }: SessionCardProps) {
   const status = getSignupStatus(session);
-  const now = new Date();
-  const isOpen =
-    (!session.signup_open || now >= new Date(session.signup_open)) &&
-    (!session.signup_close || now <= new Date(session.signup_close));
+  const isOpen = isSignupOpen(session);
 
   return (
-    <Link href={`/softball/session/${session.id}`} className="block h-full">
+    <Link href={`/${session.sport}/session/${session.id}`} className="block h-full">
       <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
         <CardHeader className="pb-1.5">
           <div className="flex items-start justify-between gap-2">

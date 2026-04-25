@@ -6,7 +6,7 @@ import { Settings } from "lucide-react";
 import SessionCard from "@/components/softball/session-card";
 import TeamAccessBanner from "@/components/softball/team-access-banner";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
-import SoftballPageShell from "@/components/softball/softball-page-shell";
+import SportPageShell from "@/components/softball/softball-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -27,41 +27,35 @@ export default async function SoftballPage() {
     return <SignInPrompt sport={SPORT} />;
   }
 
-  // ── Roles & access ─────────────────────────────────────────────
-  let isAdmin = false;
-  let isTeamMember = true;
-  let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
-
-  if (user) {
-    ({ isAdmin, isTeamMember } = await getUserSportRole(
-      supabase,
-      user.id,
-      SPORT,
-    ));
-
-    if (config.restrictedAccessEnabled && !isTeamMember) {
-      const { data: request } = await supabase
-        .from("team_access_requests")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("sport", SPORT)
-        .single();
-      accessRequestStatus = request?.status ?? null;
-    }
-  }
-
-  // ── Sessions ───────────────────────────────────────────────────
-  // RLS requires an authenticated user; fall back to the admin client
-  // when auth is disabled so the query still returns rows.
+  // ── Roles, access & sessions (parallel) ─────────────────────────
   const queryClient = user ? supabase : createAdminClient();
 
-  const { data: sessions } = await queryClient
-    .from("sessions")
-    .select("*, signups(count)")
-    .eq("sport", SPORT)
-    .neq("signups.status", "cancelled")
-    .gte("date", new Date().toISOString().split("T")[0])
-    .order("date", { ascending: true });
+  const [roleResult, sessionsResult] = await Promise.all([
+    user
+      ? getUserSportRole(supabase, user.id, SPORT)
+      : Promise.resolve({ isAdmin: false, isTeamMember: true }),
+    queryClient
+      .from("sessions")
+      .select("*, signups(count)")
+      .eq("sport", SPORT)
+      .neq("signups.status", "cancelled")
+      .gte("date", new Date().toISOString().split("T")[0])
+      .order("date", { ascending: true }),
+  ]);
+
+  let { isAdmin, isTeamMember } = roleResult;
+  const { data: sessions } = sessionsResult;
+  let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
+
+  if (user && config.restrictedAccessEnabled && !isTeamMember) {
+    const { data: request } = await supabase
+      .from("team_access_requests")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("sport", SPORT)
+      .single();
+    accessRequestStatus = request?.status ?? null;
+  }
 
   const sessionsWithCounts = (sessions ?? []).map((s) => ({
     ...s,
@@ -86,7 +80,7 @@ export default async function SoftballPage() {
   ) : null;
 
   return (
-    <SoftballPageShell user={user} sport={SPORT} actions={adminButton}>
+    <SportPageShell user={user} sport={SPORT} actions={adminButton}>
       <Tabs defaultValue="drop_in_practice" className="gap-4">
         <TabsList className="max-sm:w-full rounded-full">
           <TabsTrigger
@@ -163,6 +157,6 @@ export default async function SoftballPage() {
           </li>
         </ul>
       </div>
-    </SoftballPageShell>
+    </SportPageShell>
   );
 }

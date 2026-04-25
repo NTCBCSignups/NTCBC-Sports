@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/supabase/user";
+import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -16,8 +16,10 @@ import AdminSessionSignups from "@/components/softball/admin-session-signups";
 import AdminAccessRequests from "@/components/softball/admin-access-requests";
 import DeleteSessionButton from "@/components/softball/delete-session-button";
 import AdminSidebar from "@/components/softball/admin-sidebar";
+import { formatDate, formatTime } from "@/lib/format";
 import type {
   Profile,
+  SportSession,
   SignupStatus,
   AccessRequestStatus,
 } from "@/lib/supabase/types";
@@ -26,30 +28,12 @@ export const dynamic = "force-dynamic";
 
 const SPORT = "softball";
 
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${m} ${ampm}`;
-}
-
 function SessionAccordion({
   sessions,
   signupsBySession,
   muted,
 }: {
-  sessions: Record<string, unknown>[];
+  sessions: SportSession[];
   signupsBySession: Map<
     string,
     {
@@ -70,16 +54,16 @@ function SessionAccordion({
 
   return (
     <Accordion type="multiple" className="space-y-2">
-      {sessions.map((session: Record<string, unknown>) => {
+      {sessions.map((session) => {
         const sessionSignups =
-          signupsBySession.get(session.id as string) ?? [];
+          signupsBySession.get(session.id) ?? [];
         const activeCount = sessionSignups.filter(
           (s) => s.status !== "cancelled",
         ).length;
         return (
           <AccordionItem
-            key={session.id as string}
-            value={session.id as string}
+            key={session.id}
+            value={session.id}
             className="!border-b rounded-lg border bg-white px-4"
           >
             <AccordionTrigger className="hover:no-underline py-3">
@@ -89,32 +73,31 @@ function SessionAccordion({
                     <div
                       className={`font-medium ${muted ? "text-gray-500" : ""}`}
                     >
-                      {(session.title as string) ||
-                        formatDate(session.date as string)}
+                      {session.title || formatDate(session.date)}
                     </div>
                     <div
                       className={`text-xs flex items-center gap-3 mt-0.5 ${muted ? "text-gray-400" : "text-gray-500"}`}
                     >
                       <span className="flex items-center gap-1">
                         <CalendarDays className="h-3 w-3" />
-                        {formatDate(session.date as string)}
+                        {formatDate(session.date)}
                       </span>
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {session.location_name as string}
+                        {session.location_name}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">
-                    {(session.session_type as string) === "scheduled_game"
+                    {session.session_type === "scheduled_game"
                       ? "Game"
                       : "Practice"}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     {activeCount}
-                    {(session.player_cap as number | null)
+                    {session.player_cap
                       ? ` / ${session.player_cap}`
                       : ""}
                   </Badge>
@@ -125,16 +108,16 @@ function SessionAccordion({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    {formatTime(session.time_start as string)} –{" "}
-                    {formatTime(session.time_end as string)} ·{" "}
-                    {session.location_address as string}
+                    {formatTime(session.time_start)} –{" "}
+                    {formatTime(session.time_end)} ·{" "}
+                    {session.location_address}
                   </div>
-                  <DeleteSessionButton sessionId={session.id as string} />
+                  <DeleteSessionButton sessionId={session.id} />
                 </div>
                 <AdminSessionSignups
-                  sessionId={session.id as string}
+                  sessionId={session.id}
                   signups={sessionSignups}
-                  playerCap={session.player_cap as number | null}
+                  playerCap={session.player_cap}
                 />
               </div>
             </AccordionContent>
@@ -157,32 +140,26 @@ export default async function AdminPage({
 
   if (!user) redirect(`/${SPORT}`);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  let isAdmin = profile?.role === "admin";
-
-  if (!isAdmin) {
-    const { data: sportRole } = await supabase
-      .from("sport_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("sport", SPORT)
-      .single();
-    isAdmin = sportRole?.role === "admin";
-  }
-
+  const { isAdmin } = await getUserSportRole(supabase, user.id, SPORT);
   if (!isAdmin) redirect(`/${SPORT}`);
 
-  const { data: sessions } = await supabase
-    .from("sessions")
-    .select("*")
-    .eq("sport", SPORT)
-    .order("date", { ascending: false });
+  // ── Fetch sessions & access requests in parallel ───────────────
+  const [{ data: sessions }, { data: accessRequests }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("sport", SPORT)
+      .order("date", { ascending: false }),
+    supabase
+      .from("team_access_requests")
+      .select(
+        "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
+      )
+      .eq("sport", SPORT)
+      .order("created_at", { ascending: false }),
+  ]);
 
+  // ── Fetch signups for all sessions ─────────────────────────────
   const sessionIds = (sessions ?? []).map((s) => s.id);
 
   const { data: allSignups } = sessionIds.length
@@ -216,14 +193,6 @@ export default async function AdminPage({
     });
     signupsBySession.set(signup.session_id, list);
   }
-
-  const { data: accessRequests } = await supabase
-    .from("team_access_requests")
-    .select(
-      "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
-    )
-    .eq("sport", SPORT)
-    .order("created_at", { ascending: false });
 
   const formattedRequests = (accessRequests ?? []).map((r) => ({
     id: r.id,

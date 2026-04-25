@@ -21,31 +21,19 @@ import {
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
+import { isSignupOpen } from "@/lib/signup-capacity";
+import SignupSummaryHeader from "@/components/softball/signup-summary-header";
+import StatusBadge from "@/components/status-badge";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/lib/sports-config";
+import { formatDate, formatTime, displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [h, m] = time.split(":");
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${m} ${ampm}`;
-}
+const SPORT = "softball";
 
 export default async function SessionDetailPage({
   params,
@@ -54,62 +42,73 @@ export default async function SessionDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const sportConfig = sportsConfig["softball"];
+  const sportConfig = sportsConfig[SPORT];
 
   // Middleware validates the JWT and forwards the user via request header.
   const user = sportConfig?.authEnabled ? await getUser() : null;
 
   if (sportConfig?.authEnabled && !user) {
-    return <SignInPrompt sport="softball" />;
+    return <SignInPrompt sport={SPORT} />;
   }
 
-  const { data: session } = await supabase
+  // Run session, signups, and user-specific queries in parallel
+  const sessionPromise = supabase
     .from("sessions")
     .select("*")
     .eq("id", id)
-    .single();
+    .single()
+    .then((r) => r);
 
-  if (!session) notFound();
-
-  // Run user-role queries and the public signups query in parallel
   const signupsPromise = supabase
     .from("signups")
     .select("*, profiles(full_name, email)")
     .eq("session_id", id)
     .neq("status", "cancelled")
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .then((r) => r);
 
   let isAdmin = false;
   let isTeamMember = !sportConfig?.restrictedAccessEnabled;
   let userSignupStatus: SignupStatus | null = null;
 
-  if (user) {
-    const [roleResult, userSignupResult] = await Promise.all([
-      getUserSportRole(supabase, user.id, session.sport),
-      supabase
-        .from("signups")
-        .select("status")
-        .eq("session_id", id)
-        .eq("user_id", user.id)
-        .neq("status", "cancelled")
-        .single(),
-    ]);
+  const [sessionResult, signupsResult, ...userResults] = await Promise.all([
+    sessionPromise,
+    signupsPromise,
+    ...(user
+      ? [
+        getUserSportRole(supabase, user.id, SPORT),
+        supabase
+          .from("signups")
+          .select("status")
+          .eq("session_id", id)
+          .eq("user_id", user.id)
+          .neq("status", "cancelled")
+          .single()
+          .then((r) => r),
+      ]
+      : []),
+  ]);
 
+  if (!sessionResult.data) notFound();
+  const session = sessionResult.data;
+  const allSignups = signupsResult.data ?? [];
+
+  if (user && userResults.length === 2) {
+    const roleResult = userResults[0] as Awaited<
+      ReturnType<typeof getUserSportRole>
+    >;
+    const userSignupResult = userResults[1] as {
+      data: { status: string } | null;
+    };
     ({ isAdmin, isTeamMember } = roleResult);
     userSignupStatus =
       (userSignupResult.data?.status as SignupStatus) ?? null;
   }
 
-  const { data: signups } = await signupsPromise;
-
-  const allSignups = signups ?? [];
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
 
-  const now = new Date();
-  const isOpen =
-    (!session.signup_open || now >= new Date(session.signup_open)) &&
-    (!session.signup_close || now <= new Date(session.signup_close));
+  const isOpen = isSignupOpen(session);
 
   const isEligible = sportConfig?.restrictedAccessEnabled
     ? session.session_type === "drop_in_practice" || isTeamMember
@@ -124,16 +123,16 @@ export default async function SessionDetailPage({
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <div className="flex items-center justify-between">
         <Link
-          href="/softball"
+          href={`/${SPORT}`}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Softball
+          Back to {sportConfig?.name ?? "Softball"}
         </Link>
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href="/softball/admin">
+              <Link href={`/${SPORT}/admin`}>
                 <Settings className="h-4 w-4" />
                 Admin
               </Link>
@@ -149,7 +148,7 @@ export default async function SessionDetailPage({
             <Badge variant="secondary">{sessionTypeLabel}</Badge>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">
-            {session.title || formatDate(session.date)}
+            {session.title || formatDate(session.date, "long")}
           </h1>
         </div>
 
@@ -159,7 +158,7 @@ export default async function SessionDetailPage({
               <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
                 <span className="font-medium text-gray-900">Date</span>
-                <span className="text-gray-700">{formatDate(session.date)}</span>
+                <span className="text-gray-700">{formatDate(session.date, "long")}</span>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -232,22 +231,11 @@ export default async function SessionDetailPage({
       <div className="space-y-2">
         <h2 className="font-semibold text-gray-900">Attendance</h2>
         <div className="overflow-hidden rounded-lg border bg-white">
-          <div className="flex border-b">
-            <div className="flex-1 px-4 py-3 border-r">
-              <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
-              <p
-                className={`text-sm font-semibold ${session.player_cap && confirmedSignups.length > session.player_cap ? "text-amber-600" : "text-gray-900"}`}
-              >
-                {confirmedSignups.length}{session.player_cap ? ` / ${session.player_cap}` : ""}
-              </p>
-            </div>
-            <div className="flex-1 px-4 py-3">
-              <p className="text-xs text-muted-foreground mb-0.5">Waitlist</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {waitlistedSignups.length}
-              </p>
-            </div>
-          </div>
+          <SignupSummaryHeader
+            confirmedCount={confirmedSignups.length}
+            waitlistedCount={waitlistedSignups.length}
+            playerCap={session.player_cap}
+          />
 
           {allSignups.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
@@ -274,21 +262,13 @@ export default async function SessionDetailPage({
                         {index + 1}
                       </TableCell>
                       <TableCell>
-                        {p?.full_name ?? p?.email ?? "Unknown"}
+                        {displayName(p)}
                       </TableCell>
                       <TableCell className="text-xs">
                         <LocalTimestamp date={signup.created_at} />
                       </TableCell>
                       <TableCell className="sticky right-0 bg-white border-l">
-                        {signup.status === "confirmed" ? (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                            Confirmed
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                            Waitlist
-                          </Badge>
-                        )}
+                        <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
                       </TableCell>
                     </TableRow>
                   );

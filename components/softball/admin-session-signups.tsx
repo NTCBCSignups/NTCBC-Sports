@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,6 +12,9 @@ import {
 } from "@/components/ui/table";
 import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
+import StatusBadge from "@/components/status-badge";
+import SignupSummaryHeader from "@/components/softball/signup-summary-header";
+import { displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 interface SignupRow {
@@ -60,20 +62,11 @@ export default function AdminSessionSignups({
 
   return (
     <div className="overflow-hidden rounded-lg border bg-white">
-      <div className="flex border-b">
-        <div className="flex-1 px-4 py-3 border-r">
-          <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
-          <p className="text-sm font-semibold text-gray-900">
-            {confirmed.length}{playerCap ? ` / ${playerCap}` : ""}
-          </p>
-        </div>
-        <div className="flex-1 px-4 py-3">
-          <p className="text-xs text-muted-foreground mb-0.5">Waitlisted</p>
-          <p className="text-sm font-semibold text-gray-900">
-            {waitlisted.length}
-          </p>
-        </div>
-      </div>
+      <SignupSummaryHeader
+        confirmedCount={confirmed.length}
+        waitlistedCount={waitlisted.length}
+        playerCap={playerCap}
+      />
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
@@ -88,20 +81,10 @@ export default function AdminSessionSignups({
             <TableRow key={signup.id}>
               <TableCell className="font-mono text-xs">{index + 1}</TableCell>
               <TableCell>
-                {signup.profiles?.full_name ??
-                  signup.profiles?.email ??
-                  "Unknown"}
+                {displayName(signup.profiles)}
               </TableCell>
               <TableCell>
-                {signup.status === "confirmed" ? (
-                  <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                    Confirmed
-                  </Badge>
-                ) : (
-                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                    Waitlist
-                  </Badge>
-                )}
+                <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">

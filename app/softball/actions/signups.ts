@@ -5,15 +5,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
 import { sportsConfig } from "@/lib/sports-config";
-import { getUserSportRole } from "@/lib/supabase/user";
+import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
 const SPORT = "softball";
 
 export async function signUpForSession(sessionId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   if (!user) return { error: "Not authenticated" };
 
@@ -89,9 +87,7 @@ export async function signUpForSession(sessionId: string) {
 
 export async function cancelSignup(sessionId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   if (!user) return { error: "Not authenticated" };
 
@@ -147,30 +143,8 @@ export async function adminUpdateSignupStatus(
   sessionId: string,
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  let isAdmin = profile?.role === "admin";
-  if (!isAdmin) {
-    const { data: sportRole } = await supabase
-      .from("sport_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("sport", SPORT)
-      .single();
-    isAdmin = sportRole?.role === "admin";
-  }
-
-  if (!isAdmin) return { error: "Not authorized" };
+  const result = await requireSportAdmin(supabase, SPORT);
+  if (!result.success) return { error: result.error };
 
   const { data: before, error: beforeError } = await supabase
     .from("signups")

@@ -51,3 +51,21 @@ export async function getUserSportRole(
 
     return { isAdmin, isTeamMember };
 }
+
+/**
+ * Asserts the current user is an admin for the given sport.
+ * Returns the authenticated user on success, or an error object on failure.
+ * Combines auth check + role check in a single call with parallel queries.
+ */
+export async function requireSportAdmin(
+    supabase: SupabaseClient,
+    sport: string,
+): Promise<{ success: true; user: User } | { success: false; error: string }> {
+    const user = await getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const { isAdmin } = await getUserSportRole(supabase, user.id, sport);
+    if (!isAdmin) return { success: false, error: "Not authorized" };
+
+    return { success: true, user };
+}

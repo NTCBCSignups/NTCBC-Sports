@@ -2,14 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getUser, requireSportAdmin } from "@/lib/supabase/user";
 
 const SPORT = "softball";
 
 export async function requestTeamAccess(sport: string = SPORT) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   if (!user) return { error: "Not authenticated" };
 
@@ -32,30 +31,8 @@ export async function reviewTeamAccessRequest(
   status: "approved" | "rejected",
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  let isAdmin = profile?.role === "admin";
-  if (!isAdmin) {
-    const { data: sportRole } = await supabase
-      .from("sport_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("sport", SPORT)
-      .single();
-    isAdmin = sportRole?.role === "admin";
-  }
-
-  if (!isAdmin) return { error: "Not authorized" };
+  const result = await requireSportAdmin(supabase, SPORT);
+  if (!result.success) return { error: result.error };
 
   const { data: request, error: fetchError } = await supabase
     .from("team_access_requests")
@@ -73,7 +50,7 @@ export async function reviewTeamAccessRequest(
     .from("team_access_requests")
     .update({
       status,
-      reviewed_by: user.id,
+      reviewed_by: result.user.id,
       reviewed_at: new Date().toISOString(),
     })
     .eq("id", requestId);
