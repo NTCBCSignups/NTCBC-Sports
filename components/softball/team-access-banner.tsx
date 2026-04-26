@@ -38,7 +38,7 @@ export default function TeamAccessBanner({
         <div>
           <p className="font-medium text-amber-900">Request Pending</p>
           <p className="text-sm text-amber-700">
-            Your request to join the team is awaiting admin approval. You&apos;ll
+            Your request to join the team is awaiting leader approval. You&apos;ll
             be able to sign up for scheduled games once approved.
           </p>
         </div>
@@ -53,8 +53,8 @@ export default function TeamAccessBanner({
         <div>
           <p className="font-medium text-red-900">Request Denied</p>
           <p className="text-sm text-red-700">
-            Your request to join the team was not approved. Please contact an
-            admin if you believe this is an error.
+            Your request to join the team was not approved. Please contact a
+            leader if you believe this is an error.
           </p>
         </div>
       </div>

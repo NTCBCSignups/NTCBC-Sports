@@ -212,7 +212,7 @@ export default async function SessionDetailPage({
             <div className="flex items-start gap-2">
               <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Admins</span>
+                <span className="font-medium text-gray-900">Leaders</span>
                 <span className="text-gray-700">{config?.organizers}</span>
               </div>
             </div>

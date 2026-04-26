@@ -156,7 +156,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Team registration for the 2026 season is now closed, but you're welcome to join our drop-in practice sessions! It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome.",
       "Softball has two session types: Drop-in Practice (open to all) & Scheduled Games (team members only).",
       "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
-      "Please contact the admins if you have any questions.",
+      "Please contact the leaders if you have any questions.",
     ],
     description: "Join us for drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
     defaultTab: "drop_in_practice",
