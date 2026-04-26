@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings } from "lucide-react";
 import SessionCard from "@/components/softball/session-card";
+import SessionTabs from "@/components/softball/session-tabs";
 import TeamAccessBanner from "@/components/softball/team-access-banner";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
 import SportPageShell from "@/components/softball/softball-page-shell";
 import { Button } from "@/components/ui/button";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/lib/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,12 @@ export const dynamic = "force-dynamic";
 const SPORT = "softball";
 const config = sportsConfig[SPORT];
 
-export default async function SoftballPage() {
+export default async function SoftballPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; highlight?: string }>;
+}) {
+  const { tab, highlight } = await searchParams;
   const supabase = await createClient();
 
   // ── Auth ───────────────────────────────────────────────────────
@@ -43,11 +48,11 @@ export default async function SoftballPage() {
       .order("date", { ascending: true }),
   ]);
 
-  let { isAdmin, isTeamMember } = roleResult;
+  const { isAdmin, isTeamMember } = roleResult;
   const { data: sessions } = sessionsResult;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
-  if (user && config.restrictedAccessEnabled && !isTeamMember) {
+  if (user && hasRestrictedAccess(config) && !isTeamMember) {
     const { data: request } = await supabase
       .from("team_access_requests")
       .select("status")
@@ -63,12 +68,7 @@ export default async function SoftballPage() {
       (s.signups as unknown as { count: number }[])?.[0]?.count ?? 0,
   }));
 
-  const scheduledGames = sessionsWithCounts.filter(
-    (s) => s.session_type === "scheduled_game",
-  );
-  const dropInPractices = sessionsWithCounts.filter(
-    (s) => s.session_type === "drop_in_practice",
-  );
+  const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
   const adminButton = isAdmin ? (
     <Button asChild variant="outline" size="sm" className="rounded-full">
@@ -79,60 +79,50 @@ export default async function SoftballPage() {
     </Button>
   ) : null;
 
-  return (
-    <SportPageShell user={user} sport={SPORT} actions={adminButton}>
-      <Tabs defaultValue="drop_in_practice" className="gap-4">
-        <TabsList className="max-sm:w-full rounded-full">
-          <TabsTrigger
-            value="scheduled_game"
-            className="max-sm:flex-1 rounded-full px-5"
-          >
-            Scheduled Games
-          </TabsTrigger>
-          <TabsTrigger
-            value="drop_in_practice"
-            className="max-sm:flex-1 rounded-full px-5"
-          >
-            Drop-in Practice
-          </TabsTrigger>
-        </TabsList>
+  const configTabs = config.tabs ?? [];
+  const defaultTab = configTabs.find((t) => t.value === tab)?.value ?? config.defaultTab ?? configTabs[0]?.value;
 
-        <TabsContent value="scheduled_game" className="space-y-4">
-          {config.restrictedAccessEnabled && !isTeamMember && (
+  const tabsWithContent = configTabs.map((t) => {
+    const sessions = sessionsByType[t.value] ?? [];
+    const isRestricted = !!t.restrictedAccess && !isTeamMember;
+
+    return {
+      ...t,
+      content: (
+        <>
+          {isRestricted && (
             <TeamAccessBanner
               requestStatus={accessRequestStatus}
               sport={SPORT}
             />
           )}
-          {isTeamMember ? (
-            scheduledGames.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2">
-                {scheduledGames.map((session) => (
-                  <SessionCard key={session.id} session={session} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 py-8 text-center">
-                No upcoming scheduled games.
-              </p>
-            )
-          ) : null}
-        </TabsContent>
-
-        <TabsContent value="drop_in_practice" className="space-y-4">
-          {dropInPractices.length > 0 ? (
+          {sessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
-              {dropInPractices.map((session) => (
-                <SessionCard key={session.id} session={session} />
+              {sessions.map((session) => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  linkDisabled={isRestricted}
+                  highlighted={session.id === highlight}
+                />
               ))}
             </div>
           ) : (
             <p className="text-sm text-gray-500 py-8 text-center">
-              No upcoming drop-in practices.
+              No upcoming {t.label.toLowerCase()}.
             </p>
           )}
-        </TabsContent>
-      </Tabs>
+        </>
+      ),
+    };
+  });
+
+  return (
+    <SportPageShell user={user} sport={SPORT} actions={adminButton}>
+      <SessionTabs
+        defaultTab={defaultTab}
+        tabs={tabsWithContent}
+      />
 
       <div>
         <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>

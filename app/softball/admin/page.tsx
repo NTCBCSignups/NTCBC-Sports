@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
@@ -10,8 +9,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, MapPin } from "lucide-react";
+import PageHeader from "@/components/page-header";
 import SessionForm from "@/components/softball/session-form";
+import { sportsConfig } from "@/lib/sports-config";
 import AdminSessionSignups from "@/components/softball/admin-session-signups";
 import AdminAccessRequests from "@/components/softball/admin-access-requests";
 import DeleteSessionButton from "@/components/softball/delete-session-button";
@@ -250,15 +251,7 @@ export default async function AdminPage({
 
   return (
     <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/${SPORT}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Softball
-        </Link>
-      </div>
+      <PageHeader backHref={`/${SPORT}`} backLabel={`Back to ${sportsConfig[SPORT]?.name ?? "Softball"}`} />
 
       <h1 className="text-3xl font-bold text-gray-900">Softball Admin</h1>
 

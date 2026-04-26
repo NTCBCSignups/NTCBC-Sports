@@ -12,10 +12,13 @@ import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import CountdownTimer from "@/components/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
+import { cn } from "@/lib/utils";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
   session: SportSession & { signup_count: number };
+  linkDisabled?: boolean;
+  highlighted?: boolean;
 }
 
 function getSignupStatus(session: SportSession): {
@@ -31,56 +34,70 @@ function getSignupStatus(session: SportSession): {
   return { label: "Open", variant: "default" };
 }
 
-export default function SessionCard({ session }: SessionCardProps) {
-  const status = getSignupStatus(session);
+export default function SessionCard({ session, linkDisabled, highlighted }: SessionCardProps) {
+  const status = linkDisabled
+    ? { label: "Upcoming", variant: "secondary" as const }
+    : getSignupStatus(session);
   const isOpen = isSignupOpen(session);
+
+  const card = (
+    <Card className={cn(
+      "flex h-full flex-col overflow-hidden transition-shadow",
+      !linkDisabled && "hover:shadow-lg",
+      highlighted && "ring-2 ring-blue-500 bg-blue-50/50",
+    )}>
+      <CardHeader className="pb-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-xl leading-tight">
+            {session.title || formatDate(session.date)}
+          </CardTitle>
+          <Badge variant={status.variant} className="shrink-0">
+            {status.label}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col space-y-1.5 text-sm text-gray-700">
+        {session.title && (
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 shrink-0" />
+            <span>{formatDate(session.date)}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>
+            {formatTime(session.time_start)} –{" "}
+            {formatTime(session.time_end)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 shrink-0" />
+          <span>{session.location_name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 shrink-0" />
+          <span>
+            {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
+          </span>
+        </div>
+        {!linkDisabled && session.signup_open && session.signup_close && (
+          <CountdownTimer
+            openTime={session.signup_open}
+            closeTime={session.signup_close}
+            isFormOpen={isOpen}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  if (linkDisabled) {
+    return <div className="block h-full">{card}</div>;
+  }
 
   return (
     <Link href={`/${session.sport}/session/${session.id}`} className="block h-full">
-      <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
-        <CardHeader className="pb-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-xl leading-tight">
-              {session.title || formatDate(session.date)}
-            </CardTitle>
-            <Badge variant={status.variant} className="shrink-0">
-              {status.label}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-1 flex-col space-y-1.5 text-sm text-gray-700">
-          {session.title && (
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 shrink-0" />
-              <span>{formatDate(session.date)}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 shrink-0" />
-            <span>
-              {formatTime(session.time_start)} –{" "}
-              {formatTime(session.time_end)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span>{session.location_name}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 shrink-0" />
-            <span>
-              {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
-            </span>
-          </div>
-          {session.signup_open && session.signup_close && (
-            <CountdownTimer
-              openTime={session.signup_open}
-              closeTime={session.signup_close}
-              isFormOpen={isOpen}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {card}
     </Link>
   );
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig, isRestrictedSessionType } from "@/lib/sports-config";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
 const SPORT = "softball";
@@ -25,7 +25,7 @@ export async function signUpForSession(sessionId: string) {
 
   const sportConfig = sportsConfig[session.sport];
 
-  if (sportConfig?.restrictedAccessEnabled && session.session_type === "scheduled_game") {
+  if (isRestrictedSessionType(sportConfig, session.session_type)) {
     const { isTeamMember } = await getUserSportRole(supabase, user.id, session.sport);
 
     if (!isTeamMember) {

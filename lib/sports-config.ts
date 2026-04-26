@@ -14,7 +14,13 @@ export interface ResponseTableConfig {
   sessions: ResponseTableEntry[];
 }
 
-interface SportConfigBase {
+export interface SessionTab {
+  value: string;
+  label: string;
+  restrictedAccess?: boolean;
+}
+
+export interface SportConfig {
   id: Sport;
   emoji: string;
   name: string;
@@ -31,14 +37,20 @@ interface SportConfigBase {
   responseTable?: ResponseTableConfig;
   multiSession?: boolean;
   description?: string;
+  tabs?: SessionTab[];
+  defaultTab?: string;
+  authEnabled?: boolean;
 }
 
-export type SportConfig = SportConfigBase &
-  // Feature Flag Validation
-  (
-    | { authEnabled: true; restrictedAccessEnabled?: boolean }
-    | { authEnabled?: false; restrictedAccessEnabled?: false }
-  );
+/** Returns true if the given session type belongs to a restricted-access tab. */
+export function isRestrictedSessionType(config: SportConfig | undefined, sessionType: string): boolean {
+  return config?.tabs?.some((t) => t.value === sessionType && t.restrictedAccess) ?? false;
+}
+
+/** Returns true if the sport has any tab with restricted access. */
+export function hasRestrictedAccess(config: SportConfig | undefined): boolean {
+  return config?.tabs?.some((t) => t.restrictedAccess) ?? false;
+}
 
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
@@ -130,7 +142,6 @@ export const sportsConfig: Record<string, SportConfig> = {
   softball: {
     id: "softball",
     authEnabled: true,
-    restrictedAccessEnabled: true,
     emoji: "🥎",
     name: "Softball",
     type: "Drop-in Practice & Scheduled CCSA Games",
@@ -147,7 +158,11 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
       "Please contact the admins if you have any questions.",
     ],
-    description:
-      "Join us for drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
+    description: "Join us for drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
+    defaultTab: "drop_in_practice",
+    tabs: [
+      { value: "scheduled_game", label: "Scheduled Games", restrictedAccess: true },
+      { value: "drop_in_practice", label: "Drop-in Practice" },
+    ],
   },
 } satisfies Record<string, SportConfig>;

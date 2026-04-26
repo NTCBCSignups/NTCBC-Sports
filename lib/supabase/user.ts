@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/lib/sports-config";
 
 /**
  * Reads the authenticated user forwarded by middleware via the
@@ -45,7 +45,7 @@ export async function getUserSportRole(
 
     const isAdmin =
         profile?.role === "admin" || sportRole?.role === "admin";
-    const isTeamMember = sportConfig?.restrictedAccessEnabled
+    const isTeamMember = hasRestrictedAccess(sportConfig)
         ? isAdmin || !!sportRole?.is_team_member
         : true;
 

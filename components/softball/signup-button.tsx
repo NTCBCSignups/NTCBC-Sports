@@ -78,7 +78,7 @@ export default function SignupButton({
             for this session.
           </span>
           <Button
-            variant="outline"
+            variant="destructive"
             size="sm"
             onClick={handleCancel}
             disabled={pending}

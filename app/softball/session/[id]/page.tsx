@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
@@ -15,10 +15,10 @@ import {
   CalendarDays,
   Clock,
   MapPin,
-  ArrowLeft,
   Settings,
   UserStar,
 } from "lucide-react";
+import PageHeader from "@/components/page-header";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/softball/signup-button";
 import SignInPrompt from "@/components/softball/sign-in-prompt";
@@ -28,7 +28,7 @@ import { TeamMemberBadge, StatusBadge } from "@/components/badges";
 import CountdownTimer from "@/components/countdown-timer";
 import LocalTimestamp from "@/components/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/lib/sports-config";
 import { formatDate, formatTime, displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
@@ -52,32 +52,34 @@ export default async function SessionDetailPage({
     return <SignInPrompt sport={SPORT} />;
   }
 
-  // Run session, signups, and user-specific queries in parallel
-  const sessionPromise = supabase
-    .from("sessions")
-    .select("*")
-    .eq("id", id)
-    .single()
-    .then((r) => r);
+  // ── Fetch session + role first to gate access before loading sensitive data ──
+  const [sessionResult, roleResult] = await Promise.all([
+    supabase.from("sessions").select("*").eq("id", id).single(),
+    user
+      ? getUserSportRole(supabase, user.id, SPORT)
+      : Promise.resolve({ isAdmin: false, isTeamMember: !hasRestrictedAccess(config) }),
+  ]);
 
-  const signupsPromise = supabase
-    .from("signups")
-    .select("*, profiles(full_name, email)")
-    .eq("session_id", id)
-    .neq("status", "cancelled")
-    .order("created_at", { ascending: true })
-    .then((r) => r);
+  if (!sessionResult.data) notFound();
+  const session = sessionResult.data;
+  const { isAdmin, isTeamMember } = roleResult;
 
-  let isAdmin = false;
-  let isTeamMember = !config?.restrictedAccessEnabled;
-  let userSignupStatus: SignupStatus | null = null;
+  // Block non-team members from tabs with restricted access
+  const sessionTab = config?.tabs?.find((t) => t.value === session.session_type);
+  if (sessionTab?.restrictedAccess && !isTeamMember) {
+    redirect(`/${SPORT}?tab=${session.session_type}&highlight=${id}`);
+  }
 
-  const [sessionResult, signupsResult, ...userResults] = await Promise.all([
-    sessionPromise,
-    signupsPromise,
+  // ── Now safe to fetch signups and user-specific data ──
+  const [signupsResult, ...userResults] = await Promise.all([
+    supabase
+      .from("signups")
+      .select("*, profiles(full_name, email)")
+      .eq("session_id", id)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: true }),
     ...(user
       ? [
-        getUserSportRole(supabase, user.id, SPORT),
         supabase
           .from("signups")
           .select("status")
@@ -90,18 +92,13 @@ export default async function SessionDetailPage({
       : []),
   ]);
 
-  if (!sessionResult.data) notFound();
-  const session = sessionResult.data;
   const allSignups = signupsResult.data ?? [];
+  let userSignupStatus: SignupStatus | null = null;
 
-  if (user && userResults.length === 2) {
-    const roleResult = userResults[0] as Awaited<
-      ReturnType<typeof getUserSportRole>
-    >;
-    const userSignupResult = userResults[1] as {
+  if (user && userResults.length === 1) {
+    const userSignupResult = userResults[0] as {
       data: { status: string } | null;
     };
-    ({ isAdmin, isTeamMember } = roleResult);
     userSignupStatus =
       (userSignupResult.data?.status as SignupStatus) ?? null;
   }
@@ -123,37 +120,29 @@ export default async function SessionDetailPage({
 
   const isOpen = isSignupOpen(session);
 
-  const isEligible = config?.restrictedAccessEnabled
-    ? session.session_type === "drop_in_practice" || isTeamMember
-    : true;
+  const isEligible = sessionTab?.restrictedAccess ? isTeamMember : true;
 
-  const sessionTypeLabel =
-    session.session_type === "scheduled_game"
-      ? "Scheduled Game"
-      : "Drop-in Practice";
+  const sessionTypeLabel = sessionTab?.label ?? session.session_type;
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/${SPORT}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to {config?.name ?? "Softball"}
-        </Link>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href={`/${SPORT}/admin`}>
-                <Settings className="h-4 w-4" />
-                Admin
-              </Link>
-            </Button>
-          )}
-          {config?.authEnabled && <AuthButton user={user} sport={session.sport} />}
-        </div>
-      </div>
+      <PageHeader
+        backHref={`/${SPORT}?tab=${session.session_type}`}
+        backLabel={`Back to ${config?.name ?? "Softball"}`}
+        actions={
+          <>
+            {isAdmin && (
+              <Button asChild variant="outline" size="sm" className="rounded-full">
+                <Link href={`/${SPORT}/admin`}>
+                  <Settings className="h-4 w-4" />
+                  Admin
+                </Link>
+              </Button>
+            )}
+            {config?.authEnabled && <AuthButton user={user} sport={session.sport} />}
+          </>
+        }
+      />
 
       <div className="space-y-6">
         <div className="space-y-2">
@@ -277,8 +266,9 @@ export default async function SessionDetailPage({
               <TableBody>
                 {allSignups.map((signup, index) => {
                   const p = signup.profiles as unknown as Profile | null;
+                  const isCurrentUser = user?.id === signup.user_id;
                   return (
-                    <TableRow key={signup.id}>
+                    <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
                       <TableCell className="font-mono text-xs">
                         {index + 1}
                       </TableCell>
@@ -291,7 +281,7 @@ export default async function SessionDetailPage({
                       <TableCell className="text-xs">
                         <LocalTimestamp date={signup.created_at} />
                       </TableCell>
-                      <TableCell className="sticky right-0 bg-white border-l">
+                      <TableCell className={`sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-blue-50" : "bg-white"}`}>
                         <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
                       </TableCell>
                     </TableRow>
