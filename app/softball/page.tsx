@@ -2,25 +2,26 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Settings } from "lucide-react";
-import SessionCard from "@/components/softball/session-card";
-import SessionTabs from "@/components/softball/session-tabs";
-import TeamAccessBanner from "@/components/softball/team-access-banner";
-import SignInPrompt from "@/components/softball/sign-in-prompt";
-import SportPageShell from "@/components/softball/softball-page-shell";
+import SessionCard from "@/components/sports/session-card";
+import SessionTabs from "@/components/sports/session-tabs";
+import TeamAccessBanner from "@/components/sports/team-access-banner";
+import SignInPrompt from "@/components/sports/sign-in-prompt";
+import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess } from "@/lib/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-const SPORT = "softball";
-const config = sportsConfig[SPORT];
+const sport = "softball";
 
-export default async function SoftballPage({
+export default async function SportAuthPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string; highlight?: string }>;
 }) {
+  const config = sportsConfig[sport]!;
+
   const { tab, highlight } = await searchParams;
   const supabase = await createClient();
 
@@ -29,7 +30,7 @@ export default async function SoftballPage({
   const user = config.authEnabled ? await getUser() : null;
 
   if (config.authEnabled && !user) {
-    return <SignInPrompt sport={SPORT} />;
+    return <SignInPrompt sport={sport} />;
   }
 
   // ── Roles, access & sessions (parallel) ─────────────────────────
@@ -37,12 +38,12 @@ export default async function SoftballPage({
 
   const [roleResult, sessionsResult] = await Promise.all([
     user
-      ? getUserSportRole(supabase, user.id, SPORT)
+      ? getUserSportRole(supabase, user.id, sport)
       : Promise.resolve({ isAdmin: false, isTeamMember: true }),
     queryClient
       .from("sessions")
       .select("*, signups(count)")
-      .eq("sport", SPORT)
+      .eq("sport", sport)
       .neq("signups.status", "cancelled")
       .gte("date", new Date().toISOString().split("T")[0])
       .order("date", { ascending: true }),
@@ -57,7 +58,7 @@ export default async function SoftballPage({
       .from("team_access_requests")
       .select("status")
       .eq("user_id", user.id)
-      .eq("sport", SPORT)
+      .eq("sport", sport)
       .single();
     accessRequestStatus = request?.status ?? null;
   }
@@ -72,7 +73,7 @@ export default async function SoftballPage({
 
   const adminButton = isAdmin ? (
     <Button asChild variant="outline" size="sm" className="rounded-full">
-      <Link href="/softball/admin">
+      <Link href={`/${sport}/admin`}>
         <Settings className="h-4 w-4" />
         Admin
       </Link>
@@ -93,7 +94,7 @@ export default async function SoftballPage({
           {isRestricted && (
             <TeamAccessBanner
               requestStatus={accessRequestStatus}
-              sport={SPORT}
+              sport={sport}
             />
           )}
           {sessions.length > 0 ? (
@@ -118,7 +119,7 @@ export default async function SoftballPage({
   });
 
   return (
-    <SportPageShell user={user} sport={SPORT} actions={adminButton}>
+    <SportPageShell user={user} sport={sport} actions={adminButton}>
       <SessionTabs
         defaultTab={defaultTab}
         tabs={tabsWithContent}

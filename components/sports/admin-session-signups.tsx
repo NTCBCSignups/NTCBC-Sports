@@ -11,9 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowUp, X } from "lucide-react";
-import { adminUpdateSignupStatus } from "@/app/softball/actions/signups";
-import { StatusBadge, TeamMemberBadge } from "@/components/badges";
-import SignupSummaryHeader from "@/components/softball/signup-summary-header";
+import { adminUpdateSignupStatus } from "@/lib/actions/signups";
+import { StatusBadge, TeamMemberBadge } from "@/components/sports/badges";
+import SignupSummaryHeader from "@/components/sports/signup-summary-header";
 import { displayName } from "@/lib/format";
 import { colors } from "@/lib/styles";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
@@ -27,6 +27,7 @@ interface SignupRow {
 }
 
 interface AdminSessionSignupsProps {
+  sport: string;
   sessionId: string;
   signups: SignupRow[];
   playerCap: number | null;
@@ -34,6 +35,7 @@ interface AdminSessionSignupsProps {
 }
 
 export default function AdminSessionSignups({
+  sport,
   sessionId,
   signups,
   playerCap,
@@ -47,13 +49,13 @@ export default function AdminSessionSignups({
 
   const handlePromote = async (signupId: string) => {
     setPending(signupId);
-    await adminUpdateSignupStatus(signupId, "confirmed", sessionId);
+    await adminUpdateSignupStatus(sport, signupId, "confirmed", sessionId);
     setPending(null);
   };
 
   const handleCancel = async (signupId: string) => {
     setPending(signupId);
-    await adminUpdateSignupStatus(signupId, "cancelled", sessionId);
+    await adminUpdateSignupStatus(sport, signupId, "cancelled", sessionId);
     setPending(null);
   };
 

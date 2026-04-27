@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RefreshCw, UserCheck, LogOut, Trash2, Check } from "lucide-react";
-import { WaiverBadge } from "@/components/badges";
+import { WaiverBadge } from "@/components/sports/badges";
+import { formatTimestamp } from "@/lib/format";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { colors, statusColors, feedback } from "@/lib/styles";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ import {
     logoutCcsa,
     approveCcsaPlayersForTeam,
     deleteAllCcsaPlayers,
-} from "@/app/softball/actions/ccsa-sync";
+} from "@/lib/softball/ccsa-sync";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -226,13 +227,7 @@ export default function CcsaSyncButton({
             {lastSyncedAt && (
                 <p className="text-xs text-muted-foreground">
                     Last synced:{" "}
-                    {new Date(lastSyncedAt).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                    })}
+                    {formatTimestamp(lastSyncedAt)}
                 </p>
             )}
 

@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { deleteSession } from "@/app/softball/actions/sessions";
+import { deleteSession } from "@/lib/actions/sessions";
 import { colors } from "@/lib/styles";
 
 interface DeleteSessionButtonProps {
+  sport: string;
   sessionId: string;
 }
 
 export default function DeleteSessionButton({
+  sport,
   sessionId,
 }: DeleteSessionButtonProps) {
   const [confirming, setConfirming] = useState(false);
@@ -18,7 +20,7 @@ export default function DeleteSessionButton({
 
   const handleDelete = async () => {
     setPending(true);
-    await deleteSession(sessionId);
+    await deleteSession(sport, sessionId);
     setPending(false);
     setConfirming(false);
   };

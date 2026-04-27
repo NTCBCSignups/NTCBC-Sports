@@ -10,34 +10,32 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { CalendarDays, MapPin } from "lucide-react";
-import PageHeader from "@/components/page-header";
-import SessionForm from "@/components/softball/session-form";
-import { sportsConfig } from "@/lib/sports-config";
-import AdminSessionSignups from "@/components/softball/admin-session-signups";
-import AdminAccessRequests from "@/components/softball/admin-access-requests";
-import DeleteSessionButton from "@/components/softball/delete-session-button";
-import AdminSidebar from "@/components/softball/admin-sidebar";
-import CcsaSyncButton from "@/components/sports/ccsa-sync-button";
+import PageHeader from "@/components/sports/page-header";
+import SessionForm from "@/components/sports/session-form";
+import { sportsConfig } from "@/config/sports-config";
+import AdminSessionSignups from "@/components/sports/admin-session-signups";
+import AdminAccessRequests from "@/components/sports/admin-access-requests";
+import DeleteSessionButton from "@/components/sports/delete-session-button";
+import AdminSidebar from "@/components/sports/admin-sidebar";
+import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { formatDate, formatTime } from "@/lib/format";
-import { hasCcsaSession } from "@/app/softball/actions/ccsa-sync";
 import type {
   Profile,
   SportSession,
   SignupStatus,
-  AccessRequestStatus, WaiverStatus,
+  AccessRequestStatus,
 } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
-const SPORT = "softball";
-
 function SessionAccordion({
+  sport,
   sessions,
   signupsBySession,
-  waiverByEmail,
   teamMemberIds,
   muted,
 }: {
+  sport: string;
   sessions: SportSession[];
   signupsBySession: Map<
     string,
@@ -49,7 +47,6 @@ function SessionAccordion({
       profiles: Profile | null;
     }[]
   >;
-  waiverByEmail: Map<string, WaiverStatus>;
   teamMemberIds: Set<string>;
   muted?: boolean;
 }) {
@@ -119,9 +116,10 @@ function SessionAccordion({
                     {formatTime(session.time_end)} ·{" "}
                     {session.location_address}
                   </div>
-                  <DeleteSessionButton sessionId={session.id} />
+                  <DeleteSessionButton sport={sport} sessionId={session.id} />
                 </div>
                 <AdminSessionSignups
+                  sport={sport}
                   sessionId={session.id}
                   signups={sessionSignups}
                   playerCap={session.player_cap}
@@ -136,49 +134,60 @@ function SessionAccordion({
   );
 }
 
+const sport = "softball";
+
 export default async function AdminPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
+  const config = sportsConfig[sport]!;
+
   const { tab = "upcoming" } = await searchParams;
   const supabase = await createClient();
   // Middleware validates the JWT and forwards the user via request header.
   const user = await getUser();
 
-  if (!user) redirect(`/${SPORT}`);
+  if (!user) redirect(`/${sport}`);
 
-  const { isAdmin } = await getUserSportRole(supabase, user.id, SPORT);
-  if (!isAdmin) redirect(`/${SPORT}`);
+  const { isAdmin } = await getUserSportRole(supabase, user.id, sport);
+  if (!isAdmin) redirect(`/${sport}`);
 
   // ── Fetch sessions & access requests in parallel ───────────────
   const [{ data: sessions }, { data: accessRequests }] = await Promise.all([
     supabase
       .from("sessions")
       .select("*")
-      .eq("sport", SPORT)
+      .eq("sport", sport)
       .order("date", { ascending: false }),
     supabase
       .from("team_access_requests")
       .select(
         "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
       )
-      .eq("sport", SPORT)
+      .eq("sport", sport)
       .order("created_at", { ascending: false }),
   ]);
 
-  // ── Fetch signups for all sessions ─────────────────────────────
+  // ── Fetch signups + team members in parallel ───────────────────
   const sessionIds = (sessions ?? []).map((s) => s.id);
 
-  const { data: allSignups } = sessionIds.length
-    ? await supabase
-      .from("signups")
-      .select(
-        "*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)",
-      )
-      .in("session_id", sessionIds)
-      .order("created_at", { ascending: true })
-    : { data: [] };
+  const [{ data: allSignups }, { data: teamMembers }] = await Promise.all([
+    sessionIds.length
+      ? supabase
+        .from("signups")
+        .select(
+          "*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)",
+        )
+        .in("session_id", sessionIds)
+        .order("created_at", { ascending: true })
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("sport_roles")
+      .select("user_id")
+      .eq("sport", sport)
+      .eq("is_team_member", true),
+  ]);
 
   const signupsBySession = new Map<
     string,
@@ -214,50 +223,21 @@ export default async function AdminPage({
     (r) => r.status === "pending",
   );
 
-  const { data: lastSync } = await supabase
-    .from("ccsa_players")
-    .select("synced_at")
-    .order("synced_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const { data: ccsaPlayers } = await supabase
-    .from("ccsa_players")
-    .select("email, first_name, last_name, waiver_status");
-
-  // Fetch all team members for CCSA matching
-  const { data: teamMembers } = await supabase
-    .from("sport_roles")
-    .select("user_id, is_team_member, profiles!sport_roles_user_id_fkey(full_name, email)")
-    .eq("sport", SPORT)
-    .eq("is_team_member", true);
-
-  // Fetch all profiles for account-exists detection
-  const { data: allProfiles } = await supabase
-    .from("profiles")
-    .select("full_name, email");
-
-  const ccsaSession = await hasCcsaSession();
-
-  const waiverByEmail = new Map<string, WaiverStatus>();
-  for (const cp of ccsaPlayers ?? []) {
-    waiverByEmail.set(cp.email, cp.waiver_status as WaiverStatus);
-  }
+  const teamMemberIds = new Set((teamMembers ?? []).map((m) => m.user_id));
 
   const today = new Date().toISOString().split("T")[0];
   const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
-  const teamMemberIds = new Set((teamMembers ?? []).map((m) => m.user_id));
 
   return (
     <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
-      <PageHeader backHref={`/${SPORT}`} backLabel={`Back to ${sportsConfig[SPORT]?.name ?? "Softball"}`} />
+      <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
 
-      <h1 className="text-3xl font-bold text-gray-900">Softball Admin</h1>
+      <h1 className="text-3xl font-bold text-gray-900">{config.name} Admin</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
         <Suspense>
-          <AdminSidebar pendingRequestCount={pendingRequests.length} />
+          <AdminSidebar pendingRequestCount={pendingRequests.length} extraTabs={config.adminTabs} />
         </Suspense>
 
         <div className="flex-1 min-w-0">
@@ -273,7 +253,7 @@ export default async function AdminPage({
                   </Badge>
                 )}
               </div>
-              <AdminAccessRequests requests={formattedRequests} />
+              <AdminAccessRequests sport={sport} requests={formattedRequests} />
             </section>
           )}
 
@@ -283,7 +263,7 @@ export default async function AdminPage({
                 Create Session
               </h2>
               <div className="rounded-lg border bg-white p-6">
-                <SessionForm />
+                <SessionForm sport={sport} />
               </div>
             </section>
           )}
@@ -294,9 +274,9 @@ export default async function AdminPage({
                 Upcoming Sessions ({upcomingSessions.length})
               </h2>
               <SessionAccordion
+                sport={sport}
                 sessions={upcomingSessions}
                 signupsBySession={signupsBySession}
-                waiverByEmail={waiverByEmail}
                 teamMemberIds={teamMemberIds}
               />
             </section>
@@ -308,43 +288,21 @@ export default async function AdminPage({
                 Past Sessions ({pastSessions.length})
               </h2>
               <SessionAccordion
+                sport={sport}
                 sessions={pastSessions}
                 signupsBySession={signupsBySession}
-                waiverByEmail={waiverByEmail}
                 teamMemberIds={teamMemberIds}
                 muted
               />
             </section>
           )}
 
-          {tab === "ccsa" && (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-gray-900">
-                CCSA Sync
-              </h2>
-              <div className="rounded-lg border bg-white p-6">
-                <CcsaSyncButton
-                  lastSyncedAt={lastSync?.synced_at ?? null}
-                  hasSession={ccsaSession.hasCookies}
-                  sessionEmail={ccsaSession.email ?? undefined}
-                  initialPlayers={(ccsaPlayers ?? []).map((p) => ({
-                    email: p.email,
-                    first_name: p.first_name,
-                    last_name: p.last_name,
-                    waiver_status: p.waiver_status,
-                  }))}
-                  teamMembers={(teamMembers ?? []).map((m) => ({
-                    email: (m.profiles as unknown as { email: string })?.email ?? "",
-                    full_name: (m.profiles as unknown as { full_name: string })?.full_name ?? "",
-                  }))}
-                  allProfiles={(allProfiles ?? []).map((p) => ({
-                    email: p.email ?? "",
-                    full_name: p.full_name ?? "",
-                  }))}
-                />
-              </div>
-            </section>
-          )}
+          {config.adminTabs?.map((adminTab) => {
+            if (tab !== adminTab.id) return null;
+            const TabComponent = getAdminTabComponent(adminTab.id);
+            if (!TabComponent) return null;
+            return <TabComponent key={adminTab.id} sport={sport} />;
+          })}
         </div>
       </div>
     </div>

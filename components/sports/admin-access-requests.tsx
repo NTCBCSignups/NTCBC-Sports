@@ -12,8 +12,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
-import { reviewTeamAccessRequest } from "@/app/softball/actions/team-access";
-import { StatusBadge } from "@/components/badges";
+import { reviewTeamAccessRequest } from "@/lib/actions/team-access";
+import { StatusBadge } from "@/components/sports/badges";
+import { formatDate } from "@/lib/format";
 import { displayName } from "@/lib/format";
 import type { Profile, AccessRequestStatus } from "@/lib/supabase/types";
 
@@ -26,10 +27,12 @@ interface AccessRequestRow {
 }
 
 interface AdminAccessRequestsProps {
+  sport: string;
   requests: AccessRequestRow[];
 }
 
 export default function AdminAccessRequests({
+  sport,
   requests,
 }: AdminAccessRequestsProps) {
   const [pending, setPending] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export default function AdminAccessRequests({
     status: "approved" | "rejected",
   ) => {
     setPending(requestId);
-    await reviewTeamAccessRequest(requestId, status);
+    await reviewTeamAccessRequest(sport, requestId, status);
     setPending(null);
   };
 
@@ -74,10 +77,7 @@ export default function AdminAccessRequests({
                 <StatusBadge status={request.status} />
               </TableCell>
               <TableCell className="text-xs text-gray-500">
-                {new Date(request.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
+                {formatDate(request.created_at.split("T")[0])}
               </TableCell>
               <TableCell>
                 <div className="flex justify-center gap-1">

@@ -1,8 +1,8 @@
 import AuthButton from "@/components/sports/auth-button";
-import PageHeader from "@/components/page-header";
+import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig } from "@/config/sports-config";
 
 interface SportPageShellProps {
     user: User | null;

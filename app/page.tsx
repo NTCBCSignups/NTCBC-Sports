@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig } from "@/config/sports-config";
 
 export default function Home() {
   const sports = Object.values(sportsConfig);

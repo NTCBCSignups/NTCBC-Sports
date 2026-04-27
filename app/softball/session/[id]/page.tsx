@@ -18,23 +18,23 @@ import {
   Settings,
   UserStar,
 } from "lucide-react";
-import PageHeader from "@/components/page-header";
+import PageHeader from "@/components/sports/page-header";
 import AuthButton from "@/components/sports/auth-button";
-import SignupButton from "@/components/softball/signup-button";
-import SignInPrompt from "@/components/softball/sign-in-prompt";
+import SignupButton from "@/components/sports/signup-button";
+import SignInPrompt from "@/components/sports/sign-in-prompt";
 import { isSignupOpen } from "@/lib/signup-capacity";
-import SignupSummaryHeader from "@/components/softball/signup-summary-header";
-import { TeamMemberBadge, StatusBadge } from "@/components/badges";
-import CountdownTimer from "@/components/countdown-timer";
-import LocalTimestamp from "@/components/local-timestamp";
+import SignupSummaryHeader from "@/components/sports/signup-summary-header";
+import { TeamMemberBadge, StatusBadge } from "@/components/sports/badges";
+import CountdownTimer from "@/components/sports/countdown-timer";
+import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess } from "@/lib/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
 import { formatDate, formatTime, displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
-const SPORT = "softball";
+const sport = "softball";
 
 export default async function SessionDetailPage({
   params,
@@ -42,22 +42,21 @@ export default async function SessionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const config = sportsConfig[sport]!;
+
   const supabase = await createClient();
-  const config = sportsConfig[SPORT];
 
   // Middleware validates the JWT and forwards the user via request header.
-  const user = config?.authEnabled ? await getUser() : null;
+  const user = await getUser();
 
-  if (config?.authEnabled && !user) {
-    return <SignInPrompt sport={SPORT} />;
+  if (!user) {
+    return <SignInPrompt sport={sport} />;
   }
 
   // ── Fetch session + role first to gate access before loading sensitive data ──
   const [sessionResult, roleResult] = await Promise.all([
     supabase.from("sessions").select("*").eq("id", id).single(),
-    user
-      ? getUserSportRole(supabase, user.id, SPORT)
-      : Promise.resolve({ isAdmin: false, isTeamMember: !hasRestrictedAccess(config) }),
+    getUserSportRole(supabase, user.id, sport),
   ]);
 
   if (!sessionResult.data) notFound();
@@ -65,9 +64,9 @@ export default async function SessionDetailPage({
   const { isAdmin, isTeamMember } = roleResult;
 
   // Block non-team members from tabs with restricted access
-  const sessionTab = config?.tabs?.find((t) => t.value === session.session_type);
+  const sessionTab = config.tabs?.find((t) => t.value === session.session_type);
   if (sessionTab?.restrictedAccess && !isTeamMember) {
-    redirect(`/${SPORT}?tab=${session.session_type}&highlight=${id}`);
+    redirect(`/${sport}?tab=${session.session_type}&highlight=${id}`);
   }
 
   // ── Now safe to fetch signups and user-specific data ──
@@ -112,7 +111,7 @@ export default async function SessionDetailPage({
     ? await supabase
       .from("sport_roles")
       .select("user_id")
-      .eq("sport", SPORT)
+      .eq("sport", sport)
       .eq("is_team_member", true)
       .in("user_id", signupUserIds)
     : { data: [] };
@@ -127,19 +126,19 @@ export default async function SessionDetailPage({
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <PageHeader
-        backHref={`/${SPORT}?tab=${session.session_type}`}
-        backLabel={`Back to ${config?.name ?? "Softball"}`}
+        backHref={`/${sport}?tab=${session.session_type}`}
+        backLabel={`Back to ${config.name}`}
         actions={
           <>
             {isAdmin && (
               <Button asChild variant="outline" size="sm" className="rounded-full">
-                <Link href={`/${SPORT}/admin`}>
+                <Link href={`/${sport}/admin`}>
                   <Settings className="h-4 w-4" />
                   Admin
                 </Link>
               </Button>
             )}
-            {config?.authEnabled && <AuthButton user={user} sport={session.sport} />}
+            {config.authEnabled && <AuthButton user={user} sport={session.sport} />}
           </>
         }
       />
@@ -213,7 +212,7 @@ export default async function SessionDetailPage({
               <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
                 <span className="font-medium text-gray-900">Leaders</span>
-                <span className="text-gray-700">{config?.organizers}</span>
+                <span className="text-gray-700">{config.organizers}</span>
               </div>
             </div>
           </div>

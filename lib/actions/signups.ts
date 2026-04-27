@@ -4,10 +4,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
-import { sportsConfig, isRestrictedSessionType } from "@/lib/sports-config";
+import { sportsConfig, isRestrictedSessionType } from "@/config/sports-config";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
-const SPORT = "softball";
+async function getSessionSport(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: string) {
+  const { data } = await supabase
+    .from("sessions")
+    .select("sport")
+    .eq("id", sessionId)
+    .single();
+  return data?.sport ?? null;
+}
 
 export async function signUpForSession(sessionId: string) {
   const supabase = await createClient();
@@ -23,10 +30,11 @@ export async function signUpForSession(sessionId: string) {
 
   if (!session) return { error: "Session not found" };
 
-  const sportConfig = sportsConfig[session.sport];
+  const sport = session.sport;
+  const sportConfig = sportsConfig[sport];
 
   if (isRestrictedSessionType(sportConfig, session.session_type)) {
-    const { isTeamMember } = await getUserSportRole(supabase, user.id, session.sport);
+    const { isTeamMember } = await getUserSportRole(supabase, user.id, sport);
 
     if (!isTeamMember) {
       return { error: "Only team members can sign up for scheduled games" };
@@ -64,8 +72,8 @@ export async function signUpForSession(sessionId: string) {
 
     if (reactivateError) return { error: reactivateError.message };
 
-    revalidatePath(`/${SPORT}/session/${sessionId}`);
-    revalidatePath(`/${SPORT}`);
+    revalidatePath(`/${sport}/session/${sessionId}`);
+    revalidatePath(`/${sport}`);
     return { success: true };
   }
 
@@ -80,8 +88,8 @@ export async function signUpForSession(sessionId: string) {
     return { error: error.message };
   }
 
-  revalidatePath(`/${SPORT}/session/${sessionId}`);
-  revalidatePath(`/${SPORT}`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}`);
   return { success: true };
 }
 
@@ -90,6 +98,8 @@ export async function cancelSignup(sessionId: string) {
   const user = await getUser();
 
   if (!user) return { error: "Not authenticated" };
+
+  const sport = await getSessionSport(supabase, sessionId);
 
   const { data: row, error: fetchError } = await supabase
     .from("signups")
@@ -100,8 +110,8 @@ export async function cancelSignup(sessionId: string) {
 
   if (fetchError) return { error: fetchError.message };
   if (!row || row.status === "cancelled") {
-    revalidatePath(`/${SPORT}/session/${sessionId}`);
-    revalidatePath(`/${SPORT}`);
+    revalidatePath(`/${sport}/session/${sessionId}`);
+    revalidatePath(`/${sport}`);
     return { success: true };
   }
 
@@ -132,18 +142,19 @@ export async function cancelSignup(sessionId: string) {
     }
   }
 
-  revalidatePath(`/${SPORT}/session/${sessionId}`);
-  revalidatePath(`/${SPORT}`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}`);
   return { success: true };
 }
 
 export async function adminUpdateSignupStatus(
+  sport: string,
   signupId: string,
   status: "confirmed" | "waitlisted" | "cancelled",
   sessionId: string,
 ) {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, SPORT);
+  const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { data: before, error: beforeError } = await supabase
@@ -171,7 +182,7 @@ export async function adminUpdateSignupStatus(
     if (promoError) return { error: promoError };
   }
 
-  revalidatePath(`/${SPORT}/session/${sessionId}`);
-  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}/admin`);
   return { success: true };
 }

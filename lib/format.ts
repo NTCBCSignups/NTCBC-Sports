@@ -19,6 +19,19 @@ export function formatTime(time: string): string {
     return `${hour12}:${m} ${ampm}`;
 }
 
+export function formatTimestamp(raw: string): string {
+    if (!raw) return "";
+    const date = new Date(raw);
+    if (isNaN(date.getTime())) return raw;
+    return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
+}
+
 export function displayName(profile: { full_name: string | null; email: string | null } | null): string {
     return profile?.full_name ?? profile?.email ?? "Unknown";
 }

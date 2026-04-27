@@ -4,9 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, requireSportAdmin } from "@/lib/supabase/user";
 
-const SPORT = "softball";
-
-export async function requestTeamAccess(sport: string = SPORT) {
+export async function requestTeamAccess(sport: string) {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -27,11 +25,12 @@ export async function requestTeamAccess(sport: string = SPORT) {
 }
 
 export async function reviewTeamAccessRequest(
+  sport: string,
   requestId: string,
   status: "approved" | "rejected",
 ) {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, SPORT);
+  const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { data: request, error: fetchError } = await supabase
@@ -90,7 +89,7 @@ export async function reviewTeamAccessRequest(
     if (roleError) return { error: roleError.message };
   }
 
-  revalidatePath(`/${SPORT}/admin`);
-  revalidatePath(`/${SPORT}`);
+  revalidatePath(`/${sport}/admin`);
+  revalidatePath(`/${sport}`);
   return { success: true };
 }

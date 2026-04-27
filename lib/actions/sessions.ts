@@ -5,9 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
 import type { SessionType } from "@/lib/supabase/types";
 
-const SPORT = "softball";
-
-interface CreateSessionInput {
+export interface CreateSessionInput {
   session_type: SessionType;
   title?: string;
   date: string;
@@ -22,30 +20,31 @@ interface CreateSessionInput {
   notes?: string;
 }
 
-export async function createSession(input: CreateSessionInput) {
+export async function createSession(sport: string, input: CreateSessionInput) {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, SPORT);
+  const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase.from("sessions").insert({
     ...input,
-    sport: SPORT,
+    sport,
     created_by: result.user.id,
   });
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/${SPORT}`);
-  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
 
 export async function updateSession(
+  sport: string,
   sessionId: string,
   input: Partial<CreateSessionInput>,
 ) {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, SPORT);
+  const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase
@@ -55,15 +54,15 @@ export async function updateSession(
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/${SPORT}`);
-  revalidatePath(`/${SPORT}/session/${sessionId}`);
-  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
 
-export async function deleteSession(sessionId: string) {
+export async function deleteSession(sport: string, sessionId: string) {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, SPORT);
+  const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase
@@ -73,7 +72,7 @@ export async function deleteSession(sessionId: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/${SPORT}`);
-  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/admin`);
   return { success: true };
 }

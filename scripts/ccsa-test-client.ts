@@ -9,7 +9,7 @@ import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 
-import { setFetchImpl, auth } from "../lib/ccsa-api";
+import { setFetchImpl, auth } from "../lib/softball/ccsa-api";
 
 const COOKIE_FILE = path.join(os.tmpdir(), "ccsa-cookies.json");
 

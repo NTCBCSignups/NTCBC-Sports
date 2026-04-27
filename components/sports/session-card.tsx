@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
-import CountdownTimer from "@/components/countdown-timer";
+import CountdownTimer from "@/components/sports/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/softball";
+  const next = searchParams.get("next") ?? "/";
 
   const headersList = await headers();
   const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
@@ -20,5 +20,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/softball?error=auth`);
+  return NextResponse.redirect(`${origin}${next}?error=auth`);
 }

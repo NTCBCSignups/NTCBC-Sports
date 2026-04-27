@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, XCircle } from "lucide-react";
-import { requestTeamAccess } from "@/app/softball/actions/team-access";
+import { requestTeamAccess } from "@/lib/actions/team-access";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
+import { colors, statusColors } from "@/lib/styles";
 
 interface TeamAccessBannerProps {
   requestStatus: AccessRequestStatus | null;
@@ -33,8 +34,8 @@ export default function TeamAccessBanner({
 
   if (localStatus === "pending") {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-        <Clock className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+      <div className={`rounded-lg border ${statusColors.amber.border} ${statusColors.amber.bg} p-4 flex items-start gap-3`}>
+        <Clock className={`h-5 w-5 ${colors.warning} shrink-0 mt-0.5`} />
         <div>
           <p className="font-medium text-amber-900">Request Pending</p>
           <p className="text-sm text-amber-700">
@@ -48,8 +49,8 @@ export default function TeamAccessBanner({
 
   if (localStatus === "rejected") {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-        <XCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+      <div className={`rounded-lg border ${statusColors.red.border} ${statusColors.red.bg} p-4 flex items-start gap-3`}>
+        <XCircle className={`h-5 w-5 ${colors.destructive} shrink-0 mt-0.5`} />
         <div>
           <p className="font-medium text-red-900">Request Denied</p>
           <p className="text-sm text-red-700">

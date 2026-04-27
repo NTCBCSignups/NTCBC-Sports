@@ -9,7 +9,7 @@
  */
 
 import { ensureAuth } from "./ccsa-test-client";
-import { team } from "../lib/ccsa-api";
+import { team } from "../lib/softball/ccsa-api";
 
 async function run(email: string) {
     await ensureAuth(email);

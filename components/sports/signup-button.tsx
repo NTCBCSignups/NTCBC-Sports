@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   signUpForSession,
   cancelSignup,
-} from "@/app/softball/actions/signups";
+} from "@/lib/actions/signups";
 import type { SignupStatus } from "@/lib/supabase/types";
 import { feedback } from "@/lib/styles";
 

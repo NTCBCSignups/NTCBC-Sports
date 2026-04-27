@@ -3,27 +3,50 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Calendar, History, RefreshCw } from "lucide-react";
+import {
+  ClipboardList, Plus, Calendar, History,
+  RefreshCw, type LucideIcon,
+} from "lucide-react";
+import type { AdminTabMeta } from "@/config/sports-config";
 
-interface AdminSidebarProps {
-  pendingRequestCount: number;
+/** Map from iconName strings in sports-config to actual Lucide components. */
+const iconMap: Record<string, LucideIcon> = {
+  RefreshCw,
+};
+
+interface SidebarTab {
+  id: string;
+  label: string;
+  icon: LucideIcon;
 }
 
-const tabs = [
+const baseTabs: SidebarTab[] = [
   { id: "requests", label: "Access Requests", icon: ClipboardList },
   { id: "create", label: "Create Session", icon: Plus },
   { id: "upcoming", label: "Upcoming Sessions", icon: Calendar },
   { id: "past", label: "Past Sessions", icon: History },
-  { id: "ccsa", label: "CCSA Sync", icon: RefreshCw },
-] as const;
+];
 
-export type AdminTab = (typeof tabs)[number]["id"];
+interface AdminSidebarProps {
+  pendingRequestCount: number;
+  extraTabs?: AdminTabMeta[];
+}
 
-export default function AdminSidebar({ pendingRequestCount }: AdminSidebarProps) {
+export default function AdminSidebar({ pendingRequestCount, extraTabs }: AdminSidebarProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const activeTab = (searchParams.get("tab") as AdminTab) || "upcoming";
+
+  const allTabs: SidebarTab[] = [
+    ...baseTabs,
+    ...(extraTabs ?? []).map((t) => ({
+      id: t.id,
+      label: t.label,
+      icon: iconMap[t.iconName] ?? RefreshCw,
+    })),
+  ];
+
+  const activeTab = searchParams.get("tab") || "upcoming";
 
   const navigate = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -35,7 +58,7 @@ export default function AdminSidebar({ pendingRequestCount }: AdminSidebarProps)
     <>
       {/* Desktop sidebar */}
       <nav className="hidden md:flex flex-col gap-1 w-56 shrink-0">
-        {tabs.map((tab) => (
+        {allTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => navigate(tab.id)}
@@ -62,7 +85,7 @@ export default function AdminSidebar({ pendingRequestCount }: AdminSidebarProps)
 
       {/* Mobile horizontal tabs */}
       <nav className="md:hidden flex gap-1 overflow-x-auto pb-2 -mx-1 px-1">
-        {tabs.map((tab) => (
+        {allTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => navigate(tab.id)}

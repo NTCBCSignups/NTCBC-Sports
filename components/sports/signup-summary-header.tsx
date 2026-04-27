@@ -1,3 +1,5 @@
+import { colors } from "@/lib/styles";
+
 interface SignupSummaryHeaderProps {
     confirmedCount: number;
     waitlistedCount: number;
@@ -14,7 +16,7 @@ export default function SignupSummaryHeader({
             <div className="flex-1 px-4 py-3 border-r">
                 <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
                 <p
-                    className={`text-sm font-semibold ${playerCap && confirmedCount > playerCap ? "text-amber-600" : "text-gray-900"}`}
+                    className={`text-sm font-semibold ${playerCap && confirmedCount > playerCap ? colors.warning : "text-gray-900"}`}
                 >
                     {confirmedCount}{playerCap ? ` / ${playerCap}` : ""}
                 </p>

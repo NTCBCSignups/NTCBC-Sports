@@ -1,5 +1,5 @@
 import Image from "next/image";
-import BackButton from "@/components/back-button";
+import BackButton from "@/components/sports/back-button";
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {

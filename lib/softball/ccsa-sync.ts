@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSportAdmin } from "@/lib/supabase/user";
-import { installCookieFetch, getCapturedCookies } from "@/lib/ccsa-server-fetch";
-import { auth, team } from "@/lib/ccsa-api";
+import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-server-fetch";
+import { auth, team } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
 
 const SPORT = "softball";

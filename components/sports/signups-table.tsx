@@ -6,8 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatusBadge } from "@/components/badges";
+import { StatusBadge } from "@/components/sports/badges";
 import { FormResponseColumn } from "@/lib/schedule-utils";
+import { formatTimestamp } from "@/lib/format";
+import { colors } from "@/lib/styles";
 
 interface SignupsTableProps {
   label: string;
@@ -17,19 +19,6 @@ interface SignupsTableProps {
   filterColumn?: { header: string; value: string };
   hiddenColumns?: string[];
   description?: string;
-}
-
-function formatTimestamp(raw: string): string {
-  if (!raw) return "";
-  const date = new Date(raw);
-  if (isNaN(date.getTime())) return raw;
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 export default function SignupsTable({
@@ -66,7 +55,7 @@ export default function SignupsTable({
       <div className="flex-1 px-4 py-3 border-r">
         <p className="text-xs text-muted-foreground mb-0.5">Capacity</p>
         <p
-          className={`text-sm font-semibold ${isOverCap ? "text-amber-600" : "text-gray-900"}`}
+          className={`text-sm font-semibold ${isOverCap ? colors.warning : "text-gray-900"}`}
         >
           {sorted.length} / {playerCap}
         </p>

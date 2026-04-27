@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getScheduleData, getFormResponses } from "@/lib/schedule-utils";
-import { sportsConfig } from "@/lib/sports-config";
+import { sportsConfig } from "@/config/sports-config";
 import { getUser } from "@/lib/supabase/user";
-import SportPage from "@/components/sport-page";
+import SportPage from "@/components/sports/sport-page";
 
 export const dynamic = "force-dynamic";
 

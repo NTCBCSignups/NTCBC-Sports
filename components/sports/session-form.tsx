@@ -13,10 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createSession } from "@/app/softball/actions/sessions";
+import { createSession } from "@/lib/actions/sessions";
 import type { SessionType } from "@/lib/supabase/types";
 
-export default function SessionForm() {
+interface SessionFormProps {
+  sport: string;
+}
+
+export default function SessionForm({ sport }: SessionFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -109,7 +113,7 @@ export default function SessionForm() {
       return;
     }
 
-    const result = await createSession({
+    const result = await createSession(sport, {
       session_type: sessionType,
       title: (form.get("title") as string) || undefined,
       date: date,

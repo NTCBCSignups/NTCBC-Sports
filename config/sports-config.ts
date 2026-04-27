@@ -1,4 +1,4 @@
-import { Sport, FormResponseColumn } from "./schedule-utils";
+import { Sport, FormResponseColumn } from "@/lib/schedule-utils";
 
 export interface ResponseTableEntry {
   time: string;
@@ -18,6 +18,13 @@ export interface SessionTab {
   value: string;
   label: string;
   restrictedAccess?: boolean;
+}
+
+export interface AdminTabMeta {
+  id: string;
+  label: string;
+  /** Lucide icon name (must be mapped in admin-sidebar) */
+  iconName: string;
 }
 
 export interface SportConfig {
@@ -40,6 +47,8 @@ export interface SportConfig {
   tabs?: SessionTab[];
   defaultTab?: string;
   authEnabled?: boolean;
+  /** Extra sport-specific tabs to show in the admin sidebar. */
+  adminTabs?: AdminTabMeta[];
 }
 
 /** Returns true if the given session type belongs to a restricted-access tab. */
@@ -142,6 +151,9 @@ export const sportsConfig: Record<string, SportConfig> = {
   softball: {
     id: "softball",
     authEnabled: true,
+    adminTabs: [
+      { id: "ccsa", label: "CCSA Sync", iconName: "RefreshCw" },
+    ],
     emoji: "🥎",
     name: "Softball",
     type: "Drop-in Practice & Scheduled CCSA Games",

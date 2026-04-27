@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { sportsConfig, hasRestrictedAccess } from "@/lib/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
 
 /**
  * Reads the authenticated user forwarded by middleware via the
