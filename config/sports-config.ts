@@ -81,6 +81,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       "This basketball session is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
       "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
       "Please contact the admins if you have any questions.",
+      "NTCBC is not liable for any lost possessions or injuries during the session.",
     ],
     responseTable: {
       sheetTab: "Form Responses 1",
