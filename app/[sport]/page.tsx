@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
@@ -14,14 +15,16 @@ import { getTodayInSportTimezone } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
 
-const sport = "softball";
-
 export default async function SportAuthPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ sport: string }>;
   searchParams: Promise<{ tab?: string; highlight?: string }>;
 }) {
-  const config = sportsConfig[sport]!;
+  const { sport } = await params;
+  const config = sportsConfig[sport];
+  if (!config) notFound();
 
   const { tab, highlight } = await searchParams;
   const supabase = await createClient();
