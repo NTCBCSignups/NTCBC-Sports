@@ -231,6 +231,7 @@ export default async function SessionDetailPage({
           isOpen={isOpen}
           userSignupStatus={userSignupStatus}
           isEligible={!!isEligible}
+          showStatusText={false}
         />
       ) : (
         <p className="text-sm text-gray-500">Sign in to sign up for this session.</p>

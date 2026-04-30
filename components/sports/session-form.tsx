@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,10 +22,17 @@ interface SessionFormProps {
   sport: string;
 }
 
+const sessionToastClasses = {
+  success:
+    "!border-green-200 !bg-green-100 !text-green-800 [&_[data-title]]:!text-green-800",
+  error:
+    "!border-red-200 !bg-red-100 !text-red-800 [&_[data-title]]:!text-red-800",
+} as const;
+
 export default function SessionForm({ sport }: SessionFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
   const [sessionType, setSessionType] =
     useState<SessionType>("drop_in_practice");
 
@@ -73,7 +82,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    setSuccess(false);
+    setCreatedSessionId(null);
 
     const form = new FormData(e.currentTarget);
     const date = form.get("date") as string;
@@ -133,13 +142,23 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
     if (result.error) {
       setError(result.error);
+      toast.error(result.error, {
+        className: sessionToastClasses.error,
+      });
     } else {
-      setSuccess(true);
+      setCreatedSessionId(result.sessionId);
+      toast.success("Session created successfully.", {
+        className: sessionToastClasses.success,
+      });
       (e.target as HTMLFormElement).reset();
       setSessionType("drop_in_practice");
     }
     setPending(false);
   };
+
+  const createdSessionHref = createdSessionId
+    ? `/${sport}/session/${createdSessionId}`
+    : "#";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -275,8 +294,14 @@ export default function SessionForm({ sport }: SessionFormProps) {
       </div>
 
       {error && <p className={feedback.error}>{error}</p>}
-      {success && (
-        <p className={feedback.success}>Session created successfully.</p>
+      {createdSessionId && (
+        <p className={feedback.success}>
+          Session created.{" "}
+          <Link href={createdSessionHref} className="underline underline-offset-2">
+            View the session
+          </Link>
+          .
+        </p>
       )}
 
       <Button type="submit" disabled={pending} className="rounded-full">

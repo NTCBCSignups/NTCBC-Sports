@@ -1,5 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -16,6 +14,7 @@ import { formatDate } from "@/lib/format";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import SignupsTable from "@/components/sports/signups-table";
 import AuthButton from "@/components/sports/auth-button";
+import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 
 interface SportPageProps {
@@ -35,24 +34,15 @@ export default function SportPage({
 }: SportPageProps) {
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <div className="flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          <Image
-            src="/favicon.ico"
-            alt="NTCBC"
-            width={18}
-            height={18}
-            className="rounded-sm"
-          />
-          NTCBC Sports
-        </Link>
-        {config.authEnabled && (
-          <AuthButton user={user ?? null} sport={config.id} />
-        )}
-      </div>
+      <PageHeader
+        backHref="/"
+        backLabel="Back to Sports"
+        actions={
+          config.authEnabled ? (
+            <AuthButton user={user ?? null} sport={config.id} />
+          ) : null
+        }
+      />
       {/* Title + info bullets */}
       <div className="space-y-6">
         <h1 className="text-4xl font-bold text-gray-900">

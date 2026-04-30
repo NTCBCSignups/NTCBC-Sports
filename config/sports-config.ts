@@ -171,7 +171,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
       "Please contact the leaders if you have any questions.",
     ],
-    description: "Join us for drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
+    description: "Join us for Drop-in Practices. Scheduled Games are only open to confirmed CCSA Team Members.",
     defaultTab: "drop_in_practice",
     tabs: [
       { value: "scheduled_game", label: "Scheduled Games", restrictedAccess: true },

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import BackButton from "@/components/sports/back-button";
 import type { ReactNode } from "react";
 
@@ -11,7 +12,10 @@ interface PageHeaderProps {
 export default function PageHeader({ backHref, backLabel, actions }: PageHeaderProps) {
     return (
         <>
-            <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+            <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
                 <Image
                     src="/favicon.ico"
                     alt="NTCBC"
@@ -20,7 +24,7 @@ export default function PageHeader({ backHref, backLabel, actions }: PageHeaderP
                     className="rounded-sm"
                 />
                 NTCBC Sports
-            </div>
+            </Link>
 
             <div className="flex items-center justify-between">
                 <BackButton href={backHref} label={backLabel} />

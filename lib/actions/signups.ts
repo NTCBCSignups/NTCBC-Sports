@@ -16,6 +16,36 @@ async function getSessionSport(supabase: Awaited<ReturnType<typeof createClient>
   return data?.sport ?? null;
 }
 
+async function getSignupPlacement(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sessionId: string,
+  userId: string,
+  status: "confirmed" | "waitlisted",
+) {
+  const [{ data: session }, { data: signups }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("player_cap")
+      .eq("id", sessionId)
+      .single(),
+    supabase
+      .from("signups")
+      .select("user_id")
+      .eq("session_id", sessionId)
+      .eq("status", status)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const position =
+    signups?.findIndex((signup) => signup.user_id === userId) ?? -1;
+
+  return {
+    status,
+    position: position >= 0 ? position + 1 : null,
+    playerCap: status === "confirmed" ? session?.player_cap ?? null : null,
+  };
+}
+
 export async function signUpForSession(sessionId: string) {
   const supabase = await createClient();
   const user = await getUser();
@@ -52,7 +82,15 @@ export async function signUpForSession(sessionId: string) {
     existingSignup?.status &&
     existingSignup.status !== "cancelled"
   ) {
-    return { error: "Already signed up" };
+    return {
+      success: true,
+      ...(await getSignupPlacement(
+        supabase,
+        sessionId,
+        user.id,
+        existingSignup.status as "confirmed" | "waitlisted",
+      )),
+    };
   }
 
   let status: "confirmed" | "waitlisted";
@@ -74,7 +112,10 @@ export async function signUpForSession(sessionId: string) {
 
     revalidatePath(`/${sport}/session/${sessionId}`);
     revalidatePath(`/${sport}`);
-    return { success: true };
+    return {
+      success: true,
+      ...(await getSignupPlacement(supabase, sessionId, user.id, status)),
+    };
   }
 
   const { error } = await supabase.from("signups").insert({
@@ -90,7 +131,10 @@ export async function signUpForSession(sessionId: string) {
 
   revalidatePath(`/${sport}/session/${sessionId}`);
   revalidatePath(`/${sport}`);
-  return { success: true };
+  return {
+    success: true,
+    ...(await getSignupPlacement(supabase, sessionId, user.id, status)),
+  };
 }
 
 export async function cancelSignup(sessionId: string) {

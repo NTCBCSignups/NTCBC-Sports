@@ -25,17 +25,21 @@ export async function createSession(sport: string, input: CreateSessionInput) {
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const { error } = await supabase.from("sessions").insert({
-    ...input,
-    sport,
-    created_by: result.user.id,
-  });
+  const { data, error } = await supabase
+    .from("sessions")
+    .insert({
+      ...input,
+      sport,
+      created_by: result.user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
 
   revalidatePath(`/${sport}`);
   revalidatePath(`/${sport}/admin`);
-  return { success: true };
+  return { success: true, sessionId: data.id };
 }
 
 export async function updateSession(
