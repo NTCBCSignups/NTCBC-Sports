@@ -239,7 +239,23 @@ create policy "ccsa_players_delete"
 
 
 -- ============================================================
--- 4. ADDITIONAL OPTIMIZATIONS
+-- 4. RESTRICT FUNCTION EXECUTION TO AUTHENTICATED USERS
+-- ============================================================
+
+-- Revoke public execution and grant only to authenticated users
+revoke all on function public.is_admin(uuid) from public, anon;
+revoke all on function public.is_sport_admin(uuid, text) from public, anon;
+revoke all on function public.is_sport_team_member(uuid, text) from public, anon;
+revoke all on function public.handle_new_user() from public, anon;
+
+grant execute on function public.is_admin(uuid) to authenticated;
+grant execute on function public.is_sport_admin(uuid, text) to authenticated;
+grant execute on function public.is_sport_team_member(uuid, text) to authenticated;
+-- handle_new_user() is only called by auth trigger, no role needs direct execute
+
+
+-- ============================================================
+-- 5. ADDITIONAL OPTIMIZATIONS
 -- ============================================================
 
 -- Add indexes for sport_id on team_access_requests (for filtering by sport)
