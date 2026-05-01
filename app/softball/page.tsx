@@ -10,6 +10,7 @@ import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTodayInSportTimezone } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export default async function SportAuthPage({
       .select("*, signups(count)")
       .eq("sport", sport)
       .neq("signups.status", "cancelled")
-      .gte("date", new Date().toISOString().split("T")[0])
+      .gte("date", getTodayInSportTimezone())
       .order("date", { ascending: true }),
   ]);
 

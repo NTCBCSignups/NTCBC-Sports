@@ -26,7 +26,7 @@ export default function PageHeader({ backHref, backLabel, actions }: PageHeaderP
                 NTCBC Sports
             </Link>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-8">
                 <BackButton href={backHref} label={backLabel} />
                 {actions && (
                     <div className="flex items-center gap-2">

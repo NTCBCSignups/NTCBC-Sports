@@ -36,6 +36,11 @@ function getSignupStatus(session: SportSession): {
   return { label: "Open", variant: "default" };
 }
 
+const sessionTypeLabels: Record<string, string> = {
+  drop_in_practice: "Practice",
+  scheduled_game: "Game",
+};
+
 export default function SessionCard({
   session,
   linkDisabled,
@@ -47,6 +52,9 @@ export default function SessionCard({
     ? { label: "Upcoming", variant: "secondary" as const }
     : getSignupStatus(session);
   const href = `/${session.sport}/session/${session.id}`;
+  const fallbackTitle = `${sessionTypeLabels[session.session_type] ?? "Session"
+    }: ${formatDate(session.date, "short", true)}`;
+  const displayTitle = session.title || fallbackTitle;
 
   const card = (
     <Card className={cn(
@@ -58,14 +66,14 @@ export default function SessionCard({
         <Link
           href={href}
           className="absolute inset-0 z-10"
-          aria-label={`View ${session.title || formatDate(session.date)} details`}
+          aria-label={`View ${displayTitle} details`}
         />
       )}
       <CardHeader className="relative z-20 pb-0 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
             <CardTitle className="text-xl leading-tight">
-              {session.title || formatDate(session.date)}
+              {displayTitle}
             </CardTitle>
           </div>
           <div className="flex shrink-0 flex-wrap justify-end gap-2">
@@ -80,15 +88,13 @@ export default function SessionCard({
         </div>
       </CardHeader>
       <CardContent className="relative z-20 flex flex-1 flex-col space-y-1.5 text-sm text-gray-700 pointer-events-none">
-        {session.title && (
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 shrink-0" />
-            <span>{formatDate(session.date)}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 shrink-0" />
+          <span className="font-semibold">{formatDate(session.date, "short", true)}</span>
+        </div>
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 shrink-0" />
-          <span>
+          <span className="font-semibold">
             {formatTime(session.time_start)} –{" "}
             {formatTime(session.time_end)}
           </span>

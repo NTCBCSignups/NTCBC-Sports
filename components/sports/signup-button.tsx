@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   signUpForSession,
   cancelSignup,
+  type SignupPlacement,
 } from "@/lib/actions/signups";
 import type { SignupStatus } from "@/lib/supabase/types";
-import { feedback } from "@/lib/styles";
+import { feedback, toastClasses } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
-type ActiveSignupStatus = Exclude<SignupStatus, "cancelled">;
+type ActiveSignupStatus = SignupPlacement["status"];
 
 interface SignupButtonProps {
   sessionId: string;
@@ -25,31 +26,23 @@ interface SignupButtonProps {
   buttonClassName?: string;
 }
 
-const signupToastClasses = {
-  confirmed:
-    "!border-green-200 !bg-green-100 !text-green-800 [&_[data-title]]:!text-green-800",
-  waitlisted:
-    "!border-amber-200 !bg-amber-100 !text-amber-800 [&_[data-title]]:!text-amber-800",
-} as const;
+const signupToastClassByStatus: Record<ActiveSignupStatus, string> = {
+  confirmed: toastClasses.green,
+  waitlisted: toastClasses.amber,
+};
 
-function signupMessage(result: {
-  status?: ActiveSignupStatus;
-  position?: number | null;
-  playerCap?: number | null;
-}) {
-  if (result.status === "waitlisted") {
+function signupMessage(placement: SignupPlacement): string {
+  if (placement.status === "waitlisted") {
     return `You are on the waitlist.${
-      result.position ? ` You are #${result.position}` : ""
+      placement.position ? ` You are #${placement.position}` : ""
     }`;
   }
 
-  if (result.status === "confirmed") {
-    const position = result.position ? `#${result.position}` : "on the list";
-    const cap = result.playerCap ? ` / ${result.playerCap}` : "";
-    return `You are confirmed for this session. You are ${position}${cap}`;
-  }
-
-  return "You are signed up for this session.";
+  const position = placement.position
+    ? `#${placement.position}`
+    : "on the list";
+  const cap = placement.playerCap ? ` / ${placement.playerCap}` : "";
+  return `You are confirmed for this session. You are ${position}${cap}`;
 }
 
 export default function SignupButton({
@@ -70,19 +63,12 @@ export default function SignupButton({
     setPending(true);
     setError(null);
     const result = await signUpForSession(sessionId);
-    if ("error" in result && result.error) {
+    if ("error" in result) {
       setError(result.error);
     } else {
-      const status: ActiveSignupStatus =
-        "status" in result ? result.status : "confirmed";
-      const placement = {
-        status,
-        position: "position" in result ? result.position : null,
-        playerCap: "playerCap" in result ? result.playerCap : null,
-      };
-      setLocalStatus(status);
-      toast(signupMessage(placement), {
-        className: signupToastClasses[status],
+      setLocalStatus(result.status);
+      toast(signupMessage(result), {
+        className: signupToastClassByStatus[result.status],
       });
       router.refresh();
     }
@@ -93,7 +79,7 @@ export default function SignupButton({
     setPending(true);
     setError(null);
     const result = await cancelSignup(sessionId);
-    if ("error" in result && result.error) {
+    if ("error" in result) {
       setError(result.error);
     } else {
       setLocalStatus("cancelled");
@@ -134,10 +120,13 @@ export default function SignupButton({
     return (
       <Button
         disabled
-        className={cn("w-full sm:w-auto rounded-full px-8", buttonClassName)}
+        className={cn(
+          "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+          buttonClassName,
+        )}
       >
         <Lock className="h-4 w-4 shrink-0" />
-        Sign-up closed
+        Sign-ups closed
       </Button>
     );
   }
@@ -146,7 +135,10 @@ export default function SignupButton({
     return (
       <Button
         disabled
-        className={cn("w-full sm:w-auto rounded-full px-8", buttonClassName)}
+        className={cn(
+          "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+          buttonClassName,
+        )}
       >
         Team members only
       </Button>
@@ -158,7 +150,10 @@ export default function SignupButton({
       <Button
         onClick={handleSignup}
         disabled={pending}
-        className={cn("w-full sm:w-auto rounded-full px-8", buttonClassName)}
+        className={cn(
+          "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+          buttonClassName,
+        )}
       >
         {pending ? "Signing up..." : "Sign up"}
       </Button>

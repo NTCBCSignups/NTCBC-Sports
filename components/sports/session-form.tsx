@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { feedback } from "@/lib/styles";
+import { feedback, toastClasses } from "@/lib/styles";
 import {
   Select,
   SelectContent,
@@ -21,13 +21,6 @@ import type { SessionType } from "@/lib/supabase/types";
 interface SessionFormProps {
   sport: string;
 }
-
-const sessionToastClasses = {
-  success:
-    "!border-green-200 !bg-green-100 !text-green-800 [&_[data-title]]:!text-green-800",
-  error:
-    "!border-red-200 !bg-red-100 !text-red-800 [&_[data-title]]:!text-red-800",
-} as const;
 
 export default function SessionForm({ sport }: SessionFormProps) {
   const [pending, setPending] = useState(false);
@@ -88,35 +81,31 @@ export default function SessionForm({ sport }: SessionFormProps) {
     const date = form.get("date") as string;
     const timeStart = form.get("time_start") as string;
     const timeEnd = form.get("time_end") as string;
-    const signupOpenRaw = (form.get("signup_open") as string) || "";
-    const signupCloseRaw = (form.get("signup_close") as string) || "";
-    const signupOpen = signupOpenRaw ? new Date(signupOpenRaw) : null;
-    const signupClose = signupCloseRaw ? new Date(signupCloseRaw) : null;
+    const signupOpen = new Date(form.get("signup_open") as string);
+    const signupClose = new Date(form.get("signup_close") as string);
 
-    // Create datetime objects for session start/end
     const sessionStart = new Date(`${date}T${timeStart}`);
     const sessionEnd = new Date(`${date}T${timeEnd}`);
 
-    // Validate time ranges
     if (timeStart >= timeEnd) {
       setError("Session start time must be before end time");
       setPending(false);
       return;
     }
 
-    if (signupOpen && signupClose && signupOpen >= signupClose) {
+    if (signupOpen >= signupClose) {
       setError("Sign-up open time must be before sign-up close time");
       setPending(false);
       return;
     }
 
-    if (signupOpen && signupOpen > sessionStart) {
+    if (signupOpen > sessionStart) {
       setError("Sign-up open time cannot be after session start time");
       setPending(false);
       return;
     }
 
-    if (signupClose && signupClose > sessionEnd) {
+    if (signupClose > sessionEnd) {
       setError("Sign-up close time must be before or at session end time");
       setPending(false);
       return;
@@ -135,20 +124,18 @@ export default function SessionForm({ sport }: SessionFormProps) {
       player_cap: (form.get("player_cap") as string)
         ? parseInt(form.get("player_cap") as string)
         : null,
-      signup_open: signupOpen ? signupOpen.toISOString() : null,
-      signup_close: signupClose ? signupClose.toISOString() : null,
+      signup_open: signupOpen.toISOString(),
+      signup_close: signupClose.toISOString(),
       notes: (form.get("notes") as string) || undefined,
     });
 
     if (result.error) {
       setError(result.error);
-      toast.error(result.error, {
-        className: sessionToastClasses.error,
-      });
+      toast.error(result.error, { className: toastClasses.red });
     } else {
       setCreatedSessionId(result.sessionId);
       toast.success("Session created successfully.", {
-        className: sessionToastClasses.success,
+        className: toastClasses.green,
       });
       (e.target as HTMLFormElement).reset();
       setSessionType("drop_in_practice");
@@ -260,22 +247,22 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
         <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="signup_open">
-              Sign-ups Open{" "}
-              <span className="font-normal text-gray-400">(optional)</span>
-            </Label>
-            <Input id="signup_open" name="signup_open" type="datetime-local" />
+            <Label htmlFor="signup_open">Sign-ups Open</Label>
+            <Input
+              id="signup_open"
+              name="signup_open"
+              type="datetime-local"
+              required
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="signup_close">
-              Sign-ups Close{" "}
-              <span className="font-normal text-gray-400">(optional)</span>
-            </Label>
+            <Label htmlFor="signup_close">Sign-ups Close</Label>
             <Input
               id="signup_close"
               name="signup_close"
               type="datetime-local"
+              required
             />
           </div>
         </div>

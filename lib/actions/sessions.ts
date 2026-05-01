@@ -15,8 +15,8 @@ export interface CreateSessionInput {
   location_address: string;
   location_maps_link?: string;
   player_cap?: number | null;
-  signup_open: string | null;
-  signup_close: string | null;
+  signup_open: string;
+  signup_close: string;
   notes?: string;
 }
 

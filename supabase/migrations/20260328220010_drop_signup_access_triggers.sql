@@ -1,6 +1,3 @@
--- Remove business-logic triggers if a database was created from an older 001 + 002.
--- Fresh installs from the current 001 no longer create these objects.
-
 drop trigger if exists on_signup_reactivate_from_cancelled on public.signups;
 drop trigger if exists on_signup_cancelled on public.signups;
 drop trigger if exists on_signup_created on public.signups;

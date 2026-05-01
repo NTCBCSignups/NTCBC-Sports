@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -45,11 +46,15 @@ export default function SportPage({
       />
       {/* Title + info bullets */}
       <div className="space-y-6">
-        <h1 className="text-4xl font-bold text-gray-900">
-          {config.emoji} {config.name}
-        </h1>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{config.type}</Badge>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900">
+            {config.emoji} {config.name}
+          </h1>
+        </div>
 
-        <h2 className="font-semibold text-gray-900">{config.type}</h2>
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           {/* Left stack */}
           <div className="space-y-2">
@@ -106,7 +111,7 @@ export default function SportPage({
             <div className="flex items-start gap-2">
               <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Admins</span>
+                <span className="font-medium text-gray-900">Leaders</span>
                 <span className="text-gray-700">{config.organizers}</span>
               </div>
             </div>
@@ -167,7 +172,7 @@ export default function SportPage({
           className="w-full max-sm:w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8"
         >
           <Lock className="w-4 h-4 shrink-0" />
-          Sign-up closed for {formatDate(scheduleData?.date ?? "", "long")}
+          Sign-ups closed for {formatDate(scheduleData?.date ?? "", "long")}
         </Button>
       )}
 

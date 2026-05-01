@@ -7,6 +7,24 @@ import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capaci
 import { sportsConfig, isRestrictedSessionType } from "@/config/sports-config";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
+export interface SignupPlacement {
+  status: "confirmed" | "waitlisted";
+  position: number | null;
+  playerCap: number | null;
+}
+
+export type SignupActionResult =
+  | { error: string }
+  | ({ success: true } & SignupPlacement);
+
+export type CancelSignupResult =
+  | { error: string }
+  | { success: true };
+
+export type AdminSignupActionResult =
+  | { error: string }
+  | { success: true };
+
 async function getSessionSport(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: string) {
   const { data } = await supabase
     .from("sessions")
@@ -21,7 +39,7 @@ async function getSignupPlacement(
   sessionId: string,
   userId: string,
   status: "confirmed" | "waitlisted",
-) {
+): Promise<SignupPlacement> {
   const [{ data: session }, { data: signups }] = await Promise.all([
     supabase
       .from("sessions")
@@ -46,7 +64,9 @@ async function getSignupPlacement(
   };
 }
 
-export async function signUpForSession(sessionId: string) {
+export async function signUpForSession(
+  sessionId: string,
+): Promise<SignupActionResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -137,7 +157,9 @@ export async function signUpForSession(sessionId: string) {
   };
 }
 
-export async function cancelSignup(sessionId: string) {
+export async function cancelSignup(
+  sessionId: string,
+): Promise<CancelSignupResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -196,7 +218,7 @@ export async function adminUpdateSignupStatus(
   signupId: string,
   status: "confirmed" | "waitlisted" | "cancelled",
   sessionId: string,
-) {
+): Promise<AdminSignupActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };

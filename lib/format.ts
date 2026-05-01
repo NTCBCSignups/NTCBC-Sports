@@ -1,6 +1,7 @@
 export function formatDate(
     dateStr: string,
     weekday: "short" | "long" = "short",
+    includeYear = false,
 ): string {
     const [year, month, day] = dateStr.split("-").map(Number);
     const date = new Date(year, month - 1, day);
@@ -8,6 +9,7 @@ export function formatDate(
         weekday,
         month: "short",
         day: "numeric",
+        ...(includeYear ? { year: "numeric" as const } : {}),
     });
 }
 
