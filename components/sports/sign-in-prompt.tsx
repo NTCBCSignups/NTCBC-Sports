@@ -9,7 +9,7 @@ export default function SignInPrompt({ sport }: SignInPromptProps) {
     const config = sportsConfig[sport];
 
     return (
-        <SportPageShell user={null} sport={sport}>
+        <SportPageShell user={null} sport={sport} showDescription={false}>
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center space-y-3">
                 <p className="text-gray-700 font-medium">
                     Sign in to view and sign up for sessions

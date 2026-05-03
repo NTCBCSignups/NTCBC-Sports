@@ -148,32 +148,13 @@ export default async function SessionDetailPage({
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{sessionTypeLabel}</Badge>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {session.title || formatDate(session.date, "long")}
+          <h1 className="text-4xl font-bold text-gray-900">
+            {session.title || formatDate(session.date, "long", true)}
           </h1>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           <div className="space-y-2">
-            <div className="flex items-start gap-2">
-              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Date</span>
-                <span className="text-gray-700">{formatDate(session.date, "long")}</span>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Time</span>
-                <span className="text-gray-700">
-                  {formatTime(session.time_start)} –{" "}
-                  {formatTime(session.time_end)}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-2 mt-2 sm:mt-0">
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
@@ -201,13 +182,25 @@ export default async function SessionDetailPage({
                 )}
               </div>
             </div>
-            {session.signup_open && session.signup_close && (
-              <CountdownTimer
-                openTime={session.signup_open}
-                closeTime={session.signup_close}
-                isFormOpen={isOpen}
-              />
-            )}
+            <div className="flex items-start gap-2">
+              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Date</span>
+                <span className="text-gray-700">{formatDate(session.date, "long", true)}</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">Time</span>
+                <span className="text-gray-700">
+                  {formatTime(session.time_start)} –{" "}
+                  {formatTime(session.time_end)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2 mt-2 sm:mt-0">
             <div className="flex items-start gap-2">
               <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
               <div className="flex flex-col">
@@ -215,6 +208,29 @@ export default async function SessionDetailPage({
                 <span className="text-gray-700">{config.organizers}</span>
               </div>
             </div>
+            {session.signup_open && session.signup_close && (
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900">
+                    Sign-ups open from
+                  </span>
+                  <span className="text-gray-700">
+                    <LocalTimestamp date={session.signup_open} weekday="long" />
+                  </span>
+                  <span className="text-gray-700">
+                    <LocalTimestamp date={session.signup_close} weekday="long" />
+                  </span>
+                </div>
+              </div>
+            )}
+            {session.signup_open && session.signup_close && (
+              <CountdownTimer
+                openTime={session.signup_open}
+                closeTime={session.signup_close}
+                isFormOpen={isOpen}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -231,6 +247,7 @@ export default async function SessionDetailPage({
           isOpen={isOpen}
           userSignupStatus={userSignupStatus}
           isEligible={!!isEligible}
+          showStatusText={false}
         />
       ) : (
         <p className="text-sm text-gray-500">Sign in to sign up for this session.</p>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ArrowBigRight } from "lucide-react";
+import { accent } from "@/lib/styles";
 
 interface CountdownTimerProps {
   openTime: string;
@@ -20,41 +21,38 @@ export default function CountdownTimer({
   const targetTime = isFormOpen ? closeTime : openTime;
   const now = Date.now();
   const targetMs = new Date(targetTime).getTime();
+  const closeMs = new Date(closeTime).getTime();
   const alreadyPast = targetMs <= now;
+  const isClosed = closeMs <= now;
 
-  const calculateCountdown = useCallback(
-    (target: string) => {
-      const nowMs = Date.now();
-      const targetTimeMs = new Date(target).getTime();
-      const difference = targetTimeMs - nowMs;
+  const calculateCountdown = useCallback((target: string) => {
+    const nowMs = Date.now();
+    const targetTimeMs = new Date(target).getTime();
+    const difference = targetTimeMs - nowMs;
 
-      if (difference <= 0) {
-        setExpired(true);
-        window.location.reload();
-        return "Refreshing...";
-      }
+    if (difference <= 0) {
+      setExpired(true);
+      window.location.reload();
+      return "Refreshing...";
+    }
 
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-      );
-      const minutes = Math.floor(
-        (difference % (1000 * 60 * 60)) / (1000 * 60),
-      );
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    );
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-      if (days > 0) {
-        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-      } else if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
-      } else if (minutes > 0) {
-        return `${minutes}m ${seconds}s`;
-      } else {
-        return `${seconds}s`;
-      }
-    },
-    [],
-  );
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  }, []);
 
   useEffect(() => {
     if (alreadyPast) return;
@@ -67,8 +65,13 @@ export default function CountdownTimer({
     return () => clearInterval(interval);
   }, [targetTime, alreadyPast, calculateCountdown]);
 
-  if (alreadyPast && !expired) {
-    return null;
+  if (isClosed || (alreadyPast && !expired)) {
+    return (
+      <div className="flex items-start gap-2 text-sm">
+        <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+        <span className="font-medium text-gray-900">Sign-ups closed</span>
+      </div>
+    );
   }
 
   return (
@@ -78,7 +81,7 @@ export default function CountdownTimer({
         <span className="font-medium text-gray-900">
           {isFormOpen ? "Sign-ups close in" : "Sign-ups open in"}
         </span>
-        <span className="font-mono text-blue-500">{countdown}</span>
+        <span className={accent.countdown}>{countdown}</span>
       </div>
     </div>
   );

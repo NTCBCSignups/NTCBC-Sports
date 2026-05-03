@@ -7,6 +7,24 @@ import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capaci
 import { sportsConfig, isRestrictedSessionType } from "@/config/sports-config";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
+export interface SignupPlacement {
+  status: "confirmed" | "waitlisted";
+  position: number | null;
+  playerCap: number | null;
+}
+
+export type SignupActionResult =
+  | { error: string }
+  | ({ success: true } & SignupPlacement);
+
+export type CancelSignupResult =
+  | { error: string }
+  | { success: true };
+
+export type AdminSignupActionResult =
+  | { error: string }
+  | { success: true };
+
 async function getSessionSport(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: string) {
   const { data } = await supabase
     .from("sessions")
@@ -16,7 +34,39 @@ async function getSessionSport(supabase: Awaited<ReturnType<typeof createClient>
   return data?.sport ?? null;
 }
 
-export async function signUpForSession(sessionId: string) {
+async function getSignupPlacement(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sessionId: string,
+  userId: string,
+  status: "confirmed" | "waitlisted",
+): Promise<SignupPlacement> {
+  const [{ data: session }, { data: signups }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("player_cap")
+      .eq("id", sessionId)
+      .single(),
+    supabase
+      .from("signups")
+      .select("user_id")
+      .eq("session_id", sessionId)
+      .eq("status", status)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const position =
+    signups?.findIndex((signup) => signup.user_id === userId) ?? -1;
+
+  return {
+    status,
+    position: position >= 0 ? position + 1 : null,
+    playerCap: status === "confirmed" ? session?.player_cap ?? null : null,
+  };
+}
+
+export async function signUpForSession(
+  sessionId: string,
+): Promise<SignupActionResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -52,7 +102,15 @@ export async function signUpForSession(sessionId: string) {
     existingSignup?.status &&
     existingSignup.status !== "cancelled"
   ) {
-    return { error: "Already signed up" };
+    return {
+      success: true,
+      ...(await getSignupPlacement(
+        supabase,
+        sessionId,
+        user.id,
+        existingSignup.status as "confirmed" | "waitlisted",
+      )),
+    };
   }
 
   let status: "confirmed" | "waitlisted";
@@ -74,7 +132,10 @@ export async function signUpForSession(sessionId: string) {
 
     revalidatePath(`/${sport}/session/${sessionId}`);
     revalidatePath(`/${sport}`);
-    return { success: true };
+    return {
+      success: true,
+      ...(await getSignupPlacement(supabase, sessionId, user.id, status)),
+    };
   }
 
   const { error } = await supabase.from("signups").insert({
@@ -90,10 +151,15 @@ export async function signUpForSession(sessionId: string) {
 
   revalidatePath(`/${sport}/session/${sessionId}`);
   revalidatePath(`/${sport}`);
-  return { success: true };
+  return {
+    success: true,
+    ...(await getSignupPlacement(supabase, sessionId, user.id, status)),
+  };
 }
 
-export async function cancelSignup(sessionId: string) {
+export async function cancelSignup(
+  sessionId: string,
+): Promise<CancelSignupResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -152,7 +218,7 @@ export async function adminUpdateSignupStatus(
   signupId: string,
   status: "confirmed" | "waitlisted" | "cancelled",
   sessionId: string,
-) {
+): Promise<AdminSignupActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };

@@ -15,34 +15,46 @@ export interface CreateSessionInput {
   location_address: string;
   location_maps_link?: string;
   player_cap?: number | null;
-  signup_open: string | null;
-  signup_close: string | null;
+  signup_open: string;
+  signup_close: string;
   notes?: string;
 }
 
-export async function createSession(sport: string, input: CreateSessionInput) {
+export type CreateSessionResult =
+  | { error: string }
+  | { success: true; sessionId: string };
+
+export type SessionActionResult =
+  | { error: string }
+  | { success: true };
+
+export async function createSession(sport: string, input: CreateSessionInput): Promise<CreateSessionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const { error } = await supabase.from("sessions").insert({
-    ...input,
-    sport,
-    created_by: result.user.id,
-  });
+  const { data, error } = await supabase
+    .from("sessions")
+    .insert({
+      ...input,
+      sport,
+      created_by: result.user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
 
   revalidatePath(`/${sport}`);
   revalidatePath(`/${sport}/admin`);
-  return { success: true };
+  return { success: true, sessionId: data.id };
 }
 
 export async function updateSession(
   sport: string,
   sessionId: string,
   input: Partial<CreateSessionInput>,
-) {
+): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
@@ -60,7 +72,7 @@ export async function updateSession(
   return { success: true };
 }
 
-export async function deleteSession(sport: string, sessionId: string) {
+export async function deleteSession(sport: string, sessionId: string): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };

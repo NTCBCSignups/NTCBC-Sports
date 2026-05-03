@@ -1,15 +1,16 @@
 "use client";
 
-export default function LocalTimestamp({ date }: { date: string }) {
-    return (
-        <time dateTime={date}>
-            {new Date(date).toLocaleString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            })}
-        </time>
-    );
+import { formatTimestamp, formatDateTimeWithWeekday } from "@/lib/format";
+
+interface LocalTimestampProps {
+    date: string;
+    weekday?: "short" | "long";
+}
+
+export default function LocalTimestamp({ date, weekday }: LocalTimestampProps) {
+    const formatted = weekday
+        ? formatDateTimeWithWeekday(date, weekday)
+        : formatTimestamp(date);
+
+    return <time dateTime={date}>{formatted}</time>;
 }

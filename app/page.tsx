@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,8 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import { sportsConfig } from "@/config/sports-config";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const sports = Object.values(sportsConfig);
@@ -41,47 +42,51 @@ export default function Home() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {sports.map((sport) => (
-          <Card
-            key={sport.id}
-            className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                {sport.emoji} {sport.name}
-              </CardTitle>
-              <CardDescription className="text-gray-700">
-                {sport.type}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1 space-y-4">
-              <div className="flex-1 space-y-2 text-sm text-gray-700">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  <span>{sport.day}</span>
-                </div>
-                {sport.responseTable?.sessions.map((session) => (
-                  <div key={session.time} className="flex justify-between">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{session.time}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>{session.playerCap} player cap</span>
-                    </div>
+          <Link key={sport.id} href={`/${sport.id}`} className="block">
+            <Card
+              className="flex h-full flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+            >
+              <CardHeader>
+                <CardTitle className="text-2xl">
+                  {sport.emoji} {sport.name}
+                </CardTitle>
+                <CardDescription className="text-gray-700">
+                  {sport.type}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-1 space-y-4">
+                <div className="flex-1 space-y-2 text-sm text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>{sport.day}</span>
                   </div>
-                ))}
-                {sport.description && !sport.responseTable && (
-                  <p className="text-gray-500">{sport.description}</p>
-                )}
-              </div>
-              <Button asChild className="w-full rounded-full has-[>svg]:px-8">
-                <Link href={`/${sport.id}`}>
+                  {sport.responseTable?.sessions.map((session) => (
+                    <div key={session.time} className="flex justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{session.time}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span>{session.playerCap} player cap</span>
+                      </div>
+                    </div>
+                  ))}
+                  {sport.description && !sport.responseTable && (
+                    <p className="text-gray-500">{sport.description}</p>
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    buttonVariants(),
+                    "w-full rounded-full has-[>svg]:px-8",
+                  )}
+                >
                   View sign-ups <ArrowRight className="w-4 h-4 shrink-0" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+                </span>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

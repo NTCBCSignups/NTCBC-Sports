@@ -8,6 +8,7 @@ interface SportPageShellProps {
     user: User | null;
     sport: string;
     actions?: ReactNode;
+    showDescription?: boolean;
     children: ReactNode;
 }
 
@@ -15,6 +16,7 @@ export default function SportPageShell({
     user,
     sport,
     actions,
+    showDescription = true,
     children,
 }: SportPageShellProps) {
     const config = sportsConfig[sport];
@@ -34,7 +36,7 @@ export default function SportPageShell({
 
             <div className="space-y-2">
                 <h1 className="text-4xl font-bold text-gray-900">{config?.emoji} {config?.name ?? sport}</h1>
-                {config?.description && (
+                {showDescription && config?.description && (
                     <p className="text-sm text-gray-700">
                         {config.description}
                     </p>

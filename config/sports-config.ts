@@ -61,6 +61,11 @@ export function hasRestrictedAccess(config: SportConfig | undefined): boolean {
   return config?.tabs?.some((t) => t.restrictedAccess) ?? false;
 }
 
+export const sessionTypeLabels: Record<string, string> = {
+  drop_in_practice: "Practice",
+  scheduled_game: "Game",
+};
+
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
     id: "basketball",
@@ -80,7 +85,7 @@ export const sportsConfig: Record<string, SportConfig> = {
     notes: [
       "This basketball session is part of our church ministry. It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome to join.",
       "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
-      "Please contact the admins if you have any questions.",
+      "Please contact the leaders if you have any questions.",
       "NTCBC is not liable for any lost possessions or injuries during the session.",
     ],
     responseTable: {
@@ -92,7 +97,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       ],
       sessions: [
         {
-          time: "7:30 PM - 10:00 PM",
+          time: "7:30 PM – 10:00 PM",
           playerCap: 20,
           description: "All levels",
           filterColumn: { header: "Attending", value: "Yes" },
@@ -121,30 +126,30 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Don't play volleyball in the basement foyer as you may break the lights.",
       "Don't cross the centre line, as this can cause serious injuries.",
       "By filling out the form, you are signing up to attend this session. If you can no longer attend, please modify your response in the form.",
-      "Please contact the admins if you have any questions.",
+      "Please contact the leaders if you have any questions.",
     ],
     responseTable: {
       sheetTab: "Form Responses 1",
       columns: [
         { index: 0, header: "Timestamp" },
         { index: 2, header: "Name" },
-        { index: 3, header: "6:00 PM - 8:15 PM" },
-        { index: 4, header: "8:15 PM - 10:30 PM" },
+        { index: 3, header: "6:00 PM – 8:15 PM" },
+        { index: 4, header: "8:15 PM – 10:30 PM" },
       ],
       sessions: [
         {
-          time: "6:00 PM - 8:15 PM",
+          time: "6:00 PM – 8:15 PM",
           playerCap: 21,
           description: "All levels",
-          filterColumn: { header: "6:00 PM - 8:15 PM", value: "Yes" },
-          hiddenColumns: ["8:15 PM - 10:30 PM"],
+          filterColumn: { header: "6:00 PM – 8:15 PM", value: "Yes" },
+          hiddenColumns: ["8:15 PM – 10:30 PM"],
         },
         {
-          time: "8:15 PM - 10:30 PM",
+          time: "8:15 PM – 10:30 PM",
           playerCap: 18,
           description: "Intermediate+",
-          filterColumn: { header: "8:15 PM - 10:30 PM", value: "Yes" },
-          hiddenColumns: ["6:00 PM - 8:15 PM"],
+          filterColumn: { header: "8:15 PM – 10:30 PM", value: "Yes" },
+          hiddenColumns: ["6:00 PM – 8:15 PM"],
         },
       ],
     },
@@ -171,7 +176,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
       "Please contact the leaders if you have any questions.",
     ],
-    description: "Join us for drop-in practice sessions. Sign in to view and sign up for upcoming sessions.",
+    description: "Join us for Drop-in Practices. Scheduled Games are only open to confirmed CCSA Team Members.",
     defaultTab: "drop_in_practice",
     tabs: [
       { value: "scheduled_game", label: "Scheduled Games", restrictedAccess: true },

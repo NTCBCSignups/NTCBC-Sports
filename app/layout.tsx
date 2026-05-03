@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +32,7 @@ export default function RootLayout({
         <div className="min-h-screen" style={{ backgroundColor: "#FDFDFB" }}>
           <div className="container mx-auto px-4 py-8">{children}</div>
         </div>
+        <Toaster />
       </body>
       <Analytics />
     </html>

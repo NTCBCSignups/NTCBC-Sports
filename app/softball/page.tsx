@@ -10,6 +10,7 @@ import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTodayInSportTimezone } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export default async function SportAuthPage({
       .select("*, signups(count)")
       .eq("sport", sport)
       .neq("signups.status", "cancelled")
-      .gte("date", new Date().toISOString().split("T")[0])
+      .gte("date", getTodayInSportTimezone())
       .order("date", { ascending: true }),
   ]);
 
@@ -68,6 +69,22 @@ export default async function SportAuthPage({
     signup_count:
       (s.signups as unknown as { count: number }[])?.[0]?.count ?? 0,
   }));
+  const sessionIds = sessionsWithCounts.map((session) => session.id);
+  const { data: userSignups } =
+    user && sessionIds.length > 0
+      ? await supabase
+        .from("signups")
+        .select("session_id, status")
+        .eq("user_id", user.id)
+        .in("session_id", sessionIds)
+        .neq("status", "cancelled")
+      : { data: [] };
+  const userSignupStatusBySession = new Map(
+    (userSignups ?? []).map((signup) => [
+      signup.session_id,
+      signup.status,
+    ]),
+  );
 
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
@@ -105,6 +122,9 @@ export default async function SportAuthPage({
                   session={session}
                   linkDisabled={isRestricted}
                   highlighted={session.id === highlight}
+                  userSignupStatus={
+                    userSignupStatusBySession.get(session.id) ?? null
+                  }
                 />
               ))}
             </div>
@@ -119,7 +139,11 @@ export default async function SportAuthPage({
   });
 
   return (
-    <SportPageShell user={user} sport={sport} actions={adminButton}>
+    <SportPageShell
+      user={user}
+      sport={sport}
+      actions={adminButton}
+    >
       <SessionTabs
         defaultTab={defaultTab}
         tabs={tabsWithContent}

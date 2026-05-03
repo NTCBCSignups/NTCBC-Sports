@@ -37,3 +37,20 @@ export const statusColors = {
         border: "border-red-200",
     },
 } as const;
+
+// ── Accent classes ───────────────────────────────────────────────
+export const accent = {
+    countdown: "font-mono text-blue-500",
+} as const;
+
+// ── Sonner toast palettes ───────────────────────────────────────
+// Match the StatusBadge palette so confirmed/waitlist/error toasts
+// look like their corresponding pills.
+export const toastClasses = {
+    green:
+        "!border-green-200 !bg-green-100 !text-green-800 [&_[data-title]]:!text-green-800",
+    amber:
+        "!border-amber-200 !bg-amber-100 !text-amber-800 [&_[data-title]]:!text-amber-800",
+    red:
+        "!border-red-200 !bg-red-100 !text-red-800 [&_[data-title]]:!text-red-800",
+} as const;

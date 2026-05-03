@@ -19,6 +19,7 @@ import DeleteSessionButton from "@/components/sports/delete-session-button";
 import AdminSidebar from "@/components/sports/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { formatDate, formatTime } from "@/lib/format";
+import { getTodayInSportTimezone } from "@/lib/timezone";
 import type {
   Profile,
   SportSession,
@@ -225,8 +226,13 @@ export default async function AdminPage({
 
   const teamMemberIds = new Set((teamMembers ?? []).map((m) => m.user_id));
 
-  const today = new Date().toISOString().split("T")[0];
-  const upcomingSessions = (sessions ?? []).filter((s) => s.date >= today);
+  const today = getTodayInSportTimezone();
+  const upcomingSessions = (sessions ?? [])
+    .filter((s) => s.date >= today)
+    .sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.time_start.localeCompare(b.time_start);
+    });
   const pastSessions = (sessions ?? []).filter((s) => s.date < today);
 
   return (
