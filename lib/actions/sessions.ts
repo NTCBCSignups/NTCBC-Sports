@@ -20,7 +20,15 @@ export interface CreateSessionInput {
   notes?: string;
 }
 
-export async function createSession(sport: string, input: CreateSessionInput) {
+export type CreateSessionResult =
+  | { error: string }
+  | { success: true; sessionId: string };
+
+export type SessionActionResult =
+  | { error: string }
+  | { success: true };
+
+export async function createSession(sport: string, input: CreateSessionInput): Promise<CreateSessionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
@@ -46,7 +54,7 @@ export async function updateSession(
   sport: string,
   sessionId: string,
   input: Partial<CreateSessionInput>,
-) {
+): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
@@ -64,7 +72,7 @@ export async function updateSession(
   return { success: true };
 }
 
-export async function deleteSession(sport: string, sessionId: string) {
+export async function deleteSession(sport: string, sessionId: string): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };

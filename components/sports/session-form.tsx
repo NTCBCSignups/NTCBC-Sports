@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createSession } from "@/lib/actions/sessions";
+import { createSession, type CreateSessionResult } from "@/lib/actions/sessions";
 import type { SessionType } from "@/lib/supabase/types";
 
 interface SessionFormProps {
@@ -129,7 +129,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
       notes: (form.get("notes") as string) || undefined,
     });
 
-    if (result.error) {
+    if ("error" in result) {
       setError(result.error);
       toast.error(result.error, { className: toastClasses.red });
     } else {

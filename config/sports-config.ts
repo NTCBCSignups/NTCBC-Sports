@@ -61,6 +61,11 @@ export function hasRestrictedAccess(config: SportConfig | undefined): boolean {
   return config?.tabs?.some((t) => t.restrictedAccess) ?? false;
 }
 
+export const sessionTypeLabels: Record<string, string> = {
+  drop_in_practice: "Practice",
+  scheduled_game: "Game",
+};
+
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
     id: "basketball",

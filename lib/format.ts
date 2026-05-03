@@ -34,6 +34,26 @@ export function formatTimestamp(raw: string): string {
     });
 }
 
+export function formatDateTimeWithWeekday(
+    raw: string,
+    weekday: "short" | "long",
+): string {
+    const date = new Date(raw);
+    if (isNaN(date.getTime())) return raw;
+    const dateStr = date.toLocaleString("en-US", {
+        weekday,
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+    const timeStr = date.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
+    return `${dateStr} at ${timeStr}`;
+}
+
 export function displayName(profile: { full_name: string | null; email: string | null } | null): string {
     return profile?.full_name ?? profile?.email ?? "Unknown";
 }

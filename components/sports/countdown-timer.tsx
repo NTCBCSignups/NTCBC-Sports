@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ArrowBigRight } from "lucide-react";
+import { accent } from "@/lib/styles";
 
 interface CountdownTimerProps {
   openTime: string;
@@ -80,7 +81,7 @@ export default function CountdownTimer({
         <span className="font-medium text-gray-900">
           {isFormOpen ? "Sign-ups close in" : "Sign-ups open in"}
         </span>
-        <span className="font-mono text-blue-500">{countdown}</span>
+        <span className={accent.countdown}>{countdown}</span>
       </div>
     </div>
   );

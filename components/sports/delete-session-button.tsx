@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { colors } from "@/lib/styles";
+import { colors, toastClasses } from "@/lib/styles";
 
 interface DeleteSessionButtonProps {
   sport: string;
@@ -36,8 +36,8 @@ export default function DeleteSessionButton({
     const result = await deleteSession(sport, sessionId);
     setPending(false);
 
-    if (result.error) {
-      toast.error(result.error);
+    if ("error" in result) {
+      toast.error(result.error, { className: toastClasses.red });
       return;
     }
 

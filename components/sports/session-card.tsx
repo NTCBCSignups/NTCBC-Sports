@@ -14,6 +14,7 @@ import CountdownTimer from "@/components/sports/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
+import { sessionTypeLabels } from "@/config/sports-config";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -35,11 +36,6 @@ function getSignupStatus(session: SportSession): {
   if (close && now > close) return { label: "Closed", variant: "outline" };
   return { label: "Open", variant: "default" };
 }
-
-const sessionTypeLabels: Record<string, string> = {
-  drop_in_practice: "Practice",
-  scheduled_game: "Game",
-};
 
 export default function SessionCard({
   session,
