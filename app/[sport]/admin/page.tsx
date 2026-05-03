@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
@@ -135,14 +135,16 @@ function SessionAccordion({
   );
 }
 
-const sport = "softball";
-
 export default async function AdminPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ sport: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const config = sportsConfig[sport]!;
+  const { sport } = await params;
+  const config = sportsConfig[sport];
+  if (!config) notFound();
 
   const { tab = "upcoming" } = await searchParams;
   const supabase = await createClient();

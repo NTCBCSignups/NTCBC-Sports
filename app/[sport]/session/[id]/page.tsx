@@ -34,15 +34,14 @@ import type { Profile, SignupStatus } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
-const sport = "softball";
-
 export default async function SessionDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ sport: string; id: string }>;
 }) {
-  const { id } = await params;
-  const config = sportsConfig[sport]!;
+  const { sport, id } = await params;
+  const config = sportsConfig[sport];
+  if (!config) notFound();
 
   const supabase = await createClient();
 
