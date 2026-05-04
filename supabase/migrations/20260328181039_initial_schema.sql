@@ -67,7 +67,7 @@ create trigger on_auth_user_created
 create table public.sessions (
   id              uuid primary key default gen_random_uuid(),
   sport           text not null,
-  session_type    text not null check (session_type in ('scheduled_game', 'drop_in_practice')),
+  session_type    text not null,
   title           text,
   date            date not null,
   time_start      time not null,

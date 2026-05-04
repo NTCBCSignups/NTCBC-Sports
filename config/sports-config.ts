@@ -181,6 +181,7 @@ export const sportsConfig: Record<string, SportConfig> = {
     tabs: [
       { value: "scheduled_game", label: "Scheduled Games", restrictedAccess: true },
       { value: "drop_in_practice", label: "Drop-in Practice" },
+      { value: "umpiring", label: "Umpiring", restrictedAccess: true },
     ],
   },
 } satisfies Record<string, SportConfig>;
