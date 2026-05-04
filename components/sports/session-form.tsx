@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createSession, type CreateSessionResult } from "@/lib/actions/sessions";
-import type { SessionType } from "@/lib/supabase/types";
+import { sportsConfig } from "@/config/sports-config";
 
 interface SessionFormProps {
   sport: string;
@@ -26,8 +26,11 @@ export default function SessionForm({ sport }: SessionFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
+  const sportConfig = sportsConfig[sport];
+  const tabs = sportConfig?.tabs ?? [];
+  const defaultSessionType = sportConfig?.defaultTab ?? tabs[0]?.value ?? "";
   const [sessionType, setSessionType] =
-    useState<SessionType>("drop_in_practice");
+    useState(defaultSessionType);
 
   const autoFillSignupClose = (form: HTMLFormElement) => {
     const date = (form.elements.namedItem("date") as HTMLInputElement)?.value;
@@ -138,7 +141,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
         className: toastClasses.green,
       });
       (e.target as HTMLFormElement).reset();
-      setSessionType("drop_in_practice");
+      setSessionType(defaultSessionType);
     }
     setPending(false);
   };
@@ -154,14 +157,15 @@ export default function SessionForm({ sport }: SessionFormProps) {
           <Label htmlFor="session_type">Session Type</Label>
           <Select
             value={sessionType}
-            onValueChange={(v) => setSessionType(v as SessionType)}
+            onValueChange={(v) => setSessionType(v)}
           >
             <SelectTrigger id="session_type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="drop_in_practice">Drop-in Practice</SelectItem>
-              <SelectItem value="scheduled_game">Scheduled Game</SelectItem>
+              {tabs.map((tab) => (
+                <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

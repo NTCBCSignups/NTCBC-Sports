@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
-import type { SessionType } from "@/lib/supabase/types";
 
 export interface CreateSessionInput {
-  session_type: SessionType;
+  session_type: string;
   title?: string;
   date: string;
   time_start: string;
