@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -10,95 +11,45 @@ import SignInPrompt from "@/components/sports/sign-in-prompt";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { getTodayInSportTimezone } from "@/lib/timezone";
+import { LoadingContent } from "@/components/sports/loading-content";
+import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
+import type { SignupStatus } from "@/lib/supabase/types";
 
-export const dynamic = "force-dynamic";
-
-export default async function SportAuthPage({
-  params,
-  searchParams,
+async function SportSessionsContent({
+  sport,
+  tab,
+  highlight,
+  userId,
 }: {
-  params: Promise<{ sport: string }>;
-  searchParams: Promise<{ tab?: string; highlight?: string }>;
+  sport: string;
+  tab?: string;
+  highlight?: string;
+  userId: string | null;
 }) {
-  const { sport } = await params;
   const config = sportsConfig[sport];
-  if (!config) notFound();
-
-  const { tab, highlight } = await searchParams;
   const supabase = await createClient();
 
-  // ── Auth ───────────────────────────────────────────────────────
-  // Middleware validates the JWT and forwards the user via request header.
-  const user = config.authEnabled ? await getUser() : null;
-
-  if (config.authEnabled && !user) {
-    return <SignInPrompt sport={sport} />;
-  }
-
-  // ── Roles, access & sessions (parallel) ─────────────────────────
-  const queryClient = user ? supabase : createAdminClient();
-
-  const [roleResult, sessionsResult] = await Promise.all([
-    user
-      ? getUserSportRole(supabase, user.id, sport)
+  // ── Roles & sessions (parallel) ────────────────────────────────
+  const [roleResult, sessionsWithCounts] = await Promise.all([
+    userId
+      ? getUserSportRole(supabase, userId, sport)
       : Promise.resolve({ isAdmin: false, isTeamMember: true }),
-    queryClient
-      .from("sessions")
-      .select("*, signups(count)")
-      .eq("sport", sport)
-      .neq("signups.status", "cancelled")
-      .gte("date", getTodayInSportTimezone())
-      .order("date", { ascending: true }),
+    getUpcomingSessions(sport),
   ]);
 
   const { isAdmin, isTeamMember } = roleResult;
-  const { data: sessions } = sessionsResult;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
-  if (user && hasRestrictedAccess(config) && !isTeamMember) {
-    const { data: request } = await supabase
-      .from("team_access_requests")
-      .select("status")
-      .eq("user_id", user.id)
-      .eq("sport", sport)
-      .single();
-    accessRequestStatus = request?.status ?? null;
+  if (userId && hasRestrictedAccess(config) && !isTeamMember) {
+    accessRequestStatus = await getUserAccessRequestStatus(userId, sport);
   }
 
-  const sessionsWithCounts = (sessions ?? []).map((s) => ({
-    ...s,
-    signup_count:
-      (s.signups as unknown as { count: number }[])?.[0]?.count ?? 0,
-  }));
   const sessionIds = sessionsWithCounts.map((session) => session.id);
-  const { data: userSignups } =
-    user && sessionIds.length > 0
-      ? await supabase
-        .from("signups")
-        .select("session_id, status")
-        .eq("user_id", user.id)
-        .in("session_id", sessionIds)
-        .neq("status", "cancelled")
-      : { data: [] };
-  const userSignupStatusBySession = new Map(
-    (userSignups ?? []).map((signup) => [
-      signup.session_id,
-      signup.status,
-    ]),
-  );
+  const userSignupStatusBySession = userId
+    ? await getUserSignupStatuses(userId, sessionIds)
+    : new Map<string, SignupStatus>();
 
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
-
-  const adminButton = isAdmin ? (
-    <Button asChild variant="outline" size="sm" className="rounded-full">
-      <Link href={`/${sport}/admin`}>
-        <Settings className="h-4 w-4" />
-        Admin
-      </Link>
-    </Button>
-  ) : null;
 
   const configTabs = config.tabs ?? [];
   const defaultTab = configTabs.find((t) => t.value === tab)?.value ?? config.defaultTab ?? configTabs[0]?.value;
@@ -142,15 +93,68 @@ export default async function SportAuthPage({
   });
 
   return (
+    <SessionTabs
+      defaultTab={defaultTab}
+      tabs={tabsWithContent}
+    />
+  );
+}
+
+async function AdminButton({ sport, userId }: { sport: string; userId: string }) {
+  const supabase = await createClient();
+  const { isAdmin } = await getUserSportRole(supabase, userId, sport);
+  if (!isAdmin) return null;
+  return (
+    <Button asChild variant="outline" size="sm" className="rounded-full">
+      <Link href={`/${sport}/admin`}>
+        <Settings className="h-4 w-4" />
+        Admin
+      </Link>
+    </Button>
+  );
+}
+
+export default async function SportAuthPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ sport: string }>;
+  searchParams: Promise<{ tab?: string; highlight?: string }>;
+}) {
+  const { sport } = await params;
+  const config = sportsConfig[sport];
+  if (!config) notFound();
+
+  const { tab, highlight } = await searchParams;
+
+  // ── Auth ───────────────────────────────────────────────────────
+  // Middleware validates the JWT and forwards the user via request header.
+  const user = config.authEnabled ? await getUser() : null;
+
+  if (config.authEnabled && !user) {
+    return <SignInPrompt sport={sport} />;
+  }
+
+  return (
     <SportPageShell
       user={user}
       sport={sport}
-      actions={adminButton}
+      actions={
+        user ? (
+          <Suspense>
+            <AdminButton sport={sport} userId={user.id} />
+          </Suspense>
+        ) : null
+      }
     >
-      <SessionTabs
-        defaultTab={defaultTab}
-        tabs={tabsWithContent}
-      />
+      <Suspense fallback={<LoadingContent />}>
+        <SportSessionsContent
+          sport={sport}
+          tab={tab}
+          highlight={highlight}
+          userId={user?.id ?? null}
+        />
+      </Suspense>
 
       <div>
         <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>

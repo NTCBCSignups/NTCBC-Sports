@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -28,11 +29,110 @@ import { TeamMemberBadge, StatusBadge } from "@/components/sports/badges";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
+import { sportsConfig } from "@/config/sports-config";
 import { formatDate, formatTime, displayName } from "@/lib/format";
-import type { Profile, SignupStatus } from "@/lib/supabase/types";
+import { LoadingContent } from "@/components/sports/loading-content";
+import {
+  getSession,
+  getSessionSignups,
+  getTeamMembers,
+  getUserSignupStatus,
+} from "@/lib/get-data";
 
-export const dynamic = "force-dynamic";
+async function SessionSignupsContent({
+  sessionId,
+  sport,
+  userId,
+  isOpen,
+  isEligible,
+  playerCap,
+}: {
+  sessionId: string;
+  sport: string;
+  userId: string;
+  isOpen: boolean;
+  isEligible: boolean;
+  playerCap: number | null;
+}) {
+  const [rawSignups, teamMemberIds, userSignupStatus] = await Promise.all([
+    getSessionSignups(sessionId),
+    getTeamMembers(sport),
+    getUserSignupStatus(userId, sessionId),
+  ]);
+
+  const allSignups = rawSignups.filter((s) => s.status !== "cancelled");
+
+  const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
+  const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
+
+  return (
+    <>
+      <SignupButton
+        sessionId={sessionId}
+        isOpen={isOpen}
+        userSignupStatus={userSignupStatus}
+        isEligible={isEligible}
+        showStatusText={false}
+      />
+
+      <div className="space-y-2">
+        <h2 className="font-semibold text-gray-900">Attendance</h2>
+        <div className="overflow-hidden rounded-lg border bg-white">
+          <SignupSummaryHeader
+            confirmedCount={confirmedSignups.length}
+            waitlistedCount={waitlistedSignups.length}
+            playerCap={playerCap}
+          />
+
+          {allSignups.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              No sign-ups yet.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-12">#</TableHead>
+                  <TableHead className="w-8 px-1"></TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Signed up</TableHead>
+                  <TableHead className="sticky right-0 bg-muted/50 border-l">
+                    Status
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allSignups.map((signup, index) => {
+                  const p = signup.profiles;
+                  const isCurrentUser = userId === signup.user_id;
+                  return (
+                    <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
+                      <TableCell className="font-mono text-xs">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell className="px-1 align-middle">
+                        {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
+                      </TableCell>
+                      <TableCell>
+                        {displayName(p)}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <LocalTimestamp date={signup.created_at} />
+                      </TableCell>
+                      <TableCell className={`sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-blue-50" : "bg-white"}`}>
+                        <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
 
 export default async function SessionDetailPage({
   params,
@@ -52,14 +152,13 @@ export default async function SessionDetailPage({
     return <SignInPrompt sport={sport} />;
   }
 
-  // ── Fetch session + role first to gate access before loading sensitive data ──
-  const [sessionResult, roleResult] = await Promise.all([
-    supabase.from("sessions").select("*").eq("id", id).single(),
+  // ── Fetch cached session + role first to gate access before loading sensitive data ──
+  const [session, roleResult] = await Promise.all([
+    getSession(id),
     getUserSportRole(supabase, user.id, sport),
   ]);
 
-  if (!sessionResult.data) notFound();
-  const session = sessionResult.data;
+  if (!session) notFound();
   const { isAdmin, isTeamMember } = roleResult;
 
   // Block non-team members from tabs with restricted access
@@ -68,58 +167,8 @@ export default async function SessionDetailPage({
     redirect(`/${sport}?tab=${session.session_type}&highlight=${id}`);
   }
 
-  // ── Now safe to fetch signups and user-specific data ──
-  const [signupsResult, ...userResults] = await Promise.all([
-    supabase
-      .from("signups")
-      .select("*, profiles(full_name, email)")
-      .eq("session_id", id)
-      .neq("status", "cancelled")
-      .order("created_at", { ascending: true }),
-    ...(user
-      ? [
-        supabase
-          .from("signups")
-          .select("status")
-          .eq("session_id", id)
-          .eq("user_id", user.id)
-          .neq("status", "cancelled")
-          .single()
-          .then((r) => r),
-      ]
-      : []),
-  ]);
-
-  const allSignups = signupsResult.data ?? [];
-  let userSignupStatus: SignupStatus | null = null;
-
-  if (user && userResults.length === 1) {
-    const userSignupResult = userResults[0] as {
-      data: { status: string } | null;
-    };
-    userSignupStatus =
-      (userSignupResult.data?.status as SignupStatus) ?? null;
-  }
-
-  const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
-  const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
-
-  // Fetch team membership for signed-up players
-  const signupUserIds = allSignups.map((s) => s.user_id);
-  const { data: teamRoles } = signupUserIds.length
-    ? await supabase
-      .from("sport_roles")
-      .select("user_id")
-      .eq("sport", sport)
-      .eq("is_team_member", true)
-      .in("user_id", signupUserIds)
-    : { data: [] };
-  const teamMemberIds = new Set((teamRoles ?? []).map((r) => r.user_id));
-
   const isOpen = isSignupOpen(session);
-
   const isEligible = sessionTab?.restrictedAccess ? isTeamMember : true;
-
   const sessionTypeLabel = sessionTab?.label ?? session.session_type;
 
   return (
@@ -235,78 +284,21 @@ export default async function SessionDetailPage({
       </div>
 
       {session.notes && (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 whitespace-pre-line">
           <p>{session.notes}</p>
         </div>
       )}
 
-      {user ? (
-        <SignupButton
+      <Suspense fallback={<LoadingContent />}>
+        <SessionSignupsContent
           sessionId={session.id}
+          sport={sport}
+          userId={user.id}
           isOpen={isOpen}
-          userSignupStatus={userSignupStatus}
           isEligible={!!isEligible}
-          showStatusText={false}
+          playerCap={session.player_cap}
         />
-      ) : (
-        <p className="text-sm text-gray-500">Sign in to sign up for this session.</p>
-      )}
-
-      <div className="space-y-2">
-        <h2 className="font-semibold text-gray-900">Attendance</h2>
-        <div className="overflow-hidden rounded-lg border bg-white">
-          <SignupSummaryHeader
-            confirmedCount={confirmedSignups.length}
-            waitlistedCount={waitlistedSignups.length}
-            playerCap={session.player_cap}
-          />
-
-          {allSignups.length === 0 ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              No sign-ups yet.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead className="w-8 px-1"></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Signed up</TableHead>
-                  <TableHead className="sticky right-0 bg-muted/50 border-l">
-                    Status
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allSignups.map((signup, index) => {
-                  const p = signup.profiles as unknown as Profile | null;
-                  const isCurrentUser = user?.id === signup.user_id;
-                  return (
-                    <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
-                      <TableCell className="font-mono text-xs">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell className="px-1 align-middle">
-                        {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
-                      </TableCell>
-                      <TableCell>
-                        {displayName(p)}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        <LocalTimestamp date={signup.created_at} />
-                      </TableCell>
-                      <TableCell className={`sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-blue-50" : "bg-white"}`}>
-                        <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </div>
+      </Suspense>
     </div>
   );
 }
