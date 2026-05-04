@@ -273,7 +273,11 @@ async function AdminDataContent({
           if (tab !== adminTab.id) return null;
           const TabComponent = getAdminTabComponent(adminTab.id);
           if (!TabComponent) return null;
-          return <TabComponent key={adminTab.id} sport={sport} />;
+          return (
+            <Suspense key={adminTab.id} fallback={<LoadingAdminContent />}>
+              <TabComponent sport={sport} />
+            </Suspense>
+          );
         })}
       </div>
     </>
