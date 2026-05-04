@@ -21,12 +21,10 @@ export interface SportRole {
   created_at: string;
 }
 
-export type SessionType = "scheduled_game" | "drop_in_practice";
-
 export interface SportSession {
   id: string;
   sport: string;
-  session_type: SessionType;
+  session_type: string;
   title: string | null;
   date: string;
   time_start: string;

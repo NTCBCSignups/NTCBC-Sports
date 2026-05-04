@@ -14,7 +14,7 @@ import CountdownTimer from "@/components/sports/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
-import { sessionTypeLabels } from "@/config/sports-config";
+import { sportsConfig, getSessionTypeLabel, getDefaultTitlePrefix } from "@/config/sports-config";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -48,8 +48,10 @@ export default function SessionCard({
     ? { label: "Upcoming", variant: "secondary" as const }
     : getSignupStatus(session);
   const href = `/${session.sport}/session/${session.id}`;
-  const fallbackTitle = `${sessionTypeLabels[session.session_type] ?? "Session"
-    }: ${formatDate(session.date, "short", true)}`;
+  const sportConfig = sportsConfig[session.sport];
+  const prefix = getDefaultTitlePrefix(sportConfig, session.session_type)
+    ?? getSessionTypeLabel(sportConfig, session.session_type);
+  const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;
   const displayTitle = session.title || fallbackTitle;
 
   const card = (
