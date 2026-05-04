@@ -67,13 +67,14 @@ drop policy if exists "Global admins can manage all sport roles" on public.sport
 drop policy if exists "Sport admins can read sport roles for their sport" on public.sport_roles;
 drop policy if exists "Sport admins can manage sport roles for their sport" on public.sport_roles;
 
--- Read policies consolidated: own, global admin, or sport admin for that sport
+-- Read policies consolidated: own, global admin, sport admin, or team member for that sport
 create policy "sport_roles_read"
   on public.sport_roles for select
   using (
     auth.uid() = user_id
     or public.is_admin(auth.uid())
     or public.is_sport_admin(auth.uid(), sport)
+    or public.is_sport_team_member(auth.uid(), sport)
   );
 
 -- Write policies consolidated: global admin or sport admin for that sport
