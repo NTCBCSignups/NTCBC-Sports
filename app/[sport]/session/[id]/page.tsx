@@ -183,7 +183,7 @@ export default async function SessionDetailPage({
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <PageHeader
-        backHref={`/${sport}?tab=${session.session_type}`}
+        backHref={`/${sport}?session=${id}`}
         backLabel={`Back to ${config.name}`}
         actions={
           <>

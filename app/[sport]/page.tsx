@@ -19,11 +19,13 @@ async function SportSessionsContent({
   sport,
   tab,
   highlight,
+  scrollTo,
   userId,
 }: {
   sport: string;
   tab?: string;
   highlight?: string;
+  scrollTo?: string;
   userId: string | null;
 }) {
   const config = sportsConfig[sport];
@@ -52,7 +54,11 @@ async function SportSessionsContent({
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
   const configTabs = config.tabs ?? [];
-  const defaultTab = configTabs.find((t) => t.value === tab)?.value ?? config.defaultTab ?? configTabs[0]?.value;
+
+  // Derive the active tab: from explicit ?tab=, from the session's type via ?session=, or fall back to default
+  const scrollSession = scrollTo ? sessionsWithCounts.find((s) => s.id === scrollTo) : null;
+  const resolvedTab = tab ?? scrollSession?.session_type;
+  const defaultTab = configTabs.find((t) => t.value === resolvedTab)?.value ?? config.defaultTab ?? configTabs[0]?.value;
 
   const tabsWithContent = configTabs.map((t) => {
     const sessions = sessionsByType[t.value] ?? [];
@@ -96,6 +102,7 @@ async function SportSessionsContent({
     <SessionTabs
       defaultTab={defaultTab}
       tabs={tabsWithContent}
+      scrollTo={scrollTo}
     />
   );
 }
@@ -119,13 +126,13 @@ export default async function SportAuthPage({
   searchParams,
 }: {
   params: Promise<{ sport: string }>;
-  searchParams: Promise<{ tab?: string; highlight?: string }>;
+  searchParams: Promise<{ tab?: string; highlight?: string; session?: string }>;
 }) {
   const { sport } = await params;
   const config = sportsConfig[sport];
   if (!config) notFound();
 
-  const { tab, highlight } = await searchParams;
+  const { tab, highlight, session } = await searchParams;
 
   // ── Auth ───────────────────────────────────────────────────────
   // Middleware validates the JWT and forwards the user via request header.
@@ -152,6 +159,7 @@ export default async function SportAuthPage({
           sport={sport}
           tab={tab}
           highlight={highlight}
+          scrollTo={session}
           userId={user?.id ?? null}
         />
       </Suspense>
