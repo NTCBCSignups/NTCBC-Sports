@@ -32,9 +32,12 @@ import { Button } from "@/components/ui/button";
 import { sportsConfig } from "@/config/sports-config";
 import { formatDate, formatTime, displayName } from "@/lib/format";
 import { LoadingContent } from "@/components/sports/loading-content";
-import type { Profile, SignupStatus } from "@/lib/supabase/types";
-
-export const dynamic = "force-dynamic";
+import {
+  getSession,
+  getSessionSignups,
+  getTeamMembers,
+  getUserSignupStatus,
+} from "@/lib/get-data";
 
 async function SessionSignupsContent({
   sessionId,
@@ -51,41 +54,16 @@ async function SessionSignupsContent({
   isEligible: boolean;
   playerCap: number | null;
 }) {
-  const supabase = await createClient();
-
-  const [signupsResult, userSignupResult] = await Promise.all([
-    supabase
-      .from("signups")
-      .select("*, profiles(full_name, email)")
-      .eq("session_id", sessionId)
-      .neq("status", "cancelled")
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("signups")
-      .select("status")
-      .eq("session_id", sessionId)
-      .eq("user_id", userId)
-      .neq("status", "cancelled")
-      .single(),
+  const [rawSignups, teamMemberIds, userSignupStatus] = await Promise.all([
+    getSessionSignups(sessionId),
+    getTeamMembers(sport),
+    getUserSignupStatus(userId, sessionId),
   ]);
 
-  const allSignups = signupsResult.data ?? [];
-  const userSignupStatus = (userSignupResult.data?.status as SignupStatus) ?? null;
+  const allSignups = rawSignups.filter((s) => s.status !== "cancelled");
 
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
-
-  // Fetch team membership for signed-up players
-  const signupUserIds = allSignups.map((s) => s.user_id);
-  const { data: teamRoles } = signupUserIds.length
-    ? await supabase
-      .from("sport_roles")
-      .select("user_id")
-      .eq("sport", sport)
-      .eq("is_team_member", true)
-      .in("user_id", signupUserIds)
-    : { data: [] };
-  const teamMemberIds = new Set((teamRoles ?? []).map((r) => r.user_id));
 
   return (
     <>
@@ -125,7 +103,7 @@ async function SessionSignupsContent({
               </TableHeader>
               <TableBody>
                 {allSignups.map((signup, index) => {
-                  const p = signup.profiles as unknown as Profile | null;
+                  const p = signup.profiles;
                   const isCurrentUser = userId === signup.user_id;
                   return (
                     <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
@@ -174,14 +152,13 @@ export default async function SessionDetailPage({
     return <SignInPrompt sport={sport} />;
   }
 
-  // ── Fetch session + role first to gate access before loading sensitive data ──
-  const [sessionResult, roleResult] = await Promise.all([
-    supabase.from("sessions").select("*").eq("id", id).single(),
+  // ── Fetch cached session + role first to gate access before loading sensitive data ──
+  const [session, roleResult] = await Promise.all([
+    getSession(id),
     getUserSportRole(supabase, user.id, sport),
   ]);
 
-  if (!sessionResult.data) notFound();
-  const session = sessionResult.data;
+  if (!session) notFound();
   const { isAdmin, isTeamMember } = roleResult;
 
   // Block non-team members from tabs with restricted access

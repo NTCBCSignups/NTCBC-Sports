@@ -11,11 +11,9 @@ import SignInPrompt from "@/components/sports/sign-in-prompt";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { getTodayInSportTimezone } from "@/lib/timezone";
 import { LoadingContent } from "@/components/sports/loading-content";
-
-export const dynamic = "force-dynamic";
+import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
+import type { SignupStatus } from "@/lib/supabase/types";
 
 async function SportSessionsContent({
   sport,
@@ -31,57 +29,25 @@ async function SportSessionsContent({
   const config = sportsConfig[sport];
   const supabase = await createClient();
 
-  // ── Roles, access & sessions (parallel) ─────────────────────────
-  const queryClient = userId ? supabase : createAdminClient();
-
-  const [roleResult, sessionsResult] = await Promise.all([
+  // ── Roles & sessions (parallel) ────────────────────────────────
+  const [roleResult, sessionsWithCounts] = await Promise.all([
     userId
       ? getUserSportRole(supabase, userId, sport)
       : Promise.resolve({ isAdmin: false, isTeamMember: true }),
-    queryClient
-      .from("sessions")
-      .select("*, signups(count)")
-      .eq("sport", sport)
-      .neq("signups.status", "cancelled")
-      .gte("date", getTodayInSportTimezone())
-      .order("date", { ascending: true }),
+    getUpcomingSessions(sport),
   ]);
 
   const { isAdmin, isTeamMember } = roleResult;
-  const { data: sessions } = sessionsResult;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (userId && hasRestrictedAccess(config) && !isTeamMember) {
-    const { data: request } = await supabase
-      .from("team_access_requests")
-      .select("status")
-      .eq("user_id", userId)
-      .eq("sport", sport)
-      .single();
-    accessRequestStatus = request?.status ?? null;
+    accessRequestStatus = await getUserAccessRequestStatus(userId, sport);
   }
 
-  const sessionsWithCounts = (sessions ?? []).map((s) => ({
-    ...s,
-    signup_count:
-      (s.signups as unknown as { count: number }[])?.[0]?.count ?? 0,
-  }));
   const sessionIds = sessionsWithCounts.map((session) => session.id);
-  const { data: userSignups } =
-    userId && sessionIds.length > 0
-      ? await supabase
-        .from("signups")
-        .select("session_id, status")
-        .eq("user_id", userId)
-        .in("session_id", sessionIds)
-        .neq("status", "cancelled")
-      : { data: [] };
-  const userSignupStatusBySession = new Map(
-    (userSignups ?? []).map((signup) => [
-      signup.session_id,
-      signup.status,
-    ]),
-  );
+  const userSignupStatusBySession = userId
+    ? await getUserSignupStatuses(userId, sessionIds)
+    : new Map<string, SignupStatus>();
 
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 

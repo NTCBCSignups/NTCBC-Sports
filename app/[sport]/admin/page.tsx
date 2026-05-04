@@ -21,14 +21,18 @@ import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { formatDate, formatTime } from "@/lib/format";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
+import {
+  getAllSessions,
+  getAccessRequests,
+  getSessionSignups,
+  getTeamMembers,
+} from "@/lib/get-data";
 import type {
   Profile,
   SportSession,
   SignupStatus,
   AccessRequestStatus,
 } from "@/lib/supabase/types";
-
-export const dynamic = "force-dynamic";
 
 function SessionAccordion({
   sport,
@@ -144,43 +148,18 @@ async function AdminDataContent({
   tab: string;
 }) {
   const config = sportsConfig[sport];
-  const supabase = await createClient();
 
-  // ── Fetch sessions & access requests in parallel ───────────────
-  const [{ data: sessions }, { data: accessRequests }] = await Promise.all([
-    supabase
-      .from("sessions")
-      .select("*")
-      .eq("sport", sport)
-      .order("date", { ascending: false }),
-    supabase
-      .from("team_access_requests")
-      .select(
-        "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
-      )
-      .eq("sport", sport)
-      .order("created_at", { ascending: false }),
+  // ── Fetch cached data in parallel ──────────────────────────────
+  const [sessions, accessRequests, teamMemberIds] = await Promise.all([
+    getAllSessions(sport),
+    getAccessRequests(sport),
+    getTeamMembers(sport),
   ]);
 
-  // ── Fetch signups + team members in parallel ───────────────────
-  const sessionIds = (sessions ?? []).map((s) => s.id);
-
-  const [{ data: allSignups }, { data: teamMembers }] = await Promise.all([
-    sessionIds.length
-      ? supabase
-        .from("signups")
-        .select(
-          "*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)",
-        )
-        .in("session_id", sessionIds)
-        .order("created_at", { ascending: true })
-      : Promise.resolve({ data: null }),
-    supabase
-      .from("sport_roles")
-      .select("user_id")
-      .eq("sport", sport)
-      .eq("is_team_member", true),
-  ]);
+  // ── Fetch signups for all sessions in parallel ─────────────────
+  const allSignupArrays = await Promise.all(
+    sessions.map((s) => getSessionSignups(s.id)),
+  );
 
   const signupsBySession = new Map<
     string,
@@ -192,40 +171,40 @@ async function AdminDataContent({
       profiles: Profile | null;
     }[]
   >();
-  for (const signup of allSignups ?? []) {
-    const list = signupsBySession.get(signup.session_id) ?? [];
-    list.push({
-      id: signup.id,
-      user_id: signup.user_id,
-      status: signup.status as SignupStatus,
-      created_at: signup.created_at,
-      profiles: signup.profiles as unknown as Profile | null,
-    });
-    signupsBySession.set(signup.session_id, list);
+  for (let i = 0; i < sessions.length; i++) {
+    const sessionId = sessions[i].id;
+    signupsBySession.set(
+      sessionId,
+      (allSignupArrays[i] ?? []).map((signup) => ({
+        id: signup.id,
+        user_id: signup.user_id,
+        status: signup.status as SignupStatus,
+        created_at: signup.created_at,
+        profiles: signup.profiles,
+      })),
+    );
   }
 
-  const formattedRequests = (accessRequests ?? []).map((r) => ({
+  const formattedRequests = accessRequests.map((r) => ({
     id: r.id,
     user_id: r.user_id,
     status: r.status as AccessRequestStatus,
     created_at: r.created_at,
-    profiles: r.profiles as unknown as Profile | null,
+    profiles: r.profiles,
   }));
 
   const pendingRequests = formattedRequests.filter(
     (r) => r.status === "pending",
   );
 
-  const teamMemberIds = new Set((teamMembers ?? []).map((m) => m.user_id));
-
   const today = getTodayInSportTimezone();
-  const upcomingSessions = (sessions ?? [])
+  const upcomingSessions = sessions
     .filter((s) => s.date >= today)
     .sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return a.time_start.localeCompare(b.time_start);
     });
-  const pastSessions = (sessions ?? []).filter((s) => s.date < today);
+  const pastSessions = sessions.filter((s) => s.date < today);
 
   return (
     <>
