@@ -284,7 +284,7 @@ export default async function SessionDetailPage({
       </div>
 
       {session.notes && (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 whitespace-pre-line">
           <p>{session.notes}</p>
         </div>
       )}
