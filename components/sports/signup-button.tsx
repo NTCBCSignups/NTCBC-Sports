@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   signUpForSession,
   cancelSignup,
+  declineSession,
   type SignupPlacement,
 } from "@/lib/actions/signups";
 import type { SignupStatus } from "@/lib/supabase/types";
@@ -89,6 +90,20 @@ export default function SignupButton({
     setPending(false);
   };
 
+  const handleDecline = async () => {
+    setPending(true);
+    setError(null);
+    const result = await declineSession(sessionId);
+    if ("error" in result) {
+      setError(result.error);
+    } else {
+      setLocalStatus("declined");
+      toast("Marked as unable to join.");
+      router.refresh();
+    }
+    setPending(false);
+  };
+
   if (localStatus === "confirmed" || localStatus === "waitlisted") {
     return (
       <div className={cn("space-y-2", className)}>
@@ -110,6 +125,31 @@ export default function SignupButton({
           >
             {pending ? "Cancelling..." : "Cancel Sign-up"}
           </Button>
+        </div>
+        {error && <p className={feedback.error}>{error}</p>}
+      </div>
+    );
+  }
+
+  if (localStatus === "declined") {
+    return (
+      <div className={cn("space-y-2", className)}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {showStatusText && (
+            <span className="text-sm text-gray-700">
+              You marked this session as{" "}
+              <span className="font-semibold">unable to join</span>.
+            </span>
+          )}
+          {isOpen && isEligible && (
+            <Button
+              onClick={handleSignup}
+              disabled={pending}
+              className={cn("rounded-full px-8", buttonClassName)}
+            >
+              {pending ? "Signing up..." : "Sign up instead"}
+            </Button>
+          )}
         </div>
         {error && <p className={feedback.error}>{error}</p>}
       </div>
@@ -147,16 +187,29 @@ export default function SignupButton({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Button
-        onClick={handleSignup}
-        disabled={pending}
-        className={cn(
-          "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
-          buttonClassName,
-        )}
-      >
-        {pending ? "Signing up..." : "Sign up"}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={handleSignup}
+          disabled={pending}
+          className={cn(
+            "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+            buttonClassName,
+          )}
+        >
+          {pending ? "Signing up..." : "Sign up"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleDecline}
+          disabled={pending}
+          className={cn(
+            "w-full sm:w-auto rounded-full px-8",
+            buttonClassName,
+          )}
+        >
+          {pending ? "..." : "Unable to join"}
+        </Button>
+      </div>
       {error && <p className={feedback.error}>{error}</p>}
     </div>
   );

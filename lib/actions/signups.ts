@@ -98,17 +98,15 @@ export async function signUpForSession(
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (
-    existingSignup?.status &&
-    existingSignup.status !== "cancelled"
-  ) {
+  // Already actively signed up — return current placement
+  if (existingSignup?.status === "confirmed" || existingSignup?.status === "waitlisted") {
     return {
       success: true,
       ...(await getSignupPlacement(
         supabase,
         sessionId,
         user.id,
-        existingSignup.status as "confirmed" | "waitlisted",
+        existingSignup.status,
       )),
     };
   }
@@ -122,31 +120,25 @@ export async function signUpForSession(
     };
   }
 
-  if (existingSignup?.status === "cancelled") {
-    const { error: reactivateError } = await supabase
+  if (existingSignup) {
+    // Override whatever inactive status they had
+    const { error: updateError } = await supabase
       .from("signups")
       .update({ status, created_at: new Date().toISOString() })
       .eq("id", existingSignup.id);
 
-    if (reactivateError) return { error: reactivateError.message };
+    if (updateError) return { error: updateError.message };
+  } else {
+    const { error } = await supabase.from("signups").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      status,
+    });
 
-    revalidatePath(`/${sport}/session/${sessionId}`);
-    revalidatePath(`/${sport}`);
-    return {
-      success: true,
-      ...(await getSignupPlacement(supabase, sessionId, user.id, status)),
-    };
-  }
-
-  const { error } = await supabase.from("signups").insert({
-    session_id: sessionId,
-    user_id: user.id,
-    status,
-  });
-
-  if (error) {
-    if (error.code === "23505") return { error: "Already signed up" };
-    return { error: error.message };
+    if (error) {
+      if (error.code === "23505") return { error: "Already signed up" };
+      return { error: error.message };
+    }
   }
 
   revalidatePath(`/${sport}/session/${sessionId}`);
@@ -175,7 +167,7 @@ export async function cancelSignup(
     .maybeSingle();
 
   if (fetchError) return { error: fetchError.message };
-  if (!row || row.status === "cancelled") {
+  if (!row || row.status === "cancelled" || row.status === "declined") {
     revalidatePath(`/${sport}/session/${sessionId}`);
     revalidatePath(`/${sport}`);
     return { success: true };
@@ -206,6 +198,80 @@ export async function cancelSignup(
             : "Could not promote waitlist (check server configuration)",
       };
     }
+  }
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}`);
+  return { success: true };
+}
+
+export async function declineSession(
+  sessionId: string,
+): Promise<CancelSignupResult> {
+  const supabase = await createClient();
+  const user = await getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("session_type, sport")
+    .eq("id", sessionId)
+    .single();
+
+  if (!session) return { error: "Session not found" };
+
+  const sport = session.sport;
+  const sportConfig = sportsConfig[sport];
+
+  if (isRestrictedSessionType(sportConfig, session.session_type)) {
+    const { isTeamMember } = await getUserSportRole(supabase, user.id, sport);
+    if (!isTeamMember) {
+      return { error: "Only team members can respond to scheduled games" };
+    }
+  }
+
+  const { data: existingSignup } = await supabase
+    .from("signups")
+    .select("id, status")
+    .eq("session_id", sessionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  // Already declined — no-op
+  if (existingSignup?.status === "declined") {
+    return { success: true };
+  }
+
+  if (existingSignup) {
+    const wasConfirmed = existingSignup.status === "confirmed";
+
+    const { error } = await supabase
+      .from("signups")
+      .update({ status: "declined" })
+      .eq("id", existingSignup.id);
+
+    if (error) return { error: error.message };
+
+    if (wasConfirmed) {
+      try {
+        const admin = createAdminClient();
+        const { error: promoError } = await promoteOneFromWaitlist(admin, sessionId);
+        if (promoError) return { error: promoError };
+      } catch (e) {
+        return {
+          error: e instanceof Error ? e.message : "Could not promote waitlist",
+        };
+      }
+    }
+  } else {
+    const { error } = await supabase.from("signups").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      status: "declined",
+    });
+
+    if (error) return { error: error.message };
   }
 
   revalidatePath(`/${sport}/session/${sessionId}`);

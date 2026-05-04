@@ -42,7 +42,7 @@ export interface SportSession {
   created_at: string;
 }
 
-export type SignupStatus = "confirmed" | "waitlisted" | "cancelled";
+export type SignupStatus = "confirmed" | "waitlisted" | "cancelled" | "declined";
 
 export interface Signup {
   id: string;

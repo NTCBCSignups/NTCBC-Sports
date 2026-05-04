@@ -74,7 +74,8 @@ export default function SessionCard({
           </div>
           <div className="flex shrink-0 flex-wrap justify-end gap-2">
             {(userSignupStatus === "confirmed" ||
-              userSignupStatus === "waitlisted") && (
+              userSignupStatus === "waitlisted" ||
+              userSignupStatus === "declined") && (
                 <StatusBadge status={userSignupStatus} />
               )}
             <Badge variant={status.variant} className="shrink-0">

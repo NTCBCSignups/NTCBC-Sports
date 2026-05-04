@@ -64,6 +64,9 @@ async function SessionSignupsContent({
 
   const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
   const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
+  const activeSignups = allSignups.filter((s) => s.status !== "declined");
+  const declinedSignups = allSignups.filter((s) => s.status === "declined");
+  const sortedSignups = [...activeSignups, ...declinedSignups];
 
   return (
     <>
@@ -102,13 +105,18 @@ async function SessionSignupsContent({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allSignups.map((signup, index) => {
+                {(() => {
+                  let activeIndex = 0;
+                  let declinedIndex = 0;
+                  return sortedSignups.map((signup) => {
                   const p = signup.profiles;
                   const isCurrentUser = userId === signup.user_id;
+                  const isDeclined = signup.status === "declined";
+                  const groupIndex = isDeclined ? ++declinedIndex : ++activeIndex;
                   return (
                     <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
                       <TableCell className="font-mono text-xs">
-                        {index + 1}
+                        {groupIndex}
                       </TableCell>
                       <TableCell className="px-1 align-middle">
                         {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
@@ -120,11 +128,12 @@ async function SessionSignupsContent({
                         <LocalTimestamp date={signup.created_at} />
                       </TableCell>
                       <TableCell className={`sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-blue-50" : "bg-white"}`}>
-                        <StatusBadge status={signup.status as "confirmed" | "waitlisted"} />
+                        <StatusBadge status={signup.status as "confirmed" | "waitlisted" | "declined"} />
                       </TableCell>
                     </TableRow>
                   );
-                })}
+                  });
+                })()}
               </TableBody>
             </Table>
           )}

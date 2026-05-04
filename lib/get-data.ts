@@ -13,6 +13,7 @@ export async function getUpcomingSessions(sport: string) {
         .select("*, signups(count)")
         .eq("sport", sport)
         .neq("signups.status", "cancelled")
+        .neq("signups.status", "declined")
         .gte("date", getTodayInSportTimezone())
         .order("date", { ascending: true });
 
