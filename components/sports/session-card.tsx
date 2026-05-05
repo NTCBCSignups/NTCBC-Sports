@@ -124,7 +124,7 @@ export default function SessionCard({
   }
 
   return (
-    <div className="block h-full">
+    <div id={`session-${session.id}`} className="block h-full">
       {card}
     </div>
   );
