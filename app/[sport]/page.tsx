@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Settings } from "lucide-react";
 import SessionCard from "@/components/sports/session-card";
-import SessionTabs from "@/components/sports/session-tabs";
+import SessionFilter from "@/components/sports/session-filter";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
-import SignInPrompt from "@/components/sports/sign-in-prompt";
+import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
 import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
@@ -35,11 +35,11 @@ async function SportSessionsContent({
   const [roleResult, sessionsWithCounts] = await Promise.all([
     userId
       ? getUserSportRole(supabase, userId, sport)
-      : Promise.resolve({ isAdmin: false, isTeamMember: true }),
+      : Promise.resolve({ isAdmin: false, isTeamMember: false }),
     getUpcomingSessions(sport),
   ]);
 
-  const { isAdmin, isTeamMember } = roleResult;
+  const { isTeamMember } = roleResult;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (userId && hasRestrictedAccess(config) && !isTeamMember) {
@@ -54,33 +54,23 @@ async function SportSessionsContent({
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
   const configTabs = config.tabs ?? [];
+  const showAll = configTabs.length > 1;
+  const ALL_VALUE = "all";
 
-  // Derive the active tab: from explicit ?tab=, from the session's type via ?session=, or fall back to default
-  const scrollSession = scrollTo ? sessionsWithCounts.find((s) => s.id === scrollTo) : null;
-  const resolvedTab = tab ?? scrollSession?.session_type;
-  const defaultTab = configTabs.find((t) => t.value === resolvedTab)?.value ?? config.defaultTab ?? configTabs[0]?.value;
-
-  const tabsWithContent = configTabs.map((t) => {
+  const typeOptions = configTabs.map((t) => {
     const sessions = sessionsByType[t.value] ?? [];
-    const isRestricted = !!t.restrictedAccess && !isTeamMember;
 
     return {
-      ...t,
+      value: t.value,
+      label: t.label,
       content: (
         <>
-          {isRestricted && (
-            <TeamAccessBanner
-              requestStatus={accessRequestStatus}
-              sport={sport}
-            />
-          )}
           {sessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
               {sessions.map((session) => (
                 <SessionCard
                   key={session.id}
                   session={session}
-                  linkDisabled={isRestricted}
                   highlighted={session.id === highlight}
                   userSignupStatus={
                     userSignupStatusBySession.get(session.id) ?? null
@@ -98,12 +88,67 @@ async function SportSessionsContent({
     };
   });
 
+  const allOption = showAll
+    ? {
+      value: ALL_VALUE,
+      label: "All",
+      content: (
+        <>
+          {sessionsWithCounts.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {sessionsWithCounts.map((session) => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  highlighted={session.id === highlight}
+                  userSignupStatus={
+                    userSignupStatusBySession.get(session.id) ?? null
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 py-8 text-center">
+              No upcoming sessions.
+            </p>
+          )}
+        </>
+      ),
+    }
+    : null;
+
+  const filterOptions = allOption ? [allOption, ...typeOptions] : typeOptions;
+
+  // Derive the active filter: from explicit ?tab=, from the session's type via ?session=, or fall back to "All" (or configured default)
+  const scrollSession = scrollTo ? sessionsWithCounts.find((s) => s.id === scrollTo) : null;
+  const resolvedValue = tab ?? scrollSession?.session_type;
+  const validValues = filterOptions.map((o) => o.value);
+  const defaultValue =
+    validValues.find((v) => v === resolvedValue) ??
+    (showAll ? ALL_VALUE : config.defaultTab ?? configTabs[0]?.value);
+
+  const showTeamAccessBanner =
+    !!userId && hasRestrictedAccess(config) && !isTeamMember;
+  const showSignInBanner =
+    !userId && !!config.authEnabled && hasRestrictedAccess(config);
+
   return (
-    <SessionTabs
-      defaultTab={defaultTab}
-      tabs={tabsWithContent}
-      scrollTo={scrollTo}
-    />
+    <div className="space-y-4">
+      {showTeamAccessBanner && (
+        <TeamAccessBanner
+          requestStatus={accessRequestStatus}
+          sport={sport}
+        />
+      )}
+      {showSignInBanner && (
+        <SignInToSignupBanner />
+      )}
+      <SessionFilter
+        defaultValue={defaultValue}
+        options={filterOptions}
+        scrollTo={scrollTo}
+      />
+    </div>
   );
 }
 
@@ -137,10 +182,6 @@ export default async function SportAuthPage({
   // ── Auth ───────────────────────────────────────────────────────
   // Middleware validates the JWT and forwards the user via request header.
   const user = config.authEnabled ? await getUser() : null;
-
-  if (config.authEnabled && !user) {
-    return <SignInPrompt sport={sport} />;
-  }
 
   return (
     <SportPageShell

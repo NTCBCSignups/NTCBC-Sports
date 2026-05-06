@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
@@ -22,43 +22,65 @@ import {
 import PageHeader from "@/components/sports/page-header";
 import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
-import SignInPrompt from "@/components/sports/sign-in-prompt";
+import TeamAccessBanner from "@/components/sports/team-access-banner";
+import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SignupSummaryHeader from "@/components/sports/signup-summary-header";
 import { TeamMemberBadge, StatusBadge } from "@/components/sports/badges";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig } from "@/config/sports-config";
+import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
 import { formatDate, formatTime, displayName } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { LoadingContent } from "@/components/sports/loading-content";
 import {
   getSession,
   getSessionSignups,
   getTeamMembers,
   getUserSignupStatus,
+  getUserAccessRequestStatus,
 } from "@/lib/get-data";
+import type { User } from "@supabase/supabase-js";
 
 async function SessionSignupsContent({
   sessionId,
   sport,
-  userId,
+  user,
   isOpen,
-  isEligible,
+  isTeamMember,
+  isRestrictedSession,
   playerCap,
+  authEnabled,
 }: {
   sessionId: string;
   sport: string;
-  userId: string;
+  user: User | null;
   isOpen: boolean;
-  isEligible: boolean;
+  isTeamMember: boolean;
+  isRestrictedSession: boolean;
   playerCap: number | null;
+  authEnabled: boolean;
 }) {
-  const [rawSignups, teamMemberIds, userSignupStatus] = await Promise.all([
-    getSessionSignups(sessionId),
-    getTeamMembers(sport),
-    getUserSignupStatus(userId, sessionId),
-  ]);
+  const userId = user?.id ?? null;
+  const sportCfg = sportsConfig[sport];
+  const fetchAccessStatus =
+    !!userId &&
+    authEnabled &&
+    isRestrictedSession &&
+    !isTeamMember &&
+    hasRestrictedAccess(sportCfg);
+
+  const [rawSignups, teamMemberIds, userSignupStatus, accessRequestStatus] =
+    await Promise.all([
+      getSessionSignups(sessionId),
+      getTeamMembers(sport),
+      userId ? getUserSignupStatus(userId, sessionId) : Promise.resolve(null),
+      fetchAccessStatus
+        ? getUserAccessRequestStatus(userId!, sport)
+        : Promise.resolve(null),
+    ]);
 
   const allSignups = rawSignups.filter((s) => s.status !== "cancelled");
 
@@ -68,15 +90,43 @@ async function SessionSignupsContent({
   const declinedSignups = allSignups.filter((s) => s.status === "declined");
   const sortedSignups = [...activeSignups, ...declinedSignups];
 
+  const requestApproved = accessRequestStatus === "approved";
+  const showTeamGate =
+    !!userId &&
+    authEnabled &&
+    isRestrictedSession &&
+    !isTeamMember &&
+    !requestApproved;
+  const showSignupButton =
+    !!userId &&
+    (!authEnabled ||
+      !isRestrictedSession ||
+      isTeamMember ||
+      requestApproved);
+
   return (
-    <>
-      <SignupButton
-        sessionId={sessionId}
-        isOpen={isOpen}
-        userSignupStatus={userSignupStatus}
-        isEligible={isEligible}
-        showStatusText={false}
-      />
+    <div className="space-y-6">
+      <div className="space-y-4">
+        {authEnabled && !userId && (
+          <SignInToSignupBanner />
+        )}
+        {showTeamGate && (
+          <TeamAccessBanner
+            requestStatus={accessRequestStatus}
+            sport={sport}
+          />
+        )}
+
+        {showSignupButton && (
+          <SignupButton
+            sessionId={sessionId}
+            isOpen={isOpen}
+            userSignupStatus={userSignupStatus}
+            isEligible
+            showStatusText={false}
+          />
+        )}
+      </div>
 
       <div className="space-y-2">
         <h2 className="font-semibold text-gray-900">Attendance</h2>
@@ -139,7 +189,7 @@ async function SessionSignupsContent({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -154,30 +204,21 @@ export default async function SessionDetailPage({
 
   const supabase = await createClient();
 
-  // Middleware validates the JWT and forwards the user via request header.
   const user = await getUser();
 
-  if (!user) {
-    return <SignInPrompt sport={sport} />;
-  }
-
-  // ── Fetch cached session + role first to gate access before loading sensitive data ──
   const [session, roleResult] = await Promise.all([
     getSession(id),
-    getUserSportRole(supabase, user.id, sport),
+    user
+      ? getUserSportRole(supabase, user.id, sport)
+      : Promise.resolve({ isAdmin: false, isTeamMember: false }),
   ]);
 
   if (!session) notFound();
   const { isAdmin, isTeamMember } = roleResult;
 
-  // Block non-team members from tabs with restricted access
   const sessionTab = config.tabs?.find((t) => t.value === session.session_type);
-  if (sessionTab?.restrictedAccess && !isTeamMember) {
-    redirect(`/${sport}?tab=${session.session_type}&highlight=${id}`);
-  }
-
+  const isRestrictedSession = !!sessionTab?.restrictedAccess;
   const isOpen = isSignupOpen(session);
-  const isEligible = sessionTab?.restrictedAccess ? isTeamMember : true;
   const sessionTypeLabel = sessionTab?.label ?? session.session_type;
 
   return (
@@ -203,7 +244,15 @@ export default async function SessionDetailPage({
       <div className="space-y-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{sessionTypeLabel}</Badge>
+            <Badge
+              variant="outline"
+              className={cn(
+                "rounded-full border font-normal shadow-none",
+                sessionTypePillClass(session.session_type),
+              )}
+            >
+              {sessionTypeLabel}
+            </Badge>
           </div>
           <h1 className="text-4xl font-bold text-gray-900">
             {session.title || formatDate(session.date, "long", true)}
@@ -302,10 +351,12 @@ export default async function SessionDetailPage({
         <SessionSignupsContent
           sessionId={session.id}
           sport={sport}
-          userId={user.id}
+          user={user}
           isOpen={isOpen}
-          isEligible={!!isEligible}
+          isTeamMember={isTeamMember}
+          isRestrictedSession={isRestrictedSession}
           playerCap={session.player_cap}
+          authEnabled={!!config.authEnabled}
         />
       </Suspense>
     </div>
