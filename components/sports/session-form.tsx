@@ -34,8 +34,8 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
   const autoFillSignupClose = (form: HTMLFormElement) => {
     const date = (form.elements.namedItem("date") as HTMLInputElement)?.value;
-    const timeStart = (
-      form.elements.namedItem("time_start") as HTMLInputElement
+    const timeEnd = (
+      form.elements.namedItem("time_end") as HTMLInputElement
     )?.value;
     const signupCloseInput = form.elements.namedItem(
       "signup_close",
@@ -44,9 +44,9 @@ export default function SessionForm({ sport }: SessionFormProps) {
       "signup_open",
     ) as HTMLInputElement;
 
-    // Auto-fill signup_close if it's empty and we have both date and time_start
-    if (date && timeStart && signupCloseInput && !signupCloseInput.value) {
-      const signupCloseValue = `${date}T${timeStart}`;
+    // Auto-fill signup_close if it's empty and we have both date and time_end
+    if (date && timeEnd && signupCloseInput && !signupCloseInput.value) {
+      const signupCloseValue = `${date}T${timeEnd}`;
       signupCloseInput.value = signupCloseValue;
 
       // Also auto-fill signup_open to one week before signup_close if it's empty
@@ -208,13 +208,12 @@ export default function SessionForm({ sport }: SessionFormProps) {
             name="time_start"
             type="time"
             required
-            onChange={handleDateOrTimeChange}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="time_end">End Time</Label>
-          <Input id="time_end" name="time_end" type="time" required />
+          <Input id="time_end" name="time_end" type="time" required onChange={handleDateOrTimeChange} />
         </div>
 
         <div className="space-y-2">
