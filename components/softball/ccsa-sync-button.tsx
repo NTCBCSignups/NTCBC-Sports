@@ -247,15 +247,17 @@ export default function CcsaSyncButton({
                                     <RefreshCw className={`h-4 w-4 mr-2 ${pending ? "animate-spin" : ""}`} />
                                     {pending ? "Syncing..." : "Sync"}
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleApproveAll}
-                                    disabled={pending}
-                                    className="rounded-full"
-                                >
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    {pending ? "Approving..." : "Approve All for Team Access"}
-                                </Button>
+                                {players.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleApproveAll}
+                                        disabled={pending}
+                                        className="rounded-full"
+                                    >
+                                        <UserCheck className="h-4 w-4 mr-2" />
+                                        {pending ? "Approving..." : "Approve All for Team Access"}
+                                    </Button>
+                                )}
                                 <Button
                                     variant="ghost"
                                     onClick={async () => {
@@ -276,13 +278,26 @@ export default function CcsaSyncButton({
                             <p className="text-sm text-gray-600">
                                 Log in to CCSA to pull the latest roster and waiver data.
                             </p>
-                            <Button
-                                variant="outline"
-                                onClick={() => setStep("email")}
-                                className="rounded-full"
-                            >
-                                Log in to CCSA
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setStep("email")}
+                                    className="rounded-full"
+                                >
+                                    Log in to CCSA
+                                </Button>
+                                {players.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleApproveAll}
+                                        disabled={pending}
+                                        className="rounded-full"
+                                    >
+                                        <UserCheck className="h-4 w-4 mr-2" />
+                                        {pending ? "Approving..." : "Approve All for Team Access"}
+                                    </Button>
+                                )}
+                            </div>
                         </>
                     )}
                 </div>
