@@ -141,7 +141,7 @@ export default async function SessionDetailPage({
     redirect(`/${sport}`);
   }
 
-  const { isAdmin } = roleResult;
+  const isAdmin = userRole >= Role.admin;
 
   const sessionTab = config.tabs?.find((t) => t.value === session.session_type);
   const isOpen = isSignupOpen(session);

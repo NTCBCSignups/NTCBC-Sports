@@ -35,7 +35,7 @@ async function SportSessionsContent({
   const [roleResult, sessionsWithCounts] = await Promise.all([
     userId
       ? getUserSportRole(supabase, userId, sport)
-      : Promise.resolve({ isAdmin: false, isTeamMember: false }),
+      : Promise.resolve({ role: Role.anon, isAdmin: false, isTeamMember: false }),
     getUpcomingSessions(sport),
   ]);
 
@@ -162,8 +162,8 @@ async function SportSessionsContent({
 
 async function AdminButton({ sport, userId }: { sport: string; userId: string }) {
   const supabase = await createClient();
-  const { isAdmin } = await getUserSportRole(supabase, userId, sport);
-  if (!isAdmin) return null;
+  const { role } = await getUserSportRole(supabase, userId, sport);
+  if (role < Role.admin) return null;
   return (
     <Button asChild variant="outline" size="sm" className="rounded-full">
       <Link href={`/${sport}/admin`}>

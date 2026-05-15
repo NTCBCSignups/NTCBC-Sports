@@ -16,6 +16,7 @@ import {
   getDefaultTitlePrefix,
   getSessionTypeLabel,
   sportsConfig,
+  Role,
   type SportConfig,
 } from "@/config/sports-config";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
@@ -321,8 +322,8 @@ export default async function AdminPage({
 
   if (!user) redirect(`/${sport}`);
 
-  const { isAdmin } = await getUserSportRole(supabase, user.id, sport);
-  if (!isAdmin) redirect(`/${sport}`);
+  const { role } = await getUserSportRole(supabase, user.id, sport);
+  if (role < Role.admin) redirect(`/${sport}`);
 
   return (
     <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
