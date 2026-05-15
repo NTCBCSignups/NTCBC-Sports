@@ -72,6 +72,7 @@ async function SportSessionsContent({
                   key={session.id}
                   session={session}
                   highlighted={session.id === highlight}
+                  returnTab={t.value}
                   userSignupStatus={
                     userSignupStatusBySession.get(session.id) ?? null
                   }
@@ -101,6 +102,7 @@ async function SportSessionsContent({
                   key={session.id}
                   session={session}
                   highlighted={session.id === highlight}
+                  returnTab={ALL_VALUE}
                   userSignupStatus={
                     userSignupStatusBySession.get(session.id) ?? null
                   }

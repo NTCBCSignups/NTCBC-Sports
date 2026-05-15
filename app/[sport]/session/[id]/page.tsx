@@ -195,10 +195,13 @@ async function SessionSignupsContent({
 
 export default async function SessionDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ sport: string; id: string }>;
+  searchParams: Promise<{ fromTab?: string }>;
 }) {
   const { sport, id } = await params;
+  const { fromTab } = await searchParams;
   const config = sportsConfig[sport];
   if (!config) notFound();
 
@@ -220,11 +223,13 @@ export default async function SessionDetailPage({
   const isRestrictedSession = !!sessionTab?.restrictedAccess;
   const isOpen = isSignupOpen(session);
   const sessionTypeLabel = sessionTab?.label ?? session.session_type;
+  const backParams = new URLSearchParams({ session: id });
+  if (fromTab) backParams.set("tab", fromTab);
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <PageHeader
-        backHref={`/${sport}?session=${id}`}
+        backHref={`/${sport}?${backParams.toString()}`}
         backLabel={`Back to ${config.name}`}
         actions={
           <>
@@ -248,7 +253,7 @@ export default async function SessionDetailPage({
               variant="outline"
               className={cn(
                 "rounded-full border font-normal shadow-none",
-                sessionTypePillClass(session.session_type),
+                sessionTypePillClass(config, session.session_type),
               )}
             >
               {sessionTypeLabel}

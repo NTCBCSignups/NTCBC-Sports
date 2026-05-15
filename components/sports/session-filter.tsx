@@ -2,14 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface FilterOption {
     value: string;
@@ -50,18 +44,33 @@ export default function SessionFilter({
 
     return (
         <div className="space-y-4">
-            <Select value={value} onValueChange={handleChange}>
-                <SelectTrigger className="w-full sm:w-64 rounded-full px-5">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    {options.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
+            <div
+                role="tablist"
+                aria-label="Session filter"
+                className="flex gap-3 overflow-x-auto pb-1 sm:flex-wrap"
+            >
+                {options.map((opt) => {
+                    const selected = opt.value === value;
+
+                    return (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            role="tab"
+                            aria-selected={selected}
+                            onClick={() => handleChange(opt.value)}
+                            className={cn(
+                                "rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                selected
+                                    ? "bg-stone-950 text-white shadow-sm"
+                                    : "bg-gray-100 text-gray-900 hover:bg-gray-200",
+                            )}
+                        >
                             {opt.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                        </button>
+                    );
+                })}
+            </div>
 
             {options.map((opt) => (
                 <div key={opt.value} hidden={opt.value !== value}>

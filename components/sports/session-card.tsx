@@ -22,6 +22,7 @@ interface SessionCardProps {
   session: SportSession & { signup_count: number };
   highlighted?: boolean;
   userSignupStatus?: SignupStatus | null;
+  returnTab?: string;
 }
 
 function getSignupStatus(session: SportSession): {
@@ -41,10 +42,13 @@ export default function SessionCard({
   session,
   highlighted,
   userSignupStatus,
+  returnTab,
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
   const status = getSignupStatus(session);
-  const href = `/${session.sport}/session/${session.id}`;
+  const href = returnTab
+    ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
+    : `/${session.sport}/session/${session.id}`;
   const sportConfig = sportsConfig[session.sport];
   const sessionTypeLabel = getSessionTypeLabel(sportConfig, session.session_type);
   const prefix = getDefaultTitlePrefix(sportConfig, session.session_type)
@@ -72,7 +76,7 @@ export default function SessionCard({
               variant="outline"
               className={cn(
                 "rounded-full border font-normal shadow-none",
-                sessionTypePillClass(session.session_type),
+                sessionTypePillClass(sportConfig, session.session_type),
               )}
             >
               {sessionTypeLabel}
