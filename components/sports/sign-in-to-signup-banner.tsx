@@ -20,9 +20,11 @@ export default function SignInToSignupBanner() {
 
   return (
     <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-      <p className="font-medium text-blue-900">Sign in to sign up</p>
+      <p className="font-medium text-blue-900">
+        Sign in to view and sign up for sessions
+      </p>
       <p className="mt-1 text-sm text-blue-800">
-        Use your Google account to sign up for sessions and manage your attendance.
+        Use your Google account to get started.
       </p>
       <Button
         type="button"

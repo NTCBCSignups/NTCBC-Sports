@@ -56,6 +56,7 @@ async function SportSessionsContent({
   const configTabs = config.tabs ?? [];
   const showAll = configTabs.length > 1;
   const ALL_VALUE = "all";
+  const requiresSignIn = !!config.authEnabled && !userId;
 
   const typeOptions = configTabs.map((t) => {
     const sessions = sessionsByType[t.value] ?? [];
@@ -79,7 +80,7 @@ async function SportSessionsContent({
                 />
               ))}
             </div>
-          ) : (
+          ) : requiresSignIn ? null : (
             <p className="text-sm text-gray-500 py-8 text-center">
               No upcoming {t.label.toLowerCase()}.
             </p>
@@ -109,7 +110,7 @@ async function SportSessionsContent({
                 />
               ))}
             </div>
-          ) : (
+          ) : requiresSignIn ? null : (
             <p className="text-sm text-gray-500 py-8 text-center">
               No upcoming sessions.
             </p>
@@ -150,6 +151,7 @@ async function SportSessionsContent({
         options={filterOptions}
         scrollTo={scrollTo}
         sport={sport}
+        showFilters={!requiresSignIn}
       />
     </div>
   );
