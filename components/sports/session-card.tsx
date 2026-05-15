@@ -14,14 +14,15 @@ import CountdownTimer from "@/components/sports/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
+import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { sportsConfig, getSessionTypeLabel, getDefaultTitlePrefix } from "@/config/sports-config";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
   session: SportSession & { signup_count: number };
-  linkDisabled?: boolean;
   highlighted?: boolean;
   userSignupStatus?: SignupStatus | null;
+  returnTab?: string;
 }
 
 function getSignupStatus(session: SportSession): {
@@ -39,40 +40,54 @@ function getSignupStatus(session: SportSession): {
 
 export default function SessionCard({
   session,
-  linkDisabled,
   highlighted,
   userSignupStatus,
+  returnTab,
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
-  const status = linkDisabled
-    ? { label: "Upcoming", variant: "secondary" as const }
-    : getSignupStatus(session);
-  const href = `/${session.sport}/session/${session.id}`;
+  const status = getSignupStatus(session);
+  const href = returnTab
+    ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
+    : `/${session.sport}/session/${session.id}`;
   const sportConfig = sportsConfig[session.sport];
+  const sessionTypeLabel = getSessionTypeLabel(sportConfig, session.session_type);
   const prefix = getDefaultTitlePrefix(sportConfig, session.session_type)
-    ?? getSessionTypeLabel(sportConfig, session.session_type);
+    ?? sessionTypeLabel;
   const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;
   const displayTitle = session.title || fallbackTitle;
 
   const card = (
     <Card className={cn(
-      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
-      !linkDisabled && "hover:shadow-lg",
+      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow hover:shadow-lg",
       highlighted && "ring-2 ring-blue-500 bg-blue-50/50",
     )}>
-      {!linkDisabled && (
-        <Link
-          href={href}
-          className="absolute inset-0 z-10"
-          aria-label={`View ${displayTitle} details`}
-        />
-      )}
+      <Link
+        href={href}
+        onClick={() => {
+          if (!returnTab) return;
+          sessionStorage.setItem(
+            `last-session:${session.sport}`,
+            JSON.stringify({ sessionId: session.id, tab: returnTab }),
+          );
+        }}
+        className="absolute inset-0 z-10"
+        aria-label={`View ${displayTitle} details`}
+      />
       <CardHeader className="relative z-20 pb-0 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1">
+          <div className="space-y-2">
             <CardTitle className="text-xl leading-tight">
               {displayTitle}
             </CardTitle>
+            <Badge
+              variant="outline"
+              className={cn(
+                "rounded-full border font-normal shadow-none",
+                sessionTypePillClass(sportConfig, session.session_type),
+              )}
+            >
+              {sessionTypeLabel}
+            </Badge>
           </div>
           <div className="flex shrink-0 flex-wrap justify-end gap-2">
             {(userSignupStatus === "confirmed" ||
@@ -108,7 +123,7 @@ export default function SessionCard({
             {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
           </span>
         </div>
-        {!linkDisabled && session.signup_open && session.signup_close && (
+        {session.signup_open && session.signup_close && (
           <CountdownTimer
             openTime={session.signup_open}
             closeTime={session.signup_close}
@@ -118,10 +133,6 @@ export default function SessionCard({
       </CardContent>
     </Card>
   );
-
-  if (linkDisabled) {
-    return <div className="block h-full">{card}</div>;
-  }
 
   return (
     <div id={`session-${session.id}`} className="block h-full">

@@ -1,5 +1,44 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database Migrations
+
+**Source of truth:** every schema change lives as a versioned file in `supabase/migrations/` and is committed to git. The remote `supabase_migrations.schema_migrations` table must always be in lockstep with that folder.
+
+### Rules
+
+- **DO** create every schema change as a tracked migration:
+
+  ```bash
+  supabase migration new <snake_case_name>
+  # edit the generated supabase/migrations/<timestamp>_<name>.sql
+  supabase db push --linked
+  ```
+
+  `supabase db push` applies the SQL **and** records the manifest row atomically. This is the only sanctioned path.
+
+- **DO** verify alignment after any DB-touching work:
+
+  ```bash
+  supabase migration list --linked   # Local and Remote columns must match
+  supabase db push --dry-run --linked # must say "Remote database is up to date"
+  ```
+
+- **DO** commit the new migration file in the same PR as any application code that depends on it.
+
+- **DON'T** run schema-changing SQL via the Supabase web SQL editor or `psql` against production. That bypasses the manifest, and `supabase migration list` and `supabase db pull` will silently miss the change. Both tools only inspect `supabase_migrations.schema_migrations`; they do **not** diff actual schema.
+
+- **DON'T** edit a migration file after it has been applied to any environment. If you need to change behavior, write a new migration that supersedes the old one.
+
+- **DON'T** experiment in production. Use `supabase start` for a local Postgres or a Supabase branch DB for ad-hoc exploration; promote successful experiments by writing a real migration.
+
+### Recovering from drift
+
+If schema changes ever land outside the migration system (e.g. a hotfix run in the SQL editor), reconcile immediately:
+
+1. Add a new migration file containing the SQL that was run.
+2. Insert a matching row into `supabase_migrations.schema_migrations` so the CLI considers it applied (the schema is already in place — the row is purely manifest bookkeeping). Use the same `version` and `name` as the file.
+3. Verify with `supabase migration list --linked` and `supabase db push --dry-run`.
+
 ## Getting Started
 
 First, run the development server:

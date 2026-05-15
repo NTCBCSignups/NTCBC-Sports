@@ -14,12 +14,16 @@ export interface ResponseTableConfig {
   sessions: ResponseTableEntry[];
 }
 
+export type SessionPillColor = "gray" | "emerald" | "indigo" | "amber";
+
 export interface SessionTab {
   value: string;
   label: string;
   restrictedAccess?: boolean;
   /** Default prefix for session titles */
   defaultTitlePrefix?: string;
+  /** Color token used for session type pills. */
+  sessionPillColor?: SessionPillColor;
 }
 
 export interface AdminTabMeta {
@@ -186,9 +190,26 @@ export const sportsConfig: Record<string, SportConfig> = {
     description: "Join us for Drop-in Practices. Scheduled Games are only open to confirmed CCSA Team Members.",
     defaultTab: "drop_in_practice",
     tabs: [
-      { value: "drop_in_practice", label: "Drop-in Practice", defaultTitlePrefix: "Practice" },
-      { value: "scheduled_game", label: "Scheduled Games", restrictedAccess: true, defaultTitlePrefix: "Game" },
-      { value: "umpiring", label: "Umpiring", restrictedAccess: true },
+      {
+        value: "drop_in_practice",
+        label: "Drop-in Practice",
+        defaultTitlePrefix: "Practice",
+        sessionPillColor: "emerald",
+      },
+      {
+        value: "scheduled_game",
+        label: "Scheduled Games",
+        restrictedAccess: true,
+        defaultTitlePrefix: "Game",
+        sessionPillColor: "indigo",
+      },
+      {
+        value: "umpiring",
+        label: "Umpiring",
+        restrictedAccess: true,
+        defaultTitlePrefix: "Umpire",
+        sessionPillColor: "amber",
+      },
     ],
   },
 } satisfies Record<string, SportConfig>;
