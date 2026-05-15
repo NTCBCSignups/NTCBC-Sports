@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
+import { sportsConfig, hasRestrictedAccess, Role } from "@/config/sports-config";
 
 /**
  * Reads the authenticated user forwarded by middleware via the
@@ -17,7 +17,20 @@ export async function getUser(): Promise<User | null> {
     }
 }
 
+/** Resolves the current user's Role from auth + role flags. */
+export function getUserRole(
+    user: User | null,
+    isTeamMember: boolean,
+    isAdmin: boolean,
+): Role {
+    if (!user) return Role.anon;
+    if (isAdmin) return Role.admin;
+    if (isTeamMember) return Role.teamUser;
+    return Role.user;
+}
+
 export interface UserSportRole {
+    role: Role;
     isAdmin: boolean;
     isTeamMember: boolean;
 }
@@ -49,7 +62,7 @@ export async function getUserSportRole(
         ? isAdmin || !!sportRole?.is_team_member
         : true;
 
-    return { isAdmin, isTeamMember };
+    return { role: getUserRole({ id: userId } as User, isTeamMember, isAdmin), isAdmin, isTeamMember };
 }
 
 /**
@@ -64,8 +77,8 @@ export async function requireSportAdmin(
     const user = await getUser();
     if (!user) return { success: false, error: "Not authenticated" };
 
-    const { isAdmin } = await getUserSportRole(supabase, user.id, sport);
-    if (!isAdmin) return { success: false, error: "Not authorized" };
+    const { role } = await getUserSportRole(supabase, user.id, sport);
+    if (role < Role.admin) return { success: false, error: "Not authorized" };
 
     return { success: true, user };
 }
