@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, XCircle } from "lucide-react";
 import { requestTeamAccess } from "@/lib/actions/team-access";
+import { sportsConfig } from "@/config/sports-config";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 import { colors, statusColors } from "@/lib/styles";
 
@@ -12,12 +13,23 @@ interface TeamAccessBannerProps {
   sport: string;
 }
 
+function getRestrictedTabLabels(sport: string): string {
+  const config = sportsConfig[sport];
+  const labels = config?.tabs
+    ?.filter((t) => t.restrictedAccess)
+    .map((t) => t.label.toLowerCase()) ?? [];
+  if (labels.length === 0) return "restricted sessions";
+  if (labels.length === 1) return labels[0];
+  return labels.slice(0, -1).join(", ") + " and " + labels[labels.length - 1];
+}
+
 export default function TeamAccessBanner({
   requestStatus,
   sport,
 }: TeamAccessBannerProps) {
   const [pending, setPending] = useState(false);
   const [localStatus, setLocalStatus] = useState(requestStatus);
+  const restrictedLabels = getRestrictedTabLabels(sport);
 
   const handleRequest = async () => {
     setPending(true);
@@ -40,7 +52,7 @@ export default function TeamAccessBanner({
           <p className="font-medium text-amber-900">Request pending</p>
           <p className="text-sm text-amber-700">
             Your request to join the team is awaiting leader approval. You&apos;ll be
-            able to sign up for scheduled games and umpiring sessions once approved.
+            able to sign up for {restrictedLabels} once approved.
           </p>
         </div>
       </div>
@@ -68,7 +80,7 @@ export default function TeamAccessBanner({
       <div className="min-w-0 flex-1">
         <p className="font-medium text-blue-900">Team members only</p>
         <p className="text-sm text-blue-700 mb-3">
-          Scheduled games and umpiring sessions are reserved for approved team members.
+          {restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved for approved team members.
           Request access to sign up for those sessions.
         </p>
         <Button
