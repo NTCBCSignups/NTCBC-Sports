@@ -5,14 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   CalendarDays,
   Clock,
   MapPin,
@@ -25,13 +17,12 @@ import SignupButton from "@/components/sports/signup-button";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import { isSignupOpen } from "@/lib/signup-capacity";
-import SignupSummaryHeader from "@/components/sports/signup-summary-header";
-import { TeamMemberBadge, StatusBadge } from "@/components/sports/badges";
+import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
 import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
-import { formatDate, formatTime, displayName } from "@/lib/format";
+import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { LoadingContent } from "@/components/sports/loading-content";
@@ -82,14 +73,6 @@ async function SessionSignupsContent({
         : Promise.resolve(null),
     ]);
 
-  const allSignups = rawSignups.filter((s) => s.status !== "cancelled");
-
-  const confirmedSignups = allSignups.filter((s) => s.status === "confirmed");
-  const waitlistedSignups = allSignups.filter((s) => s.status === "waitlisted");
-  const activeSignups = allSignups.filter((s) => s.status !== "declined");
-  const declinedSignups = allSignups.filter((s) => s.status === "declined");
-  const sortedSignups = [...activeSignups, ...declinedSignups];
-
   const requestApproved = accessRequestStatus === "approved";
   const showTeamGate =
     !!userId &&
@@ -130,64 +113,13 @@ async function SessionSignupsContent({
 
       <div className="space-y-2">
         <h2 className="font-semibold text-gray-900">Attendance</h2>
-        <div className="overflow-hidden rounded-lg border bg-white">
-          <SignupSummaryHeader
-            confirmedCount={confirmedSignups.length}
-            waitlistedCount={waitlistedSignups.length}
-            playerCap={playerCap}
-          />
-
-          {allSignups.length === 0 ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              No sign-ups yet.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead className="w-8 px-1"></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Signed up</TableHead>
-                  <TableHead className="sticky right-0 bg-muted/50 border-l">
-                    Status
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(() => {
-                  let activeIndex = 0;
-                  let declinedIndex = 0;
-                  return sortedSignups.map((signup) => {
-                  const p = signup.profiles;
-                  const isCurrentUser = userId === signup.user_id;
-                  const isDeclined = signup.status === "declined";
-                  const groupIndex = isDeclined ? ++declinedIndex : ++activeIndex;
-                  return (
-                    <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
-                      <TableCell className="font-mono text-xs">
-                        {groupIndex}
-                      </TableCell>
-                      <TableCell className="px-1 align-middle">
-                        {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
-                      </TableCell>
-                      <TableCell>
-                        {displayName(p)}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        <LocalTimestamp date={signup.created_at} />
-                      </TableCell>
-                      <TableCell className={`sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-blue-50" : "bg-white"}`}>
-                        <StatusBadge status={signup.status as "confirmed" | "waitlisted" | "declined"} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                  });
-                })()}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+        <SessionSignupsTable
+          signups={rawSignups}
+          teamMemberIds={teamMemberIds}
+          playerCap={playerCap}
+          currentUserId={userId}
+          showTimestamp
+        />
       </div>
     </div>
   );
