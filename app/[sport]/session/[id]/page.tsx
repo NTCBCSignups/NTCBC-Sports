@@ -21,7 +21,7 @@ import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
+import { sportsConfig, hasRestrictedAccess, isRestrictedSessionType } from "@/config/sports-config";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
@@ -152,7 +152,7 @@ export default async function SessionDetailPage({
   const { isAdmin, isTeamMember } = roleResult;
 
   const sessionTab = config.tabs?.find((t) => t.value === session.session_type);
-  const isRestrictedSession = !!sessionTab?.restrictedAccess;
+  const isRestrictedSession = isRestrictedSessionType(config, session.session_type);
   const isOpen = isSignupOpen(session);
   const sessionTypeLabel = sessionTab?.label ?? session.session_type;
   const backParams = new URLSearchParams({ session: id });

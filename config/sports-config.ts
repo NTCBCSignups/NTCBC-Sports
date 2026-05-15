@@ -1,5 +1,33 @@
 import { Sport, FormResponseColumn } from "@/lib/schedule-utils";
 
+// ── Enums ────────────────────────────────────────────────────────
+
+/** Ordered user roles — higher numeric value = more privilege. */
+export enum Role {
+  anon = 0,
+  user = 1,
+  teamUser = 2,
+  admin = 3,
+}
+
+/** Actions that can be gated per tab. */
+export enum AccessLevel {
+  view = "view",
+  signup = "signup",
+  admin = "admin",
+}
+
+/** Maps each access level to the minimum Role required. */
+export type TabPermissions = Record<AccessLevel, Role>;
+
+export const DEFAULT_PERMISSIONS: TabPermissions = {
+  [AccessLevel.view]: Role.anon,
+  [AccessLevel.signup]: Role.user,
+  [AccessLevel.admin]: Role.admin,
+};
+
+// ── Config interfaces ───────────────────────────────────────────
+
 export interface ResponseTableEntry {
   time: string;
   playerCap: number;
@@ -19,7 +47,8 @@ export type SessionPillColor = "gray" | "emerald" | "indigo" | "amber";
 export interface SessionTab {
   value: string;
   label: string;
-  restrictedAccess?: boolean;
+  /** Per-tab access control. Omitted keys fall back to DEFAULT_PERMISSIONS. */
+  permissions?: Partial<TabPermissions>;
   /** Default prefix for session titles */
   defaultTitlePrefix?: string;
   /** Color token used for session type pills. */
@@ -57,14 +86,20 @@ export interface SportConfig {
   adminTabs?: AdminTabMeta[];
 }
 
+/** Resolve the full permissions for a given session type, merging with defaults. */
+export function getTabPermissions(config: SportConfig | undefined, sessionType: string): TabPermissions {
+  const tab = config?.tabs?.find((t) => t.value === sessionType);
+  return { ...DEFAULT_PERMISSIONS, ...tab?.permissions };
+}
+
 /** Returns true if the given session type belongs to a restricted-access tab. */
 export function isRestrictedSessionType(config: SportConfig | undefined, sessionType: string): boolean {
-  return config?.tabs?.some((t) => t.value === sessionType && t.restrictedAccess) ?? false;
+  return getTabPermissions(config, sessionType)[AccessLevel.signup] >= Role.teamUser;
 }
 
 /** Returns true if the sport has any tab with restricted access. */
 export function hasRestrictedAccess(config: SportConfig | undefined): boolean {
-  return config?.tabs?.some((t) => t.restrictedAccess) ?? false;
+  return config?.tabs?.some((t) => getTabPermissions(config, t.value)[AccessLevel.signup] >= Role.teamUser) ?? false;
 }
 
 /** Look up the tab label for a session type from sportsConfig. */
@@ -199,14 +234,14 @@ export const sportsConfig: Record<string, SportConfig> = {
       {
         value: "scheduled_game",
         label: "Scheduled Games",
-        restrictedAccess: true,
+        permissions: { [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Game",
         sessionPillColor: "indigo",
       },
       {
         value: "umpiring",
         label: "Umpiring",
-        restrictedAccess: true,
+        permissions: { [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Umpiring",
         sessionPillColor: "amber",
       },
