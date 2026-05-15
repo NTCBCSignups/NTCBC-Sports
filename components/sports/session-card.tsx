@@ -63,6 +63,13 @@ export default function SessionCard({
     )}>
       <Link
         href={href}
+        onClick={() => {
+          if (!returnTab) return;
+          sessionStorage.setItem(
+            `last-session:${session.sport}`,
+            JSON.stringify({ sessionId: session.id, tab: returnTab }),
+          );
+        }}
         className="absolute inset-0 z-10"
         aria-label={`View ${displayTitle} details`}
       />

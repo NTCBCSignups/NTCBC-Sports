@@ -12,7 +12,12 @@ import {
 import { CalendarDays, MapPin } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
 import SessionForm from "@/components/sports/session-form";
-import { sportsConfig } from "@/config/sports-config";
+import {
+  getDefaultTitlePrefix,
+  getSessionTypeLabel,
+  sportsConfig,
+  type SportConfig,
+} from "@/config/sports-config";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import AdminAccessRequests from "@/components/sports/admin-access-requests";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
@@ -20,6 +25,8 @@ import AdminSidebar from "@/components/sports/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { formatDate, formatTime } from "@/lib/format";
 import { getTodayInSportTimezone } from "@/lib/timezone";
+import { sessionTypePillClass } from "@/lib/session-type-pill";
+import { cn } from "@/lib/utils";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
 import {
   getAllSessions,
@@ -35,12 +42,14 @@ import type {
 } from "@/lib/supabase/types";
 
 function SessionAccordion({
+  config,
   sport,
   sessions,
   signupsBySession,
   teamMemberIds,
   muted,
 }: {
+  config: SportConfig;
   sport: string;
   sessions: SportSession[];
   signupsBySession: Map<
@@ -70,40 +79,46 @@ function SessionAccordion({
         const activeCount = sessionSignups.filter(
           (s) => s.status !== "cancelled",
         ).length;
+        const sessionTypeLabel =
+          getDefaultTitlePrefix(config, session.session_type) ??
+          getSessionTypeLabel(config, session.session_type);
+
         return (
           <AccordionItem
             key={session.id}
             value={session.id}
-            className="!border-b rounded-lg border bg-white px-4"
+            className="border-b! rounded-lg border bg-white px-4"
           >
             <AccordionTrigger className="hover:no-underline py-3">
-              <div className="flex flex-1 items-center justify-between pr-4">
-                <div className="flex items-center gap-3 text-left">
-                  <div>
-                    <div
-                      className={`font-medium ${muted ? "text-gray-500" : ""}`}
-                    >
-                      {session.title || formatDate(session.date)}
-                    </div>
-                    <div
-                      className={`text-xs flex items-center gap-3 mt-0.5 ${muted ? "text-gray-400" : "text-gray-500"}`}
-                    >
-                      <span className="flex items-center gap-1">
-                        <CalendarDays className="h-3 w-3" />
-                        {formatDate(session.date)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {session.location_name}
-                      </span>
-                    </div>
+              <div className="flex min-w-0 flex-1 items-start justify-between gap-3 pr-2 sm:items-center sm:pr-4">
+                <div className="min-w-0 flex-1 text-left">
+                  <div
+                    className={`truncate text-base font-medium sm:text-sm ${muted ? "text-gray-500" : ""}`}
+                  >
+                    {session.title || formatDate(session.date)}
+                  </div>
+                  <div
+                    className={`mt-1 flex min-w-0 items-center gap-4 text-sm sm:gap-6 sm:text-xs ${muted ? "text-gray-400" : "text-gray-500"}`}
+                  >
+                    <span className="flex shrink-0 items-center gap-2 sm:gap-1">
+                      <CalendarDays className="h-4 w-4 shrink-0 sm:h-3 sm:w-3" />
+                      {formatDate(session.date)}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-2 sm:gap-1">
+                      <MapPin className="h-4 w-4 shrink-0 sm:h-3 sm:w-3" />
+                      <span className="truncate">{session.location_name}</span>
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {session.session_type === "scheduled_game"
-                      ? "Game"
-                      : "Practice"}
+                <div className="flex shrink-0 flex-col items-end gap-1.5 sm:gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "rounded-full border text-xs font-normal shadow-none",
+                      sessionTypePillClass(config, session.session_type),
+                    )}
+                  >
+                    {sessionTypeLabel}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     {activeCount}
@@ -116,13 +131,15 @@ function SessionAccordion({
             </AccordionTrigger>
             <AccordionContent className="pb-4">
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 text-sm text-gray-600">
                     {formatTime(session.time_start)} –{" "}
                     {formatTime(session.time_end)} ·{" "}
                     {session.location_address}
                   </div>
-                  <DeleteSessionButton sport={sport} sessionId={session.id} />
+                  <div className="shrink-0 -mt-1">
+                    <DeleteSessionButton sport={sport} sessionId={session.id} />
+                  </div>
                 </div>
                 <AdminSessionSignups
                   sport={sport}
@@ -246,6 +263,7 @@ async function AdminDataContent({
               Upcoming Sessions ({upcomingSessions.length})
             </h2>
             <SessionAccordion
+              config={config}
               sport={sport}
               sessions={upcomingSessions}
               signupsBySession={signupsBySession}
@@ -260,6 +278,7 @@ async function AdminDataContent({
               Past Sessions ({pastSessions.length})
             </h2>
             <SessionAccordion
+              config={config}
               sport={sport}
               sessions={pastSessions}
               signupsBySession={signupsBySession}

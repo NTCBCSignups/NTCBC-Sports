@@ -149,6 +149,7 @@ async function SportSessionsContent({
         defaultValue={defaultValue}
         options={filterOptions}
         scrollTo={scrollTo}
+        sport={sport}
       />
     </div>
   );
