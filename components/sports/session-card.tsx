@@ -15,7 +15,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
-import { sportsConfig, getSessionTypeLabel, getDefaultTitlePrefix } from "@/config/sports-config";
+import { sportsConfig, getSessionTypeLabel, getDefaultTitlePrefix, getTabPermissions, AccessLevel, Role } from "@/config/sports-config";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -23,6 +23,7 @@ interface SessionCardProps {
   highlighted?: boolean;
   userSignupStatus?: SignupStatus | null;
   returnTab?: string;
+  userRole?: Role;
 }
 
 function getSignupStatus(session: SportSession): {
@@ -43,13 +44,16 @@ export default function SessionCard({
   highlighted,
   userSignupStatus,
   returnTab,
+  userRole,
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
   const status = getSignupStatus(session);
+  const sportConfig = sportsConfig[session.sport];
+  const permissions = getTabPermissions(sportConfig, session.session_type);
+  const canView = userRole === undefined || userRole >= permissions[AccessLevel.view];
   const href = returnTab
     ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
     : `/${session.sport}/session/${session.id}`;
-  const sportConfig = sportsConfig[session.sport];
   const sessionTypeLabel = getSessionTypeLabel(sportConfig, session.session_type);
   const prefix = getDefaultTitlePrefix(sportConfig, session.session_type)
     ?? sessionTypeLabel;
@@ -58,21 +62,25 @@ export default function SessionCard({
 
   const card = (
     <Card className={cn(
-      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow hover:shadow-lg",
+      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
+      canView && "hover:shadow-lg",
+      !canView && "opacity-60 cursor-default",
       highlighted && "ring-2 ring-blue-500 bg-blue-50/50",
     )}>
-      <Link
-        href={href}
-        onClick={() => {
-          if (!returnTab) return;
-          sessionStorage.setItem(
-            `last-session:${session.sport}`,
-            JSON.stringify({ sessionId: session.id, tab: returnTab }),
-          );
-        }}
-        className="absolute inset-0 z-10"
-        aria-label={`View ${displayTitle} details`}
-      />
+      {canView && (
+        <Link
+          href={href}
+          onClick={() => {
+            if (!returnTab) return;
+            sessionStorage.setItem(
+              `last-session:${session.sport}`,
+              JSON.stringify({ sessionId: session.id, tab: returnTab }),
+            );
+          }}
+          className="absolute inset-0 z-10"
+          aria-label={`View ${displayTitle} details`}
+        />
+      )}
       <CardHeader className="relative z-20 pb-0 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-2">

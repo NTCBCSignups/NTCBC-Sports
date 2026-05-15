@@ -10,7 +10,7 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
+import { sportsConfig, hasRestrictedAccess, Role, AccessLevel, getTabPermissions } from "@/config/sports-config";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus } from "@/lib/supabase/types";
@@ -40,6 +40,7 @@ async function SportSessionsContent({
   ]);
 
   const { isTeamMember } = roleResult;
+  const userRole: Role = 'role' in roleResult ? (roleResult as { role: Role }).role : (userId ? Role.user : Role.anon);
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
   if (userId && hasRestrictedAccess(config) && !isTeamMember) {
@@ -74,6 +75,7 @@ async function SportSessionsContent({
                   session={session}
                   highlighted={session.id === highlight}
                   returnTab={t.value}
+                  userRole={userRole}
                   userSignupStatus={
                     userSignupStatusBySession.get(session.id) ?? null
                   }
@@ -104,6 +106,7 @@ async function SportSessionsContent({
                   session={session}
                   highlighted={session.id === highlight}
                   returnTab={ALL_VALUE}
+                  userRole={userRole}
                   userSignupStatus={
                     userSignupStatusBySession.get(session.id) ?? null
                   }
