@@ -207,7 +207,7 @@ export const sportsConfig: Record<string, SportConfig> = {
         value: "umpiring",
         label: "Umpiring",
         restrictedAccess: true,
-        defaultTitlePrefix: "Umpire",
+        defaultTitlePrefix: "Umpiring",
         sessionPillColor: "amber",
       },
     ],
