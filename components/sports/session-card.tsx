@@ -15,7 +15,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
-import { sportsConfig, getSessionTypeLabel, getDefaultTitlePrefix, getTabPermissions, AccessLevel, Role } from "@/config/sports-config";
+import { resolvedSportsConfig, getResolvedTab, AccessLevel, Role } from "@/config/config-resolver";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -48,15 +48,15 @@ export default function SessionCard({
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
   const status = getSignupStatus(session);
-  const sportConfig = sportsConfig[session.sport];
-  const permissions = getTabPermissions(sportConfig, session.session_type);
-  const canView = userRole === undefined || userRole >= permissions[AccessLevel.view];
+  const sportConfig = resolvedSportsConfig[session.sport];
+  const tab = getResolvedTab(sportConfig, session.session_type);
+  const canView = userRole === undefined || userRole >= tab.permissions[AccessLevel.view];
+  const canSignup = userRole === undefined || userRole >= tab.permissions[AccessLevel.signup];
   const href = returnTab
     ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
     : `/${session.sport}/session/${session.id}`;
-  const sessionTypeLabel = getSessionTypeLabel(sportConfig, session.session_type);
-  const prefix = getDefaultTitlePrefix(sportConfig, session.session_type)
-    ?? sessionTypeLabel;
+  const sessionTypeLabel = tab.label;
+  const prefix = tab.defaultTitlePrefix ?? sessionTypeLabel;
   const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;
   const displayTitle = session.title || fallbackTitle;
 
@@ -103,9 +103,11 @@ export default function SessionCard({
               userSignupStatus === "declined") && (
                 <StatusBadge status={userSignupStatus} />
               )}
-            <Badge variant={status.variant} className="shrink-0">
-              {status.label}
-            </Badge>
+            {canSignup && (
+              <Badge variant={status.variant} className="shrink-0">
+                {status.label}
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -125,13 +127,15 @@ export default function SessionCard({
           <MapPin className="h-4 w-4 shrink-0" />
           <span>{session.location_name}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 shrink-0" />
-          <span>
-            {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
-          </span>
-        </div>
-        {session.signup_open && session.signup_close && (
+        {canSignup && (
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 shrink-0" />
+            <span>
+              {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
+            </span>
+          </div>
+        )}
+        {canSignup && session.signup_open && session.signup_close && (
           <CountdownTimer
             openTime={session.signup_open}
             closeTime={session.signup_close}
