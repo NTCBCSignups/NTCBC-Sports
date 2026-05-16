@@ -1,116 +1,19 @@
-import { Sport, FormResponseColumn } from "@/lib/schedule-utils";
+import { AccessLevel, Role, type SportConfig, type TabPermissions } from "./config-interfaces";
 
-// ── Enums ────────────────────────────────────────────────────────
+// ── Defaults ─────────────────────────────────────────────────────
 
-/** Ordered user roles — higher numeric value = more privilege. */
-export enum Role {
-  anon = 0,
-  user = 1,
-  teamUser = 2,
-  admin = 3,
-}
+export const SPORT_DEFAULTS = {
+  authEnabled: false,
+  tab: {
+    permissions: {
+      [AccessLevel.view]: Role.anon,
+      [AccessLevel.signup]: Role.user,
+      [AccessLevel.admin]: Role.admin,
+    } satisfies TabPermissions,
+  },
+} as const;
 
-/** Actions that can be gated per tab. */
-export enum AccessLevel {
-  view = "view",
-  signup = "signup",
-  admin = "admin",
-}
-
-/** Maps each access level to the minimum Role required. */
-export type TabPermissions = Record<AccessLevel, Role>;
-
-export const DEFAULT_PERMISSIONS: TabPermissions = {
-  [AccessLevel.view]: Role.anon,
-  [AccessLevel.signup]: Role.user,
-  [AccessLevel.admin]: Role.admin,
-};
-
-// ── Config interfaces ───────────────────────────────────────────
-
-export interface ResponseTableEntry {
-  time: string;
-  playerCap: number;
-  description?: string;
-  filterColumn?: { header: string; value: string };
-  hiddenColumns?: string[];
-}
-
-export interface ResponseTableConfig {
-  sheetTab: string;
-  columns: FormResponseColumn[];
-  sessions: ResponseTableEntry[];
-}
-
-export type SessionPillColor = "gray" | "emerald" | "indigo" | "amber";
-
-export interface SessionTab {
-  value: string;
-  label: string;
-  /** Per-tab access control. Omitted keys fall back to DEFAULT_PERMISSIONS. */
-  permissions?: Partial<TabPermissions>;
-  /** Default prefix for session titles */
-  defaultTitlePrefix?: string;
-  /** Color token used for session type pills. */
-  sessionPillColor?: SessionPillColor;
-}
-
-export interface AdminTabMeta {
-  id: string;
-  label: string;
-  /** Lucide icon name (must be mapped in admin-sidebar) */
-  iconName: string;
-}
-
-export interface SportConfig {
-  id: Sport;
-  emoji: string;
-  name: string;
-  type: string;
-  location: {
-    name: string;
-    address: string;
-    mapsLink?: string;
-  };
-  day: string;
-  organizers: string;
-  waiverLink?: string;
-  notes: string[];
-  responseTable?: ResponseTableConfig;
-  multiSession?: boolean;
-  description?: string;
-  tabs?: SessionTab[];
-  defaultTab?: string;
-  authEnabled?: boolean;
-  /** Extra sport-specific tabs to show in the admin sidebar. */
-  adminTabs?: AdminTabMeta[];
-}
-
-/** Resolve the full permissions for a given session type, merging with defaults. */
-export function getTabPermissions(config: SportConfig | undefined, sessionType: string): TabPermissions {
-  const tab = config?.tabs?.find((t) => t.value === sessionType);
-  return { ...DEFAULT_PERMISSIONS, ...tab?.permissions };
-}
-
-/** Returns true if the given session type belongs to a restricted-access tab. */
-export function isRestrictedSessionType(config: SportConfig | undefined, sessionType: string): boolean {
-  return getTabPermissions(config, sessionType)[AccessLevel.signup] >= Role.teamUser;
-}
-
-/** Returns true if the sport has any tab with restricted access. */
-export function hasRestrictedAccess(config: SportConfig | undefined): boolean {
-  return config?.tabs?.some((t) => getTabPermissions(config, t.value)[AccessLevel.signup] >= Role.teamUser) ?? false;
-}
-
-/** Look up the tab label for a session type from sportsConfig. */
-export function getSessionTypeLabel(config: SportConfig | undefined, sessionType: string): string {
-  return config?.tabs?.find((t) => t.value === sessionType)?.label ?? sessionType;
-}
-
-/** Look up the default title prefix for a session type from sportsConfig. */
-export function getDefaultTitlePrefix(config: SportConfig | undefined, sessionType: string): string | undefined {
-  return config?.tabs?.find((t) => t.value === sessionType)?.defaultTitlePrefix;
-}
+// ── Sport configurations ─────────────────────────────────────────
 
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
@@ -234,14 +137,14 @@ export const sportsConfig: Record<string, SportConfig> = {
       {
         value: "scheduled_game",
         label: "Scheduled Games",
-        permissions: { [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.teamUser },
+        permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Game",
         sessionPillColor: "indigo",
       },
       {
         value: "umpiring",
         label: "Umpiring",
-        permissions: { [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.teamUser },
+        permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Umpiring",
         sessionPillColor: "amber",
       },
