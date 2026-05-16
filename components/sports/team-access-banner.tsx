@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, XCircle } from "lucide-react";
 import { requestTeamAccess } from "@/lib/actions/team-access";
-import { sportsConfig } from "@/config/sports-config";
+import { resolvedSportsConfig, AccessLevel, Role } from "@/config/config-resolver";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 import { colors, statusColors } from "@/lib/styles";
 
@@ -14,9 +14,9 @@ interface TeamAccessBannerProps {
 }
 
 function getRestrictedTabLabels(sport: string): string {
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   const labels = config?.tabs
-    ?.filter((t) => t.restrictedAccess)
+    ?.filter((t) => t.permissions[AccessLevel.signup] > Role.user)
     .map((t) => t.label.toLowerCase()) ?? [];
   if (labels.length === 0) return "restricted sessions";
   if (labels.length === 1) return labels[0];

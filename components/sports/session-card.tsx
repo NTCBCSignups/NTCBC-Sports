@@ -15,7 +15,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
-import { sportsConfig, getSessionTypeLabel, getDefaultTitlePrefix } from "@/config/sports-config";
+import { resolvedSportsConfig, getResolvedTab, AccessLevel, Role } from "@/config/config-resolver";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -23,6 +23,7 @@ interface SessionCardProps {
   highlighted?: boolean;
   userSignupStatus?: SignupStatus | null;
   returnTab?: string;
+  userRole?: Role;
 }
 
 function getSignupStatus(session: SportSession): {
@@ -43,36 +44,43 @@ export default function SessionCard({
   highlighted,
   userSignupStatus,
   returnTab,
+  userRole,
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
   const status = getSignupStatus(session);
+  const sportConfig = resolvedSportsConfig[session.sport];
+  const tab = getResolvedTab(sportConfig, session.session_type);
+  const canView = userRole === undefined || userRole >= tab.permissions[AccessLevel.view];
+  const canSignup = userRole === undefined || userRole >= tab.permissions[AccessLevel.signup];
   const href = returnTab
     ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
     : `/${session.sport}/session/${session.id}`;
-  const sportConfig = sportsConfig[session.sport];
-  const sessionTypeLabel = getSessionTypeLabel(sportConfig, session.session_type);
-  const prefix = getDefaultTitlePrefix(sportConfig, session.session_type)
-    ?? sessionTypeLabel;
+  const sessionTypeLabel = tab.label;
+  const prefix = tab.defaultTitlePrefix ?? sessionTypeLabel;
   const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;
   const displayTitle = session.title || fallbackTitle;
 
   const card = (
     <Card className={cn(
-      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow hover:shadow-lg",
+      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
+      canView && "hover:shadow-lg",
+      !canView && "opacity-60 cursor-default",
       highlighted && "ring-2 ring-blue-500 bg-blue-50/50",
     )}>
-      <Link
-        href={href}
-        onClick={() => {
-          if (!returnTab) return;
-          sessionStorage.setItem(
-            `last-session:${session.sport}`,
-            JSON.stringify({ sessionId: session.id, tab: returnTab }),
-          );
-        }}
-        className="absolute inset-0 z-10"
-        aria-label={`View ${displayTitle} details`}
-      />
+      {canView && (
+        <Link
+          href={href}
+          onClick={() => {
+            if (!returnTab) return;
+            sessionStorage.setItem(
+              `last-session:${session.sport}`,
+              JSON.stringify({ sessionId: session.id, tab: returnTab }),
+            );
+          }}
+          className="absolute inset-0 z-10"
+          aria-label={`View ${displayTitle} details`}
+        />
+      )}
       <CardHeader className="relative z-20 pb-0 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-2">
@@ -95,9 +103,11 @@ export default function SessionCard({
               userSignupStatus === "declined") && (
                 <StatusBadge status={userSignupStatus} />
               )}
-            <Badge variant={status.variant} className="shrink-0">
-              {status.label}
-            </Badge>
+            {canSignup && (
+              <Badge variant={status.variant} className="shrink-0">
+                {status.label}
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -117,13 +127,15 @@ export default function SessionCard({
           <MapPin className="h-4 w-4 shrink-0" />
           <span>{session.location_name}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 shrink-0" />
-          <span>
-            {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
-          </span>
-        </div>
-        {session.signup_open && session.signup_close && (
+        {canSignup && (
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 shrink-0" />
+            <span>
+              {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
+            </span>
+          </div>
+        )}
+        {canSignup && session.signup_open && session.signup_close && (
           <CountdownTimer
             openTime={session.signup_open}
             closeTime={session.signup_close}

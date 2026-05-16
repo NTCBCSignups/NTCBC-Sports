@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import {
   Table,
   TableBody,
@@ -86,15 +86,15 @@ export default function SessionSignupsTable({
                 const groupIndex = isDeclined ? ++declinedIndex : ++activeIndex;
                 const showDivider = isDeclined && declinedIndex === 1;
                 return (
-                  <>
+                  <Fragment key={signup.id}>
                     {showDivider && (
-                      <TableRow key="divider" className="pointer-events-none">
+                      <TableRow className="pointer-events-none">
                         <TableCell colSpan={colCount} className="py-1 px-4">
                           <div className="border-t border-dashed border-gray-300" />
                         </TableCell>
                       </TableRow>
                     )}
-                    <TableRow key={signup.id} className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
+                    <TableRow className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
                       <TableCell className="font-mono text-xs">
                         {groupIndex}
                       </TableCell>
@@ -118,7 +118,7 @@ export default function SessionSignupsTable({
                         </TableCell>
                       )}
                     </TableRow>
-                  </>
+                  </Fragment>
                 );
               });
             })()}

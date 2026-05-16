@@ -2,7 +2,7 @@ import AuthButton from "@/components/sports/auth-button";
 import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
-import { sportsConfig } from "@/config/sports-config";
+import { resolvedSportsConfig } from "@/config/config-resolver";
 
 interface SportPageShellProps {
     user: User | null;
@@ -19,7 +19,7 @@ export default function SportPageShell({
     showDescription = true,
     children,
 }: SportPageShellProps) {
-    const config = sportsConfig[sport];
+    const config = resolvedSportsConfig[sport];
 
     return (
         <div className="max-w-4xl mx-auto mb-12 space-y-6">

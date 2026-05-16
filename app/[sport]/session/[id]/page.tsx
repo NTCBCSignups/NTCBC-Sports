@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
@@ -21,7 +21,7 @@ import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
+import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel } from "@/config/config-resolver";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
@@ -40,57 +40,40 @@ async function SessionSignupsContent({
   sport,
   user,
   isOpen,
-  isTeamMember,
-  isRestrictedSession,
+  userRole,
+  signupRole,
   playerCap,
-  authEnabled,
 }: {
   sessionId: string;
   sport: string;
   user: User | null;
   isOpen: boolean;
-  isTeamMember: boolean;
-  isRestrictedSession: boolean;
+  userRole: Role;
+  signupRole: Role;
   playerCap: number | null;
-  authEnabled: boolean;
 }) {
   const userId = user?.id ?? null;
-  const sportCfg = sportsConfig[sport];
-  const fetchAccessStatus =
-    !!userId &&
-    authEnabled &&
-    isRestrictedSession &&
-    !isTeamMember &&
-    hasRestrictedAccess(sportCfg);
+  const canSignup = userRole >= signupRole;
+  const needsTeamAccess = !!user && userRole < signupRole;
 
   const [rawSignups, teamMemberIds, userSignupStatus, accessRequestStatus] =
     await Promise.all([
       getSessionSignups(sessionId),
       getTeamMembers(sport),
       userId ? getUserSignupStatus(userId, sessionId) : Promise.resolve(null),
-      fetchAccessStatus
+      needsTeamAccess
         ? getUserAccessRequestStatus(userId!, sport)
         : Promise.resolve(null),
     ]);
 
   const requestApproved = accessRequestStatus === "approved";
-  const showTeamGate =
-    !!userId &&
-    authEnabled &&
-    isRestrictedSession &&
-    !isTeamMember &&
-    !requestApproved;
-  const showSignupButton =
-    !!userId &&
-    (!authEnabled ||
-      !isRestrictedSession ||
-      isTeamMember ||
-      requestApproved);
+  const showTeamGate = needsTeamAccess && !requestApproved;
+  const showSignupButton = canSignup || requestApproved;
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        {authEnabled && !userId && (
+        {!user && signupRole > userRole && (
           <SignInToSignupBanner />
         )}
         {showTeamGate && (
@@ -134,7 +117,7 @@ export default async function SessionDetailPage({
 }) {
   const { sport, id } = await params;
   const { fromTab } = await searchParams;
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   if (!config) notFound();
 
   const supabase = await createClient();
@@ -145,16 +128,23 @@ export default async function SessionDetailPage({
     getSession(id),
     user
       ? getUserSportRole(supabase, user.id, sport)
-      : Promise.resolve({ isAdmin: false, isTeamMember: false }),
+      : Promise.resolve({ role: Role.anon, isAdmin: false, isTeamMember: false }),
   ]);
 
-  if (!session) notFound();
-  const { isAdmin, isTeamMember } = roleResult;
+  // Redirect to sport page if session doesn't exist or user lacks view access
+  const tab = getResolvedTab(config, session?.session_type ?? "");
+  const userRole = user
+    ? roleResult.role
+    : Role.anon;
 
-  const sessionTab = config.tabs?.find((t) => t.value === session.session_type);
-  const isRestrictedSession = !!sessionTab?.restrictedAccess;
+  if (!session || userRole < tab.permissions[AccessLevel.view]) {
+    redirect(`/${sport}`);
+  }
+
+  const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
+
   const isOpen = isSignupOpen(session);
-  const sessionTypeLabel = sessionTab?.label ?? session.session_type;
+  const sessionTypeLabel = tab.label;
   const backParams = new URLSearchParams({ session: id });
   if (fromTab) backParams.set("tab", fromTab);
 
@@ -290,10 +280,9 @@ export default async function SessionDetailPage({
           sport={sport}
           user={user}
           isOpen={isOpen}
-          isTeamMember={isTeamMember}
-          isRestrictedSession={isRestrictedSession}
+          userRole={userRole}
+          signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
-          authEnabled={!!config.authEnabled}
         />
       </Suspense>
     </div>

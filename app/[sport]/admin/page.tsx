@@ -13,11 +13,11 @@ import { CalendarDays, MapPin } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
 import SessionForm from "@/components/sports/session-form";
 import {
-  getDefaultTitlePrefix,
-  getSessionTypeLabel,
-  sportsConfig,
-  type SportConfig,
-} from "@/config/sports-config";
+  resolvedSportsConfig,
+  getResolvedTab,
+  Role,
+  type ResolvedSportConfig,
+} from "@/config/config-resolver";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import AdminAccessRequests from "@/components/sports/admin-access-requests";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
@@ -49,7 +49,7 @@ function SessionAccordion({
   teamMemberIds,
   muted,
 }: {
-  config: SportConfig;
+  config: ResolvedSportConfig;
   sport: string;
   sessions: SportSession[];
   signupsBySession: Map<
@@ -79,9 +79,9 @@ function SessionAccordion({
         const activeCount = sessionSignups.filter(
           (s) => s.status !== "cancelled",
         ).length;
+        const tab = getResolvedTab(config, session.session_type);
         const sessionTypeLabel =
-          getDefaultTitlePrefix(config, session.session_type) ??
-          getSessionTypeLabel(config, session.session_type);
+          tab.defaultTitlePrefix ?? tab.label;
 
         return (
           <AccordionItem
@@ -164,7 +164,7 @@ async function AdminDataContent({
   sport: string;
   tab: string;
 }) {
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
 
   // ── Fetch cached data in parallel ──────────────────────────────
   const [sessions, accessRequests, teamMemberIds] = await Promise.all([
@@ -311,7 +311,7 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { sport } = await params;
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   if (!config) notFound();
 
   const { tab = "upcoming" } = await searchParams;
@@ -321,8 +321,8 @@ export default async function AdminPage({
 
   if (!user) redirect(`/${sport}`);
 
-  const { isAdmin } = await getUserSportRole(supabase, user.id, sport);
-  if (!isAdmin) redirect(`/${sport}`);
+  const { role } = await getUserSportRole(supabase, user.id, sport);
+  if (role < Role.admin) redirect(`/${sport}`);
 
   return (
     <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">

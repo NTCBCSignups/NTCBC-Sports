@@ -7,7 +7,7 @@ import {
   ClipboardList, Plus, Calendar, History,
   RefreshCw, type LucideIcon,
 } from "lucide-react";
-import type { AdminTabMeta } from "@/config/sports-config";
+import type { AdminTabMeta } from "@/config/config-resolver";
 
 /** Map from iconName strings in sports-config to actual Lucide components. */
 const iconMap: Record<string, LucideIcon> = {

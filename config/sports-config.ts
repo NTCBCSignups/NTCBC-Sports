@@ -1,81 +1,25 @@
-import { Sport, FormResponseColumn } from "@/lib/schedule-utils";
+/**
+ * Raw sport config data and defaults. Internal to config/ — do not import
+ * directly. Use config-resolver.ts as the single consumer entry point.
+ */
 
-export interface ResponseTableEntry {
-  time: string;
-  playerCap: number;
-  description?: string;
-  filterColumn?: { header: string; value: string };
-  hiddenColumns?: string[];
-}
+import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults } from "./config-interfaces";
 
-export interface ResponseTableConfig {
-  sheetTab: string;
-  columns: FormResponseColumn[];
-  sessions: ResponseTableEntry[];
-}
+// ── Defaults ─────────────────────────────────────────────────────
 
-export type SessionPillColor = "gray" | "emerald" | "indigo" | "amber";
+export const SPORT_DEFAULTS = {
+  authEnabled: false,
+  tab: {
+    permissions: {
+      [AccessLevel.view]: Role.anon,
+      [AccessLevel.signup]: Role.user,
+      [AccessLevel.admin]: Role.admin,
+    },
+    sessionPillColor: PillColor.gray,
+  } satisfies TabDefaults,
+} as const;
 
-export interface SessionTab {
-  value: string;
-  label: string;
-  restrictedAccess?: boolean;
-  /** Default prefix for session titles */
-  defaultTitlePrefix?: string;
-  /** Color token used for session type pills. */
-  sessionPillColor?: SessionPillColor;
-}
-
-export interface AdminTabMeta {
-  id: string;
-  label: string;
-  /** Lucide icon name (must be mapped in admin-sidebar) */
-  iconName: string;
-}
-
-export interface SportConfig {
-  id: Sport;
-  emoji: string;
-  name: string;
-  type: string;
-  location: {
-    name: string;
-    address: string;
-    mapsLink?: string;
-  };
-  day: string;
-  organizers: string;
-  waiverLink?: string;
-  notes: string[];
-  responseTable?: ResponseTableConfig;
-  multiSession?: boolean;
-  description?: string;
-  tabs?: SessionTab[];
-  defaultTab?: string;
-  authEnabled?: boolean;
-  /** Extra sport-specific tabs to show in the admin sidebar. */
-  adminTabs?: AdminTabMeta[];
-}
-
-/** Returns true if the given session type belongs to a restricted-access tab. */
-export function isRestrictedSessionType(config: SportConfig | undefined, sessionType: string): boolean {
-  return config?.tabs?.some((t) => t.value === sessionType && t.restrictedAccess) ?? false;
-}
-
-/** Returns true if the sport has any tab with restricted access. */
-export function hasRestrictedAccess(config: SportConfig | undefined): boolean {
-  return config?.tabs?.some((t) => t.restrictedAccess) ?? false;
-}
-
-/** Look up the tab label for a session type from sportsConfig. */
-export function getSessionTypeLabel(config: SportConfig | undefined, sessionType: string): string {
-  return config?.tabs?.find((t) => t.value === sessionType)?.label ?? sessionType;
-}
-
-/** Look up the default title prefix for a session type from sportsConfig. */
-export function getDefaultTitlePrefix(config: SportConfig | undefined, sessionType: string): string | undefined {
-  return config?.tabs?.find((t) => t.value === sessionType)?.defaultTitlePrefix;
-}
+// ── Sport configurations ─────────────────────────────────────────
 
 export const sportsConfig: Record<string, SportConfig> = {
   basketball: {
@@ -194,21 +138,21 @@ export const sportsConfig: Record<string, SportConfig> = {
         value: "drop_in_practice",
         label: "Drop-in Practice",
         defaultTitlePrefix: "Practice",
-        sessionPillColor: "emerald",
+        sessionPillColor: PillColor.emerald,
       },
       {
         value: "scheduled_game",
         label: "Scheduled Games",
-        restrictedAccess: true,
+        permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Game",
-        sessionPillColor: "indigo",
+        sessionPillColor: PillColor.indigo,
       },
       {
         value: "umpiring",
         label: "Umpiring",
-        restrictedAccess: true,
+        permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Umpiring",
-        sessionPillColor: "amber",
+        sessionPillColor: PillColor.amber,
       },
     ],
   },

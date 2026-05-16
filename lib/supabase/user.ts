@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { sportsConfig, hasRestrictedAccess } from "@/config/sports-config";
+import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
 
 /**
  * Reads the authenticated user forwarded by middleware via the
@@ -17,7 +17,25 @@ export async function getUser(): Promise<User | null> {
     }
 }
 
+/**
+ * Resolves the highest Role a user qualifies for from a set of boolean qualifiers.
+ * The qualifiers record maps each elevated Role (above `user`) to whether the
+ * user satisfies it. Roles are checked highest-first so the most privileged match wins.
+ */
+export function getUserRole(user: User | null, qualifiers: Partial<Record<Role, boolean>>): Role {
+    if (!user) return Role.anon;
+    // Walk roles from highest to lowest (skip anon/user — they're the floor)
+    const elevatedRoles = Object.values(Role)
+        .filter((v): v is Role => typeof v === "number" && v > Role.user)
+        .sort((a, b) => b - a);
+    for (const role of elevatedRoles) {
+        if (qualifiers[role]) return role;
+    }
+    return Role.user;
+}
+
 export interface UserSportRole {
+    role: Role;
     isAdmin: boolean;
     isTeamMember: boolean;
 }
@@ -31,7 +49,7 @@ export async function getUserSportRole(
     userId: string,
     sport: string,
 ): Promise<UserSportRole> {
-    const sportConfig = sportsConfig[sport];
+    const sportConfig = resolvedSportsConfig[sport];
 
     const [{ data: profile }, { data: sportRole }] = await Promise.all([
         supabase.from("profiles").select("role").eq("id", userId).single(),
@@ -43,13 +61,23 @@ export async function getUserSportRole(
             .single(),
     ]);
 
+    // TODO: Revamp DB schema so role resolution maps directly from a single
+    // `role` column (matching the Role enum) instead of combining separate
+    // `profiles.role`, `sport_roles.role`, and `is_team_member` columns.
     const isAdmin =
         profile?.role === "admin" || sportRole?.role === "admin";
-    const isTeamMember = hasRestrictedAccess(sportConfig)
+    const isTeamMember = sportConfig?.hasRestrictedAccess
         ? isAdmin || !!sportRole?.is_team_member
         : true;
 
-    return { isAdmin, isTeamMember };
+    return {
+        role: getUserRole({ id: userId } as User, {
+            [Role.admin]: isAdmin,
+            [Role.teamUser]: isTeamMember,
+        }),
+        isAdmin,
+        isTeamMember,
+    };
 }
 
 /**
@@ -64,8 +92,8 @@ export async function requireSportAdmin(
     const user = await getUser();
     if (!user) return { success: false, error: "Not authenticated" };
 
-    const { isAdmin } = await getUserSportRole(supabase, user.id, sport);
-    if (!isAdmin) return { success: false, error: "Not authorized" };
+    const { role } = await getUserSportRole(supabase, user.id, sport);
+    if (role < Role.admin) return { success: false, error: "Not authorized" };
 
     return { success: true, user };
 }
