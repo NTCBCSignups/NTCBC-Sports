@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getScheduleData, getFormResponses } from "@/lib/schedule-utils";
-import { sportsConfig } from "@/config/sports-config";
+import { resolvedSportsConfig } from "@/config/config-resolver";
 import { getUser } from "@/lib/supabase/user";
 import SportPage from "@/components/sports/sport-page";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const sport = "basketball";
 
 export default async function BasketballPage() {
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
 
   if (!config) notFound();
 

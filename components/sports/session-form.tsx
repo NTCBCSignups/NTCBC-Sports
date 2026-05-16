@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createSession, type CreateSessionResult } from "@/lib/actions/sessions";
-import { sportsConfig } from "@/config/sports-config";
+import { resolvedSportsConfig } from "@/config/config-resolver";
 
 interface SessionFormProps {
   sport: string;
@@ -26,7 +26,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
-  const sportConfig = sportsConfig[sport];
+  const sportConfig = resolvedSportsConfig[sport];
   const tabs = sportConfig?.tabs ?? [];
   const defaultSessionType = sportConfig?.defaultTab ?? tabs[0]?.value ?? "";
   const [sessionType, setSessionType] =

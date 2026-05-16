@@ -21,7 +21,7 @@ import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, getTabPermissions, Role, AccessLevel } from "@/config/sports-config";
+import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel } from "@/config/config-resolver";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
@@ -54,7 +54,7 @@ async function SessionSignupsContent({
 }) {
   const userId = user?.id ?? null;
   const canSignup = userRole >= signupRole;
-  const needsTeamAccess = signupRole >= Role.teamUser && userRole < Role.teamUser && userRole >= Role.user;
+  const needsTeamAccess = !!user && userRole < signupRole;
 
   const [rawSignups, teamMemberIds, userSignupStatus, accessRequestStatus] =
     await Promise.all([
@@ -73,7 +73,7 @@ async function SessionSignupsContent({
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        {userRole === Role.anon && signupRole >= Role.user && (
+        {!user && signupRole > userRole && (
           <SignInToSignupBanner />
         )}
         {showTeamGate && (
@@ -117,7 +117,7 @@ export default async function SessionDetailPage({
 }) {
   const { sport, id } = await params;
   const { fromTab } = await searchParams;
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   if (!config) notFound();
 
   const supabase = await createClient();
@@ -132,20 +132,19 @@ export default async function SessionDetailPage({
   ]);
 
   // Redirect to sport page if session doesn't exist or user lacks view access
-  const permissions = getTabPermissions(config, session?.session_type ?? "");
+  const tab = getResolvedTab(config, session?.session_type ?? "");
   const userRole = user
     ? roleResult.role
     : Role.anon;
 
-  if (!session || userRole < permissions[AccessLevel.view]) {
+  if (!session || userRole < tab.permissions[AccessLevel.view]) {
     redirect(`/${sport}`);
   }
 
-  const isAdmin = userRole >= Role.admin;
+  const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
 
-  const sessionTab = config.tabs?.find((t) => t.value === session.session_type);
   const isOpen = isSignupOpen(session);
-  const sessionTypeLabel = sessionTab?.label ?? session.session_type;
+  const sessionTypeLabel = tab.label;
   const backParams = new URLSearchParams({ session: id });
   if (fromTab) backParams.set("tab", fromTab);
 
@@ -282,7 +281,7 @@ export default async function SessionDetailPage({
           user={user}
           isOpen={isOpen}
           userRole={userRole}
-          signupRole={permissions[AccessLevel.signup]}
+          signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
         />
       </Suspense>

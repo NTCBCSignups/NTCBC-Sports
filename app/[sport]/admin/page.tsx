@@ -13,12 +13,12 @@ import { CalendarDays, MapPin } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
 import SessionForm from "@/components/sports/session-form";
 import {
-  getDefaultTitlePrefix,
-  getSessionTypeLabel,
-  sportsConfig,
+  resolvedSportsConfig,
+  getResolvedTab,
   Role,
-  type SportConfig,
-} from "@/config/sports-config";
+  AccessLevel,
+  type ResolvedSportConfig,
+} from "@/config/config-resolver";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import AdminAccessRequests from "@/components/sports/admin-access-requests";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
@@ -50,7 +50,7 @@ function SessionAccordion({
   teamMemberIds,
   muted,
 }: {
-  config: SportConfig;
+  config: ResolvedSportConfig;
   sport: string;
   sessions: SportSession[];
   signupsBySession: Map<
@@ -80,9 +80,9 @@ function SessionAccordion({
         const activeCount = sessionSignups.filter(
           (s) => s.status !== "cancelled",
         ).length;
+        const tab = getResolvedTab(config, session.session_type);
         const sessionTypeLabel =
-          getDefaultTitlePrefix(config, session.session_type) ??
-          getSessionTypeLabel(config, session.session_type);
+          tab.defaultTitlePrefix ?? tab.label;
 
         return (
           <AccordionItem
@@ -165,7 +165,7 @@ async function AdminDataContent({
   sport: string;
   tab: string;
 }) {
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
 
   // ── Fetch cached data in parallel ──────────────────────────────
   const [sessions, accessRequests, teamMemberIds] = await Promise.all([
@@ -312,7 +312,7 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { sport } = await params;
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   if (!config) notFound();
 
   const { tab = "upcoming" } = await searchParams;

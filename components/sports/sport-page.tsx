@@ -10,7 +10,7 @@ import {
   UserStar,
 } from "lucide-react";
 import { ScheduleData } from "@/lib/schedule-utils";
-import { SportConfig } from "@/config/sports-config";
+import { SportConfig } from "@/config/config-resolver";
 import { formatDate } from "@/lib/format";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import SignupsTable from "@/components/sports/signups-table";

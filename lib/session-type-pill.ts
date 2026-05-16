@@ -1,4 +1,4 @@
-import type { SessionPillColor, SportConfig } from "@/config/sports-config";
+import type { SessionPillColor, SportConfig } from "@/config/config-resolver";
 
 const DEFAULT_SESSION_PILL_COLOR: SessionPillColor = "gray";
 

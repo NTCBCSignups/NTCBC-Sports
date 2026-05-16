@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
-import { sportsConfig, isRestrictedSessionType } from "@/config/sports-config";
+import { resolvedSportsConfig, getResolvedTab, AccessLevel } from "@/config/config-resolver";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
 export interface SignupPlacement {
@@ -81,14 +81,11 @@ export async function signUpForSession(
   if (!session) return { error: "Session not found" };
 
   const sport = session.sport;
-  const sportConfig = sportsConfig[sport];
+  const tab = getResolvedTab(resolvedSportsConfig[sport], session.session_type);
 
-  if (isRestrictedSessionType(sportConfig, session.session_type)) {
-    const { isTeamMember } = await getUserSportRole(supabase, user.id, sport);
-
-    if (!isTeamMember) {
-      return { error: "Only team members can sign up for scheduled games" };
-    }
+  const { role } = await getUserSportRole(supabase, user.id, sport);
+  if (role < tab.permissions[AccessLevel.signup]) {
+    return { error: "You don't have permission to sign up for this session" };
   }
 
   const { data: existingSignup } = await supabase
@@ -222,13 +219,11 @@ export async function declineSession(
   if (!session) return { error: "Session not found" };
 
   const sport = session.sport;
-  const sportConfig = sportsConfig[sport];
+  const tab = getResolvedTab(resolvedSportsConfig[sport], session.session_type);
 
-  if (isRestrictedSessionType(sportConfig, session.session_type)) {
-    const { isTeamMember } = await getUserSportRole(supabase, user.id, sport);
-    if (!isTeamMember) {
-      return { error: "Only team members can respond to scheduled games" };
-    }
+  const { role } = await getUserSportRole(supabase, user.id, sport);
+  if (role < tab.permissions[AccessLevel.signup]) {
+    return { error: "You don't have permission to respond to this session" };
   }
 
   const { data: existingSignup } = await supabase

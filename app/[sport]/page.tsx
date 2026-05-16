@@ -10,7 +10,7 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import { Button } from "@/components/ui/button";
-import { sportsConfig, hasRestrictedAccess, Role, AccessLevel, getTabPermissions } from "@/config/sports-config";
+import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus } from "@/lib/supabase/types";
@@ -28,7 +28,7 @@ async function SportSessionsContent({
   scrollTo?: string;
   userId: string | null;
 }) {
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   const supabase = await createClient();
 
   // ── Roles & sessions (parallel) ────────────────────────────────
@@ -39,12 +39,15 @@ async function SportSessionsContent({
     getUpcomingSessions(sport),
   ]);
 
-  const { isTeamMember } = roleResult;
-  const userRole: Role = 'role' in roleResult ? (roleResult as { role: Role }).role : (userId ? Role.user : Role.anon);
+  const userRole = roleResult.role;
   let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
-  if (userId && hasRestrictedAccess(config) && !isTeamMember) {
-    accessRequestStatus = await getUserAccessRequestStatus(userId, sport);
+  const showTeamAccessBanner = !!userId && config.tabs.some((t) =>
+    userRole < t.permissions[AccessLevel.signup]
+  );
+
+  if (showTeamAccessBanner) {
+    accessRequestStatus = await getUserAccessRequestStatus(userId!, sport);
   }
 
   const sessionIds = sessionsWithCounts.map((session) => session.id);
@@ -133,10 +136,8 @@ async function SportSessionsContent({
     validValues.find((v) => v === resolvedValue) ??
     (showAll ? ALL_VALUE : config.defaultTab ?? configTabs[0]?.value);
 
-  const showTeamAccessBanner =
-    !!userId && hasRestrictedAccess(config) && !isTeamMember;
   const showSignInBanner =
-    !userId && !!config.authEnabled && hasRestrictedAccess(config);
+    !userId && !!config.authEnabled && config.hasRestrictedAccess;
 
   return (
     <div className="space-y-4">
@@ -182,7 +183,7 @@ export default async function SportAuthPage({
   searchParams: Promise<{ tab?: string; highlight?: string; session?: string }>;
 }) {
   const { sport } = await params;
-  const config = sportsConfig[sport];
+  const config = resolvedSportsConfig[sport];
   if (!config) notFound();
 
   const { tab, highlight, session } = await searchParams;
