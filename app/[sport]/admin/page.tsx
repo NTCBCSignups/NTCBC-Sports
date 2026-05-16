@@ -16,7 +16,6 @@ import {
   resolvedSportsConfig,
   getResolvedTab,
   Role,
-  AccessLevel,
   type ResolvedSportConfig,
 } from "@/config/config-resolver";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";

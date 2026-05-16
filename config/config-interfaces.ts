@@ -10,11 +10,19 @@ export enum Role {
   admin = 3,
 }
 
-/** Actions that can be gated per tab. */
+/** Access level actions that can be gated per tab. */
 export enum AccessLevel {
   view = "view",
   signup = "signup",
   admin = "admin",
+}
+
+/** Session type pill colors. */
+export enum PillColor {
+  gray = "gray",
+  emerald = "emerald",
+  indigo = "indigo",
+  amber = "amber",
 }
 
 // ── Types ────────────────────────────────────────────────────────
@@ -22,7 +30,11 @@ export enum AccessLevel {
 /** Maps each access level to the minimum Role required. */
 export type TabPermissions = Record<AccessLevel, Role>;
 
-export type SessionPillColor = "gray" | "emerald" | "indigo" | "amber";
+/** Default values applied to every tab during resolution. */
+export interface TabDefaults {
+  permissions: TabPermissions;
+  sessionPillColor: PillColor;
+}
 
 // ── Raw config interfaces (authored in sports-config) ────────────
 
@@ -48,7 +60,7 @@ export interface SessionTab {
   /** Default prefix for session titles */
   defaultTitlePrefix?: string;
   /** Color token used for session type pills. */
-  sessionPillColor?: SessionPillColor;
+  sessionPillColor?: PillColor;
 }
 
 export interface AdminTabMeta {
@@ -84,9 +96,10 @@ export interface SportConfig {
 
 // ── Resolved config interfaces (all defaults applied) ────────────
 
-/** A session tab with all permissions fully resolved — no Partials. */
-export interface ResolvedSessionTab extends Omit<SessionTab, "permissions"> {
+/** A session tab with all defaults fully resolved — no optionals for defaulted fields. */
+export interface ResolvedSessionTab extends Omit<SessionTab, "permissions" | "sessionPillColor"> {
   permissions: TabPermissions;
+  sessionPillColor: PillColor;
 }
 
 /** A sport config with all tab permissions resolved and computed flags. */

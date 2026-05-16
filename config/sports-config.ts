@@ -1,4 +1,9 @@
-import { AccessLevel, Role, type SportConfig, type TabPermissions } from "./config-interfaces";
+/**
+ * Raw sport config data and defaults. Internal to config/ — do not import
+ * directly. Use config-resolver.ts as the single consumer entry point.
+ */
+
+import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults } from "./config-interfaces";
 
 // ── Defaults ─────────────────────────────────────────────────────
 
@@ -9,8 +14,9 @@ export const SPORT_DEFAULTS = {
       [AccessLevel.view]: Role.anon,
       [AccessLevel.signup]: Role.user,
       [AccessLevel.admin]: Role.admin,
-    } satisfies TabPermissions,
-  },
+    },
+    sessionPillColor: PillColor.gray,
+  } satisfies TabDefaults,
 } as const;
 
 // ── Sport configurations ─────────────────────────────────────────
@@ -132,21 +138,21 @@ export const sportsConfig: Record<string, SportConfig> = {
         value: "drop_in_practice",
         label: "Drop-in Practice",
         defaultTitlePrefix: "Practice",
-        sessionPillColor: "emerald",
+        sessionPillColor: PillColor.emerald,
       },
       {
         value: "scheduled_game",
         label: "Scheduled Games",
         permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Game",
-        sessionPillColor: "indigo",
+        sessionPillColor: PillColor.indigo,
       },
       {
         value: "umpiring",
         label: "Umpiring",
         permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
         defaultTitlePrefix: "Umpiring",
-        sessionPillColor: "amber",
+        sessionPillColor: PillColor.amber,
       },
     ],
   },
