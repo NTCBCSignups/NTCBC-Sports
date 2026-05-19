@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+        <h1 className="text-4xl font-bold text-foreground mb-4 flex items-center gap-3">
           <Image
             src="/favicon.ico"
             alt="NTCBC"
@@ -31,8 +31,8 @@ export default function Home() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-semibold text-gray-900">About Sports Ministry</h2>
-        <p className="text-sm text-gray-700">
+        <h2 className="font-semibold text-foreground">About Sports Ministry</h2>
+        <p className="text-sm text-muted-foreground">
           Our sports programs are part of North Toronto Chinese Baptist
           Church&apos;s (NTCBC) ministry to build community and share the gospel
           through recreation. Everyone is welcome regardless of skill level or
@@ -50,12 +50,12 @@ export default function Home() {
                 <CardTitle className="text-2xl">
                   {sport.emoji} {sport.name}
                 </CardTitle>
-                <CardDescription className="text-gray-700">
+                <CardDescription className="text-muted-foreground">
                   {sport.type}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col flex-1 space-y-4">
-                <div className="flex-1 space-y-2 text-sm text-gray-700">
+                <div className="flex-1 space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="h-4 w-4" />
                     <span>{sport.day}</span>
@@ -73,7 +73,7 @@ export default function Home() {
                     </div>
                   ))}
                   {sport.description && !sport.responseTable && (
-                    <p className="text-gray-500">{sport.description}</p>
+                    <p className="text-muted-foreground">{sport.description}</p>
                   )}
                 </div>
                 <span
