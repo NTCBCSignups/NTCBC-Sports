@@ -7,7 +7,6 @@
  * and persists the choice in localStorage.
  */
 
-import * as React from "react"
 import { Moon, Sun, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
 
