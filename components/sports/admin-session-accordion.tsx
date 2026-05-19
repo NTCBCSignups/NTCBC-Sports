@@ -51,7 +51,7 @@ export default function SessionAccordion({
                 const sessionSignups =
                     signupsBySession.get(session.id) ?? [];
                 const activeCount = sessionSignups.filter(
-                    (s) => s.status !== "cancelled",
+                    (s) => s.status === "confirmed",
                 ).length;
                 const tab = getResolvedTab(config, session.session_type);
                 const sessionTypeLabel =
