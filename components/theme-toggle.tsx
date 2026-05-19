@@ -1,5 +1,12 @@
 "use client"
 
+/**
+ * Theme toggle dropdown — positioned fixed top-right in layout.tsx.
+ * Offers Light, Dark, and System (default) options.
+ * Uses next-themes' setTheme() which updates the class on <html>
+ * and persists the choice in localStorage.
+ */
+
 import * as React from "react"
 import { Moon, Sun, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
