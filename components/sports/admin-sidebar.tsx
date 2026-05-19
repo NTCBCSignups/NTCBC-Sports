@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,6 +34,7 @@ export default function AdminSidebar({ pendingRequestCount, tabs }: AdminSidebar
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
   const allTabs: SidebarTab[] = tabs.map((t) => ({
     id: t.id,
@@ -45,7 +47,9 @@ export default function AdminSidebar({ pendingRequestCount, tabs }: AdminSidebar
   const navigate = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   return (
