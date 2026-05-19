@@ -16,6 +16,7 @@ import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
+import CancelSessionButton from "@/components/sports/cancel-session-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
@@ -143,7 +144,7 @@ export default async function SessionDetailPage({
 
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
 
-  const isOpen = isSignupOpen(session);
+  const isOpen = session.status === "active" && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
   const backParams = new URLSearchParams({ session: id });
   if (fromTab) backParams.set("tab", fromTab);
@@ -155,6 +156,9 @@ export default async function SessionDetailPage({
         backLabel={`Back to ${config.name}`}
         actions={
           <>
+            {isAdmin && session.status === "active" && (
+              <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+            )}
             {isAdmin && (
               <Button asChild variant="outline" size="sm" className="rounded-full">
                 <Link href={`/${sport}/admin`}>
@@ -180,8 +184,13 @@ export default async function SessionDetailPage({
             >
               {sessionTypeLabel}
             </Badge>
+            {session.status === "cancelled" && (
+              <Badge variant="destructive" className="rounded-full">
+                Cancelled
+              </Badge>
+            )}
           </div>
-          <h1 className="text-4xl font-bold text-foreground">
+          <h1 className={cn("text-4xl font-bold", session.status === "cancelled" ? "text-muted-foreground line-through" : "text-foreground")}>
             {session.title || formatDate(session.date, "long", true)}
           </h1>
         </div>
