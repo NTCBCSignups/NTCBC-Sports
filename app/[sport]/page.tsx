@@ -86,7 +86,7 @@ async function SportSessionsContent({
               ))}
             </div>
           ) : requiresSignIn ? null : (
-            <p className="text-sm text-gray-500 py-8 text-center">
+            <p className="text-sm text-muted-foreground py-8 text-center">
               No upcoming {t.label.toLowerCase()}.
             </p>
           )}
@@ -117,7 +117,7 @@ async function SportSessionsContent({
               ))}
             </div>
           ) : requiresSignIn ? null : (
-            <p className="text-sm text-gray-500 py-8 text-center">
+            <p className="text-sm text-muted-foreground py-8 text-center">
               No upcoming sessions.
             </p>
           )}
@@ -215,11 +215,11 @@ export default async function SportAuthPage({
       </Suspense>
 
       <div>
-        <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>
-        <ul className="space-y-2.5 ml-4 text-gray-700">
+        <h2 className="font-semibold text-foreground mb-2">Important Notes</h2>
+        <ul className="space-y-2.5 ml-4 text-muted-foreground">
           {config.notes?.map((note) => (
             <li key={note} className="flex items-start text-sm">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
+              <div className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full mr-3 mt-1.5 shrink-0"></div>
               <span>{note}</span>
             </li>
           ))}

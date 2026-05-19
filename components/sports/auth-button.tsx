@@ -52,7 +52,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
             referrerPolicy="no-referrer"
           />
         )}
-        <span className="text-sm text-gray-700 hidden sm:inline">
+        <span className="text-sm text-muted-foreground hidden sm:inline">
           {user.user_metadata?.full_name ?? user.email}
         </span>
       </div>

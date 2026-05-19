@@ -67,7 +67,7 @@ function SessionAccordion({
 }) {
   if (sessions.length === 0) {
     return (
-      <p className="text-sm text-gray-500 py-4">No sessions.</p>
+      <p className="text-sm text-muted-foreground py-4">No sessions.</p>
     );
   }
 
@@ -87,18 +87,18 @@ function SessionAccordion({
           <AccordionItem
             key={session.id}
             value={session.id}
-            className="border-b! rounded-lg border bg-white px-4"
+            className="border-b! rounded-lg border bg-card px-4"
           >
             <AccordionTrigger className="hover:no-underline py-3">
               <div className="flex min-w-0 flex-1 items-start justify-between gap-3 pr-2 sm:items-center sm:pr-4">
                 <div className="min-w-0 flex-1 text-left">
                   <div
-                    className={`truncate text-base font-medium sm:text-sm ${muted ? "text-gray-500" : ""}`}
+                    className={`truncate text-base font-medium sm:text-sm ${muted ? "text-muted-foreground" : ""}`}
                   >
                     {session.title || formatDate(session.date)}
                   </div>
                   <div
-                    className={`mt-1 flex min-w-0 items-center gap-4 text-sm sm:gap-6 sm:text-xs ${muted ? "text-gray-400" : "text-gray-500"}`}
+                    className={`mt-1 flex min-w-0 items-center gap-4 text-sm sm:gap-6 sm:text-xs ${muted ? "text-muted-foreground/60" : "text-muted-foreground"}`}
                   >
                     <span className="flex shrink-0 items-center gap-2 sm:gap-1">
                       <CalendarDays className="h-4 w-4 shrink-0 sm:h-3 sm:w-3" />
@@ -132,7 +132,7 @@ function SessionAccordion({
             <AccordionContent className="pb-4">
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 text-sm text-gray-600">
+                  <div className="min-w-0 text-sm text-muted-foreground">
                     {formatTime(session.time_start)} –{" "}
                     {formatTime(session.time_end)} ·{" "}
                     {session.location_address}
@@ -233,7 +233,7 @@ async function AdminDataContent({
         {tab === "requests" && (
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 Team Access Requests
               </h2>
               {pendingRequests.length > 0 && (
@@ -248,10 +248,10 @@ async function AdminDataContent({
 
         {tab === "create" && (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Create Session
             </h2>
-            <div className="rounded-lg border bg-white p-6">
+            <div className="rounded-lg border bg-card p-6">
               <SessionForm sport={sport} />
             </div>
           </section>
@@ -259,7 +259,7 @@ async function AdminDataContent({
 
         {tab === "upcoming" && (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Upcoming Sessions ({upcomingSessions.length})
             </h2>
             <SessionAccordion
@@ -274,7 +274,7 @@ async function AdminDataContent({
 
         {tab === "past" && (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Past Sessions ({pastSessions.length})
             </h2>
             <SessionAccordion
@@ -328,7 +328,7 @@ export default async function AdminPage({
     <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
       <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
 
-      <h1 className="text-3xl font-bold text-gray-900">{config.name} Admin</h1>
+      <h1 className="text-3xl font-bold text-foreground">{config.name} Admin</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
         <Suspense fallback={<LoadingAdminContent />}>

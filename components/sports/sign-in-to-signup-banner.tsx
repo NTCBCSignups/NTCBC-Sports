@@ -19,17 +19,18 @@ export default function SignInToSignupBanner() {
   };
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-      <p className="font-medium text-blue-900">
+    <div className="rounded-lg border border-status-info-border bg-status-info p-4">
+      <p className="font-medium text-status-info-foreground">
         Sign in to view and sign up for sessions
       </p>
-      <p className="mt-1 text-sm text-blue-800">
+      <p className="mt-1 text-sm text-status-info-foreground/80">
         Use your Google account to get started.
       </p>
       <Button
         type="button"
         size="sm"
-        className="mt-3 rounded-full"
+        variant="outline"
+        className="mt-3 rounded-full border-status-info-border text-status-info-foreground hover:bg-status-info-border/30"
         onClick={handleSignIn}
       >
         <LogIn className="h-4 w-4" />

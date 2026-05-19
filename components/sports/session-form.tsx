@@ -172,7 +172,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="title">
-            Title <span className="font-normal text-gray-400">(optional)</span>
+            Title <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
           <Input id="title" name="title" placeholder="e.g. Week 5 vs Team B" />
         </div>
@@ -190,7 +190,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="player_cap">
-            Player Cap <span className="font-normal text-gray-400">(optional)</span>
+            Player Cap <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
           <Input
             id="player_cap"
@@ -238,7 +238,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="location_maps_link">
-            Maps Link <span className="font-normal text-gray-400">(optional)</span>
+            Maps Link <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
           <Input
             id="location_maps_link"
@@ -273,7 +273,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="notes">
-          Notes <span className="font-normal text-gray-400">(optional)</span>
+          Notes <span className="font-normal text-muted-foreground">(optional)</span>
         </Label>
         <Textarea
           id="notes"

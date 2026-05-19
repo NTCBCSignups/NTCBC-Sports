@@ -109,7 +109,7 @@ export default function SignupButton({
       <div className={cn("space-y-2", className)}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {showStatusText && (
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-muted-foreground">
               You are{" "}
               <span className="font-semibold">
                 {localStatus === "confirmed" ? "confirmed" : "on the waitlist"}
@@ -136,7 +136,7 @@ export default function SignupButton({
       <div className={cn("space-y-2", className)}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {showStatusText && (
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-muted-foreground">
               You marked this session as{" "}
               <span className="font-semibold">unable to join</span>.
             </span>

@@ -48,7 +48,7 @@ export default function SessionSignupsTable({
   const sortedSignups = [...activeSignups, ...declinedSignups];
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-white">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <SignupSummaryHeader
         confirmedCount={confirmed.length}
         waitlistedCount={waitlisted.length}
@@ -90,11 +90,11 @@ export default function SessionSignupsTable({
                     {showDivider && (
                       <TableRow className="pointer-events-none">
                         <TableCell colSpan={colCount} className="py-1 px-4">
-                          <div className="border-t border-dashed border-gray-300" />
+                          <div className="border-t border-dashed border-border" />
                         </TableCell>
                       </TableRow>
                     )}
-                    <TableRow className={`group ${isCurrentUser ? "bg-blue-50" : ""}`}>
+                    <TableRow className={`group ${isCurrentUser ? "bg-status-info" : ""}`}>
                       <TableCell className="font-mono text-xs">
                         {groupIndex}
                       </TableCell>
@@ -109,7 +109,7 @@ export default function SessionSignupsTable({
                           <LocalTimestamp date={signup.created_at} />
                         </TableCell>
                       )}
-                      <TableCell className={renderActions ? "" : `sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-blue-50" : "bg-white"}`}>
+                      <TableCell className={renderActions ? "" : `sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-status-info" : "bg-card"}`}>
                         <StatusBadge status={signup.status as "confirmed" | "waitlisted" | "declined"} />
                       </TableCell>
                       {renderActions && (

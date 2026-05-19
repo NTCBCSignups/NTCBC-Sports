@@ -16,14 +16,14 @@ export default function SignupSummaryHeader({
             <div className="flex-1 px-4 py-3 border-r">
                 <p className="text-xs text-muted-foreground mb-0.5">Confirmed</p>
                 <p
-                    className={`text-sm font-semibold ${playerCap && confirmedCount > playerCap ? colors.warning : "text-gray-900"}`}
+                    className={`text-sm font-semibold ${playerCap && confirmedCount > playerCap ? colors.warning : "text-foreground"}`}
                 >
                     {confirmedCount}{playerCap ? ` / ${playerCap}` : ""}
                 </p>
             </div>
             <div className="flex-1 px-4 py-3">
                 <p className="text-xs text-muted-foreground mb-0.5">Waitlist</p>
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-foreground">
                     {waitlistedCount}
                 </p>
             </div>

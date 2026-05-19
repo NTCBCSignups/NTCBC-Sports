@@ -95,7 +95,7 @@ async function SessionSignupsContent({
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-semibold text-gray-900">Attendance</h2>
+        <h2 className="font-semibold text-foreground">Attendance</h2>
         <SessionSignupsTable
           signups={rawSignups}
           teamMemberIds={teamMemberIds}
@@ -181,7 +181,7 @@ export default async function SessionDetailPage({
               {sessionTypeLabel}
             </Badge>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-4xl font-bold text-foreground">
             {session.title || formatDate(session.date, "long", true)}
           </h1>
         </div>
@@ -189,15 +189,15 @@ export default async function SessionDetailPage({
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           <div className="space-y-2">
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Location</span>
+                <span className="font-medium text-foreground">Location</span>
                 {session.location_maps_link ? (
                   <a
                     href={session.location_maps_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                    className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
                   >
                     {session.location_name}
                     <br />
@@ -205,10 +205,10 @@ export default async function SessionDetailPage({
                   </a>
                 ) : (
                   <>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">
                       {session.location_name}
                     </span>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">
                       {session.location_address}
                     </span>
                   </>
@@ -216,17 +216,17 @@ export default async function SessionDetailPage({
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Date</span>
-                <span className="text-gray-700">{formatDate(session.date, "long", true)}</span>
+                <span className="font-medium text-foreground">Date</span>
+                <span className="text-muted-foreground">{formatDate(session.date, "long", true)}</span>
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Time</span>
-                <span className="text-gray-700">
+                <span className="font-medium text-foreground">Time</span>
+                <span className="text-muted-foreground">
                   {formatTime(session.time_start)} –{" "}
                   {formatTime(session.time_end)}
                 </span>
@@ -235,23 +235,23 @@ export default async function SessionDetailPage({
           </div>
           <div className="space-y-2 mt-2 sm:mt-0">
             <div className="flex items-start gap-2">
-              <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Leaders</span>
-                <span className="text-gray-700">{config.organizers}</span>
+                <span className="font-medium text-foreground">Leaders</span>
+                <span className="text-muted-foreground">{config.organizers}</span>
               </div>
             </div>
             {session.signup_open && session.signup_close && (
               <div className="flex items-start gap-2">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
                 <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-foreground">
                     Sign-ups open from
                   </span>
-                  <span className="text-gray-700">
+                  <span className="text-muted-foreground">
                     <LocalTimestamp date={session.signup_open} weekday="long" />
                   </span>
-                  <span className="text-gray-700">
+                  <span className="text-muted-foreground">
                     <LocalTimestamp date={session.signup_close} weekday="long" />
                   </span>
                 </div>
@@ -269,7 +269,7 @@ export default async function SessionDetailPage({
       </div>
 
       {session.notes && (
-        <div className="text-sm text-gray-700 whitespace-pre-line">
+        <div className="text-sm text-muted-foreground whitespace-pre-line">
           <p>{session.notes}</p>
         </div>
       )}
