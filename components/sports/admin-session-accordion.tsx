@@ -61,11 +61,11 @@ export default function SessionAccordion({
                     <AccordionItem
                         key={session.id}
                         value={session.id}
-                        className="border-b! rounded-lg border bg-card px-4"
+                        className="border-b! rounded-lg border bg-card px-4 overflow-hidden"
                     >
-                        <AccordionTrigger className="hover:no-underline py-3">
+                        <AccordionTrigger className="hover:no-underline py-3 min-w-0">
                             <div className="flex min-w-0 flex-1 items-start justify-between gap-3 pr-2 sm:items-center sm:pr-4">
-                                <div className="min-w-0 flex-1 text-left">
+                                <div className="min-w-0 flex-1 text-left overflow-hidden">
                                     <div
                                         className={`truncate text-base font-medium sm:text-sm ${muted ? "text-muted-foreground" : ""}`}
                                     >
