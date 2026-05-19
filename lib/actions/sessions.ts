@@ -87,3 +87,21 @@ export async function deleteSession(sport: string, sessionId: string): Promise<S
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
+
+export async function cancelSession(sport: string, sessionId: string): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ status: "cancelled" })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}/admin`);
+  return { success: true };
+}

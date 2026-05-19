@@ -21,6 +21,8 @@ export interface SportRole {
   created_at: string;
 }
 
+export type SessionStatus = "active" | "cancelled";
+
 export interface SportSession {
   id: string;
   sport: string;
@@ -36,6 +38,7 @@ export interface SportSession {
   signup_open: string;
   signup_close: string;
   notes: string | null;
+  status: SessionStatus;
   created_by: string | null;
   created_at: string;
 }
