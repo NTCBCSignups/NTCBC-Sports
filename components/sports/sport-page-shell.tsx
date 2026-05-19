@@ -35,9 +35,9 @@ export default function SportPageShell({
             />
 
             <div className="space-y-2">
-                <h1 className="text-4xl font-bold text-gray-900">{config?.emoji} {config?.name ?? sport}</h1>
+                <h1 className="text-4xl font-bold text-foreground">{config?.emoji} {config?.name ?? sport}</h1>
                 {showDescription && config?.description && (
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-muted-foreground">
                         {config.description}
                     </p>
                 )}

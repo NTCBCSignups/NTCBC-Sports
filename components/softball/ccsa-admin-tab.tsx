@@ -13,10 +13,10 @@ export default async function CcsaAdminTab({ sport }: { sport: string }) {
 
     return (
         <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
                 CCSA Sync
             </h2>
-            <div className="rounded-lg border bg-white p-6">
+            <div className="rounded-lg border bg-card p-6">
                 <CcsaSyncButton
                     lastSyncedAt={lastSyncedAt}
                     hasSession={sessionResult.hasCookies}

@@ -65,7 +65,7 @@ export default function SessionCard({
       "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
       canView && "hover:shadow-lg",
       !canView && "opacity-60 cursor-default",
-      highlighted && "ring-2 ring-blue-500 bg-blue-50/50",
+      highlighted && "ring-2 ring-info bg-status-info/50",
     )}>
       {canView && (
         <Link
@@ -111,7 +111,7 @@ export default function SessionCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="relative z-20 flex flex-1 flex-col space-y-1.5 text-sm text-gray-700 pointer-events-none">
+      <CardContent className="relative z-20 flex flex-1 flex-col space-y-1.5 text-sm text-muted-foreground pointer-events-none">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 shrink-0" />
           <span className="font-semibold">{formatDate(session.date, "short", true)}</span>

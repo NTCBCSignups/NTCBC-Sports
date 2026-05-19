@@ -75,7 +75,7 @@ export default function TeamAccessBanner({
   }
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
+    <div className="rounded-lg border border-status-info-border bg-status-info p-4 flex items-start gap-3">
       <Shield className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
       <div className="min-w-0 flex-1">
         <p className="font-medium text-blue-900">Team members only</p>

@@ -235,7 +235,7 @@ export default function CcsaSyncButton({
                 <div className="space-y-3">
                     {loggedIn ? (
                         <>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                                 CCSA logged in as <span className="font-medium">{loggedInEmail}</span>. Sync to pull the latest roster and waiver data.
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -266,7 +266,7 @@ export default function CcsaSyncButton({
                                         setLoggedInEmail("");
                                     }}
                                     disabled={pending}
-                                    className="rounded-full text-gray-500"
+                                    className="rounded-full text-muted-foreground"
                                 >
                                     <LogOut className="h-4 w-4 mr-2" />
                                     Logout from CCSA
@@ -275,7 +275,7 @@ export default function CcsaSyncButton({
                         </>
                     ) : (
                         <>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                                 Log in to CCSA to pull the latest roster and waiver data.
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -305,7 +305,7 @@ export default function CcsaSyncButton({
 
             {step === "email" && (
                 <div className="space-y-3">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                         Enter your CCSA email to receive a login code.
                     </p>
                     <div className="space-y-2">
@@ -340,7 +340,7 @@ export default function CcsaSyncButton({
 
             {step === "otp" && (
                 <div className="space-y-3">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                         A login code was sent to <span className="font-medium">{email}</span>.
                     </p>
                     <div className="space-y-2">
@@ -385,7 +385,7 @@ export default function CcsaSyncButton({
                 <div className="space-y-3">
                     <div className="rounded-lg border overflow-x-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
+                            <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
                                 <tr>
                                     <th className="px-4 py-2">Name</th>
                                     <th className="px-4 py-2 hidden xl:table-cell">CCSA Email</th>
@@ -406,7 +406,7 @@ export default function CcsaSyncButton({
                                     return (
                                         <tr key={p.email}>
                                             <td className="px-4 py-2 whitespace-nowrap">{p.first_name} {p.last_name}</td>
-                                            <td className="px-4 py-2 text-gray-500 hidden xl:table-cell">{p.email}</td>
+                                            <td className="px-4 py-2 text-muted-foreground hidden xl:table-cell">{p.email}</td>
                                             <td className="px-4 py-2 whitespace-nowrap">
                                                 <WaiverBadge status={p.waiver_status as WaiverStatus} />
                                             </td>
@@ -480,7 +480,7 @@ export default function CcsaSyncButton({
                                                 {/* No match — with undo if was dismissed */}
                                                 {access.status === "none" && (
                                                     <span className="inline-flex items-center gap-1.5">
-                                                        <Badge variant="outline" className="text-xs text-gray-400 border-gray-200">
+                                                        <Badge variant="outline" className="text-xs text-muted-foreground border-border">
                                                             No account
                                                         </Badge>
                                                         {isDismissed && isSuggested && (
@@ -491,7 +491,7 @@ export default function CcsaSyncButton({
                                                                     next.delete(p.email);
                                                                     return next;
                                                                 })}
-                                                                className="text-xs text-blue-500 hover:text-blue-700 hover:underline"
+                                                                className="text-xs text-info hover:text-info/80 hover:underline"
                                                             >
                                                                 Undo
                                                             </button>

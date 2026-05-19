@@ -8,13 +8,13 @@ import type { WaiverStatus } from "@/lib/supabase/types";
 // ── StatusBadge ──────────────────────────────────────────────────
 
 const statusVariants = {
-    confirmed: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
-    waitlisted: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
-    pending: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
-    approved: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
-    rejected: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
-    cancelled: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100",
-    declined: "bg-red-50 text-red-700 border-red-200 hover:bg-red-50",
+    confirmed: "bg-status-success text-status-success-foreground border-status-success-border hover:bg-status-success",
+    waitlisted: "bg-status-warning text-status-warning-foreground border-status-warning-border hover:bg-status-warning",
+    pending: "bg-status-warning text-status-warning-foreground border-status-warning-border hover:bg-status-warning",
+    approved: "bg-status-success text-status-success-foreground border-status-success-border hover:bg-status-success",
+    rejected: "bg-status-destructive text-status-destructive-foreground border-status-destructive-border hover:bg-status-destructive",
+    cancelled: "bg-muted text-foreground border-border hover:bg-muted",
+    declined: "bg-status-destructive/50 text-status-destructive-foreground border-status-destructive-border hover:bg-status-destructive/50",
 } as const;
 
 const statusLabels: Record<string, string> = {

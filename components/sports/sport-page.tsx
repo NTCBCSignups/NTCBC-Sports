@@ -50,7 +50,7 @@ export default function SportPage({
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{config.type}</Badge>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-4xl font-bold text-foreground">
             {config.emoji} {config.name}
           </h1>
         </div>
@@ -59,24 +59,24 @@ export default function SportPage({
           {/* Left stack */}
           <div className="space-y-2">
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Location</span>
+                <span className="font-medium text-foreground">Location</span>
                 {config.location.mapsLink ? (
                   <a
                     href={config.location.mapsLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                    className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
                   >
                     {config.location.name} <br /> {config.location.address}
                   </a>
                 ) : (
                   <>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">
                       {config.location.name}
                     </span>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">
                       {config.location.address}
                     </span>
                   </>
@@ -84,18 +84,18 @@ export default function SportPage({
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Date</span>
-                <span className="text-gray-700">{config.day}</span>
+                <span className="font-medium text-foreground">Date</span>
+                <span className="text-muted-foreground">{config.day}</span>
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Time</span>
+                <span className="font-medium text-foreground">Time</span>
                 {config.responseTable?.sessions.map((session) => (
-                  <span key={session.time} className="text-gray-700">
+                  <span key={session.time} className="text-muted-foreground">
                     {session.time}
                     {session.description && (
                       <span> · {session.description}</span>
@@ -109,24 +109,24 @@ export default function SportPage({
           {/* Right stack */}
           <div className="space-y-2 mt-2 sm:mt-0">
             <div className="flex items-start gap-2">
-              <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+              <UserStar className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">Leaders</span>
-                <span className="text-gray-700">{config.organizers}</span>
+                <span className="font-medium text-foreground">Leaders</span>
+                <span className="text-muted-foreground">{config.organizers}</span>
               </div>
             </div>
             {scheduleData?.form_open_display &&
               scheduleData?.form_close_display && (
                 <div className="flex items-start gap-2">
-                  <Clock className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+                  <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
                   <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-foreground">
                       Sign-ups open from
                     </span>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">
                       {scheduleData.form_open_display}
                     </span>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">
                       {scheduleData.form_close_display}
                     </span>
                   </div>
@@ -144,9 +144,9 @@ export default function SportPage({
       </div>
 
       {scheduleData?.verse_ref && scheduleData?.verse_text && (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-muted-foreground">
           <h1 className="font-semibold">{scheduleData.verse_ref}</h1>
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-muted-foreground/70 italic">
             {scheduleData.verse_text}
           </p>
         </div>
@@ -178,7 +178,7 @@ export default function SportPage({
 
       {isFormOpen && config.responseTable && formResponses && (
         <div className="space-y-2">
-          <h2 className="font-semibold text-gray-900">Attendance</h2>
+          <h2 className="font-semibold text-foreground">Attendance</h2>
           <Tabs
             defaultValue={config.responseTable.sessions[0].time}
             className="gap-4"
@@ -213,16 +213,16 @@ export default function SportPage({
 
       <div className="mb-8 space-y-6">
         <div>
-          <h2 className="font-semibold text-gray-900 mb-2">Important Notes</h2>
-          <ul className="space-y-2.5 ml-4 text-gray-700">
+          <h2 className="font-semibold text-foreground mb-2">Important Notes</h2>
+          <ul className="space-y-2.5 ml-4 text-muted-foreground">
             {config.waiverLink && (
               <li className="flex items-start text-sm">
-                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full mr-3 mt-1.5 shrink-0"></div>
                 <span>
                   By signing up, you acknowledge that you have read and
                   understood the{" "}
                   <a
-                    className="text-blue-500 underline"
+                    className="text-info underline"
                     href={config.waiverLink}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -237,7 +237,7 @@ export default function SportPage({
             )}
             {config.notes.map((note) => (
               <li key={note} className="flex items-start text-sm">
-                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3 mt-1.5 shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full mr-3 mt-1.5 shrink-0"></div>
                 <span>{note}</span>
               </li>
             ))}

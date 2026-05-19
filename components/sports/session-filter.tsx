@@ -99,8 +99,8 @@ export default function SessionFilter({
                                 className={cn(
                                     "rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                                     selected
-                                        ? "bg-stone-950 text-white shadow-sm"
-                                        : "bg-gray-100 text-gray-900 hover:bg-gray-200",
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "bg-muted text-foreground hover:bg-accent",
                                 )}
                             >
                                 {opt.label}

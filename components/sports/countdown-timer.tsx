@@ -68,17 +68,17 @@ export default function CountdownTimer({
   if (isClosed || (alreadyPast && !expired)) {
     return (
       <div className="flex items-start gap-2 text-sm">
-        <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
-        <span className="font-medium text-gray-900">Sign-ups closed</span>
+        <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+        <span className="font-medium text-foreground">Sign-ups closed</span>
       </div>
     );
   }
 
   return (
     <div className="flex items-start gap-2 text-sm">
-      <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-gray-700" />
+      <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
       <div className="flex flex-col">
-        <span className="font-medium text-gray-900">
+        <span className="font-medium text-foreground">
           {isFormOpen ? "Sign-ups close in" : "Sign-ups open in"}
         </span>
         <span className={accent.countdown}>{countdown}</span>

@@ -19,7 +19,7 @@ export default function SignInToSignupBanner() {
   };
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+    <div className="rounded-lg border border-status-info-border bg-status-info p-4">
       <p className="font-medium text-blue-900">
         Sign in to view and sign up for sessions
       </p>

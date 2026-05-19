@@ -48,12 +48,12 @@ export default function AdminAccessRequests({
 
   if (requests.length === 0) {
     return (
-      <p className="text-sm text-gray-500 py-4">No access requests.</p>
+      <p className="text-sm text-muted-foreground py-4">No access requests.</p>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-white">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
@@ -70,13 +70,13 @@ export default function AdminAccessRequests({
               <TableCell>
                 {displayName(request.profiles)}
               </TableCell>
-              <TableCell className="text-sm text-gray-500">
+              <TableCell className="text-sm text-muted-foreground">
                 {request.profiles?.email ?? "—"}
               </TableCell>
               <TableCell>
                 <StatusBadge status={request.status} />
               </TableCell>
-              <TableCell className="text-xs text-gray-500">
+              <TableCell className="text-xs text-muted-foreground">
                 {formatDate(request.created_at.split("T")[0])}
               </TableCell>
               <TableCell>

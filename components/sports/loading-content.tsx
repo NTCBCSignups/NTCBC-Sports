@@ -5,8 +5,8 @@ export function LoadingContent() {
     return (
         <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center gap-3 py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500">Loading...</span>
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
 
             <div className="space-y-4">
@@ -14,7 +14,7 @@ export function LoadingContent() {
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div
                             key={i}
-                            className="rounded-xl border bg-white p-6 space-y-4"
+                            className="rounded-xl border bg-card p-6 space-y-4"
                         >
                             <div className="flex items-center justify-between">
                                 <Skeleton className="h-5 w-32" />
@@ -38,15 +38,15 @@ export function LoadingAdminContent() {
     return (
         <div className="flex-1 min-w-0 space-y-4 animate-in fade-in duration-300">
             <div className="flex items-center gap-3 py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500">Loading...</span>
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
 
             <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                     <div
                         key={i}
-                        className="rounded-lg border bg-white px-4 py-3 space-y-3"
+                        className="rounded-lg border bg-card px-4 py-3 space-y-3"
                     >
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
@@ -69,8 +69,8 @@ export function LoadingSportPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center gap-3 py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500">Loading...</span>
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
 
             <div className="space-y-6">

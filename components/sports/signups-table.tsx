@@ -55,7 +55,7 @@ export default function SignupsTable({
       <div className="flex-1 px-4 py-3 border-r">
         <p className="text-xs text-muted-foreground mb-0.5">Capacity</p>
         <p
-          className={`text-sm font-semibold ${isOverCap ? colors.warning : "text-gray-900"}`}
+          className={`text-sm font-semibold ${isOverCap ? colors.warning : "text-foreground"}`}
         >
           {sorted.length} / {playerCap}
         </p>
@@ -63,7 +63,7 @@ export default function SignupsTable({
       {description && (
         <div className="flex-1 px-4 py-3">
           <p className="text-xs text-muted-foreground mb-0.5">Skill Level</p>
-          <p className="text-sm font-semibold text-gray-900">{description}</p>
+          <p className="text-sm font-semibold text-foreground">{description}</p>
         </div>
       )}
     </div>
@@ -73,9 +73,9 @@ export default function SignupsTable({
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">{label}</h2>
+          <h2 className="font-semibold text-foreground">{label}</h2>
         </div>
-        <div className="overflow-hidden rounded-lg border bg-white">
+        <div className="overflow-hidden rounded-lg border bg-card">
           {infoTiles}
           <div className="p-6 text-center text-sm text-muted-foreground">
             No sign-ups yet.
@@ -87,7 +87,7 @@ export default function SignupsTable({
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-hidden rounded-lg border bg-card">
         {infoTiles}
         <Table>
           <TableHeader>
@@ -120,7 +120,7 @@ export default function SignupsTable({
                       {response[col.header]}
                     </TableCell>
                   ))}
-                  <TableCell className="sticky right-0 bg-white border-l">
+                  <TableCell className="sticky right-0 bg-card border-l">
                     <StatusBadge status={isConfirmed ? "confirmed" : "waitlisted"} />
                   </TableCell>
                 </TableRow>
