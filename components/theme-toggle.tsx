@@ -37,15 +37,15 @@ export function ThemeToggle() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
+                <DropdownMenuItem onClick={() => setTheme("light")} className={theme === "light" ? "bg-status-info" : ""}>
                     <Sun className="h-4 w-4 mr-2" />
                     Light
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <DropdownMenuItem onClick={() => setTheme("dark")} className={theme === "dark" ? "bg-status-info" : ""}>
                     <Moon className="h-4 w-4 mr-2" />
                     Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
+                <DropdownMenuItem onClick={() => setTheme("system")} className={theme === "system" ? "bg-status-info" : ""}>
                     <Monitor className="h-4 w-4 mr-2" />
                     System
                 </DropdownMenuItem>
