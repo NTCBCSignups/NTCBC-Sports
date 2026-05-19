@@ -40,7 +40,7 @@ export default async function AdminTabUpcoming({ sport }: { sport: string }) {
 
     return (
         <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
                 Upcoming Sessions ({upcomingSessions.length})
             </h2>
             <SessionAccordion

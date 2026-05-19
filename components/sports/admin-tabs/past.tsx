@@ -35,7 +35,7 @@ export default async function AdminTabPast({ sport }: { sport: string }) {
 
     return (
         <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
                 Past Sessions ({pastSessions.length})
             </h2>
             <SessionAccordion

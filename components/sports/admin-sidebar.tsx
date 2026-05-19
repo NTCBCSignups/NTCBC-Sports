@@ -11,6 +11,10 @@ import type { AdminTabMeta } from "@/config/config-resolver";
 
 /** Map from iconName strings in sports-config to actual Lucide components. */
 const iconMap: Record<string, LucideIcon> = {
+  ClipboardList,
+  Plus,
+  Calendar,
+  History,
   RefreshCw,
 };
 
@@ -20,31 +24,21 @@ interface SidebarTab {
   icon: LucideIcon;
 }
 
-const baseTabs: SidebarTab[] = [
-  { id: "requests", label: "Access Requests", icon: ClipboardList },
-  { id: "create", label: "Create Session", icon: Plus },
-  { id: "upcoming", label: "Upcoming Sessions", icon: Calendar },
-  { id: "past", label: "Past Sessions", icon: History },
-];
-
 interface AdminSidebarProps {
   pendingRequestCount: number;
-  extraTabs?: AdminTabMeta[];
+  tabs: AdminTabMeta[];
 }
 
-export default function AdminSidebar({ pendingRequestCount, extraTabs }: AdminSidebarProps) {
+export default function AdminSidebar({ pendingRequestCount, tabs }: AdminSidebarProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const allTabs: SidebarTab[] = [
-    ...baseTabs,
-    ...(extraTabs ?? []).map((t) => ({
-      id: t.id,
-      label: t.label,
-      icon: iconMap[t.iconName] ?? RefreshCw,
-    })),
-  ];
+  const allTabs: SidebarTab[] = tabs.map((t) => ({
+    id: t.id,
+    label: t.label,
+    icon: iconMap[t.iconName] ?? Calendar,
+  }));
 
   const activeTab = searchParams.get("tab") || "upcoming";
 

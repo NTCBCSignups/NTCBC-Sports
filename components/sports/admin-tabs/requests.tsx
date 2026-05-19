@@ -21,7 +21,7 @@ export default async function AdminTabRequests({ sport }: { sport: string }) {
     return (
         <section className="space-y-3">
             <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-foreground">
                     Team Access Requests
                 </h2>
                 {pendingRequests.length > 0 && (
