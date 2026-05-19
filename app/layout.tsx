@@ -38,10 +38,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="min-h-screen bg-background">
-            <div className="fixed top-4 right-4 z-50">
-              <ThemeToggle />
+            <div className="container mx-auto px-4 py-8">
+              <div className="flex justify-end mb-4">
+                <ThemeToggle />
+              </div>
+              {children}
             </div>
-            <div className="container mx-auto px-4 py-8">{children}</div>
           </div>
           <Toaster />
         </ThemeProvider>
