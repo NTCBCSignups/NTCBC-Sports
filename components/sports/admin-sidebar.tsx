@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +9,7 @@ import {
   RefreshCw, type LucideIcon,
 } from "lucide-react";
 import type { AdminTabMeta } from "@/config/config-resolver";
+import { LoadingAdminContent } from "@/components/sports/loading-content";
 
 /** Map from iconName strings in sports-config to actual Lucide components. */
 const iconMap: Record<string, LucideIcon> = {
@@ -25,12 +26,13 @@ interface SidebarTab {
   icon: LucideIcon;
 }
 
-interface AdminSidebarProps {
+interface AdminLayoutProps {
   pendingRequestCount: number;
   tabs: AdminTabMeta[];
+  children: ReactNode;
 }
 
-export default function AdminSidebar({ pendingRequestCount, tabs }: AdminSidebarProps) {
+export default function AdminLayout({ pendingRequestCount, tabs, children }: AdminLayoutProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -107,6 +109,11 @@ export default function AdminSidebar({ pendingRequestCount, tabs }: AdminSidebar
           </button>
         ))}
       </nav>
+
+      {/* Content area — show loading instantly on tab switch */}
+      <div className="flex-1 min-w-0">
+        {isPending ? <LoadingAdminContent /> : children}
+      </div>
     </>
   );
 }
