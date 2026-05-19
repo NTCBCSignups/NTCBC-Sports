@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useTransition, type ReactNode } from "react";
+import { useOptimistic, useTransition, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -37,6 +37,8 @@ export default function AdminLayout({ pendingRequestCount, tabs, children }: Adm
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const serverTab = searchParams.get("tab") || "upcoming";
+  const [activeTab, setActiveTab] = useOptimistic(serverTab);
 
   const allTabs: SidebarTab[] = tabs.map((t) => ({
     id: t.id,
@@ -44,13 +46,14 @@ export default function AdminLayout({ pendingRequestCount, tabs, children }: Adm
     icon: iconMap[t.iconName] ?? Calendar,
   }));
 
-  const activeTab = searchParams.get("tab") || "upcoming";
-
   const navigate = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
+    const url = `${pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", url);
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      setActiveTab(tab);
+      router.replace(url, { scroll: false });
     });
   };
 
@@ -112,7 +115,10 @@ export default function AdminLayout({ pendingRequestCount, tabs, children }: Adm
 
       {/* Content area — show loading instantly on tab switch */}
       <div className="flex-1 min-w-0">
-        {isPending ? <LoadingAdminContent /> : children}
+        {isPending && <LoadingAdminContent />}
+        <div className={isPending ? "hidden" : undefined}>
+          {children}
+        </div>
       </div>
     </>
   );
