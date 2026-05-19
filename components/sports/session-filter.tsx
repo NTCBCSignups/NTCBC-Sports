@@ -97,7 +97,7 @@ export default function SessionFilter({
                                 aria-selected={selected}
                                 onClick={() => handleChange(opt.value)}
                                 className={cn(
-                                    "rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                    "rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                                     selected
                                         ? "bg-primary text-primary-foreground shadow-sm"
                                         : "bg-muted text-foreground hover:bg-accent",
