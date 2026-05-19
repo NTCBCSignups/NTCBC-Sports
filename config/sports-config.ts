@@ -3,12 +3,20 @@
  * directly. Use config-resolver.ts as the single consumer entry point.
  */
 
-import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults } from "./config-interfaces";
+import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults, type AdminTabMeta } from "./config-interfaces";
 
 // ── Defaults ─────────────────────────────────────────────────────
 
+export const DEFAULT_ADMIN_TABS: AdminTabMeta[] = [
+  { id: "requests", label: "Access Requests", iconName: "ClipboardList" },
+  { id: "create", label: "Create Session", iconName: "Plus" },
+  { id: "upcoming", label: "Upcoming Sessions", iconName: "Calendar" },
+  { id: "past", label: "Past Sessions", iconName: "History" },
+];
+
 export const SPORT_DEFAULTS = {
   authEnabled: false,
+  adminTabs: DEFAULT_ADMIN_TABS,
   tab: {
     permissions: {
       [AccessLevel.view]: Role.anon,
@@ -113,6 +121,7 @@ export const sportsConfig: Record<string, SportConfig> = {
     id: "softball",
     authEnabled: true,
     adminTabs: [
+      ...DEFAULT_ADMIN_TABS,
       { id: "ccsa", label: "CCSA Sync", iconName: "RefreshCw" },
     ],
     emoji: "🥎",

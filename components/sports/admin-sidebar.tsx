@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useOptimistic, useTransition, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,9 +9,14 @@ import {
   RefreshCw, type LucideIcon,
 } from "lucide-react";
 import type { AdminTabMeta } from "@/config/config-resolver";
+import { LoadingAdminContent } from "@/components/sports/loading-content";
 
 /** Map from iconName strings in sports-config to actual Lucide components. */
 const iconMap: Record<string, LucideIcon> = {
+  ClipboardList,
+  Plus,
+  Calendar,
+  History,
   RefreshCw,
 };
 
@@ -20,38 +26,35 @@ interface SidebarTab {
   icon: LucideIcon;
 }
 
-const baseTabs: SidebarTab[] = [
-  { id: "requests", label: "Access Requests", icon: ClipboardList },
-  { id: "create", label: "Create Session", icon: Plus },
-  { id: "upcoming", label: "Upcoming Sessions", icon: Calendar },
-  { id: "past", label: "Past Sessions", icon: History },
-];
-
-interface AdminSidebarProps {
+interface AdminLayoutProps {
   pendingRequestCount: number;
-  extraTabs?: AdminTabMeta[];
+  tabs: AdminTabMeta[];
+  children: ReactNode;
 }
 
-export default function AdminSidebar({ pendingRequestCount, extraTabs }: AdminSidebarProps) {
+export default function AdminLayout({ pendingRequestCount, tabs, children }: AdminLayoutProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+  const serverTab = searchParams.get("tab") || "upcoming";
+  const [activeTab, setActiveTab] = useOptimistic(serverTab);
 
-  const allTabs: SidebarTab[] = [
-    ...baseTabs,
-    ...(extraTabs ?? []).map((t) => ({
-      id: t.id,
-      label: t.label,
-      icon: iconMap[t.iconName] ?? RefreshCw,
-    })),
-  ];
-
-  const activeTab = searchParams.get("tab") || "upcoming";
+  const allTabs: SidebarTab[] = tabs.map((t) => ({
+    id: t.id,
+    label: t.label,
+    icon: iconMap[t.iconName] ?? Calendar,
+  }));
 
   const navigate = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    const url = `${pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", url);
+    startTransition(() => {
+      setActiveTab(tab);
+      router.replace(url, { scroll: false });
+    });
   };
 
   return (
@@ -109,6 +112,14 @@ export default function AdminSidebar({ pendingRequestCount, extraTabs }: AdminSi
           </button>
         ))}
       </nav>
+
+      {/* Content area — show loading instantly on tab switch */}
+      <div className="flex-1 min-w-0">
+        {isPending && <LoadingAdminContent />}
+        <div className={isPending ? "hidden" : undefined}>
+          {children}
+        </div>
+      </div>
     </>
   );
 }

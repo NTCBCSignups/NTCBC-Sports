@@ -7,6 +7,7 @@
  * and persists the choice in localStorage.
  */
 
+import { useState, useEffect } from "react"
 import { Moon, Sun, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -20,12 +21,17 @@ import {
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => setMounted(true), [])
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                    {theme === "system" ? (
+                    {!mounted ? (
+                        <Sun className="h-4 w-4" />
+                    ) : theme === "system" ? (
                         <Monitor className="h-4 w-4" />
                     ) : (
                         <>
