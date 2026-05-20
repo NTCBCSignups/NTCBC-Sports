@@ -156,9 +156,6 @@ export default async function SessionDetailPage({
         backLabel={`Back to ${config.name}`}
         actions={
           <>
-            {isAdmin && session.status !== "cancelled" && (
-              <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
-            )}
             {isAdmin && (
               <Button asChild variant="outline" size="sm" className="rounded-full">
                 <Link href={`/${sport}/admin`}>
@@ -190,9 +187,14 @@ export default async function SessionDetailPage({
               </Badge>
             )}
           </div>
-          <h1 className={cn("text-4xl font-bold", session.status === "cancelled" ? "text-muted-foreground line-through" : "text-foreground")}>
-            {session.title || formatDate(session.date, "long", true)}
-          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className={cn("text-4xl font-bold", session.status === "cancelled" ? "text-muted-foreground line-through" : "text-foreground")}>
+              {session.title || formatDate(session.date, "long", true)}
+            </h1>
+            {isAdmin && session.status !== "cancelled" && (
+              <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
