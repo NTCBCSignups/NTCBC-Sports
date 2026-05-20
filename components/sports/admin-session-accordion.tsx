@@ -125,7 +125,7 @@ export default function SessionAccordion({
                                         {session.location_address}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1 -mt-1">
-                                        {session.status === "active" && (
+                                        {session.status !== "cancelled" && (
                                             <CancelSessionButton sport={sport} sessionId={session.id} />
                                         )}
                                         <DeleteSessionButton sport={sport} sessionId={session.id} />

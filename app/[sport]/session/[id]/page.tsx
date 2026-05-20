@@ -144,7 +144,7 @@ export default async function SessionDetailPage({
 
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
 
-  const isOpen = session.status === "active" && isSignupOpen(session);
+  const isOpen = session.status !== "cancelled" && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
   const backParams = new URLSearchParams({ session: id });
   if (fromTab) backParams.set("tab", fromTab);
@@ -156,7 +156,7 @@ export default async function SessionDetailPage({
         backLabel={`Back to ${config.name}`}
         actions={
           <>
-            {isAdmin && session.status === "active" && (
+            {isAdmin && session.status !== "cancelled" && (
               <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
             )}
             {isAdmin && (

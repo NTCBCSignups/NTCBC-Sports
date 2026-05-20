@@ -12,7 +12,6 @@ export async function getUpcomingSessions(sport: string) {
         .from("sessions")
         .select("*, signups(count)")
         .eq("sport", sport)
-        .eq("status", "active")
         .neq("signups.status", "cancelled")
         .neq("signups.status", "declined")
         .gte("date", getTodayInSportTimezone())
