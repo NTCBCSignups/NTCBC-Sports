@@ -65,7 +65,7 @@ export default function CancelSessionButton({
             <XCircle className="h-4 w-4" />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" className={`rounded-full ${colors.warning}`}>
+          <Button variant="outline" size="sm" className={`${colors.warning}`}>
             <XCircle className="h-4 w-4 mr-1.5" />
             Cancel
           </Button>

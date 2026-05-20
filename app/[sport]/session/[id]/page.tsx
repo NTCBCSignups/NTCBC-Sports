@@ -161,7 +161,7 @@ export default async function SessionDetailPage({
         backLabel={`Back to ${config.name}`}
         actions={
           isAdmin ? (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Button asChild variant="outline" size="sm">
               <Link href={`/${sport}/admin`}>
                 <Settings className="h-4 w-4" />
                 Admin
@@ -194,7 +194,7 @@ export default async function SessionDetailPage({
                   sport={sport}
                   session={session}
                   trigger={
-                    <Button variant="outline" size="sm" className="rounded-full">
+                    <Button variant="outline" size="sm">
                       <Pencil className="h-4 w-4 mr-1.5" />
                       Edit
                     </Button>

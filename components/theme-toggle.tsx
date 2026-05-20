@@ -28,7 +28,7 @@ export function ThemeToggle() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="outline" size="icon" className="h-8 w-8">
                     {!mounted ? (
                         <Sun className="h-4 w-4" />
                     ) : theme === "system" ? (

@@ -30,7 +30,7 @@ export default function SignInToSignupBanner() {
         type="button"
         size="sm"
         variant="outline"
-        className="mt-3 rounded-full border-status-info-border text-status-info-foreground hover:bg-status-info-border/30"
+        className="mt-3 border-status-info-border text-status-info-foreground hover:bg-status-info-border/30"
         onClick={handleSignIn}
       >
         <LogIn className="h-4 w-4" />

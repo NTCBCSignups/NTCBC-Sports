@@ -149,7 +149,7 @@ export default function SportPage({
       {isFormOpen && scheduleData?.form_link ? (
         <Button
           asChild
-          className="w-full max-sm:w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8"
+          className="w-full max-sm:w-full sm:w-auto px-8 has-[>svg]:px-8"
         >
           <a
             href={scheduleData.form_link}
@@ -163,7 +163,7 @@ export default function SportPage({
       ) : (
         <Button
           disabled
-          className="w-full max-sm:w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8"
+          className="w-full max-sm:w-full sm:w-auto px-8 has-[>svg]:px-8"
         >
           <Lock className="w-4 h-4 shrink-0" />
           Sign-ups closed for {formatDate(scheduleData?.date ?? "", "long")}

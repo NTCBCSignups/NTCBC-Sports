@@ -121,7 +121,7 @@ export default function SignupButton({
             variant="destructive"
             onClick={handleCancel}
             disabled={pending}
-            className={cn("rounded-full px-8", buttonClassName)}
+            className={cn("px-8", buttonClassName)}
           >
             {pending ? "Cancelling..." : "Cancel Sign-up"}
           </Button>
@@ -145,7 +145,7 @@ export default function SignupButton({
             <Button
               onClick={handleSignup}
               disabled={pending}
-              className={cn("rounded-full px-8", buttonClassName)}
+              className={cn("px-8", buttonClassName)}
             >
               {pending ? "Signing up..." : "Sign up instead"}
             </Button>
@@ -161,7 +161,7 @@ export default function SignupButton({
       <Button
         disabled
         className={cn(
-          "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+          "w-full sm:w-auto px-8 has-[>svg]:px-8",
           buttonClassName,
         )}
       >
@@ -176,7 +176,7 @@ export default function SignupButton({
       <Button
         disabled
         className={cn(
-          "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+          "w-full sm:w-auto px-8 has-[>svg]:px-8",
           buttonClassName,
         )}
       >
@@ -192,7 +192,7 @@ export default function SignupButton({
           onClick={handleSignup}
           disabled={pending}
           className={cn(
-            "w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8",
+            "w-full sm:w-auto px-8 has-[>svg]:px-8",
             buttonClassName,
           )}
         >
@@ -203,7 +203,7 @@ export default function SignupButton({
           onClick={handleDecline}
           disabled={pending}
           className={cn(
-            "w-full sm:w-auto rounded-full px-8",
+            "w-full sm:w-auto px-8",
             buttonClassName,
           )}
         >

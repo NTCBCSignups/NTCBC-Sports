@@ -370,7 +370,7 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
         </p>
       )}
 
-      <Button type="submit" disabled={pending} className="rounded-full">
+      <Button type="submit" disabled={pending}>
         {pending ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Session")}
       </Button>
     </form>

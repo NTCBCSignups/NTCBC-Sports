@@ -55,7 +55,7 @@ export default async function AdminPage({
   if (role < Role.admin) redirect(`/${sport}`);
 
   return (
-    <div className="max-w-full px-4 sm:px-6 lg:px-8 mx-auto mb-12 space-y-6">
+    <div className="max-w-6xl mx-auto mb-12 space-y-6">
       <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
 
       <h1 className="text-3xl font-bold text-foreground">{config.name} Admin</h1>

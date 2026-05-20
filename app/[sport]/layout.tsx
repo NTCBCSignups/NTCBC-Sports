@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import AuthButton from "@/components/sports/auth-button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import LayoutHeader from "@/components/sports/layout-header";
 import { resolvedSportsConfig } from "@/config/config-resolver";
 import { getUser } from "@/lib/supabase/user";
 import { notFound } from "next/navigation";
@@ -20,7 +22,7 @@ export default async function SportLayout({
 
   return (
     <>
-      <div className="max-w-4xl mx-auto flex items-center justify-between min-h-8 mb-6">
+      <LayoutHeader>
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -35,9 +37,10 @@ export default async function SportLayout({
           NTCBC Sports
         </Link>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {config.authEnabled && <AuthButton user={user} sport={sport} />}
         </div>
-      </div>
+      </LayoutHeader>
       {children}
     </>
   );

@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,9 +38,6 @@ export default function RootLayout({
         >
           <div className="min-h-screen bg-background">
             <div className="container mx-auto px-4 py-8">
-              <div className="flex justify-end mb-4">
-                <ThemeToggle />
-              </div>
               {children}
             </div>
           </div>
