@@ -14,7 +14,6 @@ import {
   UserStar,
 } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
-import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
@@ -160,9 +159,6 @@ export default async function SessionDetailPage({
       <PageHeader
         backHref={`/${sport}?${backParams.toString()}`}
         backLabel={`Back to ${config.name}`}
-        topActions={
-          config.authEnabled ? <AuthButton user={user} sport={session.sport} /> : null
-        }
         actions={
           isAdmin ? (
             <Button asChild variant="outline" size="sm" className="rounded-full">

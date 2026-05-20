@@ -14,7 +14,6 @@ import { SportConfig } from "@/config/config-resolver";
 import { formatDate } from "@/lib/format";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import SignupsTable from "@/components/sports/signups-table";
-import AuthButton from "@/components/sports/auth-button";
 import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 
@@ -38,11 +37,6 @@ export default function SportPage({
       <PageHeader
         backHref="/"
         backLabel="Back to Sports"
-        topActions={
-          config.authEnabled ? (
-            <AuthButton user={user ?? null} sport={config.id} />
-          ) : null
-        }
       />
       {/* Title + info bullets */}
       <div className="space-y-6">
