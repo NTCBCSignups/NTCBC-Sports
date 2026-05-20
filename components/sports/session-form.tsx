@@ -36,6 +36,18 @@ function toDatetimeLocal(iso: string): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function QuickFillButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="cursor-pointer text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function SessionForm({ sport, session, onSuccess }: SessionFormProps) {
   const isEdit = !!session;
   const [pending, setPending] = useState(false);
@@ -123,8 +135,9 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
       return;
     }
 
-    if (signupClose > sessionEnd) {
-      setError("Sign-up close time must be before or at session end time");
+    const endOfSessionDay = new Date(`${date}T23:59`);
+    if (signupClose > endOfSessionDay) {
+      setError("Sign-up close time must be on the session date (by 11:59 PM)");
       setPending(false);
       return;
     }
@@ -294,7 +307,20 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="signup_close">Sign-ups Close</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="signup_close">Sign-ups Close</Label>
+              <QuickFillButton
+                label="End of day"
+                onClick={() => {
+                  const form = document.getElementById("signup_close")?.closest("form");
+                  const dateInput = form?.elements.namedItem("date") as HTMLInputElement | null;
+                  if (dateInput?.value) {
+                    const signupCloseInput = form?.elements.namedItem("signup_close") as HTMLInputElement;
+                    signupCloseInput.value = `${dateInput.value}T23:59`;
+                  }
+                }}
+              />
+            </div>
             <Input
               id="signup_close"
               name="signup_close"

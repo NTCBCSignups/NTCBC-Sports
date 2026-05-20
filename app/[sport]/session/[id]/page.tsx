@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Clock,
   MapPin,
+  Pencil,
   Settings,
   UserStar,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import CancelSessionButton from "@/components/sports/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/restore-session-button";
+import SessionDialog from "@/components/sports/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
@@ -191,7 +193,19 @@ export default async function SessionDetailPage({
               {session.title || formatDate(session.date, "long", true)}
             </h1>
             {isAdmin && session.status !== SESSION_STATUS.cancelled && (
-              <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+              <div className="flex shrink-0 items-center gap-2">
+                <SessionDialog
+                  sport={sport}
+                  session={session}
+                  trigger={
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      <Pencil className="h-4 w-4 mr-1.5" />
+                      Edit
+                    </Button>
+                  }
+                />
+                <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+              </div>
             )}
           </div>
         </div>

@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -27,6 +28,9 @@ export default function SessionDialog({ sport, session, trigger }: SessionDialog
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "Update the session details below." : "Fill in the details to create a new session."}
+          </DialogDescription>
         </DialogHeader>
         <SessionForm
           sport={sport}
