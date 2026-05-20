@@ -9,13 +9,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 import SessionForm from "@/components/sports/session-form";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionDialogProps {
   sport: string;
   session?: SportSession;
-  trigger: ReactNode;
+  trigger?: ReactNode;
 }
 
 export default function SessionDialog({ sport, session, trigger }: SessionDialogProps) {
@@ -24,7 +26,14 @@ export default function SessionDialog({ sport, session, trigger }: SessionDialog
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger asChild>
+        {trigger ?? (
+          <Button variant="outline" size="sm">
+            <Pencil className="h-4 w-4 mr-1.5" />
+            {isEdit ? "Edit" : "Create"}
+          </Button>
+        )}
+      </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg [&_form]:min-w-0 [&_input]:min-w-0">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>

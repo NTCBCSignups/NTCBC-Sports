@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Clock,
   MapPin,
-  Pencil,
   UserStar,
 } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
@@ -24,7 +23,7 @@ import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
-import { Button } from "@/components/ui/button";
+
 import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel } from "@/config/config-resolver";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -187,12 +186,6 @@ export default async function SessionDetailPage({
                 <SessionDialog
                   sport={sport}
                   session={session}
-                  trigger={
-                    <Button variant="outline" size="sm">
-                      <Pencil className="h-4 w-4 mr-1.5" />
-                      Edit
-                    </Button>
-                  }
                 />
                 <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
               </div>

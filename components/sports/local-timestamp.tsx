@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { formatTimestamp, formatDateTimeWithWeekday } from "@/lib/format";
 
 interface LocalTimestampProps {
@@ -8,9 +9,13 @@ interface LocalTimestampProps {
 }
 
 export default function LocalTimestamp({ date, weekday }: LocalTimestampProps) {
-    const formatted = weekday
-        ? formatDateTimeWithWeekday(date, weekday)
-        : formatTimestamp(date);
+    const [formatted, setFormatted] = useState("");
+
+    useEffect(() => {
+        setFormatted(
+            weekday ? formatDateTimeWithWeekday(date, weekday) : formatTimestamp(date),
+        );
+    }, [date, weekday]);
 
     return <time dateTime={date}>{formatted}</time>;
 }
