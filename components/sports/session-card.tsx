@@ -141,7 +141,7 @@ export default function SessionCard({
             </span>
           </div>
         )}
-        {canSignup && session.signup_open && session.signup_close && (
+        {canSignup && !isCancelled && session.signup_open && session.signup_close && (
           <CountdownTimer
             openTime={session.signup_open}
             closeTime={session.signup_close}
