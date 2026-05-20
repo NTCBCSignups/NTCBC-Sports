@@ -22,6 +22,11 @@ export const feedback = {
 
 // ── Status background palettes (for badges, banners, etc.) ──────
 export const statusColors = {
+    info: {
+        bg: "bg-status-info",
+        text: "text-status-info-foreground",
+        border: "border-status-info-border",
+    },
     green: {
         bg: "bg-status-success",
         text: "text-status-success-foreground",

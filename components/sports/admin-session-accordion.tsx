@@ -9,9 +9,12 @@ import { CalendarDays, MapPin } from "lucide-react";
 import { getResolvedTab, type ResolvedSportConfig } from "@/config/config-resolver";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
+import CancelSessionButton from "@/components/sports/cancel-session-button";
+import RestoreSessionButton from "@/components/sports/restore-session-button";
 import { formatDate, formatTime } from "@/lib/format";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { Profile, SportSession, SignupStatus } from "@/lib/supabase/types";
 
 export interface SessionSignupEntry {
@@ -56,6 +59,8 @@ export default function SessionAccordion({
                 const tab = getResolvedTab(config, session.session_type);
                 const sessionTypeLabel =
                     tab.defaultTitlePrefix ?? tab.label;
+                const isCancelled = session.status === SESSION_STATUS.cancelled;
+                const dimmed = muted || isCancelled;
 
                 return (
                     <AccordionItem
@@ -67,12 +72,16 @@ export default function SessionAccordion({
                             <div className="flex min-w-0 flex-1 items-start justify-between gap-3 pr-2 sm:items-center sm:pr-4">
                                 <div className="min-w-0 flex-1 text-left overflow-hidden">
                                     <div
-                                        className={`truncate text-base font-medium sm:text-sm ${muted ? "text-muted-foreground" : ""}`}
+                                        className={cn(
+                                            "truncate text-base font-medium sm:text-sm",
+                                            dimmed && "text-muted-foreground",
+                                            isCancelled && "line-through",
+                                        )}
                                     >
                                         {session.title || formatDate(session.date)}
                                     </div>
                                     <div
-                                        className={`mt-1 flex min-w-0 items-center gap-4 text-sm sm:gap-6 sm:text-xs ${muted ? "text-muted-foreground/60" : "text-muted-foreground"}`}
+                                        className={`mt-1 flex min-w-0 items-center gap-4 text-sm sm:gap-6 sm:text-xs ${dimmed ? "text-muted-foreground/60" : "text-muted-foreground"}`}
                                     >
                                         <span className="flex shrink-0 items-center gap-2 sm:gap-1">
                                             <CalendarDays className="h-4 w-4 shrink-0 sm:h-3 sm:w-3" />
@@ -94,12 +103,18 @@ export default function SessionAccordion({
                                     >
                                         {sessionTypeLabel}
                                     </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                        {activeCount}
-                                        {session.player_cap
-                                            ? ` / ${session.player_cap}`
-                                            : ""}
-                                    </Badge>
+                                    {session.status === SESSION_STATUS.cancelled ? (
+                                        <Badge variant="destructive" className="text-xs rounded-full">
+                                            Cancelled
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-xs">
+                                            {activeCount}
+                                            {session.player_cap
+                                                ? ` / ${session.player_cap}`
+                                                : ""}
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
                         </AccordionTrigger>
@@ -111,7 +126,13 @@ export default function SessionAccordion({
                                         {formatTime(session.time_end)} ·{" "}
                                         {session.location_address}
                                     </div>
-                                    <div className="shrink-0 -mt-1">
+                                    <div className="flex shrink-0 items-center gap-1 -mt-1">
+                                        {session.status === SESSION_STATUS.cancelled && (
+                                            <RestoreSessionButton sport={sport} sessionId={session.id} />
+                                        )}
+                                        {session.status !== SESSION_STATUS.cancelled && (
+                                            <CancelSessionButton sport={sport} sessionId={session.id} />
+                                        )}
                                         <DeleteSessionButton sport={sport} sessionId={session.id} />
                                     </div>
                                 </div>

@@ -6,7 +6,8 @@ import { Shield, Clock, XCircle } from "lucide-react";
 import { requestTeamAccess } from "@/lib/actions/team-access";
 import { resolvedSportsConfig, AccessLevel, Role } from "@/config/config-resolver";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
-import { colors, statusColors } from "@/lib/styles";
+import { colors } from "@/lib/styles";
+import StatusBanner from "@/components/sports/status-banner";
 
 interface TeamAccessBannerProps {
   requestStatus: AccessRequestStatus | null;
@@ -46,52 +47,41 @@ export default function TeamAccessBanner({
 
   if (localStatus === "pending") {
     return (
-      <div className={`rounded-lg border ${statusColors.amber.border} ${statusColors.amber.bg} p-4 flex items-start gap-3`}>
-        <Clock className={`h-5 w-5 ${colors.warning} shrink-0 mt-0.5`} />
-        <div>
-          <p className="font-medium text-status-warning-foreground">Request pending</p>
-          <p className="text-sm text-status-warning-foreground/80">
-            Your request to join the team is awaiting leader approval. You&apos;ll be
-            able to sign up for {restrictedLabels} once approved.
-          </p>
-        </div>
-      </div>
+      <StatusBanner
+        variant="warning"
+        icon={<Clock className={`h-5 w-5 ${colors.warning} shrink-0 mt-0.5`} />}
+        title="Request pending"
+        message={<>Your request to join the team is awaiting leader approval. You&apos;ll be able to sign up for {restrictedLabels} once approved.</>}
+      />
     );
   }
 
   if (localStatus === "rejected") {
     return (
-      <div className={`rounded-lg border ${statusColors.red.border} ${statusColors.red.bg} p-4 flex items-start gap-3`}>
-        <XCircle className={`h-5 w-5 ${colors.destructive} shrink-0 mt-0.5`} />
-        <div>
-          <p className="font-medium text-status-destructive-foreground">Request denied</p>
-          <p className="text-sm text-status-destructive-foreground/80">
-            Your request to join the team was not approved. Please contact a
-            leader if you believe this is an error.
-          </p>
-        </div>
-      </div>
+      <StatusBanner
+        variant="destructive"
+        icon={<XCircle className={`h-5 w-5 ${colors.destructive} shrink-0 mt-0.5`} />}
+        title="Request denied"
+        message="Your request to join the team was not approved. Please contact a leader if you believe this is an error."
+      />
     );
   }
 
   return (
-    <div className="rounded-lg border border-status-info-border bg-status-info p-4 flex items-start gap-3">
-      <Shield className="h-5 w-5 text-info shrink-0 mt-0.5" />
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-status-info-foreground">Team members only</p>
-        <p className="text-sm text-status-info-foreground/80 mb-3">
-          {restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved for approved team members.
-          Request access to sign up for those sessions.
-        </p>
-        <Button
-          size="sm"
-          onClick={handleRequest}
-          disabled={pending}
-          className="rounded-full"
-        >
-          {pending ? "Requesting..." : "Request to join"}
-        </Button>
-      </div>
-    </div>
+    <StatusBanner
+      variant="info"
+      icon={<Shield className="h-5 w-5 text-info shrink-0 mt-0.5" />}
+      title="Team members only"
+      message={<>{restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved for approved team members. Request access to sign up for those sessions.</>}
+    >
+      <Button
+        size="sm"
+        onClick={handleRequest}
+        disabled={pending}
+        className="rounded-full"
+      >
+        {pending ? "Requesting..." : "Request to join"}
+      </Button>
+    </StatusBanner>
   );
 }

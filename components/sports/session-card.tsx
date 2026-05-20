@@ -16,6 +16,7 @@ import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { resolvedSportsConfig, getResolvedTab, AccessLevel, Role } from "@/config/config-resolver";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -28,8 +29,10 @@ interface SessionCardProps {
 
 function getSignupStatus(session: SportSession): {
   label: string;
-  variant: "default" | "secondary" | "outline";
+  variant: "default" | "secondary" | "outline" | "destructive";
 } {
+  if (session.status === SESSION_STATUS.cancelled) return { label: "Cancelled", variant: "destructive" };
+
   const now = new Date();
   const open = session.signup_open ? new Date(session.signup_open) : null;
   const close = session.signup_close ? new Date(session.signup_close) : null;
@@ -60,11 +63,14 @@ export default function SessionCard({
   const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;
   const displayTitle = session.title || fallbackTitle;
 
+  const isCancelled = session.status === SESSION_STATUS.cancelled;
+
   const card = (
     <Card className={cn(
       "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
       canView && "hover:shadow-lg",
       !canView && "opacity-60 cursor-default",
+      isCancelled && "opacity-60",
       highlighted && "ring-2 ring-info bg-status-info/50",
     )}>
       {canView && (

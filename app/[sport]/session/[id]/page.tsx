@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
+  Ban,
   CalendarDays,
   Clock,
   MapPin,
@@ -16,6 +17,9 @@ import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
+import CancelSessionButton from "@/components/sports/cancel-session-button";
+import RestoreSessionButton from "@/components/sports/restore-session-button";
+import StatusBanner from "@/components/sports/status-banner";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
@@ -34,6 +38,7 @@ import {
   getUserAccessRequestStatus,
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 
 async function SessionSignupsContent({
   sessionId,
@@ -143,7 +148,7 @@ export default async function SessionDetailPage({
 
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
 
-  const isOpen = isSignupOpen(session);
+  const isOpen = session.status !== SESSION_STATUS.cancelled && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
   const backParams = new URLSearchParams({ session: id });
   if (fromTab) backParams.set("tab", fromTab);
@@ -181,9 +186,14 @@ export default async function SessionDetailPage({
               {sessionTypeLabel}
             </Badge>
           </div>
-          <h1 className="text-4xl font-bold text-foreground">
-            {session.title || formatDate(session.date, "long", true)}
-          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className={cn("text-4xl font-bold", session.status === SESSION_STATUS.cancelled ? "text-muted-foreground line-through" : "text-foreground")}>
+              {session.title || formatDate(session.date, "long", true)}
+            </h1>
+            {isAdmin && session.status !== SESSION_STATUS.cancelled && (
+              <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
@@ -272,6 +282,19 @@ export default async function SessionDetailPage({
         <div className="text-sm text-muted-foreground whitespace-pre-line">
           <p>{session.notes}</p>
         </div>
+      )}
+
+      {session.status === SESSION_STATUS.cancelled && (
+        <StatusBanner
+          variant="destructive"
+          icon={<Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />}
+          title="Session cancelled"
+          message={<>{session.status_notes && <>{session.status_notes}{session.status_notes.endsWith(".") ? " " : ". "}</>}You can no longer sign up for this session.</>}
+        >
+          {isAdmin && (
+            <RestoreSessionButton sport={sport} sessionId={session.id} variant="full" />
+          )}
+        </StatusBanner>
       )}
 
       <Suspense fallback={<LoadingContent />}>

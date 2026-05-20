@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 
 export interface CreateSessionInput {
   session_type: string;
@@ -84,6 +85,42 @@ export async function deleteSession(sport: string, sessionId: string): Promise<S
   if (error) return { error: error.message };
 
   revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/admin`);
+  return { success: true };
+}
+
+export async function cancelSession(sport: string, sessionId: string, reason?: string): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ status: SESSION_STATUS.cancelled, status_notes: reason || null })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(`/${sport}/admin`);
+  return { success: true };
+}
+
+export async function restoreSession(sport: string, sessionId: string): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ status: SESSION_STATUS.active, status_notes: null })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}`);
+  revalidatePath(`/${sport}/session/${sessionId}`);
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
