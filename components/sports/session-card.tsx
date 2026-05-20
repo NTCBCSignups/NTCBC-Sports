@@ -16,6 +16,7 @@ import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { resolvedSportsConfig, getResolvedTab, AccessLevel, Role } from "@/config/config-resolver";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
@@ -30,7 +31,7 @@ function getSignupStatus(session: SportSession): {
   label: string;
   variant: "default" | "secondary" | "outline" | "destructive";
 } {
-  if (session.status === "cancelled") return { label: "Cancelled", variant: "destructive" };
+  if (session.status === SESSION_STATUS.cancelled) return { label: "Cancelled", variant: "destructive" };
 
   const now = new Date();
   const open = session.signup_open ? new Date(session.signup_open) : null;
@@ -62,7 +63,7 @@ export default function SessionCard({
   const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;
   const displayTitle = session.title || fallbackTitle;
 
-  const isCancelled = session.status === "cancelled";
+  const isCancelled = session.status === SESSION_STATUS.cancelled;
 
   const card = (
     <Card className={cn(

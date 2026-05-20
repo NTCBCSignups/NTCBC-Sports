@@ -38,6 +38,7 @@ import {
   getUserAccessRequestStatus,
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 
 async function SessionSignupsContent({
   sessionId,
@@ -147,7 +148,7 @@ export default async function SessionDetailPage({
 
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
 
-  const isOpen = session.status !== "cancelled" && isSignupOpen(session);
+  const isOpen = session.status !== SESSION_STATUS.cancelled && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
   const backParams = new URLSearchParams({ session: id });
   if (fromTab) backParams.set("tab", fromTab);
@@ -186,10 +187,10 @@ export default async function SessionDetailPage({
             </Badge>
           </div>
           <div className="flex items-start justify-between gap-3">
-            <h1 className={cn("text-4xl font-bold", session.status === "cancelled" ? "text-muted-foreground line-through" : "text-foreground")}>
+            <h1 className={cn("text-4xl font-bold", session.status === SESSION_STATUS.cancelled ? "text-muted-foreground line-through" : "text-foreground")}>
               {session.title || formatDate(session.date, "long", true)}
             </h1>
-            {isAdmin && session.status !== "cancelled" && (
+            {isAdmin && session.status !== SESSION_STATUS.cancelled && (
               <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
             )}
           </div>
@@ -283,7 +284,7 @@ export default async function SessionDetailPage({
         </div>
       )}
 
-      {session.status === "cancelled" && (
+      {session.status === SESSION_STATUS.cancelled && (
         <StatusBanner
           variant="destructive"
           icon={<Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />}

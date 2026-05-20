@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 
 export interface CreateSessionInput {
   session_type: string;
@@ -95,7 +96,7 @@ export async function cancelSession(sport: string, sessionId: string, reason?: s
 
   const { error } = await supabase
     .from("sessions")
-    .update({ status: "cancelled", status_notes: reason || null })
+    .update({ status: SESSION_STATUS.cancelled, status_notes: reason || null })
     .eq("id", sessionId);
 
   if (error) return { error: error.message };
@@ -113,7 +114,7 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
 
   const { error } = await supabase
     .from("sessions")
-    .update({ status: "active", status_notes: null })
+    .update({ status: SESSION_STATUS.active, status_notes: null })
     .eq("id", sessionId);
 
   if (error) return { error: error.message };

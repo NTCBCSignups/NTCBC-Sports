@@ -13,9 +13,9 @@ interface StatusBannerProps {
 
 const variantStyles: Record<BannerVariant, { border: string; bg: string; foreground: string; muted: string }> = {
   info: {
-    border: "border-status-info-border",
-    bg: "bg-status-info",
-    foreground: "text-status-info-foreground",
+    border: statusColors.info.border,
+    bg: statusColors.info.bg,
+    foreground: statusColors.info.text,
     muted: "text-status-info-foreground/80",
   },
   warning: {

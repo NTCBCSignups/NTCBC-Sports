@@ -23,6 +23,11 @@ export interface SportRole {
 
 export type SessionStatus = "active" | "cancelled";
 
+export const SESSION_STATUS = {
+  active: "active",
+  cancelled: "cancelled",
+} as const satisfies Record<string, SessionStatus>;
+
 export interface SportSession {
   id: string;
   sport: string;

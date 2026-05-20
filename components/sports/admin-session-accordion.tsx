@@ -14,6 +14,7 @@ import RestoreSessionButton from "@/components/sports/restore-session-button";
 import { formatDate, formatTime } from "@/lib/format";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { Profile, SportSession, SignupStatus } from "@/lib/supabase/types";
 
 export interface SessionSignupEntry {
@@ -58,7 +59,7 @@ export default function SessionAccordion({
                 const tab = getResolvedTab(config, session.session_type);
                 const sessionTypeLabel =
                     tab.defaultTitlePrefix ?? tab.label;
-                const isCancelled = session.status === "cancelled";
+                const isCancelled = session.status === SESSION_STATUS.cancelled;
                 const dimmed = muted || isCancelled;
 
                 return (
@@ -102,7 +103,7 @@ export default function SessionAccordion({
                                     >
                                         {sessionTypeLabel}
                                     </Badge>
-                                    {session.status === "cancelled" ? (
+                                    {session.status === SESSION_STATUS.cancelled ? (
                                         <Badge variant="destructive" className="text-xs rounded-full">
                                             Cancelled
                                         </Badge>
@@ -126,10 +127,10 @@ export default function SessionAccordion({
                                         {session.location_address}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1 -mt-1">
-                                        {session.status === "cancelled" && (
+                                        {session.status === SESSION_STATUS.cancelled && (
                                             <RestoreSessionButton sport={sport} sessionId={session.id} />
                                         )}
-                                        {session.status !== "cancelled" && (
+                                        {session.status !== SESSION_STATUS.cancelled && (
                                             <CancelSessionButton sport={sport} sessionId={session.id} />
                                         )}
                                         <DeleteSessionButton sport={sport} sessionId={session.id} />
