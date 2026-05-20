@@ -5,12 +5,14 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { CalendarDays, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, MapPin, Pencil } from "lucide-react";
 import { getResolvedTab, type ResolvedSportConfig } from "@/config/config-resolver";
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
 import CancelSessionButton from "@/components/sports/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/restore-session-button";
+import SessionDialog from "@/components/sports/session-dialog";
 import { formatDate, formatTime } from "@/lib/format";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
@@ -127,6 +129,16 @@ export default function SessionAccordion({
                                         {session.location_address}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1 -mt-1">
+                                        <SessionDialog
+                                            sport={sport}
+                                            session={session}
+                                            trigger={
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Pencil className="h-4 w-4" />
+                                                    <span className="sr-only">Edit session</span>
+                                                </Button>
+                                            }
+                                        />
                                         {session.status === SESSION_STATUS.cancelled && (
                                             <RestoreSessionButton sport={sport} sessionId={session.id} />
                                         )}
