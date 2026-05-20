@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +9,6 @@ import {
   Clock,
   MapPin,
   Pencil,
-  Settings,
   UserStar,
 } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
@@ -21,6 +19,7 @@ import CancelSessionButton from "@/components/sports/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/restore-session-button";
 import SessionDialog from "@/components/sports/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
+import AdminButton from "@/components/sports/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
@@ -161,12 +160,7 @@ export default async function SessionDetailPage({
         backLabel={`Back to ${config.name}`}
         actions={
           isAdmin ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/${sport}/admin`}>
-                <Settings className="h-4 w-4" />
-                Admin
-              </Link>
-            </Button>
+            <AdminButton sport={sport} />
           ) : null
         }
       />

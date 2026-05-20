@@ -1,15 +1,13 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
-import { Settings } from "lucide-react";
 import SessionCard from "@/components/sports/session-card";
 import SessionFilter from "@/components/sports/session-filter";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
-import { Button } from "@/components/ui/button";
+import AdminButton from "@/components/sports/admin-button";
 import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
@@ -161,18 +159,11 @@ async function SportSessionsContent({
   );
 }
 
-async function AdminButton({ sport, userId }: { sport: string; userId: string }) {
+async function AdminButtonGate({ sport, userId }: { sport: string; userId: string }) {
   const supabase = await createClient();
   const { role } = await getUserSportRole(supabase, userId, sport);
   if (role < Role.admin) return null;
-  return (
-    <Button asChild variant="outline" size="sm" className="rounded-full">
-      <Link href={`/${sport}/admin`}>
-        <Settings className="h-4 w-4" />
-        Admin
-      </Link>
-    </Button>
-  );
+  return <AdminButton sport={sport} />;
 }
 
 export default async function SportAuthPage({
@@ -199,7 +190,7 @@ export default async function SportAuthPage({
       actions={
         user ? (
           <Suspense>
-            <AdminButton sport={sport} userId={user.id} />
+            <AdminButtonGate sport={sport} userId={user.id} />
           </Suspense>
         ) : null
       }

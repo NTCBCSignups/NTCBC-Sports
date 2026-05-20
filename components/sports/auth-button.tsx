@@ -36,10 +36,9 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
   if (!user) {
     return (
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleSignIn}
-        className="rounded-full"
       >
         <LogIn className="h-4 w-4" />
         Sign in with Google
@@ -50,7 +49,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="rounded-full gap-2 px-2">
+        <Button variant="ghost" size="sm" className="gap-2 px-2">
           {user.user_metadata?.avatar_url && (
             <img
               src={user.user_metadata.avatar_url}
