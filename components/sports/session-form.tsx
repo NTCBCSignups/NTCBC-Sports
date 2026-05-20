@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink } from "lucide-react";
 import { createSession, updateSession, type CreateSessionResult } from "@/lib/actions/sessions";
 import { resolvedSportsConfig } from "@/config/config-resolver";
 import type { SportSession } from "@/lib/supabase/types";
@@ -58,6 +59,7 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
   const defaultSessionType = session?.session_type ?? sportConfig?.defaultTab ?? tabs[0]?.value ?? "";
   const [sessionType, setSessionType] =
     useState(defaultSessionType);
+  const [mapsLink, setMapsLink] = useState(session?.location_maps_link ?? "");
 
   const autoFillSignupClose = (form: HTMLFormElement) => {
     const date = (form.elements.namedItem("date") as HTMLInputElement)?.value;
@@ -192,24 +194,24 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="session_type">Session Type</Label>
-          <Select
-            value={sessionType}
-            onValueChange={(v) => setSessionType(v)}
-          >
-            <SelectTrigger id="session_type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {tabs.map((tab) => (
-                <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="session_type">Session Type</Label>
+        <Select
+          value={sessionType}
+          onValueChange={(v) => setSessionType(v)}
+        >
+          <SelectTrigger id="session_type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {tabs.map((tab) => (
+              <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="title">
             Title <span className="font-normal text-muted-foreground">(optional)</span>
@@ -291,7 +293,19 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
             type="url"
             placeholder="https://maps.app.goo.gl/..."
             defaultValue={session?.location_maps_link ?? ""}
+            onChange={(e) => setMapsLink(e.target.value)}
           />
+          {mapsLink && /^https?:\/\/.+/.test(mapsLink) && (
+            <a
+              href={mapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Open in Maps
+            </a>
+          )}
         </div>
 
         <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
