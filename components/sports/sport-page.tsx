@@ -14,7 +14,6 @@ import { SportConfig } from "@/config/config-resolver";
 import { formatDate } from "@/lib/format";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import SignupsTable from "@/components/sports/signups-table";
-import AuthButton from "@/components/sports/auth-button";
 import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 
@@ -38,11 +37,6 @@ export default function SportPage({
       <PageHeader
         backHref="/"
         backLabel="Back to Sports"
-        actions={
-          config.authEnabled ? (
-            <AuthButton user={user ?? null} sport={config.id} />
-          ) : null
-        }
       />
       {/* Title + info bullets */}
       <div className="space-y-6">
@@ -155,7 +149,7 @@ export default function SportPage({
       {isFormOpen && scheduleData?.form_link ? (
         <Button
           asChild
-          className="w-full max-sm:w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8"
+          className="w-full max-sm:w-full sm:w-auto px-8 has-[>svg]:px-8"
         >
           <a
             href={scheduleData.form_link}
@@ -169,7 +163,7 @@ export default function SportPage({
       ) : (
         <Button
           disabled
-          className="w-full max-sm:w-full sm:w-auto rounded-full px-8 has-[>svg]:px-8"
+          className="w-full max-sm:w-full sm:w-auto px-8 has-[>svg]:px-8"
         >
           <Lock className="w-4 h-4 shrink-0" />
           Sign-ups closed for {formatDate(scheduleData?.date ?? "", "long")}

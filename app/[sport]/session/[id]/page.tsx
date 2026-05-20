@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
@@ -9,17 +8,18 @@ import {
   CalendarDays,
   Clock,
   MapPin,
-  Settings,
+  Pencil,
   UserStar,
 } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
-import AuthButton from "@/components/sports/auth-button";
 import SignupButton from "@/components/sports/signup-button";
 import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import CancelSessionButton from "@/components/sports/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/restore-session-button";
+import SessionDialog from "@/components/sports/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
+import AdminButton from "@/components/sports/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
@@ -159,17 +159,9 @@ export default async function SessionDetailPage({
         backHref={`/${sport}?${backParams.toString()}`}
         backLabel={`Back to ${config.name}`}
         actions={
-          <>
-            {isAdmin && (
-              <Button asChild variant="outline" size="sm" className="rounded-full">
-                <Link href={`/${sport}/admin`}>
-                  <Settings className="h-4 w-4" />
-                  Admin
-                </Link>
-              </Button>
-            )}
-            {config.authEnabled && <AuthButton user={user} sport={session.sport} />}
-          </>
+          isAdmin ? (
+            <AdminButton sport={sport} />
+          ) : null
         }
       />
 
@@ -191,7 +183,19 @@ export default async function SessionDetailPage({
               {session.title || formatDate(session.date, "long", true)}
             </h1>
             {isAdmin && session.status !== SESSION_STATUS.cancelled && (
-              <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+              <div className="flex shrink-0 items-center gap-2">
+                <SessionDialog
+                  sport={sport}
+                  session={session}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Pencil className="h-4 w-4 mr-1.5" />
+                      Edit
+                    </Button>
+                  }
+                />
+                <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+              </div>
             )}
           </div>
         </div>

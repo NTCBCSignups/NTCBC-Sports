@@ -78,7 +78,6 @@ export default function TeamAccessBanner({
         size="sm"
         onClick={handleRequest}
         disabled={pending}
-        className="rounded-full"
       >
         {pending ? "Requesting..." : "Request to join"}
       </Button>

@@ -1,4 +1,3 @@
-import AuthButton from "@/components/sports/auth-button";
 import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
@@ -26,12 +25,7 @@ export default function SportPageShell({
             <PageHeader
                 backHref="/"
                 backLabel="Back to Sports"
-                actions={
-                    <>
-                        {actions}
-                        <AuthButton user={user} sport={sport} />
-                    </>
-                }
+                actions={actions}
             />
 
             <div className="space-y-2">
