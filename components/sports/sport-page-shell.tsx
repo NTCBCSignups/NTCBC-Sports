@@ -26,12 +26,8 @@ export default function SportPageShell({
             <PageHeader
                 backHref="/"
                 backLabel="Back to Sports"
-                actions={
-                    <>
-                        {actions}
-                        <AuthButton user={user} sport={sport} />
-                    </>
-                }
+                topActions={<AuthButton user={user} sport={sport} />}
+                actions={actions}
             />
 
             <div className="space-y-2">

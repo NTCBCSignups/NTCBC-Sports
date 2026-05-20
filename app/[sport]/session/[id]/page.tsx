@@ -160,18 +160,18 @@ export default async function SessionDetailPage({
       <PageHeader
         backHref={`/${sport}?${backParams.toString()}`}
         backLabel={`Back to ${config.name}`}
+        topActions={
+          config.authEnabled ? <AuthButton user={user} sport={session.sport} /> : null
+        }
         actions={
-          <>
-            {isAdmin && (
-              <Button asChild variant="outline" size="sm" className="rounded-full">
-                <Link href={`/${sport}/admin`}>
-                  <Settings className="h-4 w-4" />
-                  Admin
-                </Link>
-              </Button>
-            )}
-            {config.authEnabled && <AuthButton user={user} sport={session.sport} />}
-          </>
+          isAdmin ? (
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href={`/${sport}/admin`}>
+                <Settings className="h-4 w-4" />
+                Admin
+              </Link>
+            </Button>
+          ) : null
         }
       />
 

@@ -38,7 +38,7 @@ export default function SportPage({
       <PageHeader
         backHref="/"
         backLabel="Back to Sports"
-        actions={
+        topActions={
           config.authEnabled ? (
             <AuthButton user={user ?? null} sport={config.id} />
           ) : null
