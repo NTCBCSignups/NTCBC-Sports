@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import {
+  Ban,
   CalendarDays,
   Clock,
   MapPin,
@@ -26,6 +27,7 @@ import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel } from "@/confi
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
+import { statusColors } from "@/lib/styles";
 import { LoadingContent } from "@/components/sports/loading-content";
 import {
   getSession,
@@ -181,11 +183,6 @@ export default async function SessionDetailPage({
             >
               {sessionTypeLabel}
             </Badge>
-            {session.status === "cancelled" && (
-              <Badge variant="destructive" className="rounded-full">
-                Cancelled
-              </Badge>
-            )}
           </div>
           <div className="flex items-start justify-between gap-3">
             <h1 className={cn("text-4xl font-bold", session.status === "cancelled" ? "text-muted-foreground line-through" : "text-foreground")}>
@@ -282,6 +279,18 @@ export default async function SessionDetailPage({
       {session.notes && (
         <div className="text-sm text-muted-foreground whitespace-pre-line">
           <p>{session.notes}</p>
+        </div>
+      )}
+
+      {session.status === "cancelled" && (
+        <div className={`rounded-lg border ${statusColors.red.border} ${statusColors.red.bg} p-4 flex items-start gap-3`}>
+          <Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-status-destructive-foreground">Session cancelled</p>
+            <p className="text-sm text-status-destructive-foreground/80">
+              This session has been cancelled and is no longer accepting sign-ups.
+            </p>
+          </div>
         </div>
       )}
 
