@@ -10,6 +10,7 @@ import { getResolvedTab, type ResolvedSportConfig } from "@/config/config-resolv
 import AdminSessionSignups from "@/components/sports/admin-session-signups";
 import DeleteSessionButton from "@/components/sports/delete-session-button";
 import CancelSessionButton from "@/components/sports/cancel-session-button";
+import RestoreSessionButton from "@/components/sports/restore-session-button";
 import { formatDate, formatTime } from "@/lib/format";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
@@ -125,6 +126,9 @@ export default function SessionAccordion({
                                         {session.location_address}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1 -mt-1">
+                                        {session.status === "cancelled" && (
+                                            <RestoreSessionButton sport={sport} sessionId={session.id} />
+                                        )}
                                         {session.status !== "cancelled" && (
                                             <CancelSessionButton sport={sport} sessionId={session.id} />
                                         )}

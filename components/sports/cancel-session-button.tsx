@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Ban } from "lucide-react";
+import { XCircle } from "lucide-react";
 import { cancelSession } from "@/lib/actions/sessions";
 import {
   AlertDialog,
@@ -59,11 +59,11 @@ export default function CancelSessionButton({
             className={colors.warningHover}
             title="Cancel session"
           >
-            <Ban className="h-4 w-4" />
+            <XCircle className="h-4 w-4" />
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="text-warning">
-            <Ban className="h-4 w-4 mr-1.5" />
+            <XCircle className="h-4 w-4 mr-1.5" />
             Cancel Session
           </Button>
         )}
