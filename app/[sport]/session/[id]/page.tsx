@@ -178,12 +178,12 @@ export default async function SessionDetailPage({
               {sessionTypeLabel}
             </Badge>
           </div>
-          <div className="flex items-start justify-between gap-3">
+          <div className="space-y-3">
             <h1 className={cn("text-4xl font-bold", session.status === SESSION_STATUS.cancelled ? "text-muted-foreground line-through" : "text-foreground")}>
               {session.title || formatDate(session.date, "long", true)}
             </h1>
             {isAdmin && session.status !== SESSION_STATUS.cancelled && (
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center gap-2">
                 <SessionDialog
                   sport={sport}
                   session={session}
