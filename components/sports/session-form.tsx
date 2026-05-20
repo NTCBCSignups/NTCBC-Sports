@@ -15,20 +15,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createSession, type CreateSessionResult } from "@/lib/actions/sessions";
+import { createSession, updateSession, type CreateSessionResult } from "@/lib/actions/sessions";
 import { resolvedSportsConfig } from "@/config/config-resolver";
+import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionFormProps {
   sport: string;
+  session?: SportSession;
+  onSuccess?: () => void;
 }
 
-export default function SessionForm({ sport }: SessionFormProps) {
+/** Convert an ISO datetime string to a datetime-local input value (YYYY-MM-DDTHH:mm). */
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+export default function SessionForm({ sport, session, onSuccess }: SessionFormProps) {
+  const isEdit = !!session;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
   const sportConfig = resolvedSportsConfig[sport];
   const tabs = sportConfig?.tabs ?? [];
-  const defaultSessionType = sportConfig?.defaultTab ?? tabs[0]?.value ?? "";
+  const defaultSessionType = session?.session_type ?? sportConfig?.defaultTab ?? tabs[0]?.value ?? "";
   const [sessionType, setSessionType] =
     useState(defaultSessionType);
 
@@ -114,7 +129,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
       return;
     }
 
-    const result = await createSession(sport, {
+    const input = {
       session_type: sessionType,
       title: (form.get("title") as string) || undefined,
       date: date,
@@ -130,18 +145,30 @@ export default function SessionForm({ sport }: SessionFormProps) {
       signup_open: signupOpen.toISOString(),
       signup_close: signupClose.toISOString(),
       notes: (form.get("notes") as string) || undefined,
-    });
+    };
 
-    if ("error" in result) {
-      setError(result.error);
-      toast.error(result.error, { className: toastClasses.red });
+    if (isEdit) {
+      const result = await updateSession(sport, session.id, input);
+      if ("error" in result) {
+        setError(result.error);
+        toast.error(result.error, { className: toastClasses.red });
+      } else {
+        toast.success("Session updated.", { className: toastClasses.green });
+        onSuccess?.();
+      }
     } else {
-      setCreatedSessionId(result.sessionId);
-      toast.success("Session created successfully.", {
-        className: toastClasses.green,
-      });
-      (e.target as HTMLFormElement).reset();
-      setSessionType(defaultSessionType);
+      const result = await createSession(sport, input);
+      if ("error" in result) {
+        setError(result.error);
+        toast.error(result.error, { className: toastClasses.red });
+      } else {
+        setCreatedSessionId(result.sessionId);
+        toast.success("Session created successfully.", {
+          className: toastClasses.green,
+        });
+        (e.target as HTMLFormElement).reset();
+        setSessionType(defaultSessionType);
+      }
     }
     setPending(false);
   };
@@ -174,7 +201,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
           <Label htmlFor="title">
             Title <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Input id="title" name="title" placeholder="e.g. Week 5 vs Team B" />
+          <Input id="title" name="title" placeholder="e.g. Week 5 vs Team B" defaultValue={session?.title ?? ""} />
         </div>
 
         <div className="space-y-2">
@@ -184,6 +211,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
             name="date"
             type="date"
             required
+            defaultValue={session?.date}
             onChange={handleDateOrTimeChange}
           />
         </div>
@@ -198,6 +226,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
             type="number"
             min={1}
             placeholder="No limit"
+            defaultValue={session?.player_cap ?? ""}
           />
         </div>
 
@@ -208,12 +237,13 @@ export default function SessionForm({ sport }: SessionFormProps) {
             name="time_start"
             type="time"
             required
+            defaultValue={session?.time_start}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="time_end">End Time</Label>
-          <Input id="time_end" name="time_end" type="time" required onChange={handleDateOrTimeChange} />
+          <Input id="time_end" name="time_end" type="time" required defaultValue={session?.time_end} onChange={handleDateOrTimeChange} />
         </div>
 
         <div className="space-y-2">
@@ -223,6 +253,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
             name="location_name"
             placeholder="e.g. Christie Pits Diamond 1"
             required
+            defaultValue={session?.location_name}
           />
         </div>
 
@@ -233,6 +264,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
             name="location_address"
             placeholder="e.g. 750 Bloor St W, Toronto"
             required
+            defaultValue={session?.location_address}
           />
         </div>
 
@@ -245,6 +277,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
             name="location_maps_link"
             type="url"
             placeholder="https://maps.app.goo.gl/..."
+            defaultValue={session?.location_maps_link ?? ""}
           />
         </div>
 
@@ -256,6 +289,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
               name="signup_open"
               type="datetime-local"
               required
+              defaultValue={session ? toDatetimeLocal(session.signup_open) : undefined}
             />
           </div>
 
@@ -266,6 +300,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
               name="signup_close"
               type="datetime-local"
               required
+              defaultValue={session ? toDatetimeLocal(session.signup_close) : undefined}
             />
           </div>
         </div>
@@ -280,11 +315,12 @@ export default function SessionForm({ sport }: SessionFormProps) {
           name="notes"
           placeholder="Additional details about this session..."
           rows={3}
+          defaultValue={session?.notes ?? ""}
         />
       </div>
 
       {error && <p className={feedback.error}>{error}</p>}
-      {createdSessionId && (
+      {!isEdit && createdSessionId && (
         <p className={feedback.success}>
           Session created.{" "}
           <Link href={createdSessionHref} className="underline underline-offset-2">
@@ -295,7 +331,7 @@ export default function SessionForm({ sport }: SessionFormProps) {
       )}
 
       <Button type="submit" disabled={pending} className="rounded-full">
-        {pending ? "Creating..." : "Create Session"}
+        {pending ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Session")}
       </Button>
     </form>
   );
