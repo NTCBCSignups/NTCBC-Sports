@@ -88,14 +88,14 @@ export async function deleteSession(sport: string, sessionId: string): Promise<S
   return { success: true };
 }
 
-export async function cancelSession(sport: string, sessionId: string): Promise<SessionActionResult> {
+export async function cancelSession(sport: string, sessionId: string, reason?: string): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase
     .from("sessions")
-    .update({ status: "cancelled" })
+    .update({ status: "cancelled", status_notes: reason || null })
     .eq("id", sessionId);
 
   if (error) return { error: error.message };
@@ -113,7 +113,7 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
 
   const { error } = await supabase
     .from("sessions")
-    .update({ status: "active" })
+    .update({ status: "active", status_notes: null })
     .eq("id", sessionId);
 
   if (error) return { error: error.message };

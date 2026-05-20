@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { XCircle } from "lucide-react";
 import { cancelSession } from "@/lib/actions/sessions";
 import {
@@ -33,10 +34,11 @@ export default function CancelSessionButton({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  const [reason, setReason] = useState("");
 
   const handleCancel = async () => {
     setPending(true);
-    const result = await cancelSession(sport, sessionId);
+    const result = await cancelSession(sport, sessionId, reason.trim() || undefined);
     setPending(false);
 
     if ("error" in result) {
@@ -45,6 +47,7 @@ export default function CancelSessionButton({
     }
 
     setOpen(false);
+    setReason("");
     toast("Session cancelled.");
     router.refresh();
   };
@@ -76,6 +79,12 @@ export default function CancelSessionButton({
             that the session is no longer happening.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <Input
+          placeholder="Reason (optional)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          disabled={pending}
+        />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Go Back</AlertDialogCancel>
           <Button

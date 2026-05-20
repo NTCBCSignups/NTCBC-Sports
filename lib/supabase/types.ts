@@ -39,6 +39,7 @@ export interface SportSession {
   signup_close: string;
   notes: string | null;
   status: SessionStatus;
+  status_notes: string | null;
   created_by: string | null;
   created_at: string;
 }

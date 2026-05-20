@@ -19,6 +19,7 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import CancelSessionButton from "@/components/sports/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/restore-session-button";
+import StatusBanner from "@/components/sports/status-banner";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import CountdownTimer from "@/components/sports/countdown-timer";
@@ -28,7 +29,6 @@ import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel } from "@/confi
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
-import { statusColors } from "@/lib/styles";
 import { LoadingContent } from "@/components/sports/loading-content";
 import {
   getSession,
@@ -284,20 +284,16 @@ export default async function SessionDetailPage({
       )}
 
       {session.status === "cancelled" && (
-        <div className={`rounded-lg border ${statusColors.red.border} ${statusColors.red.bg} p-4 flex items-start gap-3`}>
-          <Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-status-destructive-foreground">Session cancelled</p>
-            <p className="text-sm text-status-destructive-foreground/80">
-              This session has been cancelled and is no longer accepting sign-ups.
-            </p>
-            {isAdmin && (
-              <div className="mt-3">
-                <RestoreSessionButton sport={sport} sessionId={session.id} variant="full" />
-              </div>
-            )}
-          </div>
-        </div>
+        <StatusBanner
+          variant="destructive"
+          icon={<Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />}
+          title="Session cancelled"
+          message={<>{session.status_notes && <>{session.status_notes}{session.status_notes.endsWith(".") ? " " : ". "}</>}You can no longer sign up for this session.</>}
+        >
+          {isAdmin && (
+            <RestoreSessionButton sport={sport} sessionId={session.id} variant="full" />
+          )}
+        </StatusBanner>
       )}
 
       <Suspense fallback={<LoadingContent />}>
