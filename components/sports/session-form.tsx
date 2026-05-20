@@ -191,7 +191,7 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
     : "#";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="session_type">Session Type</Label>

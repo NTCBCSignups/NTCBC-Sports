@@ -25,7 +25,7 @@ export default function SessionDialog({ sport, session, trigger }: SessionDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg [&_form]:min-w-0 [&_input]:min-w-0">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>
           <DialogDescription>
