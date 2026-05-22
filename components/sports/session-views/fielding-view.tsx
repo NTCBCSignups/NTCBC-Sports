@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +55,7 @@ const ALL_POSITIONS = [
     ...POSITIONS.outfield,
 ];
 
-type PositionKey = (typeof ALL_POSITIONS)[number]["key"];
+const COACH_KEYS = new Set(POSITIONS.batting.map((p) => p.key));
 
 const POSITION_GROUPS = [
     { label: "Batting", positions: POSITIONS.batting },
@@ -80,7 +81,7 @@ function parseData(viewData: unknown): FieldingData {
         "assignments" in viewData
     ) {
         const d = viewData as FieldingData;
-        return { innings: d.innings, unique: d.unique ?? false, assignments: d.assignments };
+        return { innings: d.innings, unique: d.unique ?? true, assignments: d.assignments };
     }
     return { innings: DEFAULT_INNINGS, unique: true, assignments: {} };
 }
@@ -134,7 +135,7 @@ function FieldingDiamond({
             <svg viewBox="0 0 100 100" className="w-full h-auto">
                 {/* Infield/outfield boundary arc */}
                 <path
-                    d="M 15 45 Q 50 25 85 45"
+                    d="M 20 50 Q 50 18 80 50"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.3"
@@ -148,11 +149,6 @@ function FieldingDiamond({
                     strokeWidth="0.4"
                     className="text-muted-foreground/60"
                 />
-                {/* Base paths */}
-                <line x1="50" y1="80" x2="75" y2="55" stroke="currentColor" strokeWidth="0.3" className="text-muted-foreground/40" />
-                <line x1="75" y1="55" x2="50" y2="30" stroke="currentColor" strokeWidth="0.3" className="text-muted-foreground/40" />
-                <line x1="50" y1="30" x2="25" y2="55" stroke="currentColor" strokeWidth="0.3" className="text-muted-foreground/40" />
-                <line x1="25" y1="55" x2="50" y2="80" stroke="currentColor" strokeWidth="0.3" className="text-muted-foreground/40" />
                 {/* Bases */}
                 <rect x="48.5" y="78.5" width="3" height="3" className="fill-muted-foreground/60" /> {/* Home */}
                 <rect x="73.5" y="53.5" width="3" height="3" transform="rotate(45 75 55)" className="fill-muted-foreground/60" /> {/* 1st */}
@@ -164,8 +160,9 @@ function FieldingDiamond({
                     const isHighlighted = highlightUserId && userId === highlightUserId;
                     const posInfo = ALL_POSITIONS.find((p) => p.key === posKey);
                     const short = posInfo?.short ?? posKey;
+                    const isCoach = COACH_KEYS.has(posKey);
                     return (
-                        <g key={posKey}>
+                        <g key={posKey} className={isCoach ? "opacity-40" : ""}>
                             <circle
                                 cx={pos.x}
                                 cy={pos.y}
@@ -178,6 +175,7 @@ function FieldingDiamond({
                                             : "fill-muted/50 stroke-muted-foreground/40",
                                 )}
                                 strokeWidth="0.3"
+                                strokeDasharray={isCoach ? "1 0.5" : undefined}
                             />
                             <text
                                 x={pos.x}
@@ -231,7 +229,7 @@ export default function FieldingView({
 
     return (
         <div className="overflow-hidden rounded-lg border bg-card">
-            <div className="border-b p-4">
+            <div className="p-4">
                 <Tabs value={mode} onValueChange={(v) => setMode(v as "player" | "inning")}>
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="player">By Player</TabsTrigger>
@@ -254,16 +252,24 @@ export default function FieldingView({
 
                         {selectedUser && (
                             <>
-                                <FieldingDiamond
-                                    assignments={Object.fromEntries(
-                                        ALL_POSITIONS.map((p) => [
-                                            p.key,
-                                            getEffectiveAssignment(data, selectedInning, p.key),
-                                        ]),
-                                    )}
-                                    highlightUserId={selectedUser}
-                                    getUserName={getUserName}
-                                />
+                                <Collapsible defaultOpen>
+                                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
+                                        Diamond
+                                        <span className="text-xs">▾</span>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent>
+                                        <FieldingDiamond
+                                            assignments={Object.fromEntries(
+                                                ALL_POSITIONS.map((p) => [
+                                                    p.key,
+                                                    getEffectiveAssignment(data, selectedInning, p.key),
+                                                ]),
+                                            )}
+                                            highlightUserId={selectedUser}
+                                            getUserName={getUserName}
+                                        />
+                                    </CollapsibleContent>
+                                </Collapsible>
 
                                 <Table>
                                     <TableHeader>
@@ -318,16 +324,24 @@ export default function FieldingView({
                             </SelectContent>
                         </Select>
 
-                        <FieldingDiamond
-                            assignments={Object.fromEntries(
-                                ALL_POSITIONS.map((p) => [
-                                    p.key,
-                                    getEffectiveAssignment(data, selectedInning, p.key),
-                                ]),
-                            )}
-                            highlightUserId={selectedUser || currentUserId}
-                            getUserName={getUserName}
-                        />
+                        <Collapsible defaultOpen>
+                            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
+                                Diamond
+                                <span className="text-xs">▾</span>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <FieldingDiamond
+                                    assignments={Object.fromEntries(
+                                        ALL_POSITIONS.map((p) => [
+                                            p.key,
+                                            getEffectiveAssignment(data, selectedInning, p.key),
+                                        ]),
+                                    )}
+                                    highlightUserId={selectedUser || currentUserId}
+                                    getUserName={getUserName}
+                                />
+                            </CollapsibleContent>
+                        </Collapsible>
 
                         <Table>
                             <TableHeader>
