@@ -229,6 +229,11 @@ export default function FieldingView({
     const [selectedInning, setSelectedInning] = useState(1);
     const [showDiamond, setShowDiamond] = useState(true);
 
+    const sorted = [...confirmed].sort((a, b) => {
+        if (a.user_id === currentUserId) return -1;
+        if (b.user_id === currentUserId) return 1;
+        return displayName(a.profiles).localeCompare(displayName(b.profiles));
+    });
     const userMap = new Map(confirmed.map((s) => [s.user_id, s]));
     const getUserName = (userId: string) =>
         displayName(userMap.get(userId)?.profiles ?? null);
@@ -262,7 +267,7 @@ export default function FieldingView({
                                 <SelectValue placeholder="Select a player" />
                             </SelectTrigger>
                             <SelectContent>
-                                {confirmed.map((s) => (
+                                {sorted.map((s) => (
                                     <SelectItem key={s.user_id} value={s.user_id}>
                                         {displayName(s.profiles)}
                                     </SelectItem>
