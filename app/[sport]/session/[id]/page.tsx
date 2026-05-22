@@ -47,7 +47,6 @@ async function SessionSignupsContent({
   userRole,
   signupRole,
   playerCap,
-  alternateViews,
   viewData,
   isAdmin,
 }: {
@@ -58,7 +57,6 @@ async function SessionSignupsContent({
   userRole: Role;
   signupRole: Role;
   playerCap: number | null;
-  alternateViews: { id: string; label: string }[];
   viewData: Record<string, unknown>;
   isAdmin: boolean;
 }) {
@@ -112,7 +110,6 @@ async function SessionSignupsContent({
           teamMemberIds={teamMemberIds}
           playerCap={playerCap}
           currentUserId={userId}
-          alternateViews={alternateViews}
           viewData={viewData}
           isAdmin={isAdmin}
         />
@@ -312,7 +309,6 @@ export default async function SessionDetailPage({
           userRole={userRole}
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
-          alternateViews={tab.alternateViews ?? []}
           viewData={(session.alt_session_views as Record<string, unknown>) ?? {}}
           isAdmin={isAdmin}
         />

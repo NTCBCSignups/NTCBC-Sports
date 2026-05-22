@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
     Select,
     SelectContent,
@@ -9,10 +8,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import type { AlternateViewMeta } from "@/config/config-interfaces";
 
 interface AlternateViewToggleProps {
-    views: AlternateViewMeta[];
+    views: { id: string; label: string }[];
     activeView: string | null;
     onViewChange: (viewId: string | null) => void;
 }

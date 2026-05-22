@@ -61,8 +61,6 @@ export interface SessionTab {
   defaultTitlePrefix?: string;
   /** Color token used for session type pills. */
   sessionPillColor?: PillColor;
-  /** Alternate attendance views available for this session type. */
-  alternateViews?: AlternateViewMeta[];
 }
 
 export interface AdminTabMeta {
@@ -70,12 +68,6 @@ export interface AdminTabMeta {
   label: string;
   /** Lucide icon name (must be mapped in admin-sidebar) */
   iconName: string;
-}
-
-/** Metadata for an alternate attendance view (e.g. batting order). */
-export interface AlternateViewMeta {
-  id: string;
-  label: string;
 }
 
 export interface SportConfig {
@@ -108,7 +100,6 @@ export interface SportConfig {
 export interface ResolvedSessionTab extends Omit<SessionTab, "permissions" | "sessionPillColor"> {
   permissions: TabPermissions;
   sessionPillColor: PillColor;
-  alternateViews?: AlternateViewMeta[];
 }
 
 /** A sport config with all tab permissions resolved and computed flags. */

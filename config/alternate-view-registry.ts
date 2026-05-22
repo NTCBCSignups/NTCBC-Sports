@@ -3,17 +3,20 @@ import CustomOrderedView from "@/components/sports/session-alt-views/custom-orde
 import CustomOrderedEditor from "@/components/sports/session-alt-views/custom-ordered-editor";
 import type { AlternateViewProps, AlternateViewEditorProps } from "./alt-view-interfaces";
 
-interface AlternateViewEntry {
+export interface AlternateViewEntry {
+    label: string;
     ViewComponent: ComponentType<AlternateViewProps>;
     EditorComponent: ComponentType<AlternateViewEditorProps>;
 }
 
 /**
- * Registry mapping alternate view IDs to their view and editor components.
- * Same pattern as admin-tab-registry — generic code never imports sport-specific folders.
+ * Registry of all available alternate view types.
+ * Admins can create any of these for any session. Users see the toggle
+ * only for views that have saved data in alt_session_views.
  */
 const alternateViewRegistry: Record<string, AlternateViewEntry> = {
     customOrderedView: {
+        label: "Custom Ordered View",
         ViewComponent: CustomOrderedView,
         EditorComponent: CustomOrderedEditor,
     },
@@ -21,4 +24,12 @@ const alternateViewRegistry: Record<string, AlternateViewEntry> = {
 
 export function getAlternateView(viewId: string): AlternateViewEntry | undefined {
     return alternateViewRegistry[viewId];
+}
+
+/** Returns all registered view types (id + label) for admin UI. */
+export function getAllAlternateViews(): { id: string; label: string }[] {
+    return Object.entries(alternateViewRegistry).map(([id, entry]) => ({
+        id,
+        label: entry.label,
+    }));
 }

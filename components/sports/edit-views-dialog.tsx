@@ -10,34 +10,33 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check } from "lucide-react";
-import { getAlternateView } from "@/config/alternate-view-registry";
-import type { AlternateViewMeta } from "@/config/config-interfaces";
+import { getAlternateView, getAllAlternateViews } from "@/config/alternate-view-registry";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 
 interface EditViewsDialogProps {
     sport: string;
     sessionId: string;
-    views: AlternateViewMeta[];
     signups: SignupRow[];
     teamMemberIds: Set<string>;
     viewData: Record<string, unknown>;
 }
 
 /**
- * Admin-only dialog: "Create/Edit Views" button opens a two-step dialog.
- * Step 1: Pick which view type to create/edit.
+ * Admin-only dialog: "Edit Views" button opens a two-step dialog.
+ * Step 1: Pick which view type to create/edit (shows all registered types).
  * Step 2: Show the editor for that view type.
  */
 export default function EditViewsDialog({
     sport,
     sessionId,
-    views,
     signups,
     teamMemberIds,
     viewData,
 }: EditViewsDialogProps) {
     const [open, setOpen] = useState(false);
     const [selectedView, setSelectedView] = useState<string | null>(null);
+
+    const allViews = getAllAlternateViews();
 
     const handleOpenChange = (next: boolean) => {
         setOpen(next);
@@ -50,7 +49,7 @@ export default function EditViewsDialog({
     };
 
     const entry = selectedView ? getAlternateView(selectedView) : null;
-    const selectedMeta = views.find((v) => v.id === selectedView);
+    const selectedMeta = allViews.find((v) => v.id === selectedView);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -72,7 +71,7 @@ export default function EditViewsDialog({
                         <p className="text-sm text-muted-foreground">
                             Choose a view to create or edit.
                         </p>
-                        {views.map((view) => {
+                        {allViews.map((view) => {
                             const isConfigured = viewData[view.id] != null;
                             return (
                                 <button
