@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
     Dialog,
     DialogContent,
@@ -51,6 +51,7 @@ export default function EditViewsDialog({
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [items, setItems] = useState<StoredViewInstance[]>(viewData);
+    const listRef = useRef<HTMLDivElement>(null);
 
     // Sync local items when viewData changes (after server revalidation)
     const [prevViewData, setPrevViewData] = useState(viewData);
@@ -141,6 +142,34 @@ export default function EditViewsDialog({
         setDragIndex(null);
     };
 
+    const handleTouchStart = (index: number) => {
+        setDragIndex(index);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (dragIndex === null || !listRef.current) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const elements = listRef.current.querySelectorAll<HTMLElement>('[data-drag-item]');
+        for (let i = 0; i < elements.length; i++) {
+            const rect = elements[i].getBoundingClientRect();
+            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom && i !== dragIndex) {
+                setItems((prev) => {
+                    const next = [...prev];
+                    const [moved] = next.splice(dragIndex, 1);
+                    next.splice(i, 0, moved);
+                    return next;
+                });
+                setDragIndex(i);
+                break;
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setDragIndex(null);
+    };
+
     const handleSave = () => {
         // Reassign ids to reflect current order
         const normalized = instances.map((v, i) => ({ ...v, id: i }));
@@ -186,17 +215,21 @@ export default function EditViewsDialog({
                 </DialogHeader>
 
                 {step.kind === "list" && (
-                    <div className="space-y-2">
+                    <div ref={listRef} className="space-y-2">
                         {instances.map((instance, index) => {
                             const isEnabled = instance.enabled !== false;
                             const isDefault = index === instances.findIndex((v) => v.enabled !== false);
                             return (
                                 <div
                                     key={instance.id}
+                                    data-drag-item
                                     draggable={editingId !== instance.id}
                                     onDragStart={() => handleDragStart(index)}
                                     onDragOver={(e) => handleDragOver(e, index)}
                                     onDragEnd={handleDragEnd}
+                                    onTouchStart={() => handleTouchStart(index)}
+                                    onTouchMove={handleTouchMove}
+                                    onTouchEnd={handleTouchEnd}
                                     className={`flex items-center gap-2 rounded-md border px-3 py-3 transition-colors ${
                                         editingId === instance.id
                                             ? ""
