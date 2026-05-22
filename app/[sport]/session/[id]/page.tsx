@@ -37,7 +37,7 @@ import {
   getUserAccessRequestStatus,
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
-import type { StoredViewInstance } from "@/components/sports/session-alt-views/interfaces";
+import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
 import { SESSION_STATUS } from "@/lib/supabase/types";
 
 async function SessionSignupsContent({

@@ -2,11 +2,11 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
-import AlternateViewToggle from "@/components/sports/alternate-view-toggle";
+import ViewToggle from "@/components/sports/view-toggle";
 import EditViewsDialog from "@/components/sports/edit-views-dialog";
-import { getAlternateView } from "@/components/sports/session-alt-views/registry";
+import { getSessionView } from "@/components/sports/session-views/registry";
 import type { SignupRow } from "@/components/sports/session-signups-table";
-import type { StoredViewInstance } from "@/components/sports/session-alt-views/interfaces";
+import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
 
 interface AttendanceSectionProps {
     sport: string;
@@ -63,7 +63,7 @@ export default function AttendanceSection({
 
     // Resolve the registry entry by the instance's type
     const activeInstance = activeView ? viewData[activeView] : null;
-    const entry = activeInstance ? getAlternateView(activeInstance.type) : undefined;
+    const entry = activeInstance ? getSessionView(activeInstance.type) : undefined;
 
     return (
         <div className="space-y-2">
@@ -71,7 +71,7 @@ export default function AttendanceSection({
                 <div className="flex items-center gap-2">
                     <h2 className="font-semibold text-foreground">Attendance</h2>
                     {hasConfiguredViews && (
-                        <AlternateViewToggle
+                        <ViewToggle
                             views={configuredViews}
                             activeView={activeView}
                             onViewChange={setActiveView}

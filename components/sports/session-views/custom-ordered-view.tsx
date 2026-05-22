@@ -15,7 +15,7 @@ import { TeamMemberBadge } from "@/components/sports/badges";
 import SignupSummaryHeader from "@/components/sports/signup-summary-header";
 import { displayName } from "@/lib/format";
 import { updateSessionViewData } from "@/lib/actions/sessions";
-import type { AlternateViewProps, AlternateViewEditorProps } from "./interfaces";
+import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
 
 /**
  * Generic ordered signups view.
@@ -28,7 +28,7 @@ export default function CustomOrderedView({
     playerCap,
     currentUserId,
     viewData,
-}: AlternateViewProps) {
+}: SessionViewProps) {
     const order = Array.isArray(viewData) ? (viewData as string[]) : [];
     const allSignups = signups.filter((s) => s.status !== "cancelled");
     const confirmed = allSignups.filter((s) => s.status === "confirmed");
@@ -116,7 +116,7 @@ export function CustomOrderedEditor({
     teamMemberIds,
     viewData,
     onSaved,
-}: AlternateViewEditorProps) {
+}: SessionViewEditorProps) {
     const currentOrder = Array.isArray(viewData) ? (viewData as string[]) : [];
     const confirmed = signups.filter((s) => s.status === "confirmed");
 

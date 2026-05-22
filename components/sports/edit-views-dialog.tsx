@@ -11,10 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pencil, Check, Trash2, Plus } from "lucide-react";
-import { getAlternateView, getAllAlternateViews } from "@/components/sports/session-alt-views/registry";
+import { getSessionView, getAllSessionViews } from "@/components/sports/session-views/registry";
 import { createSessionView, deleteSessionView } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
-import type { StoredViewInstance } from "@/components/sports/session-alt-views/interfaces";
+import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
 
 interface EditViewsDialogProps {
     sport: string;
@@ -31,7 +31,7 @@ type DialogStep =
     | { kind: "edit"; viewId: string };
 
 /**
- * Admin-only dialog for managing alternate view instances on a session.
+ * Admin-only dialog for managing session view instances.
  * Supports creating multiple instances of the same view type, each with a custom name.
  */
 export default function EditViewsDialog({
@@ -46,7 +46,7 @@ export default function EditViewsDialog({
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
 
-    const allTypes = getAllAlternateViews();
+    const allTypes = getAllSessionViews();
     const instances = Object.entries(viewData);
 
     const handleOpenChange = (next: boolean) => {
@@ -90,7 +90,7 @@ export default function EditViewsDialog({
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>
-                        {step.kind === "list" && "Alternate Views"}
+                        {step.kind === "list" && "Session Views"}
                         {step.kind === "pick-type" && "Choose View Type"}
                         {step.kind === "name" &&
                             `Name Your ${allTypes.find((t) => t.id === step.type)?.label}`}
@@ -102,7 +102,7 @@ export default function EditViewsDialog({
                     <div className="space-y-2">
                         {instances.length === 0 && (
                             <p className="text-sm text-muted-foreground py-2">
-                                No alternate views configured yet.
+                                No views configured yet.
                             </p>
                         )}
                         {instances.map(([id, instance]) => (
@@ -215,7 +215,7 @@ export default function EditViewsDialog({
                 {step.kind === "edit" && (() => {
                     const instance = viewData[step.viewId];
                     const entry = instance
-                        ? getAlternateView(instance.type)
+                        ? getSessionView(instance.type)
                         : undefined;
                     if (!entry) {
                         return (

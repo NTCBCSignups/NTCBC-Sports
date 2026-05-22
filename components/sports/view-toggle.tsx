@@ -9,21 +9,21 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-interface AlternateViewToggleProps {
+interface ViewToggleProps {
     views: { id: string; label: string }[];
     activeView: string | null;
     onViewChange: (viewId: string | null) => void;
 }
 
 /**
- * Lets users switch between the default attendance view and configured alternate views.
- * Renders a simple toggle button for 1 alt view, or a dropdown for >1.
+ * Lets users switch between the default attendance view and other session views.
+ * Renders a simple toggle button for 1 view, or a dropdown for >1.
  */
-export default function AlternateViewToggle({
+export default function ViewToggle({
     views,
     activeView,
     onViewChange,
-}: AlternateViewToggleProps) {
+}: ViewToggleProps) {
     if (views.length === 0) return null;
 
     if (views.length === 1) {

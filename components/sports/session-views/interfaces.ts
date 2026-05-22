@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 
-/** Shape of each view instance stored in alt_session_views JSONB column. */
+/** Shape of each view instance stored in the session's views JSONB column. */
 export interface StoredViewInstance {
     /** Registry key (e.g. "customOrderedView") — determines which component renders it. */
     type: string;
@@ -11,18 +11,18 @@ export interface StoredViewInstance {
     data: unknown;
 }
 
-/** Props passed to every alternate view component. */
-export interface AlternateViewProps {
+/** Props passed to every session view component. */
+export interface SessionViewProps {
     signups: SignupRow[];
     teamMemberIds: Set<string>;
     playerCap: number | null;
     currentUserId?: string | null;
-    /** The stored data for this view (from alt_session_views[viewId]). */
+    /** The stored data for this view. */
     viewData: unknown;
 }
 
-/** Props passed to every alternate view editor component. */
-export interface AlternateViewEditorProps {
+/** Props passed to every session view editor component. */
+export interface SessionViewEditorProps {
     sport: string;
     sessionId: string;
     viewId: string;
@@ -34,13 +34,13 @@ export interface AlternateViewEditorProps {
 }
 
 /**
- * Defines an alternate view type. Each instance requires exactly
+ * Defines a session view type. Each instance requires exactly
  * one View component and one Editor component.
  */
-export class AltView {
+export class SessionView {
     constructor(
         public readonly label: string,
-        public readonly ViewComponent: ComponentType<AlternateViewProps>,
-        public readonly EditorComponent: ComponentType<AlternateViewEditorProps>,
+        public readonly ViewComponent: ComponentType<SessionViewProps>,
+        public readonly EditorComponent: ComponentType<SessionViewEditorProps>,
     ) {}
 }
