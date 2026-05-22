@@ -1,6 +1,7 @@
 "use client";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import ViewToggle from "@/components/sports/view-toggle";
 import EditViewsDialog from "@/components/sports/edit-views-dialog";
@@ -22,7 +23,7 @@ interface AttendanceSectionProps {
 
 /**
  * Client wrapper for the session views section on the session detail page.
- * Manages toggle state between views and persists selection in URL (?view=...).
+ * Manages toggle state between views via local state for instant switching.
  *
  * - Empty viewData: shows full attendance table (no views configured yet).
  * - Non-empty, all disabled: shows collapsed hint (count + user's row).
@@ -39,8 +40,21 @@ export default function AttendanceSection({
     isAdmin,
 }: AttendanceSectionProps) {
     const searchParams = useSearchParams();
-    const router = useRouter();
-    const pathname = usePathname();
+    const [activeView, setActiveView] = useState<string | null>(
+        searchParams.get("view"),
+    );
+
+    const handleViewChange = (viewId: string | null) => {
+        setActiveView(viewId);
+        const params = new URLSearchParams(window.location.search);
+        if (viewId) {
+            params.set("view", viewId);
+        } else {
+            params.delete("view");
+        }
+        const newUrl = `${window.location.pathname}${params.size ? `?${params}` : ""}`;
+        window.history.replaceState(null, "", newUrl);
+    };
 
     // Empty viewData = no views configured yet → show attendance table directly
     if (viewData.length === 0) {
@@ -74,24 +88,13 @@ export default function AttendanceSection({
         .filter((v) => v.enabled !== false)
         .map((v) => ({ id: String(v.id), label: v.label }));
 
-    const viewParam = searchParams.get("view");
-    const activeView = configuredViews.length > 0
-        ? configuredViews.some((v) => v.id === viewParam)
-            ? viewParam!
+    const resolvedView = configuredViews.length > 0
+        ? configuredViews.some((v) => v.id === activeView)
+            ? activeView!
             : configuredViews[0].id
         : null;
 
-    const setActiveView = (viewId: string | null) => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (viewId) {
-            params.set("view", viewId);
-        } else {
-            params.delete("view");
-        }
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    };
-
-    const activeInstance = activeView ? viewData.find((v) => v.id === Number(activeView)) : null;
+    const activeInstance = resolvedView ? viewData.find((v) => v.id === Number(resolvedView)) : null;
     const entry = activeInstance ? getSessionView(activeInstance.type) : undefined;
 
     return (
@@ -100,8 +103,8 @@ export default function AttendanceSection({
                 {configuredViews.length > 1 ? (
                     <ViewToggle
                         views={configuredViews}
-                        activeView={activeView}
-                        onViewChange={setActiveView}
+                        activeView={resolvedView}
+                        onViewChange={handleViewChange}
                     />
                 ) : (
                     <h2 className="font-semibold text-foreground">
@@ -119,7 +122,7 @@ export default function AttendanceSection({
                 )}
             </div>
 
-            {activeView && entry ? (
+            {resolvedView && entry ? (
                 <entry.ViewComponent
                     signups={signups}
                     teamMemberIds={teamMemberIds}

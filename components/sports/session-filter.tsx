@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,6 @@ export default function SessionFilter({
     sport,
     showFilters = true,
 }: SessionFilterProps) {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const [value, setValue] = useState(defaultValue);
     const didRestoreScroll = useRef(false);
@@ -75,7 +74,7 @@ export default function SessionFilter({
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", next);
         params.delete("highlight");
-        router.replace(`?${params.toString()}`, { scroll: false });
+        window.history.replaceState(null, "", `?${params.toString()}`);
     };
 
     return (
