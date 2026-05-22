@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
     Dialog,
     DialogContent,
@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Plus, GripVertical, Loader2 } from "lucide-react";
+import { DraggableList } from "@/components/ui/draggable-list";
+import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 import { saveSessionViews } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
@@ -48,10 +49,8 @@ export default function EditViewsDialog({
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
-    const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [items, setItems] = useState<StoredViewInstance[]>(viewData);
-    const listRef = useRef<HTMLDivElement>(null);
 
     // Sync local items when viewData changes (after server revalidation)
     const [prevViewData, setPrevViewData] = useState(viewData);
@@ -122,54 +121,6 @@ export default function EditViewsDialog({
         );
     };
 
-    const handleDragStart = (index: number) => {
-        setDragIndex(index);
-    };
-
-    const handleDragOver = (e: React.DragEvent, index: number) => {
-        e.preventDefault();
-        if (dragIndex === null || dragIndex === index) return;
-        setItems((prev) => {
-            const next = [...prev];
-            const [moved] = next.splice(dragIndex, 1);
-            next.splice(index, 0, moved);
-            return next;
-        });
-        setDragIndex(index);
-    };
-
-    const handleDragEnd = () => {
-        setDragIndex(null);
-    };
-
-    const handleTouchStart = (index: number) => {
-        setDragIndex(index);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (dragIndex === null || !listRef.current) return;
-        e.preventDefault();
-        const touch = e.touches[0];
-        const elements = listRef.current.querySelectorAll<HTMLElement>('[data-drag-item]');
-        for (let i = 0; i < elements.length; i++) {
-            const rect = elements[i].getBoundingClientRect();
-            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom && i !== dragIndex) {
-                setItems((prev) => {
-                    const next = [...prev];
-                    const [moved] = next.splice(dragIndex, 1);
-                    next.splice(i, 0, moved);
-                    return next;
-                });
-                setDragIndex(i);
-                break;
-            }
-        }
-    };
-
-    const handleTouchEnd = () => {
-        setDragIndex(null);
-    };
-
     const handleSave = () => {
         // Reassign ids to reflect current order
         const normalized = instances.map((v, i) => ({ ...v, id: i }));
@@ -215,98 +166,86 @@ export default function EditViewsDialog({
                 </DialogHeader>
 
                 {step.kind === "list" && (
-                    <div ref={listRef} className="space-y-2">
-                        {instances.map((instance, index) => {
-                            const isEnabled = instance.enabled !== false;
-                            const isDefault = index === instances.findIndex((v) => v.enabled !== false);
-                            return (
-                                <div
-                                    key={instance.id}
-                                    data-drag-item
-                                    draggable={editingId !== instance.id}
-                                    onDragStart={() => handleDragStart(index)}
-                                    onDragOver={(e) => handleDragOver(e, index)}
-                                    onDragEnd={handleDragEnd}
-                                    onTouchStart={() => handleTouchStart(index)}
-                                    onTouchMove={handleTouchMove}
-                                    onTouchEnd={handleTouchEnd}
-                                    className={`flex items-center gap-2 rounded-md border px-3 py-3 transition-colors ${
-                                        editingId === instance.id
-                                            ? ""
-                                            : "cursor-grab active:cursor-grabbing"
-                                    } ${
-                                        dragIndex === index
-                                            ? "bg-muted border-primary"
-                                            : !isEnabled
-                                              ? "bg-muted/50 opacity-50"
-                                              : ""
-                                    }`}
-                                >
-                                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <input
-                                        type="checkbox"
-                                        checked={isEnabled}
-                                        onChange={(e) =>
-                                            handleToggle(instance.id, e.target.checked)
-                                        }
-                                        className="h-4 w-4 rounded border-input shrink-0"
-                                    />
-                                    <div className="flex flex-col flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            {isAttendanceView(instance) ? (
-                                                <span className="text-sm font-medium truncate">
-                                                    {instance.label}
-                                                </span>
-                                            ) : (
-                                                <input
-                                                    type="text"
-                                                    value={instance.label}
-                                                    onChange={(e) =>
-                                                        handleRename(instance.id, e.target.value)
-                                                    }
-                                                    onFocus={() => setEditingId(instance.id)}
-                                                    onBlur={() => setEditingId(null)}
-                                                    className="text-sm font-medium truncate bg-transparent border-none outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full"
-                                                />
-                                            )}
-                                            {isDefault && (
-                                                <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
-                                                    Default
+                    <div className="space-y-2">
+                        <DraggableList
+                            items={instances}
+                            onReorder={(next) => setItems(next.filter((v) => v.id !== 0 || hasAttendance))}
+                            keyExtractor={(v) => v.id}
+                            isDraggable={(v) => editingId !== v.id}
+                            itemClassName={(v) => {
+                                const isEnabled = v.enabled !== false;
+                                return !isEnabled ? "bg-muted/50 opacity-50" : "";
+                            }}
+                            renderItem={(instance, index) => {
+                                const isEnabled = instance.enabled !== false;
+                                const isDefault = index === instances.findIndex((v) => v.enabled !== false);
+                                return (
+                                    <>
+                                        <input
+                                            type="checkbox"
+                                            checked={isEnabled}
+                                            onChange={(e) =>
+                                                handleToggle(instance.id, e.target.checked)
+                                            }
+                                            className="h-4 w-4 rounded border-input shrink-0"
+                                        />
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                {isAttendanceView(instance) ? (
+                                                    <span className="text-sm font-medium truncate">
+                                                        {instance.label}
+                                                    </span>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        value={instance.label}
+                                                        onChange={(e) =>
+                                                            handleRename(instance.id, e.target.value)
+                                                        }
+                                                        onFocus={() => setEditingId(instance.id)}
+                                                        onBlur={() => setEditingId(null)}
+                                                        className="text-sm font-medium truncate bg-transparent border-none outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full"
+                                                    />
+                                                )}
+                                                {isDefault && (
+                                                    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
+                                                        Default
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {!isAttendanceView(instance) && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    {allTypes.find((t) => t.id === instance.type)
+                                                        ?.label ?? instance.type}
                                                 </span>
                                             )}
                                         </div>
                                         {!isAttendanceView(instance) && (
-                                            <span className="text-xs text-muted-foreground">
-                                                {allTypes.find((t) => t.id === instance.type)
-                                                    ?.label ?? instance.type}
-                                            </span>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 w-7 p-0"
+                                                    onClick={() =>
+                                                        setStep({ kind: "edit", viewId: instance.id })
+                                                    }
+                                                >
+                                                    <Pencil className="h-3 w-3" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                                    onClick={() => handleDelete(instance.id)}
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
                                         )}
-                                    </div>
-                                    {!isAttendanceView(instance) && (
-                                        <div className="flex items-center gap-1 shrink-0">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 w-7 p-0"
-                                                onClick={() =>
-                                                    setStep({ kind: "edit", viewId: instance.id })
-                                                }
-                                            >
-                                                <Pencil className="h-3 w-3" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                                onClick={() => handleDelete(instance.id)}
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                    </>
+                                );
+                            }}
+                        />
                         <Button
                             variant="outline"
                             size="sm"
