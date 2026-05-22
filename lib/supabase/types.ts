@@ -45,6 +45,7 @@ export interface SportSession {
   notes: string | null;
   status: SessionStatus;
   status_notes: string | null;
+  alt_session_views: Record<string, unknown>;
   created_by: string | null;
   created_at: string;
 }
