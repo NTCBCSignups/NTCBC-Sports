@@ -212,7 +212,7 @@ export default function FieldingView({
     const getUserName = (userId: string) =>
         displayName(userMap.get(userId)?.profiles ?? null);
 
-    if (data.innings === 0 || Object.keys(data.assignments).length === 0) {
+    if (Object.keys(data.assignments).length === 0) {
         return (
             <div className="overflow-hidden rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
                 No fielding assignments have been set yet.
@@ -220,7 +220,11 @@ export default function FieldingView({
         );
     }
 
-    const innings = Array.from({ length: data.innings }, (_, i) => i + 1);
+    // Use the greater of data.innings and the highest assignment key to handle
+    // cases where the saved innings count is inconsistent with actual data
+    const maxAssignmentInning = Math.max(...Object.keys(data.assignments).map(Number));
+    const effectiveInnings = Math.max(data.innings, maxAssignmentInning);
+    const innings = Array.from({ length: effectiveInnings }, (_, i) => i + 1);
 
     return (
         <div className="overflow-hidden rounded-lg border bg-card">
