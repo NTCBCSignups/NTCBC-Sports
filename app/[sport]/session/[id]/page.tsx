@@ -20,7 +20,7 @@ import SessionDialog from "@/components/sports/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
 import AdminButton from "@/components/sports/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
-import SessionSignupsTable from "@/components/sports/session-signups-table";
+import AttendanceSection from "@/components/sports/attendance-section";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
@@ -47,6 +47,9 @@ async function SessionSignupsContent({
   userRole,
   signupRole,
   playerCap,
+  alternateViews,
+  viewData,
+  isAdmin,
 }: {
   sessionId: string;
   sport: string;
@@ -55,6 +58,9 @@ async function SessionSignupsContent({
   userRole: Role;
   signupRole: Role;
   playerCap: number | null;
+  alternateViews: { id: string; label: string; iconName: string }[];
+  viewData: Record<string, unknown>;
+  isAdmin: boolean;
 }) {
   const userId = user?.id ?? null;
   const canSignup = userRole >= signupRole;
@@ -99,13 +105,16 @@ async function SessionSignupsContent({
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-semibold text-foreground">Attendance</h2>
-        <SessionSignupsTable
+        <AttendanceSection
+          sport={sport}
+          sessionId={sessionId}
           signups={rawSignups}
           teamMemberIds={teamMemberIds}
           playerCap={playerCap}
           currentUserId={userId}
-          showTimestamp
+          alternateViews={alternateViews}
+          viewData={viewData}
+          isAdmin={isAdmin}
         />
       </div>
     </div>
@@ -303,6 +312,9 @@ export default async function SessionDetailPage({
           userRole={userRole}
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
+          alternateViews={tab.alternateViews ?? []}
+          viewData={(session.alt_session_views as Record<string, unknown>) ?? {}}
+          isAdmin={isAdmin}
         />
       </Suspense>
     </div>
