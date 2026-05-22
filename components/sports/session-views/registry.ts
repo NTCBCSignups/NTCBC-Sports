@@ -1,6 +1,6 @@
 import CustomOrderedView, { CustomOrderedEditor } from "./custom-ordered-view";
 import AttendanceView, { AttendanceEditor } from "./attendance-view";
-import FieldingView, { FieldingEditor } from "./fielding-view";
+import FieldingView, { FieldingEditor } from "@/components/softball/session-views/fielding-view";
 import { SessionView } from "./interfaces";
 
 /**
