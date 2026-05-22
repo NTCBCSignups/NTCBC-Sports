@@ -32,10 +32,11 @@ const POSITIONS = {
         { key: "3B_COACH", label: "3rd Base Coach" },
     ],
     infield: [
+        { key: "PITCHER", label: "Pitcher" },
         { key: "CATCHER", label: "Catcher" },
         { key: "FIRST_BASE", label: "1st Base" },
         { key: "SECOND_BASE", label: "2nd Base" },
-        { key: "CUTOFF", label: "Cutoff" },
+        { key: "SHORTSTOP", label: "Shortstop" },
         { key: "THIRD_BASE", label: "3rd Base" },
     ],
     outfield: [
@@ -104,18 +105,19 @@ function isInherited(data: FieldingData, inning: number, position: string): bool
 // ── Diamond SVG ──────────────────────────────────────────────────
 
 const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
+    PITCHER: { x: 50, y: 62 },
     CATCHER: { x: 50, y: 90 },
-    FIRST_BASE: { x: 72, y: 58 },
-    SECOND_BASE: { x: 50, y: 42 },
-    CUTOFF: { x: 50, y: 55 },
-    THIRD_BASE: { x: 28, y: 58 },
-    LEFT_FIELD: { x: 15, y: 25 },
-    LEFT_ROVER: { x: 30, y: 35 },
-    CENTRE_FIELD: { x: 50, y: 15 },
-    RIGHT_ROVER: { x: 70, y: 35 },
-    RIGHT_FIELD: { x: 85, y: 25 },
-    "1B_COACH": { x: 82, y: 70 },
-    "3B_COACH": { x: 18, y: 70 },
+    FIRST_BASE: { x: 68, y: 55 },
+    SECOND_BASE: { x: 58, y: 38 },
+    SHORTSTOP: { x: 40, y: 38 },
+    THIRD_BASE: { x: 30, y: 55 },
+    LEFT_FIELD: { x: 12, y: 18 },
+    LEFT_ROVER: { x: 27, y: 30 },
+    CENTRE_FIELD: { x: 50, y: 10 },
+    RIGHT_ROVER: { x: 73, y: 30 },
+    RIGHT_FIELD: { x: 88, y: 18 },
+    "1B_COACH": { x: 80, y: 73 },
+    "3B_COACH": { x: 20, y: 73 },
 };
 
 function FieldingDiamond({
