@@ -15,11 +15,11 @@ import { displayName } from "@/lib/format";
 import type { AlternateViewProps } from "@/config/alternate-view-registry";
 
 /**
- * Renders signups in a specified order (from viewData).
+ * Generic ordered signups view.
  * Expects viewData to be a string[] of user IDs representing the order.
  * Confirmed players not in the order are appended at the end.
  */
-export default function OrderedSignupsView({
+export default function CustomOrderedView({
     signups,
     teamMemberIds,
     playerCap,

@@ -76,8 +76,6 @@ export interface AdminTabMeta {
 export interface AlternateViewMeta {
   id: string;
   label: string;
-  /** Lucide icon name */
-  iconName: string;
 }
 
 export interface SportConfig {

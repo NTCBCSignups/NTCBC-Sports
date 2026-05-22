@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
-import OrderedSignupsView from "@/components/sports/ordered-signups-view";
-import BattingOrderEditor from "@/components/softball/batting-order-editor";
+import CustomOrderedView from "@/components/sports/session-alt-views/custom-ordered-view";
+import CustomOrderedEditor from "@/components/sports/session-alt-views/custom-ordered-editor";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 
 /** Props passed to every alternate view component. */
@@ -17,6 +17,7 @@ export interface AlternateViewProps {
 export interface AlternateViewEditorProps {
     sport: string;
     sessionId: string;
+    viewId: string;
     signups: SignupRow[];
     teamMemberIds: Set<string>;
     /** Current saved data for this view. */
@@ -35,8 +36,8 @@ interface AlternateViewEntry {
  */
 const alternateViewRegistry: Record<string, AlternateViewEntry> = {
     battingOrder: {
-        ViewComponent: OrderedSignupsView,
-        EditorComponent: BattingOrderEditor,
+        ViewComponent: CustomOrderedView,
+        EditorComponent: CustomOrderedEditor,
     },
 };
 

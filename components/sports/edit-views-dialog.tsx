@@ -104,6 +104,7 @@ export default function EditViewsDialog({
                         <entry.EditorComponent
                             sport={sport}
                             sessionId={sessionId}
+                            viewId={selectedView}
                             signups={signups}
                             teamMemberIds={teamMemberIds}
                             viewData={viewData[selectedView] ?? null}

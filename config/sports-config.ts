@@ -156,7 +156,7 @@ export const sportsConfig: Record<string, SportConfig> = {
         defaultTitlePrefix: "Game",
         sessionPillColor: PillColor.indigo,
         permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
-        alternateViews: [{ id: "battingOrder", label: "Batting Order", iconName: "ListOrdered" }],
+        alternateViews: [{ id: "battingOrder", label: "Batting Order" }],
       },
       {
         value: "umpiring",

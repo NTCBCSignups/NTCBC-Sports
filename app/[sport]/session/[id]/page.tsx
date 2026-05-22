@@ -58,7 +58,7 @@ async function SessionSignupsContent({
   userRole: Role;
   signupRole: Role;
   playerCap: number | null;
-  alternateViews: { id: string; label: string; iconName: string }[];
+  alternateViews: { id: string; label: string }[];
   viewData: Record<string, unknown>;
   isAdmin: boolean;
 }) {

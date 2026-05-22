@@ -8,12 +8,13 @@ import { updateSessionViewData } from "@/lib/actions/sessions";
 import type { AlternateViewEditorProps } from "@/config/alternate-view-registry";
 
 /**
- * Batting order editor — drag-drop reorderable list of confirmed signups.
- * Rendered inside the edit-views dialog when "Batting Order" is selected.
+ * Generic ordered list editor — drag-drop reorderable list of confirmed signups.
+ * Used for any alternate view that stores an ordered list of user IDs.
  */
-export default function BattingOrderEditor({
+export default function CustomOrderedEditor({
     sport,
     sessionId,
+    viewId,
     signups,
     teamMemberIds,
     viewData,
@@ -72,7 +73,7 @@ export default function BattingOrderEditor({
     const handleSave = () => {
         const newOrder = items.map((s) => s.user_id);
         startTransition(async () => {
-            const result = await updateSessionViewData(sport, sessionId, "battingOrder", newOrder);
+            const result = await updateSessionViewData(sport, sessionId, viewId, newOrder);
             if ("success" in result) {
                 onSaved();
             }
@@ -90,7 +91,7 @@ export default function BattingOrderEditor({
     return (
         <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-                Drag players to set the batting order.
+                Drag players to set the order.
             </p>
             <div className="space-y-1 max-h-80 overflow-y-auto">
                 {items.map((signup, index) => (
