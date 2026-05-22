@@ -37,8 +37,7 @@ import {
   getUserAccessRequestStatus,
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
-import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
-import { SESSION_STATUS } from "@/lib/supabase/types";
+import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
 
 async function SessionSignupsContent({
   sessionId,
@@ -310,7 +309,7 @@ export default async function SessionDetailPage({
           userRole={userRole}
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
-          viewData={Array.isArray(session.alt_session_views) ? (session.alt_session_views as StoredViewInstance[]) : []}
+          viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
           isAdmin={isAdmin}
         />
       </Suspense>

@@ -15,7 +15,7 @@ import { Pencil, Trash2, Plus, GripVertical, Loader2 } from "lucide-react";
 import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 import { saveSessionViews } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
-import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
+import type { StoredViewInstance } from "@/lib/supabase/types";
 
 interface EditViewsDialogProps {
     sport: string;
@@ -33,8 +33,7 @@ type DialogStep =
 
 /**
  * Admin-only dialog for managing session view instances.
- * All list changes (reorder, toggle, delete, add) are local until Save is clicked.
- * Custom view editors still open and save their data independently.
+ * All changes (reorder, toggle, delete, add, editor data) are local until Save is clicked.
  */
 export default function EditViewsDialog({
     sport,

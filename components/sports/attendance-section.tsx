@@ -7,7 +7,7 @@ import EditViewsDialog from "@/components/sports/edit-views-dialog";
 import { getSessionView, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session-signups-table";
-import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
+import type { StoredViewInstance } from "@/lib/supabase/types";
 
 interface AttendanceSectionProps {
     sport: string;
@@ -24,8 +24,9 @@ interface AttendanceSectionProps {
  * Client wrapper for the session views section on the session detail page.
  * Manages toggle state between views and persists selection in URL (?view=...).
  *
- * - Empty viewData: shows collapsed attendance hint (user's row + count).
- * - Non-empty viewData: shows enabled views via registry.
+ * - Empty viewData: shows full attendance table (no views configured yet).
+ * - Non-empty, all disabled: shows collapsed hint (count + user's row).
+ * - Non-empty, has enabled: shows view toggle + active view component.
  */
 export default function AttendanceSection({
     sport,
@@ -41,7 +42,6 @@ export default function AttendanceSection({
     const router = useRouter();
     const pathname = usePathname();
 
-    // Empty viewData = no views configured, show collapsed attendance hint
     // Empty viewData = no views configured yet → show attendance table directly
     if (viewData.length === 0) {
         return (
