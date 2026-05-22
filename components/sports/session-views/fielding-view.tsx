@@ -169,7 +169,7 @@ function FieldingDiamond({
                     const circleClass = isHighlighted
                         ? "fill-primary stroke-primary"
                         : isCoach
-                            ? "fill-muted-foreground/40 stroke-muted-foreground/40"
+                            ? "fill-red-400/60 stroke-red-500/70"
                             : userId
                                 ? isOutfield
                                     ? "fill-emerald-400/70 stroke-emerald-500/80"
@@ -279,18 +279,23 @@ export default function FieldingView({
                                     {showDiamond ? "Hide" : "Show"} diamond
                                 </button>
 
-                                {showDiamond && (
-                                    <FieldingDiamond
-                                        assignments={Object.fromEntries(
-                                            ALL_POSITIONS.map((p) => [
-                                                p.key,
-                                                getEffectiveAssignment(data, selectedInning, p.key),
-                                            ]),
-                                        )}
-                                        highlightUserId={selectedUser}
-                                        getUserName={getUserName}
-                                    />
-                                )}
+                <div className={cn(
+                                    "grid transition-[grid-template-rows] duration-300 ease-in-out",
+                                    showDiamond ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                                )}>
+                                    <div className="overflow-hidden">
+                                        <FieldingDiamond
+                                            assignments={Object.fromEntries(
+                                                ALL_POSITIONS.map((p) => [
+                                                    p.key,
+                                                    getEffectiveAssignment(data, selectedInning, p.key),
+                                                ]),
+                                            )}
+                                            highlightUserId={selectedUser}
+                                            getUserName={getUserName}
+                                        />
+                                    </div>
+                                </div>
 
                                 <Table>
                                     <TableHeader>
@@ -352,18 +357,23 @@ export default function FieldingView({
                             {showDiamond ? "Hide" : "Show"} diamond
                         </button>
 
-                        {showDiamond && (
-                            <FieldingDiamond
-                                assignments={Object.fromEntries(
-                                    ALL_POSITIONS.map((p) => [
-                                        p.key,
-                                        getEffectiveAssignment(data, selectedInning, p.key),
-                                    ]),
-                                )}
-                                highlightUserId={selectedUser || currentUserId}
-                                getUserName={getUserName}
-                            />
-                        )}
+<div className={cn(
+                            "grid transition-[grid-template-rows] duration-300 ease-in-out",
+                            showDiamond ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                        )}>
+                            <div className="overflow-hidden">
+                                <FieldingDiamond
+                                    assignments={Object.fromEntries(
+                                        ALL_POSITIONS.map((p) => [
+                                            p.key,
+                                            getEffectiveAssignment(data, selectedInning, p.key),
+                                        ]),
+                                    )}
+                                    highlightUserId={selectedUser || currentUserId}
+                                    getUserName={getUserName}
+                                />
+                            </div>
+                        </div>
 
                         <Table>
                             <TableHeader>
