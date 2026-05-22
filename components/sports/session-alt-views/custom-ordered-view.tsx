@@ -12,7 +12,7 @@ import {
 import { TeamMemberBadge } from "@/components/sports/badges";
 import SignupSummaryHeader from "@/components/sports/signup-summary-header";
 import { displayName } from "@/lib/format";
-import type { AlternateViewProps } from "@/config/alternate-view-registry";
+import type { AlternateViewProps } from "@/config/alt-view-interfaces";
 
 /**
  * Generic ordered signups view.

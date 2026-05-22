@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import { displayName } from "@/lib/format";
 import { updateSessionViewData } from "@/lib/actions/sessions";
-import type { AlternateViewEditorProps } from "@/config/alternate-view-registry";
+import type { AlternateViewEditorProps } from "@/config/alt-view-interfaces";
 
 /**
  * Generic ordered list editor — drag-drop reorderable list of confirmed signups.
