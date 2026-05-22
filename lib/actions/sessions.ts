@@ -272,9 +272,10 @@ export async function toggleSessionView(
 
   const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
   const existing = current[viewId];
-  if (!existing) return { error: "View not found" };
 
-  const updated = { ...current, [viewId]: { ...existing, enabled } };
+  // If the entry doesn't exist yet (e.g. implicit attendance), create it
+  const entry = existing ?? { type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null };
+  const updated = { ...current, [viewId]: { ...entry, enabled } };
 
   const { error } = await supabase
     .from("sessions")

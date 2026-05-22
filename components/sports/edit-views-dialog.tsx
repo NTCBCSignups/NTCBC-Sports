@@ -54,7 +54,17 @@ export default function EditViewsDialog({
     const [dragIndex, setDragIndex] = useState<number | null>(null);
 
     const allTypes = getAllSessionViews();
-    const instances = Object.entries(viewData);
+
+    // Always show attendance row — synthesize if not in viewData
+    const hasAttendance = Object.values(viewData).some(
+        (v) => v.type === DEFAULT_VIEW_TYPE,
+    );
+    const instances: [string, StoredViewInstance][] = hasAttendance
+        ? Object.entries(viewData)
+        : [
+              ["attendance", { type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true }],
+              ...Object.entries(viewData),
+          ];
 
     const handleOpenChange = (next: boolean) => {
         setOpen(next);
@@ -138,11 +148,6 @@ export default function EditViewsDialog({
 
                 {step.kind === "list" && (
                     <div className="space-y-2">
-                        {instances.length === 0 && (
-                            <p className="text-sm text-muted-foreground py-2">
-                                No views configured yet.
-                            </p>
-                        )}
                         {instances.map(([id, instance], index) => {
                             const isDefault = isAttendance(instance);
                             const isEnabled = instance.enabled !== false;
