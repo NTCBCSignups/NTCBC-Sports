@@ -107,7 +107,7 @@ export default function SoftballFieldingView({
                                     </TableHeader>
                                     <TableBody>
                                         {innings.map((inning) => {
-                                            const position = ALL_POSITIONS.find(
+                                            const positions = ALL_POSITIONS.filter(
                                                 (p) => getEffectiveAssignment(data, inning, p.key) === selectedUser,
                                             );
                                             return (
@@ -123,7 +123,9 @@ export default function SoftballFieldingView({
                                                         {inning}
                                                     </TableCell>
                                                     <TableCell>
-                                                        {position?.label ?? "—"}
+                                                        {positions.length > 0
+                                                            ? positions.map((p) => p.label).join(", ")
+                                                            : "—"}
                                                     </TableCell>
                                                 </TableRow>
                                             );

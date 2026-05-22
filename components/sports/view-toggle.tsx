@@ -32,7 +32,7 @@ export default function ViewToggle({
             value={activeView ?? views[0].id}
             onValueChange={(v) => onViewChange(v)}
         >
-            <SelectTrigger className="h-auto border-none shadow-none px-0 py-0 font-semibold text-foreground text-base gap-1 w-auto underline decoration-muted-foreground/40 underline-offset-4 hover:decoration-foreground [&>svg:last-child]:hidden">
+            <SelectTrigger className="h-auto border-none shadow-none focus-visible:ring-0 focus-visible:border-none dark:bg-transparent dark:hover:bg-transparent px-0 py-0 font-semibold text-foreground text-base gap-1 w-auto underline decoration-muted-foreground/40 underline-offset-4 hover:decoration-foreground [&>svg:last-child]:hidden">
                 <SelectValue />
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </SelectTrigger>

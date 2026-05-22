@@ -5,9 +5,8 @@ import { cn } from "@/lib/utils";
 import { displayName } from "@/lib/format";
 import {
     ALL_POSITIONS,
-    COACH_KEYS,
     DIAMOND_POSITIONS,
-    INFIELD_KEYS,
+    OFFENSIVE_KEYS,
     OUTFIELD_KEYS,
     POSITION_GROUPS,
 } from "./fielding-data";
@@ -53,35 +52,31 @@ export function FieldingDiamond({
                     const isHighlighted = highlightUserId && userId === highlightUserId;
                     const posInfo = ALL_POSITIONS.find((p) => p.key === posKey);
                     const short = posInfo?.short ?? posKey;
-                    const isCoach = COACH_KEYS.has(posKey);
+                    const isOffensive = OFFENSIVE_KEYS.has(posKey);
                     const isOutfield = OUTFIELD_KEYS.has(posKey);
-                    const isInfield = INFIELD_KEYS.has(posKey);
 
                     const circleClass = isHighlighted
                         ? "fill-primary stroke-primary"
-                        : isCoach
-                            ? "fill-red-400/60 stroke-red-500/70"
+                        : isOffensive
+                            ? userId
+                                ? "fill-red-400/60 stroke-red-500/70"
+                                : "fill-red-400/20 stroke-red-500/30"
                             : userId
                                 ? isOutfield
                                     ? "fill-emerald-400/70 stroke-emerald-500/80"
-                                    : isInfield
-                                        ? "fill-amber-400/70 stroke-amber-500/80"
-                                        : "fill-muted-foreground/80 stroke-muted-foreground"
+                                    : "fill-amber-400/70 stroke-amber-500/80"
                                 : isOutfield
                                     ? "fill-emerald-400/20 stroke-emerald-500/30"
-                                    : isInfield
-                                        ? "fill-amber-400/20 stroke-amber-500/30"
-                                        : "fill-muted/50 stroke-muted-foreground/40";
+                                    : "fill-amber-400/20 stroke-amber-500/30";
 
                     return (
-                        <g key={posKey} className={isCoach ? "opacity-50" : ""}>
+                        <g key={posKey} className={isOffensive ? "opacity-70" : ""}>
                             <circle
                                 cx={pos.x}
                                 cy={pos.y}
                                 r={isHighlighted ? 2.5 : 2}
                                 className={circleClass}
                                 strokeWidth="0.3"
-                                strokeDasharray={isCoach ? "1 0.5" : undefined}
                             />
                             <text
                                 x={pos.x}
@@ -91,7 +86,7 @@ export function FieldingDiamond({
                                     "text-[2.5px] select-none",
                                     isHighlighted
                                         ? "fill-primary font-bold"
-                                        : isCoach
+                                        : isOffensive
                                             ? "fill-muted-foreground/60"
                                             : "fill-muted-foreground",
                                 )}

@@ -55,6 +55,18 @@ export const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
 export const INFIELD_KEYS: Set<string> = new Set(POSITIONS.infield.map((p) => p.key));
 export const OUTFIELD_KEYS: Set<string> = new Set(POSITIONS.outfield.map((p) => p.key));
 
+/** Offensive positions: batting coaches + pitcher */
+export const OFFENSIVE_KEYS: Set<string> = new Set([
+    ...POSITIONS.batting.map((p) => p.key),
+    "PITCHER",
+]);
+
+/** Defensive positions: infield (minus pitcher) + outfield */
+export const DEFENSIVE_KEYS: Set<string> = new Set([
+    ...POSITIONS.infield.filter((p) => p.key !== "PITCHER").map((p) => p.key),
+    ...POSITIONS.outfield.map((p) => p.key),
+]);
+
 // ── Data types ───────────────────────────────────────────────────
 
 export interface FieldingData {
@@ -135,10 +147,11 @@ export class FieldingMatrix {
 
         let unsetPosition: string | null = null;
 
-        // Unique: unassign user from other position in same inning
+        // Unique: unassign user from other position in same group (offensive/defensive)
         if (userId && this.unique) {
+            const sameGroup = OFFENSIVE_KEYS.has(position) ? OFFENSIVE_KEYS : DEFENSIVE_KEYS;
             for (const [pos, assignedId] of Object.entries(this.data[inning])) {
-                if (pos !== position && assignedId === userId) {
+                if (pos !== position && assignedId === userId && sameGroup.has(pos)) {
                     delete this.data[inning][pos];
                     unsetPosition = pos;
                     break;
@@ -159,13 +172,14 @@ export class FieldingMatrix {
         this.notifyInning(inning);
     }
 
-    /** Get user IDs assigned to other positions in this inning. */
+    /** Get user IDs assigned to other positions in the same group (offensive/defensive) this inning. */
     getTaken(inning: number, excludePosition: string): Set<string> {
         const taken = new Set<string>();
         const inningData = this.data[inning];
         if (!inningData) return taken;
+        const sameGroup = OFFENSIVE_KEYS.has(excludePosition) ? OFFENSIVE_KEYS : DEFENSIVE_KEYS;
         for (const [pos, userId] of Object.entries(inningData)) {
-            if (pos !== excludePosition && userId) taken.add(userId);
+            if (pos !== excludePosition && sameGroup.has(pos) && userId) taken.add(userId);
         }
         return taken;
     }
