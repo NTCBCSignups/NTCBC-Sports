@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
     Dialog,
     DialogClose,
@@ -53,6 +53,7 @@ export default function EditViewsDialog({
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
+    const pendingSaveRef = useRef(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [items, setItems] = useState<StoredViewInstance[]>(viewData);
 
@@ -75,7 +76,7 @@ export default function EditViewsDialog({
     const isDirty = JSON.stringify(instances) !== JSON.stringify(viewData);
 
     const handleOpenChange = (next: boolean) => {
-        if (!next && isDirty) {
+        if (!next && (isDirty || step.kind === "edit")) {
             setShowConfirm(true);
             return;
         }
@@ -99,8 +100,22 @@ export default function EditViewsDialog({
 
     const handleConfirmSave = () => {
         setShowConfirm(false);
-        handleSave();
+        if (step.kind === "edit") {
+            // Unmount editor first (syncs data to items), then save on next render
+            pendingSaveRef.current = true;
+            setStep({ kind: "list" });
+        } else {
+            handleSave();
+        }
     };
+
+    // Save after editor unmount has synced its data to items
+    useEffect(() => {
+        if (pendingSaveRef.current && step.kind === "list") {
+            pendingSaveRef.current = false;
+            handleSave();
+        }
+    });
 
     const handleCreate = (type: string) => {
         if (!newName.trim()) return;

@@ -173,9 +173,15 @@ class FieldingMatrix {
         return taken;
     }
 
-    /** Export final data for saving. */
+    /** Export final data for saving (omits empty innings). */
     export(): FieldingData["assignments"] {
-        return JSON.parse(JSON.stringify(this.data));
+        const result: Record<number, Record<string, string>> = {};
+        for (const [inning, positions] of Object.entries(this.data)) {
+            if (Object.keys(positions).length > 0) {
+                result[Number(inning)] = { ...positions };
+            }
+        }
+        return result;
     }
 
     removeInningsAbove(max: number) {
@@ -308,7 +314,7 @@ const FieldingCell = memo(function FieldingCell({ matrix, inning, position, uniq
                     matrix.assign(inning, position, v === "__unassigned__" ? null : v)
                 }
             >
-                <SelectTrigger className={cn("h-7 text-xs w-[120px]", !cellValue && "text-muted-foreground")}>
+                <SelectTrigger className={cn("h-7 text-xs w-[120px]", !cellValue && "text-destructive/70")}>
                     <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
@@ -611,7 +617,7 @@ export default function SoftballFieldingView({
                             <FieldingTable
                                 innings={innings}
                                 renderCell={(inning, position) => {
-                                    const userId = getEffectiveAssignment(data, inning, position);
+                                    const userId = data.assignments[inning]?.[position] ?? null;
                                     const isCurrentUser = userId === (currentUserId ?? "");
                                     return (
                                         <td
@@ -757,7 +763,9 @@ export function SoftballFieldingEditor({
     onChangeRef.current = onChange;
     const inningsRef = useRef(initial.innings);
     const uniqueRef = useRef(initial.unique);
-    const confirmed = signups.filter((s) => s.status === "confirmed");
+    const confirmed = signups
+        .filter((s) => s.status === "confirmed")
+        .sort((a, b) => displayName(a.profiles).localeCompare(displayName(b.profiles)));
 
     // Sync data to parent on unmount (when Back is clicked or dialog closes)
     useEffect(() => {
