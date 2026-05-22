@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect } from "react"
-import { Moon, Sun, Monitor } from "lucide-react"
+import { Contrast, Moon, Sun, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
@@ -29,16 +29,7 @@ export function ThemeToggle() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 data-[state=open]:bg-transparent">
-                    {!mounted ? (
-                        <Sun className="h-4 w-4" />
-                    ) : theme === "system" ? (
-                        <Monitor className="h-4 w-4" />
-                    ) : (
-                        <>
-                            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                        </>
-                    )}
+                    <Contrast className="h-4 w-4 fill-current [&_circle]:fill-none" />
                     <span className="sr-only">Toggle theme</span>
                 </Button>
             </DropdownMenuTrigger>
