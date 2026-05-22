@@ -148,7 +148,7 @@ export const sportsConfig: Record<string, SportConfig> = {
         label: "Drop-in Practice",
         defaultTitlePrefix: "Practice",
         sessionPillColor: PillColor.emerald,
-        permissions: { [AccessLevel.view]: Role.anon },
+        permissions: { [AccessLevel.view]: Role.user },
       },
       {
         value: "scheduled_game",

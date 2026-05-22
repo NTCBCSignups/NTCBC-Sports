@@ -161,21 +161,61 @@ async function SportSessionsContent({
 
   const hasHiddenSessions = sessionsWithCounts.length > viewableSessions.length;
 
-  // Find the highest view permission among restricted tabs for the "All" banner
-  const highestRestrictedViewRole = hasHiddenSessions
-    ? Math.max(...configTabs.filter((t) => userRole < t.permissions[AccessLevel.view]).map((t) => t.permissions[AccessLevel.view]))
+  // Determine the "All" tab banner based on which tabs are restricted
+  const hiddenTabs = configTabs.filter((t) => userRole < t.permissions[AccessLevel.view]);
+  const lowestHiddenRole = hasHiddenSessions
+    ? Math.min(...hiddenTabs.map((t) => t.permissions[AccessLevel.view])) as Role
     : Role.anon;
+  const hasViewableSessions = viewableSessions.length > 0;
 
-  const allGateBanner = hasHiddenSessions
-    ? getAccessGateBanner({
-      userId,
-      userRole,
-      requiredViewRole: highestRestrictedViewRole as Role,
-      accessRequestStatus,
-      sport,
-      label: "all sessions",
-    })
-    : null;
+  const allGateBanner = (() => {
+    if (!hasHiddenSessions) return null;
+
+    // Signed-in user lacking team access → show request banner
+    if (userId) {
+      return (
+        <TeamAccessBanner
+          requestStatus={accessRequestStatus}
+          sport={sport}
+        />
+      );
+    }
+
+    // Anon user — wording depends on whether they can already see some sessions
+    if (hasViewableSessions) {
+      // They can see some but not all
+      return (
+        <SignInToSignupBanner
+          title={
+            lowestHiddenRole >= Role.teamUser
+              ? "Some sessions require team access"
+              : "Sign in to view more sessions"
+          }
+          message={
+            lowestHiddenRole >= Role.teamUser
+              ? "Sign in and request team access to view all sessions."
+              : "Sign in with your Google account to view all sessions."
+          }
+        />
+      );
+    }
+
+    // They can't see anything
+    return (
+      <SignInToSignupBanner
+        title={
+          lowestHiddenRole >= Role.teamUser
+            ? "Team members only"
+            : "Sign in to view sessions"
+        }
+        message={
+          lowestHiddenRole >= Role.teamUser
+            ? "Sign in and request team access to view and sign up for sessions."
+            : "Sign in with your Google account to view and sign up for sessions."
+        }
+      />
+    );
+  })();
 
   const allOption = showAll
     ? {
