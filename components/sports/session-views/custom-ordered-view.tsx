@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useTransition } from "react";
+import { Fragment, useState } from "react";
 import {
     Table,
     TableBody,
@@ -9,12 +9,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import { TeamMemberBadge } from "@/components/sports/badges";
 import SignupSummaryHeader from "@/components/sports/signup-summary-header";
 import { displayName } from "@/lib/format";
-import { updateSessionViewData } from "@/lib/actions/sessions";
 import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
 
 /**
@@ -106,16 +104,12 @@ export default function CustomOrderedView({
 
 /**
  * Generic ordered list editor — drag-drop reorderable list of confirmed signups.
- * Used for any alternate view that stores an ordered list of user IDs.
+ * Reports order changes to parent via onChange; no direct server calls.
  */
 export function CustomOrderedEditor({
-    sport,
-    sessionId,
-    viewId,
     signups,
-    teamMemberIds,
     viewData,
-    onSaved,
+    onChange,
 }: SessionViewEditorProps) {
     const currentOrder = Array.isArray(viewData) ? (viewData as string[]) : [];
     const confirmed = signups.filter((s) => s.status === "confirmed");
@@ -139,7 +133,6 @@ export function CustomOrderedEditor({
     };
 
     const [items, setItems] = useState(buildInitialOrder);
-    const [isPending, startTransition] = useTransition();
     const [dragIndex, setDragIndex] = useState<number | null>(null);
 
     const moveItem = (from: number, to: number) => {
@@ -165,16 +158,9 @@ export function CustomOrderedEditor({
 
     const handleDragEnd = () => {
         setDragIndex(null);
-    };
-
-    const handleSave = () => {
+        // Report updated order to parent
         const newOrder = items.map((s) => s.user_id);
-        startTransition(async () => {
-            const result = await updateSessionViewData(sport, sessionId, viewId, newOrder);
-            if ("success" in result) {
-                onSaved();
-            }
-        });
+        onChange(newOrder);
     };
 
     if (confirmed.length === 0) {
@@ -209,11 +195,6 @@ export function CustomOrderedEditor({
                         <span className="text-sm">{displayName(signup.profiles)}</span>
                     </div>
                 ))}
-            </div>
-            <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={isPending} size="sm">
-                    {isPending ? "Saving…" : "Save Order"}
-                </Button>
             </div>
         </div>
     );

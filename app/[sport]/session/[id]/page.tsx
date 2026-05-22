@@ -58,7 +58,7 @@ async function SessionSignupsContent({
   userRole: Role;
   signupRole: Role;
   playerCap: number | null;
-  viewData: Record<string, StoredViewInstance>;
+  viewData: StoredViewInstance[];
   isAdmin: boolean;
 }) {
   const userId = user?.id ?? null;
@@ -310,7 +310,7 @@ export default async function SessionDetailPage({
           userRole={userRole}
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
-          viewData={(session.alt_session_views as Record<string, StoredViewInstance>) ?? {}}
+          viewData={Array.isArray(session.alt_session_views) ? (session.alt_session_views as StoredViewInstance[]) : []}
           isAdmin={isAdmin}
         />
       </Suspense>

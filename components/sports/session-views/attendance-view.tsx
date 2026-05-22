@@ -27,7 +27,7 @@ export default function AttendanceView({
 /**
  * Editor for the attendance view — no configuration needed.
  */
-export function AttendanceEditor({ onSaved }: SessionViewEditorProps) {
+export function AttendanceEditor({}: SessionViewEditorProps) {
     return (
         <p className="text-sm text-muted-foreground py-4">
             This view has no configuration. It displays sign-ups in order of sign-up time.

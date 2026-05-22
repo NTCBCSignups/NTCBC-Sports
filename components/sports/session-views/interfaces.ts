@@ -1,8 +1,10 @@
 import type { ComponentType } from "react";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 
-/** Shape of each view instance stored in the session's views JSONB column. */
+/** Shape of each view instance stored in the session's views JSONB array. */
 export interface StoredViewInstance {
+    /** Stable numeric identifier. Also determines display order (ascending). */
+    id: number;
     /** Registry key (e.g. "customOrderedView") — determines which component renders it. */
     type: string;
     /** Admin-given display name (e.g. "Batting Order"). */
@@ -25,14 +27,12 @@ export interface SessionViewProps {
 
 /** Props passed to every session view editor component. */
 export interface SessionViewEditorProps {
-    sport: string;
-    sessionId: string;
-    viewId: string;
     signups: SignupRow[];
     teamMemberIds: Set<string>;
     /** Current saved data for this view. */
     viewData: unknown;
-    onSaved: () => void;
+    /** Called when the editor's data changes. Parent batches the save. */
+    onChange: (data: unknown) => void;
 }
 
 /**
