@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Plus, GripVertical } from "lucide-react";
+import { Pencil, Trash2, Plus, GripVertical, Loader2 } from "lucide-react";
 import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 import {
     createSessionView,
@@ -300,8 +300,9 @@ export default function EditViewsDialog({
                         : undefined;
                     if (!instance || !entry) {
                         return (
-                            <div className="flex items-center justify-center py-8">
-                                <p className="text-sm text-muted-foreground">Loading…</p>
+                            <div className="flex items-center gap-3 py-8 justify-center">
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">Loading...</span>
                             </div>
                         );
                     }
