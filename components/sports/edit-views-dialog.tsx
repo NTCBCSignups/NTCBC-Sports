@@ -5,6 +5,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -43,10 +44,12 @@ export default function EditViewsDialog({
     viewData,
 }: EditViewsDialogProps) {
     const [open, setOpen] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
     const [dragIndex, setDragIndex] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [items, setItems] = useState<StoredViewInstance[]>(viewData);
 
     // Sync local items when viewData changes (after server revalidation)
@@ -68,13 +71,29 @@ export default function EditViewsDialog({
     const isDirty = JSON.stringify(instances) !== JSON.stringify(viewData);
 
     const handleOpenChange = (next: boolean) => {
+        if (!next && isDirty) {
+            setShowConfirm(true);
+            return;
+        }
         setOpen(next);
         if (!next) {
             setStep({ kind: "list" });
             setNewName("");
-            // Reset local state on close without saving
             setItems(viewData);
         }
+    };
+
+    const handleDiscard = () => {
+        setShowConfirm(false);
+        setOpen(false);
+        setStep({ kind: "list" });
+        setNewName("");
+        setItems(viewData);
+    };
+
+    const handleConfirmSave = () => {
+        setShowConfirm(false);
+        handleSave();
     };
 
     const handleCreate = (type: string) => {
@@ -93,6 +112,12 @@ export default function EditViewsDialog({
     const handleToggle = (viewId: number, enabled: boolean) => {
         setItems((prev) =>
             prev.map((v) => (v.id === viewId ? { ...v, enabled } : v)),
+        );
+    };
+
+    const handleRename = (viewId: number, label: string) => {
+        setItems((prev) =>
+            prev.map((v) => (v.id === viewId ? { ...v, label } : v)),
         );
     };
 
@@ -138,6 +163,7 @@ export default function EditViewsDialog({
         instance.type === DEFAULT_VIEW_TYPE;
 
     return (
+        <>
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="text-xs h-7">
@@ -167,11 +193,15 @@ export default function EditViewsDialog({
                             return (
                                 <div
                                     key={instance.id}
-                                    draggable
+                                    draggable={editingId !== instance.id}
                                     onDragStart={() => handleDragStart(index)}
                                     onDragOver={(e) => handleDragOver(e, index)}
                                     onDragEnd={handleDragEnd}
-                                    className={`flex items-center gap-2 rounded-md border px-3 py-3 cursor-grab active:cursor-grabbing transition-colors ${
+                                    className={`flex items-center gap-2 rounded-md border px-3 py-3 transition-colors ${
+                                        editingId === instance.id
+                                            ? ""
+                                            : "cursor-grab active:cursor-grabbing"
+                                    } ${
                                         dragIndex === index
                                             ? "bg-muted border-primary"
                                             : !isEnabled
@@ -190,11 +220,24 @@ export default function EditViewsDialog({
                                     />
                                     <div className="flex flex-col flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium truncate">
-                                                {instance.label}
-                                            </span>
+                                            {isAttendanceView(instance) ? (
+                                                <span className="text-sm font-medium truncate">
+                                                    {instance.label}
+                                                </span>
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    value={instance.label}
+                                                    onChange={(e) =>
+                                                        handleRename(instance.id, e.target.value)
+                                                    }
+                                                    onFocus={() => setEditingId(instance.id)}
+                                                    onBlur={() => setEditingId(null)}
+                                                    className="text-sm font-medium truncate bg-transparent border-none outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full"
+                                                />
+                                            )}
                                             {isDefault && (
-                                                <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                                <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
                                                     Default
                                                 </span>
                                             )}
@@ -346,5 +389,25 @@ export default function EditViewsDialog({
                 })()}
             </DialogContent>
         </Dialog>
+
+        <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+            <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>Unsaved changes</DialogTitle>
+                    <DialogDescription>
+                        You have unsaved changes. Would you like to save or discard them?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" onClick={handleDiscard}>
+                        Discard
+                    </Button>
+                    <Button onClick={handleConfirmSave}>
+                        Save
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 }
