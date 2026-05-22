@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
     Dialog,
     DialogClose,
@@ -20,6 +20,7 @@ import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/compone
 import { saveSessionViews } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
+import type { SessionViewEditorHandle } from "@/components/sports/session-views/interfaces";
 
 interface EditViewsDialogProps {
     sport: string;
@@ -48,12 +49,11 @@ export default function EditViewsDialog({
 }: EditViewsDialogProps) {
     const [open, setOpen] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
-    // Guard: when false, editor unmount sync is ignored (prevents stale writes on discard/close)
-    const syncEnabledRef = useRef(true);
+    // Ref to pull data from the active editor imperatively
+    const editorRef = useRef<SessionViewEditorHandle>(null);
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
-    const pendingSaveRef = useRef(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [items, setItems] = useState<StoredViewInstance[]>(viewData);
 
@@ -75,10 +75,34 @@ export default function EditViewsDialog({
     // Track whether local state differs from server state
     const isDirty = JSON.stringify(instances) !== JSON.stringify(viewData);
 
+    /**
+     * If we're in the editor step, pull current data from the editor ref
+     * and merge it into items. Returns the up-to-date instances array.
+     */
+    const captureEditorData = (): StoredViewInstance[] => {
+        if (step.kind === "edit" && editorRef.current) {
+            const data = editorRef.current.getCurrentData();
+            const updated = items.map((v) =>
+                v.id === step.viewId ? { ...v, data } : v,
+            );
+            setItems(updated);
+            const hasAtt = updated.some((v) => v.type === DEFAULT_VIEW_TYPE);
+            return hasAtt
+                ? updated
+                : [{ id: 0, type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true }, ...updated];
+        }
+        return instances;
+    };
+
     const handleOpenChange = (next: boolean) => {
-        if (!next && (isDirty || step.kind === "edit")) {
-            setShowConfirm(true);
-            return;
+        if (!next) {
+            // Capture editor data before checking dirty
+            const current = captureEditorData();
+            const dirty = JSON.stringify(current) !== JSON.stringify(viewData);
+            if (dirty) {
+                setShowConfirm(true);
+                return;
+            }
         }
         setOpen(next);
         if (!next) {
@@ -86,11 +110,9 @@ export default function EditViewsDialog({
             setNewName("");
             setItems(viewData);
         }
-        if (next) syncEnabledRef.current = true;
     };
 
     const handleDiscard = () => {
-        syncEnabledRef.current = false;
         setShowConfirm(false);
         setOpen(false);
         setStep({ kind: "list" });
@@ -100,22 +122,8 @@ export default function EditViewsDialog({
 
     const handleConfirmSave = () => {
         setShowConfirm(false);
-        if (step.kind === "edit") {
-            // Unmount editor first (syncs data to items), then save on next render
-            pendingSaveRef.current = true;
-            setStep({ kind: "list" });
-        } else {
-            handleSave();
-        }
+        handleSave();
     };
-
-    // Save after editor unmount has synced its data to items
-    useEffect(() => {
-        if (pendingSaveRef.current && step.kind === "list") {
-            pendingSaveRef.current = false;
-            handleSave();
-        }
-    });
 
     const handleCreate = (type: string) => {
         if (!newName.trim()) return;
@@ -143,8 +151,10 @@ export default function EditViewsDialog({
     };
 
     const handleSave = () => {
+        // Pull latest editor data if we're in the edit step
+        const current = captureEditorData();
         // Reassign ids to reflect current order
-        const normalized = instances.map((v, i) => ({ ...v, id: i }));
+        const normalized = current.map((v, i) => ({ ...v, id: i }));
         startTransition(async () => {
             const result = await saveSessionViews(sport, sessionId, normalized);
             if ("success" in result) {
@@ -152,13 +162,6 @@ export default function EditViewsDialog({
                 setStep({ kind: "list" });
             }
         });
-    };
-
-    const handleEditorChange = (viewId: number, data: unknown) => {
-        if (!syncEnabledRef.current) return;
-        setItems((prev) =>
-            prev.map((v) => (v.id === viewId ? { ...v, data } : v)),
-        );
     };
 
     const isAttendanceView = (instance: StoredViewInstance) =>
@@ -381,7 +384,11 @@ export default function EditViewsDialog({
                                     variant="ghost"
                                     size="sm"
                                     className="mb-3 text-xs sticky -left-6 pl-8 w-fit"
-                                    onClick={() => setStep({ kind: "list" })}
+                                    onClick={() => {
+                                        // Capture editor data before leaving edit mode
+                                        captureEditorData();
+                                        setStep({ kind: "list" });
+                                    }}
                                 >
                                     ← Back
                                 </Button>
@@ -390,7 +397,7 @@ export default function EditViewsDialog({
                                 signups={signups}
                                 teamMemberIds={teamMemberIds}
                                 viewData={instance.data}
-                                onChange={(data) => handleEditorChange(instance.id, data)}
+                                ref={editorRef}
                             />
                         </div>
                     );

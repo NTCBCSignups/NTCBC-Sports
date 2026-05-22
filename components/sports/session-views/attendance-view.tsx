@@ -1,5 +1,6 @@
 "use client";
 
+import { useImperativeHandle } from "react";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
 
@@ -27,7 +28,11 @@ export default function AttendanceView({
 /**
  * Editor for the attendance view — no configuration needed.
  */
-export function AttendanceEditor({}: SessionViewEditorProps) {
+export function AttendanceEditor({ ref }: SessionViewEditorProps) {
+    useImperativeHandle(ref, () => ({
+        getCurrentData: () => null,
+    }));
+
     return (
         <p className="text-sm text-muted-foreground py-4">
             This view has no configuration. It displays sign-ups in order of sign-up time.
