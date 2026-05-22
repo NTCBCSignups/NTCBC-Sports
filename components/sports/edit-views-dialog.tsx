@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -13,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/ui/draggable-list";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 import { saveSessionViews } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
@@ -46,6 +48,8 @@ export default function EditViewsDialog({
 }: EditViewsDialogProps) {
     const [open, setOpen] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    // Guard: when false, editor unmount sync is ignored (prevents stale writes on discard/close)
+    const syncEnabledRef = useRef(true);
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
@@ -81,9 +85,11 @@ export default function EditViewsDialog({
             setNewName("");
             setItems(viewData);
         }
+        if (next) syncEnabledRef.current = true;
     };
 
     const handleDiscard = () => {
+        syncEnabledRef.current = false;
         setShowConfirm(false);
         setOpen(false);
         setStep({ kind: "list" });
@@ -134,6 +140,7 @@ export default function EditViewsDialog({
     };
 
     const handleEditorChange = (viewId: number, data: unknown) => {
+        if (!syncEnabledRef.current) return;
         setItems((prev) =>
             prev.map((v) => (v.id === viewId ? { ...v, data } : v)),
         );
@@ -151,8 +158,20 @@ export default function EditViewsDialog({
                     Edit Views
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
+            <DialogContent
+                showCloseButton={step.kind !== "edit"}
+                className={cn(
+                    "transition-[max-width] duration-200",
+                    step.kind === "edit" ? "max-w-[95vw] sm:max-w-[95vw] sm:w-fit overflow-x-auto" : "sm:max-w-md",
+                )}
+            >
+                {step.kind === "edit" && (
+                    <DialogClose className="sticky right-0 top-0 ml-auto w-fit opacity-70 hover:opacity-100 cursor-pointer z-20">
+                        <X className="size-4" />
+                        <span className="sr-only">Close</span>
+                    </DialogClose>
+                )}
+                <DialogHeader className={step.kind === "edit" ? "sticky -left-6 -mx-6 pl-8 w-fit" : ""}>
                     <DialogTitle>
                         {step.kind === "list" && "Session Views"}
                         {step.kind === "pick-type" && "Choose View Type"}
@@ -342,14 +361,16 @@ export default function EditViewsDialog({
                     }
                     return (
                         <div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="mb-3 -ml-2 text-xs"
-                                onClick={() => setStep({ kind: "list" })}
-                            >
-                                ← Back
-                            </Button>
+                            <div className="-mx-6">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="mb-3 text-xs sticky -left-6 pl-8 w-fit"
+                                    onClick={() => setStep({ kind: "list" })}
+                                >
+                                    ← Back
+                                </Button>
+                            </div>
                             <entry.EditorComponent
                                 signups={signups}
                                 teamMemberIds={teamMemberIds}
