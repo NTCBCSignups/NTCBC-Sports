@@ -513,7 +513,7 @@ export function SoftballFieldingEditor({
 
                 {innings.map((inning) => {
                     return (
-                        <TabsContent key={inning} value={String(inning)} className="mt-4 space-y-4">
+                        <TabsContent key={inning} value={String(inning)} className="mt-4 space-y-4 max-h-[60vh] overflow-y-auto">
                             {POSITION_GROUPS.map((group) => (
                                 <div key={group.label} className="space-y-2">
                                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
