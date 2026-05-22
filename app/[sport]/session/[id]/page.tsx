@@ -102,18 +102,20 @@ async function SessionSignupsContent({
         )}
       </div>
 
-      <div className="space-y-2">
-        <AttendanceSection
-          sport={sport}
-          sessionId={sessionId}
-          signups={rawSignups}
-          teamMemberIds={teamMemberIds}
-          playerCap={playerCap}
-          currentUserId={userId}
-          viewData={viewData}
-          isAdmin={isAdmin}
-        />
-      </div>
+      {(canSignup || requestApproved) && (
+        <div className="space-y-2">
+          <AttendanceSection
+            sport={sport}
+            sessionId={sessionId}
+            signups={rawSignups}
+            teamMemberIds={teamMemberIds}
+            playerCap={playerCap}
+            currentUserId={userId}
+            viewData={viewData}
+            isAdmin={isAdmin}
+          />
+        </div>
+      )}
     </div>
   );
 }

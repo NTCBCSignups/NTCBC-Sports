@@ -41,7 +41,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
         onClick={handleSignIn}
       >
         <LogIn className="h-4 w-4" />
-        Sign in with Google
+        Sign in
       </Button>
     );
   }

@@ -141,14 +141,14 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Please contact the leaders if you have any questions.",
     ],
     description: "Join us for Drop-in Practices. Scheduled Games are only open to confirmed CCSA Team Members.",
-    defaultTab: "drop_in_practice",
+    defaultTab: "",
     tabs: [
       {
         value: "drop_in_practice",
         label: "Drop-in Practice",
         defaultTitlePrefix: "Practice",
         sessionPillColor: PillColor.emerald,
-        permissions: { [AccessLevel.view]: Role.user },
+        permissions: { [AccessLevel.view]: Role.anon },
       },
       {
         value: "scheduled_game",
