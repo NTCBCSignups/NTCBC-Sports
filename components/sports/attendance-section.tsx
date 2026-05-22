@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import AlternateViewToggle from "@/components/sports/alternate-view-toggle";
 import EditViewsDialog from "@/components/sports/edit-views-dialog";
@@ -23,6 +23,7 @@ interface AttendanceSectionProps {
 /**
  * Client wrapper for the attendance section on the session detail page.
  * Manages toggle state between default attendance view and alternate views.
+ * Persists active view in URL search params (?view=...) so it survives refresh.
  */
 export default function AttendanceSection({
     sport,
@@ -35,7 +36,22 @@ export default function AttendanceSection({
     viewData,
     isAdmin,
 }: AttendanceSectionProps) {
-    const [activeView, setActiveView] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const viewParam = searchParams.get("view");
+    const activeView = alternateViews.some((v) => v.id === viewParam) ? viewParam : null;
+
+    const setActiveView = (viewId: string | null) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (viewId) {
+            params.set("view", viewId);
+        } else {
+            params.delete("view");
+        }
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     const hasAltViews = alternateViews.length > 0;
     const entry = activeView ? getAlternateView(activeView) : null;
