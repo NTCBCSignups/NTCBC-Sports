@@ -138,7 +138,7 @@ function FieldingDiamond({
             <svg viewBox="0 0 100 100" className="w-full h-auto">
                 {/* Infield/outfield boundary arc */}
                 <path
-                    d="M 12 56 Q 50 28 88 56"
+                    d="M 10 42 Q 50 28 90 42"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.3"
