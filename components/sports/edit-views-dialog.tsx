@@ -298,11 +298,11 @@ export default function EditViewsDialog({
                     const entry = instance
                         ? getSessionView(instance.type)
                         : undefined;
-                    if (!entry) {
+                    if (!instance || !entry) {
                         return (
-                            <p className="text-sm text-muted-foreground">
-                                No editor registered for this view type.
-                            </p>
+                            <div className="flex items-center justify-center py-8">
+                                <p className="text-sm text-muted-foreground">Loading…</p>
+                            </div>
                         );
                     }
                     return (
