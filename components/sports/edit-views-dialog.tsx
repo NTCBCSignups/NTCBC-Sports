@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -13,11 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/ui/draggable-list";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 import { saveSessionViews } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
+import type { SessionViewEditorHandle } from "@/components/sports/session-views/interfaces";
 
 interface EditViewsDialogProps {
     sport: string;
@@ -46,6 +49,8 @@ export default function EditViewsDialog({
 }: EditViewsDialogProps) {
     const [open, setOpen] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    // Ref to pull data from the active editor imperatively
+    const editorRef = useRef<SessionViewEditorHandle>(null);
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
@@ -70,10 +75,34 @@ export default function EditViewsDialog({
     // Track whether local state differs from server state
     const isDirty = JSON.stringify(instances) !== JSON.stringify(viewData);
 
+    /**
+     * If we're in the editor step, pull current data from the editor ref
+     * and merge it into items. Returns the up-to-date instances array.
+     */
+    const captureEditorData = (): StoredViewInstance[] => {
+        if (step.kind === "edit" && editorRef.current) {
+            const data = editorRef.current.getCurrentData();
+            const updated = items.map((v) =>
+                v.id === step.viewId ? { ...v, data } : v,
+            );
+            setItems(updated);
+            const hasAtt = updated.some((v) => v.type === DEFAULT_VIEW_TYPE);
+            return hasAtt
+                ? updated
+                : [{ id: 0, type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true }, ...updated];
+        }
+        return instances;
+    };
+
     const handleOpenChange = (next: boolean) => {
-        if (!next && isDirty) {
-            setShowConfirm(true);
-            return;
+        if (!next) {
+            // Capture editor data before checking dirty
+            const current = captureEditorData();
+            const dirty = JSON.stringify(current) !== JSON.stringify(viewData);
+            if (dirty) {
+                setShowConfirm(true);
+                return;
+            }
         }
         setOpen(next);
         if (!next) {
@@ -122,8 +151,10 @@ export default function EditViewsDialog({
     };
 
     const handleSave = () => {
+        // Pull latest editor data if we're in the edit step
+        const current = captureEditorData();
         // Reassign ids to reflect current order
-        const normalized = instances.map((v, i) => ({ ...v, id: i }));
+        const normalized = current.map((v, i) => ({ ...v, id: i }));
         startTransition(async () => {
             const result = await saveSessionViews(sport, sessionId, normalized);
             if ("success" in result) {
@@ -131,12 +162,6 @@ export default function EditViewsDialog({
                 setStep({ kind: "list" });
             }
         });
-    };
-
-    const handleEditorChange = (viewId: number, data: unknown) => {
-        setItems((prev) =>
-            prev.map((v) => (v.id === viewId ? { ...v, data } : v)),
-        );
     };
 
     const isAttendanceView = (instance: StoredViewInstance) =>
@@ -151,8 +176,20 @@ export default function EditViewsDialog({
                     Edit Views
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
+            <DialogContent
+                showCloseButton={step.kind !== "edit"}
+                className={cn(
+                    "transition-[max-width] duration-200",
+                    step.kind === "edit" ? "max-w-[95vw] sm:max-w-[95vw] sm:w-fit overflow-x-auto" : "sm:max-w-md",
+                )}
+            >
+                {step.kind === "edit" && (
+                    <DialogClose className="sticky right-0 top-0 ml-auto w-fit opacity-70 hover:opacity-100 cursor-pointer z-20">
+                        <X className="size-4" />
+                        <span className="sr-only">Close</span>
+                    </DialogClose>
+                )}
+                <DialogHeader className={step.kind === "edit" ? "sticky -left-6 -mx-6 pl-8 w-fit" : ""}>
                     <DialogTitle>
                         {step.kind === "list" && "Session Views"}
                         {step.kind === "pick-type" && "Choose View Type"}
@@ -342,19 +379,25 @@ export default function EditViewsDialog({
                     }
                     return (
                         <div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="mb-3 -ml-2 text-xs"
-                                onClick={() => setStep({ kind: "list" })}
-                            >
-                                ← Back
-                            </Button>
+                            <div className="-mx-6">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="mb-3 text-xs sticky -left-6 pl-8 w-fit"
+                                    onClick={() => {
+                                        // Capture editor data before leaving edit mode
+                                        captureEditorData();
+                                        setStep({ kind: "list" });
+                                    }}
+                                >
+                                    ← Back
+                                </Button>
+                            </div>
                             <entry.EditorComponent
                                 signups={signups}
                                 teamMemberIds={teamMemberIds}
                                 viewData={instance.data}
-                                onChange={(data) => handleEditorChange(instance.id, data)}
+                                ref={editorRef}
                             />
                         </div>
                     );

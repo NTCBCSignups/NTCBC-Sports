@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useImperativeHandle, useState } from "react";
 import {
     Table,
     TableBody,
@@ -111,12 +111,12 @@ export default function CustomOrderedView({
 
 /**
  * Generic ordered list editor — drag-drop reorderable list of confirmed signups.
- * Reports order changes to parent via onChange; no direct server calls.
+ * Exposes getCurrentData() via ref for the dialog to pull on save.
  */
 export function CustomOrderedEditor({
     signups,
     viewData,
-    onChange,
+    ref,
 }: SessionViewEditorProps) {
     const currentOrder = Array.isArray(viewData) ? (viewData as string[]) : [];
     const confirmed = signups.filter((s) => s.status === "confirmed");
@@ -155,23 +155,19 @@ export function CustomOrderedEditor({
     const [visibleItems, setVisibleItems] = useState(initial.visible);
     const [hiddenItems, setHiddenItems] = useState(initial.hidden);
 
-    const emitChange = (visible: typeof confirmed, hidden: typeof confirmed) => {
-        const order = [
-            ...visible.map((s) => s.user_id),
-            ...(hidden.length > 0 ? ["__HIDDEN__", ...hidden.map((s) => s.user_id)] : []),
-        ];
-        onChange(order);
-    };
+    // Expose current order to dialog via ref
+    useImperativeHandle(ref, () => ({
+        getCurrentData: () => [
+            ...visibleItems.map((s) => s.user_id),
+            ...(hiddenItems.length > 0 ? ["__HIDDEN__", ...hiddenItems.map((s) => s.user_id)] : []),
+        ],
+    }));
 
     const hidePlayer = (index: number) => {
         setVisibleItems((prev) => {
             const next = [...prev];
             const [moved] = next.splice(index, 1);
-            setHiddenItems((h) => {
-                const newHidden = [...h, moved];
-                emitChange(next, newHidden);
-                return newHidden;
-            });
+            setHiddenItems((h) => [...h, moved]);
             return next;
         });
     };
@@ -180,11 +176,7 @@ export function CustomOrderedEditor({
         setHiddenItems((prev) => {
             const next = [...prev];
             const [moved] = next.splice(index, 1);
-            setVisibleItems((v) => {
-                const newVisible = [...v, moved];
-                emitChange(newVisible, next);
-                return newVisible;
-            });
+            setVisibleItems((v) => [...v, moved]);
             return next;
         });
     };
@@ -206,7 +198,6 @@ export function CustomOrderedEditor({
                 items={visibleItems}
                 onReorder={(next) => {
                     setVisibleItems(next);
-                    emitChange(next, hiddenItems);
                 }}
                 keyExtractor={(s) => s.user_id}
                 renderItem={(signup, index) => (
@@ -227,7 +218,6 @@ export function CustomOrderedEditor({
                 hiddenItems={hiddenItems}
                 onHiddenReorder={(next) => {
                     setHiddenItems(next);
-                    emitChange(visibleItems, next);
                 }}
                 renderHiddenItem={(signup, index) => (
                     <>
