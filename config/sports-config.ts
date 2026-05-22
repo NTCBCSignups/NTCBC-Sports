@@ -141,7 +141,7 @@ export const sportsConfig: Record<string, SportConfig> = {
       "Please contact the leaders if you have any questions.",
     ],
     description: "Join us for Drop-in Practices. Scheduled Games are only open to confirmed CCSA Team Members.",
-    defaultTab: "drop_in_practice",
+    defaultTab: "",
     tabs: [
       {
         value: "drop_in_practice",

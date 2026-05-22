@@ -11,7 +11,57 @@ import AdminButton from "@/components/sports/admin-button";
 import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
-import type { SignupStatus } from "@/lib/supabase/types";
+import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
+
+/**
+ * Returns the appropriate access gate banner for a tab based on user state.
+ * - Anon user → SignInToSignupBanner (with contextual text)
+ * - Signed-in user lacking access → TeamAccessBanner (with request button)
+ * - User has access → null
+ */
+function getAccessGateBanner({
+  userId,
+  userRole,
+  requiredViewRole,
+  accessRequestStatus,
+  sport,
+  label,
+}: {
+  userId: string | null;
+  userRole: Role;
+  requiredViewRole: Role;
+  accessRequestStatus: AccessRequestStatus | null;
+  sport: string;
+  label: string;
+}) {
+  if (userRole >= requiredViewRole) return null;
+
+  // Anon user — needs to sign in
+  if (!userId) {
+    return (
+      <SignInToSignupBanner
+        title={
+          requiredViewRole >= Role.teamUser
+            ? "Team members only"
+            : `Sign in to view ${label}`
+        }
+        message={
+          requiredViewRole >= Role.teamUser
+            ? `Sign in and request team access to view and sign up for ${label}.`
+            : `Sign in with your Google account to view and sign up for ${label}.`
+        }
+      />
+    );
+  }
+
+  // Signed-in user lacking team access
+  return (
+    <TeamAccessBanner
+      requestStatus={accessRequestStatus}
+      sport={sport}
+    />
+  );
+}
 
 async function SportSessionsContent({
   sport,
@@ -38,37 +88,48 @@ async function SportSessionsContent({
   ]);
 
   const userRole = roleResult.role;
-  let accessRequestStatus: "pending" | "approved" | "rejected" | null = null;
 
-  const showTeamAccessBanner = !!userId && config.tabs.some((t) =>
-    userRole < t.permissions[AccessLevel.signup]
+  const needsAccessRequest = !!userId && config.tabs.some((t) =>
+    userRole < t.permissions[AccessLevel.view] || userRole < t.permissions[AccessLevel.signup]
   );
 
-  if (showTeamAccessBanner) {
-    accessRequestStatus = await getUserAccessRequestStatus(userId!, sport);
-  }
-
   const sessionIds = sessionsWithCounts.map((session) => session.id);
-  const userSignupStatusBySession = userId
-    ? await getUserSignupStatuses(userId, sessionIds)
-    : new Map<string, SignupStatus>();
+
+  const [accessRequestStatus, userSignupStatusBySession] = await Promise.all([
+    needsAccessRequest
+      ? getUserAccessRequestStatus(userId!, sport)
+      : Promise.resolve(null),
+    userId
+      ? getUserSignupStatuses(userId, sessionIds)
+      : Promise.resolve(new Map<string, SignupStatus>()),
+  ]);
 
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
   const configTabs = config.tabs ?? [];
   const showAll = configTabs.length > 1;
   const ALL_VALUE = "all";
-  const requiresSignIn = !!config.authEnabled && !userId;
 
   const typeOptions = configTabs.map((t) => {
     const sessions = sessionsByType[t.value] ?? [];
+    const canView = userRole >= t.permissions[AccessLevel.view];
+    const gateBanner = getAccessGateBanner({
+      userId,
+      userRole,
+      requiredViewRole: t.permissions[AccessLevel.view],
+      accessRequestStatus,
+      sport,
+      label: t.label.toLowerCase(),
+    });
 
     return {
       value: t.value,
       label: t.label,
       content: (
-        <>
-          {sessions.length > 0 ? (
+        <div className="space-y-4">
+          {gateBanner ? (
+            gateBanner
+          ) : sessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
               {sessions.map((session) => (
                 <SessionCard
@@ -83,25 +144,89 @@ async function SportSessionsContent({
                 />
               ))}
             </div>
-          ) : requiresSignIn ? null : (
+          ) : !canView ? null : (
             <p className="text-sm text-muted-foreground py-8 text-center">
               No upcoming {t.label.toLowerCase()}.
             </p>
           )}
-        </>
+        </div>
       ),
     };
   });
+
+  const viewableSessions = sessionsWithCounts.filter((session) => {
+    const tab = configTabs.find((t) => t.value === session.session_type);
+    return !tab || userRole >= tab.permissions[AccessLevel.view];
+  });
+
+  const hasHiddenSessions = sessionsWithCounts.length > viewableSessions.length;
+
+  // Determine the "All" tab banner based on which tabs are restricted
+  const hiddenTabs = configTabs.filter((t) => userRole < t.permissions[AccessLevel.view]);
+  const lowestHiddenRole = hasHiddenSessions
+    ? Math.min(...hiddenTabs.map((t) => t.permissions[AccessLevel.view])) as Role
+    : Role.anon;
+  const hasViewableSessions = viewableSessions.length > 0;
+
+  const allGateBanner = (() => {
+    if (!hasHiddenSessions) return null;
+
+    // Signed-in user lacking team access → show request banner
+    if (userId) {
+      return (
+        <TeamAccessBanner
+          requestStatus={accessRequestStatus}
+          sport={sport}
+        />
+      );
+    }
+
+    // Anon user — wording depends on whether they can already see some sessions
+    if (hasViewableSessions) {
+      // They can see some but not all
+      return (
+        <SignInToSignupBanner
+          title={
+            lowestHiddenRole >= Role.teamUser
+              ? "Some sessions require team access"
+              : "Sign in to view more sessions"
+          }
+          message={
+            lowestHiddenRole >= Role.teamUser
+              ? "Sign in and request team access to view all sessions."
+              : "Sign in with your Google account to view all sessions."
+          }
+        />
+      );
+    }
+
+    // They can't see anything
+    return (
+      <SignInToSignupBanner
+        title={
+          lowestHiddenRole >= Role.teamUser
+            ? "Team members only"
+            : "Sign in to view sessions"
+        }
+        message={
+          lowestHiddenRole >= Role.teamUser
+            ? "Sign in and request team access to view and sign up for sessions."
+            : "Sign in with your Google account to view and sign up for sessions."
+        }
+      />
+    );
+  })();
 
   const allOption = showAll
     ? {
       value: ALL_VALUE,
       label: "All",
       content: (
-        <>
-          {sessionsWithCounts.length > 0 ? (
+        <div className="space-y-4">
+          {allGateBanner}
+          {viewableSessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
-              {sessionsWithCounts.map((session) => (
+              {viewableSessions.map((session) => (
                 <SessionCard
                   key={session.id}
                   session={session}
@@ -114,12 +239,12 @@ async function SportSessionsContent({
                 />
               ))}
             </div>
-          ) : requiresSignIn ? null : (
+          ) : !hasHiddenSessions ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
               No upcoming sessions.
             </p>
-          )}
-        </>
+          ) : null}
+        </div>
       ),
     }
     : null;
@@ -130,30 +255,17 @@ async function SportSessionsContent({
   const scrollSession = scrollTo ? sessionsWithCounts.find((s) => s.id === scrollTo) : null;
   const resolvedValue = tab ?? scrollSession?.session_type;
   const validValues = filterOptions.map((o) => o.value);
+  const fallback = config.defaultTab || (showAll ? ALL_VALUE : configTabs[0]?.value);
   const defaultValue =
-    validValues.find((v) => v === resolvedValue) ??
-    (showAll ? ALL_VALUE : config.defaultTab ?? configTabs[0]?.value);
-
-  const showSignInBanner =
-    !userId && !!config.authEnabled && config.hasRestrictedAccess;
+    validValues.find((v) => v === resolvedValue) ?? fallback;
 
   return (
     <div className="space-y-4">
-      {showTeamAccessBanner && (
-        <TeamAccessBanner
-          requestStatus={accessRequestStatus}
-          sport={sport}
-        />
-      )}
-      {showSignInBanner && (
-        <SignInToSignupBanner />
-      )}
       <SessionFilter
         defaultValue={defaultValue}
         options={filterOptions}
         scrollTo={scrollTo}
         sport={sport}
-        showFilters={!requiresSignIn}
       />
     </div>
   );

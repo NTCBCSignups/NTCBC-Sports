@@ -5,7 +5,15 @@ import { LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
-export default function SignInToSignupBanner() {
+interface SignInToSignupBannerProps {
+  title?: string;
+  message?: string;
+}
+
+export default function SignInToSignupBanner({
+  title = "Sign in to view and sign up for sessions",
+  message = "Use your Google account to get started.",
+}: SignInToSignupBannerProps) {
   const pathname = usePathname();
 
   const handleSignIn = async () => {
@@ -21,10 +29,10 @@ export default function SignInToSignupBanner() {
   return (
     <div className="rounded-lg border border-status-info-border bg-status-info p-4">
       <p className="font-medium text-status-info-foreground">
-        Sign in to view and sign up for sessions
+        {title}
       </p>
       <p className="mt-1 text-sm text-status-info-foreground/80">
-        Use your Google account to get started.
+        {message}
       </p>
       <Button
         type="button"
