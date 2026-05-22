@@ -17,7 +17,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -228,6 +227,7 @@ export default function FieldingView({
     const [mode, setMode] = useState<"player" | "inning">("player");
     const [selectedUser, setSelectedUser] = useState(currentUserId ?? "");
     const [selectedInning, setSelectedInning] = useState(1);
+    const [showDiamond, setShowDiamond] = useState(true);
 
     const userMap = new Map(confirmed.map((s) => [s.user_id, s]));
     const getUserName = (userId: string) =>
@@ -272,24 +272,25 @@ export default function FieldingView({
 
                         {selectedUser && (
                             <>
-                                <Collapsible defaultOpen>
-                                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
-                                        Diamond
-                                        <span className="text-xs">▾</span>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent>
-                                        <FieldingDiamond
-                                            assignments={Object.fromEntries(
-                                                ALL_POSITIONS.map((p) => [
-                                                    p.key,
-                                                    getEffectiveAssignment(data, selectedInning, p.key),
-                                                ]),
-                                            )}
-                                            highlightUserId={selectedUser}
-                                            getUserName={getUserName}
-                                        />
-                                    </CollapsibleContent>
-                                </Collapsible>
+                                <button
+                                    onClick={() => setShowDiamond(!showDiamond)}
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showDiamond ? "Hide" : "Show"} diamond
+                                </button>
+
+                                {showDiamond && (
+                                    <FieldingDiamond
+                                        assignments={Object.fromEntries(
+                                            ALL_POSITIONS.map((p) => [
+                                                p.key,
+                                                getEffectiveAssignment(data, selectedInning, p.key),
+                                            ]),
+                                        )}
+                                        highlightUserId={selectedUser}
+                                        getUserName={getUserName}
+                                    />
+                                )}
 
                                 <Table>
                                     <TableHeader>
@@ -344,24 +345,25 @@ export default function FieldingView({
                             </SelectContent>
                         </Select>
 
-                        <Collapsible defaultOpen>
-                            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
-                                Diamond
-                                <span className="text-xs">▾</span>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <FieldingDiamond
-                                    assignments={Object.fromEntries(
-                                        ALL_POSITIONS.map((p) => [
-                                            p.key,
-                                            getEffectiveAssignment(data, selectedInning, p.key),
-                                        ]),
-                                    )}
-                                    highlightUserId={selectedUser || currentUserId}
-                                    getUserName={getUserName}
-                                />
-                            </CollapsibleContent>
-                        </Collapsible>
+                        <button
+                            onClick={() => setShowDiamond(!showDiamond)}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            {showDiamond ? "Hide" : "Show"} diamond
+                        </button>
+
+                        {showDiamond && (
+                            <FieldingDiamond
+                                assignments={Object.fromEntries(
+                                    ALL_POSITIONS.map((p) => [
+                                        p.key,
+                                        getEffectiveAssignment(data, selectedInning, p.key),
+                                    ]),
+                                )}
+                                highlightUserId={selectedUser || currentUserId}
+                                getUserName={getUserName}
+                            />
+                        )}
 
                         <Table>
                             <TableHeader>
