@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import OrderedSignupsView from "@/components/sports/ordered-signups-view";
-import BattingOrderEditor from "@/components/sports/batting-order-editor";
+import BattingOrderEditor from "@/components/softball/batting-order-editor";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 
 /** Props passed to every alternate view component. */
