@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
     Table,
     TableBody,
@@ -155,6 +155,8 @@ export function CustomOrderedEditor({
     const [hiddenItems, setHiddenItems] = useState(initial.hidden);
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [dragSection, setDragSection] = useState<"visible" | "hidden" | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const touchStartY = useRef<number>(0);
 
     const emitChange = (visible: typeof confirmed, hidden: typeof confirmed) => {
         const order = [
@@ -193,6 +195,50 @@ export function CustomOrderedEditor({
         setDragIndex(null);
         setDragSection(null);
         emitChange(visibleItems, hiddenItems);
+    };
+
+    // ── Touch handlers for mobile ────────────────────────────────────
+    const handleTouchStart = (section: "visible" | "hidden", index: number, e: React.TouchEvent) => {
+        touchStartY.current = e.touches[0].clientY;
+        setDragIndex(index);
+        setDragSection(section);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (dragIndex === null || dragSection === null || !containerRef.current) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const elements = containerRef.current.querySelectorAll<HTMLElement>(`[data-section="${dragSection}"]`);
+        for (let i = 0; i < elements.length; i++) {
+            const rect = elements[i].getBoundingClientRect();
+            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom && i !== dragIndex) {
+                moveItem(dragSection, dragIndex, i);
+                setDragIndex(i);
+                break;
+            }
+        }
+        // Check if dragged over the divider to move between sections
+        const divider = containerRef.current.querySelector<HTMLElement>('[data-divider]');
+        if (divider) {
+            const rect = divider.getBoundingClientRect();
+            if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                if (dragSection === "visible") {
+                    hidePlayer(dragIndex);
+                } else {
+                    showPlayer(dragIndex);
+                }
+                setDragIndex(null);
+                setDragSection(null);
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (dragIndex !== null) {
+            emitChange(visibleItems, hiddenItems);
+        }
+        setDragIndex(null);
+        setDragSection(null);
     };
 
     const hidePlayer = (index: number) => {
@@ -251,14 +297,18 @@ export function CustomOrderedEditor({
             <p className="text-sm text-muted-foreground">
                 Drag players to set the order. Players below the divider are hidden from the view.
             </p>
-            <div className="space-y-1 max-h-80 overflow-y-auto">
+            <div ref={containerRef} className="space-y-1 max-h-80 overflow-y-auto">
                 {visibleItems.map((signup, index) => (
                     <div
                         key={signup.user_id}
+                        data-section="visible"
                         draggable
                         onDragStart={() => handleDragStart("visible", index)}
                         onDragOver={(e) => handleDragOver(e, "visible", index)}
                         onDragEnd={handleDragEnd}
+                        onTouchStart={(e) => handleTouchStart("visible", index, e)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                         className={`flex items-center gap-2 rounded-md border px-3 py-2 cursor-grab active:cursor-grabbing transition-colors ${
                             dragIndex === index && dragSection === "visible" ? "bg-muted border-primary" : "bg-card"
                         }`}
@@ -280,6 +330,7 @@ export function CustomOrderedEditor({
 
                 {/* Divider */}
                 <div
+                    data-divider
                     onDragOver={handleDividerDragOver}
                     onDrop={handleDividerDrop}
                     className="flex items-center gap-2 py-2 my-1"
@@ -292,10 +343,14 @@ export function CustomOrderedEditor({
                 {hiddenItems.map((signup, index) => (
                     <div
                         key={signup.user_id}
+                        data-section="hidden"
                         draggable
                         onDragStart={() => handleDragStart("hidden", index)}
                         onDragOver={(e) => handleDragOver(e, "hidden", index)}
                         onDragEnd={handleDragEnd}
+                        onTouchStart={(e) => handleTouchStart("hidden", index, e)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                         className={`flex items-center gap-2 rounded-md border px-3 py-2 cursor-grab active:cursor-grabbing transition-colors opacity-50 ${
                             dragIndex === index && dragSection === "hidden" ? "bg-muted border-primary" : "bg-card"
                         }`}
