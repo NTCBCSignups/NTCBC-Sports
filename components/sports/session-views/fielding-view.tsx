@@ -107,18 +107,18 @@ function isInherited(data: FieldingData, inning: number, position: string): bool
 
 const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
     CENTRE_FIELD: { x: 50, y: 5 },
-    LEFT_FIELD: { x: 8, y: 15 },
-    RIGHT_FIELD: { x: 92, y: 15 },
-    LEFT_ROVER: { x: 23, y: 28 },
-    RIGHT_ROVER: { x: 77, y: 28 },
-    SHORTSTOP: { x: 36, y: 46 },
-    SECOND_BASE: { x: 64, y: 46 },
-    THIRD_BASE: { x: 22, y: 62 },
-    FIRST_BASE: { x: 78, y: 62 },
-    PITCHER: { x: 50, y: 66 },
+    LEFT_FIELD: { x: 12, y: 14 },
+    RIGHT_FIELD: { x: 88, y: 14 },
+    LEFT_ROVER: { x: 24, y: 24 },
+    RIGHT_ROVER: { x: 76, y: 24 },
+    SHORTSTOP: { x: 36, y: 48 },
+    SECOND_BASE: { x: 64, y: 48 },
+    THIRD_BASE: { x: 22, y: 64 },
+    FIRST_BASE: { x: 78, y: 64 },
+    PITCHER: { x: 50, y: 68 },
     CATCHER: { x: 50, y: 94 },
-    "1B_COACH": { x: 85, y: 80 },
-    "3B_COACH": { x: 15, y: 80 },
+    "1B_COACH": { x: 84, y: 82 },
+    "3B_COACH": { x: 16, y: 82 },
 };
 
 const INFIELD_KEYS = new Set(POSITIONS.infield.map((p) => p.key));
@@ -135,10 +135,10 @@ function FieldingDiamond({
 }) {
     return (
         <div className="w-full max-w-sm mx-auto">
-            <svg viewBox="0 0 100 100" className="w-full h-auto">
+            <svg viewBox="0 0 100 100" overflow="visible" className="w-full h-auto">
                 {/* Infield/outfield boundary arc */}
                 <path
-                    d="M 10 42 Q 50 28 90 42"
+                    d="M 5 38 Q 50 22 95 38"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.3"
@@ -146,17 +146,17 @@ function FieldingDiamond({
                 />
                 {/* Diamond */}
                 <polygon
-                    points="50,84 78,60 50,36 22,60"
+                    points="50,86 78,62 50,38 22,62"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.4"
                     className="text-muted-foreground/50"
                 />
                 {/* Bases */}
-                <rect x="48.5" y="82.5" width="3" height="3" className="fill-muted-foreground/60" /> {/* Home */}
-                <rect x="76.5" y="58.5" width="3" height="3" transform="rotate(45 78 60)" className="fill-muted-foreground/60" /> {/* 1st */}
-                <rect x="48.5" y="34.5" width="3" height="3" transform="rotate(45 50 36)" className="fill-muted-foreground/60" /> {/* 2nd */}
-                <rect x="20.5" y="58.5" width="3" height="3" transform="rotate(45 22 60)" className="fill-muted-foreground/60" /> {/* 3rd */}
+                <rect x="48.5" y="84.5" width="3" height="3" className="fill-muted-foreground/60" /> {/* Home */}
+                <rect x="76.5" y="60.5" width="3" height="3" transform="rotate(45 78 62)" className="fill-muted-foreground/60" /> {/* 1st */}
+                <rect x="48.5" y="36.5" width="3" height="3" transform="rotate(45 50 38)" className="fill-muted-foreground/60" /> {/* 2nd */}
+                <rect x="20.5" y="60.5" width="3" height="3" transform="rotate(45 22 62)" className="fill-muted-foreground/60" /> {/* 3rd */}
                 {/* Position markers */}
                 {Object.entries(DIAMOND_POSITIONS).map(([posKey, pos]) => {
                     const userId = assignments[posKey];
