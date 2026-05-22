@@ -20,7 +20,7 @@ const sessionViewRegistry: Record<string, SessionView> = {
         CustomOrderedEditor,
     ),
     fieldingView: new SessionView(
-        "Fielding",
+        "CCSA Softball - Fielding View",
         FieldingView,
         FieldingEditor,
     ),
