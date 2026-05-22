@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { displayName } from "@/lib/format";
-import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
+import type { SessionViewProps, SessionViewEditorProps } from "@/components/sports/session-views/interfaces";
 
 // ── Position definitions ─────────────────────────────────────────
 
@@ -217,7 +217,7 @@ function FieldingDiamond({
 
 // ── Viewer Component ─────────────────────────────────────────────
 
-export default function FieldingView({
+export default function SoftballFieldingView({
     signups,
     currentUserId,
     viewData,
@@ -423,7 +423,7 @@ export default function FieldingView({
 
 // ── Editor Component ─────────────────────────────────────────────
 
-export function FieldingEditor({
+export function SoftballFieldingEditor({
     signups,
     viewData,
     onChange,
