@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -64,6 +65,7 @@ const POSITION_GROUPS = [
 
 interface FieldingData {
     innings: number;
+    unique: boolean;
     assignments: Record<number, Record<string, string | null>>;
 }
 
@@ -76,9 +78,10 @@ function parseData(viewData: unknown): FieldingData {
         "innings" in viewData &&
         "assignments" in viewData
     ) {
-        return viewData as FieldingData;
+        const d = viewData as FieldingData;
+        return { innings: d.innings, unique: d.unique ?? false, assignments: d.assignments };
     }
-    return { innings: DEFAULT_INNINGS, assignments: {} };
+    return { innings: DEFAULT_INNINGS, unique: true, assignments: {} };
 }
 
 function getEffectiveAssignment(
@@ -378,12 +381,11 @@ export function FieldingEditor({
 
     const setInnings = (count: number) => {
         const clamped = Math.max(1, Math.min(20, count));
-        // Prune assignments beyond new count
         const assignments = { ...data.assignments };
         for (const key of Object.keys(assignments)) {
             if (Number(key) > clamped) delete assignments[Number(key)];
         }
-        update({ innings: clamped, assignments });
+        update({ ...data, innings: clamped, assignments });
     };
 
     const setAssignment = (inning: number, position: string, userId: string | null) => {
@@ -399,24 +401,47 @@ export function FieldingEditor({
         });
     };
 
+    /** Get all user IDs assigned to other positions in this inning (effective, not just explicit). */
+    const getAssignedUserIds = (inning: number, excludePosition: string): Set<string> => {
+        const assigned = new Set<string>();
+        for (const pos of ALL_POSITIONS) {
+            if (pos.key === excludePosition) continue;
+            const userId = getEffectiveAssignment(data, inning, pos.key);
+            if (userId) assigned.add(userId);
+        }
+        return assigned;
+    };
+
     const innings = Array.from({ length: data.innings }, (_, i) => i + 1);
     const [activeInning, setActiveInning] = useState(1);
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-3">
-                <Label htmlFor="innings-count" className="text-sm whitespace-nowrap">
-                    Innings
-                </Label>
-                <Input
-                    id="innings-count"
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={data.innings}
-                    onChange={(e) => setInnings(Number(e.target.value))}
-                    className="w-20"
-                />
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <Label htmlFor="innings-count" className="text-sm whitespace-nowrap">
+                        Innings
+                    </Label>
+                    <Input
+                        id="innings-count"
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={data.innings}
+                        onChange={(e) => setInnings(Number(e.target.value))}
+                        className="w-20"
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Label htmlFor="unique-toggle" className="text-sm whitespace-nowrap">
+                        Unique
+                    </Label>
+                    <Switch
+                        id="unique-toggle"
+                        checked={data.unique}
+                        onCheckedChange={(checked) => update({ ...data, unique: checked })}
+                    />
+                </div>
             </div>
 
             <Tabs value={String(activeInning)} onValueChange={(v) => setActiveInning(Number(v))}>
@@ -428,67 +453,79 @@ export function FieldingEditor({
                     ))}
                 </TabsList>
 
-                {innings.map((inning) => (
-                    <TabsContent key={inning} value={String(inning)} className="mt-4 space-y-4">
-                        {POSITION_GROUPS.map((group) => (
-                            <div key={group.label} className="space-y-2">
-                                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    {group.label}
-                                </h4>
-                                <div className="grid gap-2">
-                                    {group.positions.map((pos) => {
-                                        const effective = getEffectiveAssignment(data, inning, pos.key);
-                                        const inherited = isInherited(data, inning, pos.key);
-                                        const explicitValue = data.assignments[inning]?.[pos.key];
+                {innings.map((inning) => {
+                    return (
+                        <TabsContent key={inning} value={String(inning)} className="mt-4 space-y-4">
+                            {POSITION_GROUPS.map((group) => (
+                                <div key={group.label} className="space-y-2">
+                                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        {group.label}
+                                    </h4>
+                                    <div className="grid gap-2">
+                                        {group.positions.map((pos) => {
+                                            const effective = getEffectiveAssignment(data, inning, pos.key);
+                                            const inherited = isInherited(data, inning, pos.key);
+                                            const explicitValue = data.assignments[inning]?.[pos.key];
+                                            const takenUserIds = data.unique
+                                                ? getAssignedUserIds(inning, pos.key)
+                                                : new Set<string>();
 
-                                        return (
-                                            <div key={pos.key} className="flex items-center gap-2">
-                                                <span className="text-sm w-28 shrink-0">{pos.label}</span>
-                                                <Select
-                                                    value={explicitValue ?? "__inherit__"}
-                                                    onValueChange={(v) =>
-                                                        setAssignment(
-                                                            inning,
-                                                            pos.key,
-                                                            v === "__inherit__" ? null : v,
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger
-                                                        className={cn(
-                                                            "flex-1",
-                                                            inherited && "text-muted-foreground",
-                                                        )}
+                                            const inheritLabel = inherited && effective
+                                                ? `${displayName(confirmed.find((s) => s.user_id === effective)?.profiles ?? null)} (default)`
+                                                : "Unassigned";
+
+                                            return (
+                                                <div key={pos.key} className="flex items-center gap-2">
+                                                    <span className="text-sm w-28 shrink-0">{pos.label}</span>
+                                                    <Select
+                                                        value={explicitValue ?? "__inherit__"}
+                                                        onValueChange={(v) =>
+                                                            setAssignment(
+                                                                inning,
+                                                                pos.key,
+                                                                v === "__inherit__" ? null : v,
+                                                            )
+                                                        }
                                                     >
-                                                        <SelectValue
-                                                            placeholder={
-                                                                inherited && effective
-                                                                    ? `${displayName(confirmed.find((s) => s.user_id === effective)?.profiles ?? null)} (default)`
-                                                                    : "Unassigned"
-                                                            }
-                                                        />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="__inherit__">
-                                                            {inning > 1 && effective
-                                                                ? `${displayName(confirmed.find((s) => s.user_id === effective)?.profiles ?? null)} (default)`
-                                                                : "Unassigned"}
-                                                        </SelectItem>
-                                                        {confirmed.map((s) => (
-                                                            <SelectItem key={s.user_id} value={s.user_id}>
-                                                                {displayName(s.profiles)}
+                                                        <SelectTrigger
+                                                            className={cn(
+                                                                "flex-1",
+                                                                inherited && !explicitValue && "text-muted-foreground",
+                                                            )}
+                                                        >
+                                                            <SelectValue placeholder={inheritLabel} />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__inherit__">
+                                                                {inning > 1 && effective && !explicitValue
+                                                                    ? inheritLabel
+                                                                    : "Unassigned"}
                                                             </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        );
-                                    })}
+                                                            {confirmed.map((s) => {
+                                                                const isTaken = takenUserIds.has(s.user_id);
+                                                                return (
+                                                                    <SelectItem
+                                                                        key={s.user_id}
+                                                                        value={s.user_id}
+                                                                        disabled={isTaken}
+                                                                        className={isTaken ? "opacity-50" : ""}
+                                                                    >
+                                                                        {displayName(s.profiles)}
+                                                                        {isTaken && " (assigned)"}
+                                                                    </SelectItem>
+                                                                );
+                                                            })}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </TabsContent>
-                ))}
+                            ))}
+                        </TabsContent>
+                    );
+                })}
             </Tabs>
         </div>
     );
