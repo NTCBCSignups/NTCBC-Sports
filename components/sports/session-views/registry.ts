@@ -1,5 +1,6 @@
 import CustomOrderedView, { CustomOrderedEditor } from "./custom-ordered-view";
 import AttendanceView, { AttendanceEditor } from "./attendance-view";
+import SoftballFieldingView, { SoftballFieldingEditor } from "@/components/softball/session-views/fielding-view";
 import { SessionView } from "./interfaces";
 
 /**
@@ -17,6 +18,11 @@ const sessionViewRegistry: Record<string, SessionView> = {
         "Custom Ordered View",
         CustomOrderedView,
         CustomOrderedEditor,
+    ),
+    softballFieldingView: new SessionView(
+        "CCSA Softball - Fielding View",
+        SoftballFieldingView,
+        SoftballFieldingEditor,
     ),
 };
 

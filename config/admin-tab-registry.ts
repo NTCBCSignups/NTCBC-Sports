@@ -3,7 +3,7 @@ import AdminTabRequests from "@/components/sports/admin-tabs/requests";
 import AdminTabCreate from "@/components/sports/admin-tabs/create";
 import AdminTabUpcoming from "@/components/sports/admin-tabs/upcoming";
 import AdminTabPast from "@/components/sports/admin-tabs/past";
-import CcsaAdminTab from "@/components/softball/ccsa-admin-tab";
+import CcsaAdminTab from "@/components/softball/admin-tabs/ccsa-sync";
 
 /**
  * Registry mapping admin tab IDs to their server components.
