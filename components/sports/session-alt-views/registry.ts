@@ -1,28 +1,21 @@
-import type { ComponentType } from "react";
 import CustomOrderedView from "./custom-ordered-view";
 import CustomOrderedEditor from "./custom-ordered-editor";
-import type { AlternateViewProps, AlternateViewEditorProps } from "./interfaces";
-
-export interface AlternateViewEntry {
-    label: string;
-    ViewComponent: ComponentType<AlternateViewProps>;
-    EditorComponent: ComponentType<AlternateViewEditorProps>;
-}
+import { AltView } from "./interfaces";
 
 /**
  * Registry of all available alternate view types.
- * Admins can create any of these for any session. Users see the toggle
- * only for views that have saved data in alt_session_views.
+ * Each entry is an AltView instance requiring exactly one View and one Editor.
+ * Admins can create any of these for any session.
  */
-const alternateViewRegistry: Record<string, AlternateViewEntry> = {
-    customOrderedView: {
-        label: "Custom Ordered View",
-        ViewComponent: CustomOrderedView,
-        EditorComponent: CustomOrderedEditor,
-    },
+const alternateViewRegistry: Record<string, AltView> = {
+    customOrderedView: new AltView(
+        "Custom Ordered View",
+        CustomOrderedView,
+        CustomOrderedEditor,
+    ),
 };
 
-export function getAlternateView(viewId: string): AlternateViewEntry | undefined {
+export function getAlternateView(viewId: string): AltView | undefined {
     return alternateViewRegistry[viewId];
 }
 

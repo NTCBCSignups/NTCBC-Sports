@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 
 /** Shape of each view instance stored in alt_session_views JSONB column. */
@@ -30,4 +31,16 @@ export interface AlternateViewEditorProps {
     /** Current saved data for this view. */
     viewData: unknown;
     onSaved: () => void;
+}
+
+/**
+ * Defines an alternate view type. Each instance requires exactly
+ * one View component and one Editor component.
+ */
+export class AltView {
+    constructor(
+        public readonly label: string,
+        public readonly ViewComponent: ComponentType<AlternateViewProps>,
+        public readonly EditorComponent: ComponentType<AlternateViewEditorProps>,
+    ) {}
 }
