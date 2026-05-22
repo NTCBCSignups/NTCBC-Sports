@@ -106,20 +106,23 @@ function isInherited(data: FieldingData, inning: number, position: string): bool
 // ── Diamond SVG ──────────────────────────────────────────────────
 
 const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
-    PITCHER: { x: 50, y: 62 },
-    CATCHER: { x: 50, y: 90 },
-    FIRST_BASE: { x: 68, y: 55 },
-    SECOND_BASE: { x: 58, y: 38 },
-    SHORTSTOP: { x: 40, y: 38 },
-    THIRD_BASE: { x: 30, y: 55 },
-    LEFT_FIELD: { x: 12, y: 18 },
-    LEFT_ROVER: { x: 27, y: 30 },
-    CENTRE_FIELD: { x: 50, y: 10 },
-    RIGHT_ROVER: { x: 73, y: 30 },
-    RIGHT_FIELD: { x: 88, y: 18 },
-    "1B_COACH": { x: 80, y: 73 },
-    "3B_COACH": { x: 20, y: 73 },
+    CENTRE_FIELD: { x: 50, y: 5 },
+    LEFT_FIELD: { x: 8, y: 15 },
+    RIGHT_FIELD: { x: 92, y: 15 },
+    LEFT_ROVER: { x: 23, y: 28 },
+    RIGHT_ROVER: { x: 77, y: 28 },
+    SHORTSTOP: { x: 36, y: 46 },
+    SECOND_BASE: { x: 64, y: 46 },
+    THIRD_BASE: { x: 22, y: 62 },
+    FIRST_BASE: { x: 78, y: 62 },
+    PITCHER: { x: 50, y: 66 },
+    CATCHER: { x: 50, y: 94 },
+    "1B_COACH": { x: 85, y: 80 },
+    "3B_COACH": { x: 15, y: 80 },
 };
+
+const INFIELD_KEYS = new Set(POSITIONS.infield.map((p) => p.key));
+const OUTFIELD_KEYS = new Set(POSITIONS.outfield.map((p) => p.key));
 
 function FieldingDiamond({
     assignments,
@@ -135,25 +138,25 @@ function FieldingDiamond({
             <svg viewBox="0 0 100 100" className="w-full h-auto">
                 {/* Infield/outfield boundary arc */}
                 <path
-                    d="M 20 50 Q 50 18 80 50"
+                    d="M 12 56 Q 50 28 88 56"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.3"
-                    className="text-muted-foreground/40"
+                    className="text-muted-foreground/30"
                 />
                 {/* Diamond */}
                 <polygon
-                    points="50,80 75,55 50,30 25,55"
+                    points="50,84 78,60 50,36 22,60"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.4"
-                    className="text-muted-foreground/60"
+                    className="text-muted-foreground/50"
                 />
                 {/* Bases */}
-                <rect x="48.5" y="78.5" width="3" height="3" className="fill-muted-foreground/60" /> {/* Home */}
-                <rect x="73.5" y="53.5" width="3" height="3" transform="rotate(45 75 55)" className="fill-muted-foreground/60" /> {/* 1st */}
-                <rect x="48.5" y="28.5" width="3" height="3" transform="rotate(45 50 30)" className="fill-muted-foreground/60" /> {/* 2nd */}
-                <rect x="23.5" y="53.5" width="3" height="3" transform="rotate(45 25 55)" className="fill-muted-foreground/60" /> {/* 3rd */}
+                <rect x="48.5" y="82.5" width="3" height="3" className="fill-muted-foreground/60" /> {/* Home */}
+                <rect x="76.5" y="58.5" width="3" height="3" transform="rotate(45 78 60)" className="fill-muted-foreground/60" /> {/* 1st */}
+                <rect x="48.5" y="34.5" width="3" height="3" transform="rotate(45 50 36)" className="fill-muted-foreground/60" /> {/* 2nd */}
+                <rect x="20.5" y="58.5" width="3" height="3" transform="rotate(45 22 60)" className="fill-muted-foreground/60" /> {/* 3rd */}
                 {/* Position markers */}
                 {Object.entries(DIAMOND_POSITIONS).map(([posKey, pos]) => {
                     const userId = assignments[posKey];
@@ -161,19 +164,32 @@ function FieldingDiamond({
                     const posInfo = ALL_POSITIONS.find((p) => p.key === posKey);
                     const short = posInfo?.short ?? posKey;
                     const isCoach = COACH_KEYS.has(posKey);
+                    const isOutfield = OUTFIELD_KEYS.has(posKey);
+                    const isInfield = INFIELD_KEYS.has(posKey);
+
+                    const circleClass = isHighlighted
+                        ? "fill-primary stroke-primary"
+                        : isCoach
+                            ? "fill-muted-foreground/40 stroke-muted-foreground/40"
+                            : userId
+                                ? isOutfield
+                                    ? "fill-emerald-400/70 stroke-emerald-500/80"
+                                    : isInfield
+                                        ? "fill-amber-400/70 stroke-amber-500/80"
+                                        : "fill-muted-foreground/80 stroke-muted-foreground"
+                                : isOutfield
+                                    ? "fill-emerald-400/20 stroke-emerald-500/30"
+                                    : isInfield
+                                        ? "fill-amber-400/20 stroke-amber-500/30"
+                                        : "fill-muted/50 stroke-muted-foreground/40";
+
                     return (
-                        <g key={posKey} className={isCoach ? "opacity-40" : ""}>
+                        <g key={posKey} className={isCoach ? "opacity-50" : ""}>
                             <circle
                                 cx={pos.x}
                                 cy={pos.y}
                                 r={isHighlighted ? 2.5 : 2}
-                                className={cn(
-                                    isHighlighted
-                                        ? "fill-primary stroke-primary"
-                                        : userId
-                                            ? "fill-muted-foreground/80 stroke-muted-foreground"
-                                            : "fill-muted/50 stroke-muted-foreground/40",
-                                )}
+                                className={circleClass}
                                 strokeWidth="0.3"
                                 strokeDasharray={isCoach ? "1 0.5" : undefined}
                             />
@@ -183,7 +199,11 @@ function FieldingDiamond({
                                 textAnchor="middle"
                                 className={cn(
                                     "text-[2.5px] select-none",
-                                    isHighlighted ? "fill-primary font-bold" : "fill-muted-foreground",
+                                    isHighlighted
+                                        ? "fill-primary font-bold"
+                                        : isCoach
+                                            ? "fill-muted-foreground/60"
+                                            : "fill-muted-foreground",
                                 )}
                             >
                                 {userId ? `${getUserName(userId)} (${short})` : short}
