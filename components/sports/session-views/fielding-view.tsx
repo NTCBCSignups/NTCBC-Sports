@@ -28,23 +28,23 @@ import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
 
 const POSITIONS = {
     batting: [
-        { key: "1B_COACH", label: "1st Base Coach" },
-        { key: "3B_COACH", label: "3rd Base Coach" },
+        { key: "1B_COACH", label: "1B Coach", short: "1B Coach" },
+        { key: "3B_COACH", label: "3B Coach", short: "3B Coach" },
     ],
     infield: [
-        { key: "PITCHER", label: "Pitcher" },
-        { key: "CATCHER", label: "Catcher" },
-        { key: "FIRST_BASE", label: "1st Base" },
-        { key: "SECOND_BASE", label: "2nd Base" },
-        { key: "SHORTSTOP", label: "Shortstop" },
-        { key: "THIRD_BASE", label: "3rd Base" },
+        { key: "PITCHER", label: "Pitcher", short: "P" },
+        { key: "CATCHER", label: "Catcher", short: "C" },
+        { key: "FIRST_BASE", label: "1st Base", short: "1B" },
+        { key: "SECOND_BASE", label: "2nd Base", short: "2B" },
+        { key: "SHORTSTOP", label: "Shortstop", short: "SS" },
+        { key: "THIRD_BASE", label: "3rd Base", short: "3B" },
     ],
     outfield: [
-        { key: "LEFT_FIELD", label: "Left Field" },
-        { key: "LEFT_ROVER", label: "Left Rover" },
-        { key: "CENTRE_FIELD", label: "Centre Field" },
-        { key: "RIGHT_ROVER", label: "Right Rover" },
-        { key: "RIGHT_FIELD", label: "Right Field" },
+        { key: "LEFT_FIELD", label: "Left Field", short: "LF" },
+        { key: "LEFT_ROVER", label: "Left Rover", short: "LR" },
+        { key: "CENTRE_FIELD", label: "Centre Field", short: "CF" },
+        { key: "RIGHT_ROVER", label: "Right Rover", short: "RR" },
+        { key: "RIGHT_FIELD", label: "Right Field", short: "RF" },
     ],
 } as const;
 
@@ -162,7 +162,8 @@ function FieldingDiamond({
                 {Object.entries(DIAMOND_POSITIONS).map(([posKey, pos]) => {
                     const userId = assignments[posKey];
                     const isHighlighted = highlightUserId && userId === highlightUserId;
-                    const posLabel = ALL_POSITIONS.find((p) => p.key === posKey)?.label ?? posKey;
+                    const posInfo = ALL_POSITIONS.find((p) => p.key === posKey);
+                    const short = posInfo?.short ?? posKey;
                     return (
                         <g key={posKey}>
                             <circle
@@ -187,7 +188,7 @@ function FieldingDiamond({
                                     isHighlighted ? "fill-primary font-bold" : "fill-muted-foreground",
                                 )}
                             >
-                                {userId ? getUserName(userId) : posLabel}
+                                {userId ? `${getUserName(userId)} (${short})` : short}
                             </text>
                         </g>
                     );
