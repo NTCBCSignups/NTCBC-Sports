@@ -11,10 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pencil, Check, Trash2, Plus } from "lucide-react";
-import { getAlternateView, getAllAlternateViews } from "@/config/alternate-view-registry";
+import { getAlternateView, getAllAlternateViews } from "@/components/sports/session-alt-views/registry";
 import { createSessionView, deleteSessionView } from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
-import type { StoredViewInstance } from "@/config/alt-view-interfaces";
+import type { StoredViewInstance } from "@/components/sports/session-alt-views/interfaces";
 
 interface EditViewsDialogProps {
     sport: string;

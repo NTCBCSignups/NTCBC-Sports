@@ -4,9 +4,9 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import AlternateViewToggle from "@/components/sports/alternate-view-toggle";
 import EditViewsDialog from "@/components/sports/edit-views-dialog";
-import { getAlternateView } from "@/config/alternate-view-registry";
+import { getAlternateView } from "@/components/sports/session-alt-views/registry";
 import type { SignupRow } from "@/components/sports/session-signups-table";
-import type { StoredViewInstance } from "@/config/alt-view-interfaces";
+import type { StoredViewInstance } from "@/components/sports/session-alt-views/interfaces";
 
 interface AttendanceSectionProps {
     sport: string;

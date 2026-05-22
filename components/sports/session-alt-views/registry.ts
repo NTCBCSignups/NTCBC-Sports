@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
-import CustomOrderedView from "@/components/sports/session-alt-views/custom-ordered-view";
-import CustomOrderedEditor from "@/components/sports/session-alt-views/custom-ordered-editor";
-import type { AlternateViewProps, AlternateViewEditorProps } from "./alt-view-interfaces";
+import CustomOrderedView from "./custom-ordered-view";
+import CustomOrderedEditor from "./custom-ordered-editor";
+import type { AlternateViewProps, AlternateViewEditorProps } from "./interfaces";
 
 export interface AlternateViewEntry {
     label: string;

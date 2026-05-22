@@ -125,7 +125,7 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
   return { success: true };
 }
 
-import type { StoredViewInstance } from "@/config/alt-view-interfaces";
+import type { StoredViewInstance } from "@/components/sports/session-alt-views/interfaces";
 
 function slugify(label: string): string {
   return label
