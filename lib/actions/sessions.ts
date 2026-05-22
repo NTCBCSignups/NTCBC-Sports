@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
-import { SESSION_STATUS } from "@/lib/supabase/types";
+import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
 
 export interface CreateSessionInput {
   session_type: string;
@@ -122,5 +122,25 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
   revalidatePath(`/${sport}`);
   revalidatePath(`/${sport}/session/${sessionId}`);
   revalidatePath(`/${sport}/admin`);
+  return { success: true };
+}
+
+export async function saveSessionViews(
+  sport: string,
+  sessionId: string,
+  views: StoredViewInstance[],
+): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ alt_session_views: views })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
   return { success: true };
 }

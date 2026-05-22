@@ -28,6 +28,20 @@ export const SESSION_STATUS = {
   cancelled: "cancelled",
 } as const satisfies Record<string, SessionStatus>;
 
+/** Shape of each view instance stored in the session's alt_session_views JSONB array. */
+export interface StoredViewInstance {
+  /** Stable numeric identifier. Also determines display order (ascending). */
+  id: number;
+  /** Registry key (e.g. "customOrderedView") — determines which component renders it. */
+  type: string;
+  /** Admin-given display name (e.g. "Batting Order"). */
+  label: string;
+  /** View-specific payload. */
+  data: unknown;
+  /** Whether this view is visible in the toggle. Defaults to true if omitted. */
+  enabled?: boolean;
+}
+
 export interface SportSession {
   id: string;
   sport: string;
@@ -45,6 +59,7 @@ export interface SportSession {
   notes: string | null;
   status: SessionStatus;
   status_notes: string | null;
+  alt_session_views: StoredViewInstance[];
   created_by: string | null;
   created_at: string;
 }

@@ -20,7 +20,7 @@ import SessionDialog from "@/components/sports/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
 import AdminButton from "@/components/sports/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
-import SessionSignupsTable from "@/components/sports/session-signups-table";
+import AttendanceSection from "@/components/sports/attendance-section";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
@@ -37,7 +37,7 @@ import {
   getUserAccessRequestStatus,
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
-import { SESSION_STATUS } from "@/lib/supabase/types";
+import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
 
 async function SessionSignupsContent({
   sessionId,
@@ -47,6 +47,8 @@ async function SessionSignupsContent({
   userRole,
   signupRole,
   playerCap,
+  viewData,
+  isAdmin,
 }: {
   sessionId: string;
   sport: string;
@@ -55,6 +57,8 @@ async function SessionSignupsContent({
   userRole: Role;
   signupRole: Role;
   playerCap: number | null;
+  viewData: StoredViewInstance[];
+  isAdmin: boolean;
 }) {
   const userId = user?.id ?? null;
   const canSignup = userRole >= signupRole;
@@ -99,13 +103,15 @@ async function SessionSignupsContent({
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-semibold text-foreground">Attendance</h2>
-        <SessionSignupsTable
+        <AttendanceSection
+          sport={sport}
+          sessionId={sessionId}
           signups={rawSignups}
           teamMemberIds={teamMemberIds}
           playerCap={playerCap}
           currentUserId={userId}
-          showTimestamp
+          viewData={viewData}
+          isAdmin={isAdmin}
         />
       </div>
     </div>
@@ -303,6 +309,8 @@ export default async function SessionDetailPage({
           userRole={userRole}
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
+          viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
+          isAdmin={isAdmin}
         />
       </Suspense>
     </div>
