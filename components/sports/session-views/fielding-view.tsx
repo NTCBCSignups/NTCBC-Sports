@@ -106,8 +106,8 @@ function isInherited(data: FieldingData, inning: number, position: string): bool
 
 const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
     CENTRE_FIELD: { x: 50, y: 5 },
-    LEFT_FIELD: { x: 12, y: 14 },
-    RIGHT_FIELD: { x: 88, y: 14 },
+    LEFT_FIELD: { x: 6, y: 18 },
+    RIGHT_FIELD: { x: 94, y: 18 },
     LEFT_ROVER: { x: 24, y: 24 },
     RIGHT_ROVER: { x: 76, y: 24 },
     SHORTSTOP: { x: 36, y: 48 },
@@ -137,7 +137,7 @@ function FieldingDiamond({
             <svg viewBox="0 0 100 100" overflow="visible" className="w-full h-auto">
                 {/* Infield/outfield boundary arc */}
                 <path
-                    d="M 5 38 Q 50 22 95 38"
+                    d="M 5 40 A 106 106 0 0 1 95 40"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.3"
@@ -274,7 +274,7 @@ export default function FieldingView({
                             <>
                                 <button
                                     onClick={() => setShowDiamond(!showDiamond)}
-                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                                 >
                                     {showDiamond ? "Hide" : "Show"} diamond
                                 </button>
@@ -347,7 +347,7 @@ export default function FieldingView({
 
                         <button
                             onClick={() => setShowDiamond(!showDiamond)}
-                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                         >
                             {showDiamond ? "Hide" : "Show"} diamond
                         </button>
