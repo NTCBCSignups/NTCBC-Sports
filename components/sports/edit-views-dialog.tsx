@@ -10,9 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Check, Trash2, Plus } from "lucide-react";
-import { getSessionView, getAllSessionViews } from "@/components/sports/session-views/registry";
-import { createSessionView, deleteSessionView } from "@/lib/actions/sessions";
+import { Pencil, Trash2, Plus, GripVertical } from "lucide-react";
+import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
+import {
+    createSessionView,
+    deleteSessionView,
+    toggleSessionView,
+    reorderSessionViews,
+} from "@/lib/actions/sessions";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
 
@@ -32,7 +37,8 @@ type DialogStep =
 
 /**
  * Admin-only dialog for managing session view instances.
- * Supports creating multiple instances of the same view type, each with a custom name.
+ * The attendance view is treated specially: toggle on/off, no rename/delete.
+ * Custom views can be created, edited, reordered, and deleted.
  */
 export default function EditViewsDialog({
     sport,
@@ -45,6 +51,7 @@ export default function EditViewsDialog({
     const [step, setStep] = useState<DialogStep>({ kind: "list" });
     const [newName, setNewName] = useState("");
     const [isPending, startTransition] = useTransition();
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
 
     const allTypes = getAllSessionViews();
     const instances = Object.entries(viewData);
@@ -74,10 +81,41 @@ export default function EditViewsDialog({
         });
     };
 
+    const handleToggle = (viewId: string, enabled: boolean) => {
+        startTransition(async () => {
+            await toggleSessionView(sport, sessionId, viewId, enabled);
+        });
+    };
+
+    const handleDragStart = (index: number) => {
+        setDragIndex(index);
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        if (dragIndex !== null && dragIndex !== index) {
+            // Visual reorder will be reflected after save
+            const keys = instances.map(([id]) => id);
+            const [moved] = keys.splice(dragIndex, 1);
+            keys.splice(index, 0, moved);
+            setDragIndex(index);
+            startTransition(async () => {
+                await reorderSessionViews(sport, sessionId, keys);
+            });
+        }
+    };
+
+    const handleDragEnd = () => {
+        setDragIndex(null);
+    };
+
     const handleSaved = () => {
         setOpen(false);
         setStep({ kind: "list" });
     };
+
+    const isAttendance = (instance: StoredViewInstance) =>
+        instance.type === DEFAULT_VIEW_TYPE;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -105,46 +143,78 @@ export default function EditViewsDialog({
                                 No views configured yet.
                             </p>
                         )}
-                        {instances.map(([id, instance]) => (
-                            <div
-                                key={id}
-                                className="flex items-center justify-between rounded-md border px-4 py-3"
-                            >
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium">
-                                        {instance.label}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {allTypes.find((t) => t.id === instance.type)?.label ??
-                                            instance.type}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    {instance.data != null && (
-                                        <Check className="h-3 w-3 text-muted-foreground mr-1" />
+                        {instances.map(([id, instance], index) => {
+                            const isDefault = isAttendance(instance);
+                            const isEnabled = instance.enabled !== false;
+                            return (
+                                <div
+                                    key={id}
+                                    draggable
+                                    onDragStart={() => handleDragStart(index)}
+                                    onDragOver={(e) => handleDragOver(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`flex items-center gap-2 rounded-md border px-3 py-3 cursor-grab active:cursor-grabbing transition-colors ${
+                                        dragIndex === index
+                                            ? "bg-muted border-primary"
+                                            : !isEnabled
+                                              ? "bg-muted/50 opacity-50"
+                                              : ""
+                                    }`}
+                                >
+                                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+
+                                    {isDefault ? (
+                                        <>
+                                            <input
+                                                type="checkbox"
+                                                checked={isEnabled}
+                                                onChange={(e) =>
+                                                    handleToggle(id, e.target.checked)
+                                                }
+                                                disabled={isPending}
+                                                className="h-4 w-4 rounded border-input shrink-0"
+                                            />
+                                            <span className="text-sm font-medium flex-1">
+                                                Attendance
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex flex-col flex-1 min-w-0">
+                                                <span className="text-sm font-medium truncate">
+                                                    {instance.label}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {allTypes.find((t) => t.id === instance.type)
+                                                        ?.label ?? instance.type}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 w-7 p-0"
+                                                    onClick={() =>
+                                                        setStep({ kind: "edit", viewId: id })
+                                                    }
+                                                >
+                                                    <Pencil className="h-3 w-3" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                                    onClick={() => handleDelete(id)}
+                                                    disabled={isPending}
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </>
                                     )}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0"
-                                        onClick={() =>
-                                            setStep({ kind: "edit", viewId: id })
-                                        }
-                                    >
-                                        <Pencil className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDelete(id)}
-                                        disabled={isPending}
-                                    >
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         <Button
                             variant="outline"
                             size="sm"
@@ -167,15 +237,21 @@ export default function EditViewsDialog({
                         >
                             ← Back
                         </Button>
-                        {allTypes.map((type) => (
-                            <button
-                                key={type.id}
-                                onClick={() => setStep({ kind: "name", type: type.id })}
-                                className="w-full flex items-center rounded-md border px-4 py-3 text-left hover:bg-muted transition-colors"
-                            >
-                                <span className="text-sm font-medium">{type.label}</span>
-                            </button>
-                        ))}
+                        {allTypes
+                            .filter((t) => t.id !== DEFAULT_VIEW_TYPE)
+                            .map((type) => (
+                                <button
+                                    key={type.id}
+                                    onClick={() =>
+                                        setStep({ kind: "name", type: type.id })
+                                    }
+                                    className="w-full flex items-center rounded-md border px-4 py-3 text-left hover:bg-muted transition-colors"
+                                >
+                                    <span className="text-sm font-medium">
+                                        {type.label}
+                                    </span>
+                                </button>
+                            ))}
                     </div>
                 )}
 

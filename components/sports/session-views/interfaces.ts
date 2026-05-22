@@ -9,6 +9,8 @@ export interface StoredViewInstance {
     label: string;
     /** View-specific payload. */
     data: unknown;
+    /** Whether this view is visible in the toggle. Defaults to true if omitted. */
+    enabled?: boolean;
 }
 
 /** Props passed to every session view component. */

@@ -159,7 +159,7 @@ export async function createSessionView(
   // attendance view so it stays visible in the toggle alongside the new view.
   let updated = { ...current };
   if (Object.keys(current).length === 0 && type !== DEFAULT_VIEW_TYPE) {
-    updated["attendance"] = { type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null };
+    updated["attendance"] = { type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true };
   }
 
   // Generate unique slug from label
@@ -244,6 +244,81 @@ export async function deleteSessionView(
   const { error } = await supabase
     .from("sessions")
     .update({ alt_session_views: remaining })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  return { success: true };
+}
+
+export async function toggleSessionView(
+  sport: string,
+  sessionId: string,
+  viewId: string,
+  enabled: boolean,
+): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { data: session, error: fetchError } = await supabase
+    .from("sessions")
+    .select("alt_session_views")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
+  const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
+  const existing = current[viewId];
+  if (!existing) return { error: "View not found" };
+
+  const updated = { ...current, [viewId]: { ...existing, enabled } };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ alt_session_views: updated })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  return { success: true };
+}
+
+export async function reorderSessionViews(
+  sport: string,
+  sessionId: string,
+  order: string[],
+): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { data: session, error: fetchError } = await supabase
+    .from("sessions")
+    .select("alt_session_views")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
+  const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
+
+  // Rebuild object in the specified order
+  const reordered: Record<string, StoredViewInstance> = {};
+  for (const key of order) {
+    if (current[key]) reordered[key] = current[key];
+  }
+  // Append any keys not in the order array (safety)
+  for (const key of Object.keys(current)) {
+    if (!reordered[key]) reordered[key] = current[key];
+  }
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ alt_session_views: reordered })
     .eq("id", sessionId);
 
   if (error) return { error: error.message };

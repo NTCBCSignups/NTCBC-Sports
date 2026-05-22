@@ -43,15 +43,14 @@ export default function AttendanceSection({
     const viewEntries = Object.entries(viewData);
     const hasViews = viewEntries.length > 0;
 
-    // All configured views for the toggle
-    const configuredViews = viewEntries.map(([id, instance]) => ({
-        id,
-        label: instance.label,
-    }));
+    // Only show enabled views in the toggle (enabled defaults to true if omitted)
+    const configuredViews = viewEntries
+        .filter(([, instance]) => instance.enabled !== false)
+        .map(([id, instance]) => ({ id, label: instance.label }));
 
     const viewParam = searchParams.get("view");
-    // Default to first view if views exist and no param specified
-    const activeView = hasViews
+    // Default to first enabled view if any exist
+    const activeView = configuredViews.length > 0
         ? configuredViews.some((v) => v.id === viewParam)
             ? viewParam!
             : configuredViews[0].id
