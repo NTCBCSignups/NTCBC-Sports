@@ -4,8 +4,9 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SessionSignupsTable from "@/components/sports/session-signups-table";
 import AlternateViewToggle from "@/components/sports/alternate-view-toggle";
 import EditViewsDialog from "@/components/sports/edit-views-dialog";
-import { getAlternateView, getAllAlternateViews } from "@/config/alternate-view-registry";
+import { getAlternateView } from "@/config/alternate-view-registry";
 import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { StoredViewInstance } from "@/config/alt-view-interfaces";
 
 interface AttendanceSectionProps {
     sport: string;
@@ -14,7 +15,7 @@ interface AttendanceSectionProps {
     teamMemberIds: Set<string>;
     playerCap: number | null;
     currentUserId: string | null;
-    viewData: Record<string, unknown>;
+    viewData: Record<string, StoredViewInstance>;
     isAdmin: boolean;
 }
 
@@ -23,7 +24,7 @@ interface AttendanceSectionProps {
  * Manages toggle state between default attendance view and alternate views.
  * Persists active view in URL search params (?view=...) so it survives refresh.
  *
- * Users see the toggle only for views that have saved data.
+ * Users see the toggle only for view instances that have saved data.
  * Admins always see the "Edit Views" button to create/edit any registered view type.
  */
 export default function AttendanceSection({
@@ -40,8 +41,10 @@ export default function AttendanceSection({
     const router = useRouter();
     const pathname = usePathname();
 
-    // Views with saved data — shown to all users in the toggle
-    const configuredViews = getAllAlternateViews().filter((v) => viewData[v.id] != null);
+    // View instances with saved data — shown to all users in the toggle
+    const configuredViews = Object.entries(viewData)
+        .filter(([, instance]) => instance.data != null)
+        .map(([id, instance]) => ({ id, label: instance.label }));
 
     const viewParam = searchParams.get("view");
     const activeView = configuredViews.some((v) => v.id === viewParam) ? viewParam : null;
@@ -57,7 +60,10 @@ export default function AttendanceSection({
     };
 
     const hasConfiguredViews = configuredViews.length > 0;
-    const entry = activeView ? getAlternateView(activeView) : null;
+
+    // Resolve the registry entry by the instance's type
+    const activeInstance = activeView ? viewData[activeView] : null;
+    const entry = activeInstance ? getAlternateView(activeInstance.type) : undefined;
 
     return (
         <div className="space-y-2">
@@ -89,7 +95,7 @@ export default function AttendanceSection({
                     teamMemberIds={teamMemberIds}
                     playerCap={playerCap}
                     currentUserId={currentUserId}
-                    viewData={viewData[activeView] ?? null}
+                    viewData={activeInstance!.data}
                 />
             ) : (
                 <SessionSignupsTable

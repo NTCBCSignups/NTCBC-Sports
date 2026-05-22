@@ -125,6 +125,58 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
   return { success: true };
 }
 
+import type { StoredViewInstance } from "@/config/alt-view-interfaces";
+
+function slugify(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export async function createSessionView(
+  sport: string,
+  sessionId: string,
+  type: string,
+  label: string,
+): Promise<{ error: string } | { success: true; viewId: string }> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { data: session, error: fetchError } = await supabase
+    .from("sessions")
+    .select("alt_session_views")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
+  const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
+
+  // Generate unique slug from label
+  let slug = slugify(label);
+  if (!slug) slug = "view";
+  let viewId = slug;
+  let counter = 2;
+  while (viewId in current) {
+    viewId = `${slug}-${counter}`;
+    counter++;
+  }
+
+  const updated = { ...current, [viewId]: { type, label, data: null } };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ alt_session_views: updated })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  return { success: true, viewId };
+}
+
 export async function updateSessionViewData(
   sport: string,
   sessionId: string,
@@ -144,12 +196,46 @@ export async function updateSessionViewData(
 
   if (fetchError) return { error: fetchError.message };
 
-  const current = (session?.alt_session_views as Record<string, unknown>) ?? {};
-  const updated = { ...current, [viewId]: data };
+  const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
+  const existing = current[viewId];
+  if (!existing) return { error: "View not found" };
+
+  const updated = { ...current, [viewId]: { ...existing, data } };
 
   const { error } = await supabase
     .from("sessions")
     .update({ alt_session_views: updated })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  return { success: true };
+}
+
+export async function deleteSessionView(
+  sport: string,
+  sessionId: string,
+  viewId: string,
+): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { data: session, error: fetchError } = await supabase
+    .from("sessions")
+    .select("alt_session_views")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
+  const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
+  const { [viewId]: _, ...remaining } = current;
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ alt_session_views: remaining })
     .eq("id", sessionId);
 
   if (error) return { error: error.message };

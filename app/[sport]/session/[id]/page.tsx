@@ -37,6 +37,7 @@ import {
   getUserAccessRequestStatus,
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
+import type { StoredViewInstance } from "@/config/alt-view-interfaces";
 import { SESSION_STATUS } from "@/lib/supabase/types";
 
 async function SessionSignupsContent({
@@ -57,7 +58,7 @@ async function SessionSignupsContent({
   userRole: Role;
   signupRole: Role;
   playerCap: number | null;
-  viewData: Record<string, unknown>;
+  viewData: Record<string, StoredViewInstance>;
   isAdmin: boolean;
 }) {
   const userId = user?.id ?? null;
@@ -309,7 +310,7 @@ export default async function SessionDetailPage({
           userRole={userRole}
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
-          viewData={(session.alt_session_views as Record<string, unknown>) ?? {}}
+          viewData={(session.alt_session_views as Record<string, StoredViewInstance>) ?? {}}
           isAdmin={isAdmin}
         />
       </Suspense>
