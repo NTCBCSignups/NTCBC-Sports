@@ -124,3 +124,36 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
+
+export async function updateSessionViewData(
+  sport: string,
+  sessionId: string,
+  viewId: string,
+  data: unknown,
+): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  // Fetch current view data to merge
+  const { data: session, error: fetchError } = await supabase
+    .from("sessions")
+    .select("alt_session_views")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
+  const current = (session?.alt_session_views as Record<string, unknown>) ?? {};
+  const updated = { ...current, [viewId]: data };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ alt_session_views: updated })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}/session/${sessionId}`);
+  return { success: true };
+}
