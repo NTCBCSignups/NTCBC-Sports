@@ -1,5 +1,4 @@
-import CustomOrderedView from "./custom-ordered-view";
-import CustomOrderedEditor from "./custom-ordered-editor";
+import CustomOrderedView, { CustomOrderedEditor } from "./custom-ordered-view";
 import { AltView } from "./interfaces";
 
 /**
