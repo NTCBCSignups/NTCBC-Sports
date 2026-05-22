@@ -7,7 +7,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 interface ViewToggleProps {
     views: { id: string; label: string }[];
@@ -16,41 +15,25 @@ interface ViewToggleProps {
 }
 
 /**
- * Lets users switch between the default attendance view and other session views.
- * Renders a simple toggle button for 1 view, or a dropdown for >1.
+ * Lets users switch between configured session views.
+ * Only rendered when there are 2+ views.
  */
 export default function ViewToggle({
     views,
     activeView,
     onViewChange,
 }: ViewToggleProps) {
-    if (views.length === 0) return null;
-
-    if (views.length === 1) {
-        const view = views[0];
-        const isActive = activeView === view.id;
-        return (
-            <Button
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                onClick={() => onViewChange(isActive ? null : view.id)}
-                className="text-xs h-7"
-            >
-                {view.label}
-            </Button>
-        );
-    }
+    if (views.length < 2) return null;
 
     return (
         <Select
-            value={activeView ?? "__default__"}
-            onValueChange={(v) => onViewChange(v === "__default__" ? null : v)}
+            value={activeView ?? views[0].id}
+            onValueChange={(v) => onViewChange(v)}
         >
-            <SelectTrigger size="sm" className="h-7 text-xs">
+            <SelectTrigger size="sm" className="h-7 text-xs w-auto">
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="__default__">Attendance</SelectItem>
                 {views.map((view) => (
                     <SelectItem key={view.id} value={view.id}>
                         {view.label}

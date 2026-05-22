@@ -126,6 +126,7 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
 }
 
 import type { StoredViewInstance } from "@/components/sports/session-views/interfaces";
+import { DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
 
 function slugify(label: string): string {
   return label
@@ -154,17 +155,24 @@ export async function createSessionView(
 
   const current = (session?.alt_session_views as Record<string, StoredViewInstance>) ?? {};
 
+  // When adding the first custom view to an empty session, auto-add the default
+  // attendance view so it stays visible in the toggle alongside the new view.
+  let updated = { ...current };
+  if (Object.keys(current).length === 0 && type !== DEFAULT_VIEW_TYPE) {
+    updated["attendance"] = { type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null };
+  }
+
   // Generate unique slug from label
   let slug = slugify(label);
   if (!slug) slug = "view";
   let viewId = slug;
   let counter = 2;
-  while (viewId in current) {
+  while (viewId in updated) {
     viewId = `${slug}-${counter}`;
     counter++;
   }
 
-  const updated = { ...current, [viewId]: { type, label, data: null } };
+  updated[viewId] = { type, label, data: null };
 
   const { error } = await supabase
     .from("sessions")

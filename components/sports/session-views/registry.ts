@@ -1,4 +1,5 @@
 import CustomOrderedView, { CustomOrderedEditor } from "./custom-ordered-view";
+import AttendanceView, { AttendanceEditor } from "./attendance-view";
 import { SessionView } from "./interfaces";
 
 /**
@@ -7,12 +8,20 @@ import { SessionView } from "./interfaces";
  * Admins can create any of these for any session.
  */
 const sessionViewRegistry: Record<string, SessionView> = {
+    attendanceView: new SessionView(
+        "Attendance",
+        AttendanceView,
+        AttendanceEditor,
+    ),
     customOrderedView: new SessionView(
         "Custom Ordered View",
         CustomOrderedView,
         CustomOrderedEditor,
     ),
 };
+
+/** The registry key for the built-in default view. */
+export const DEFAULT_VIEW_TYPE = "attendanceView";
 
 export function getSessionView(viewId: string): SessionView | undefined {
     return sessionViewRegistry[viewId];
