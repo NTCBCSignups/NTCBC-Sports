@@ -54,7 +54,7 @@ const ALL_POSITIONS = [
     ...POSITIONS.outfield,
 ];
 
-const COACH_KEYS = new Set(POSITIONS.batting.map((p) => p.key));
+const COACH_KEYS: Set<string> = new Set(POSITIONS.batting.map((p) => p.key));
 
 const POSITION_GROUPS = [
     { label: "Batting", positions: POSITIONS.batting },
@@ -120,8 +120,8 @@ const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
     "3B_COACH": { x: 16, y: 82 },
 };
 
-const INFIELD_KEYS = new Set(POSITIONS.infield.map((p) => p.key));
-const OUTFIELD_KEYS = new Set(POSITIONS.outfield.map((p) => p.key));
+const INFIELD_KEYS: Set<string> = new Set(POSITIONS.infield.map((p) => p.key));
+const OUTFIELD_KEYS: Set<string> = new Set(POSITIONS.outfield.map((p) => p.key));
 
 function FieldingDiamond({
     assignments,
@@ -279,7 +279,7 @@ export default function FieldingView({
                                     {showDiamond ? "Hide" : "Show"} diamond
                                 </button>
 
-                <div className={cn(
+                                <div className={cn(
                                     "grid transition-[grid-template-rows] duration-300 ease-in-out",
                                     showDiamond ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                                 )}>
@@ -357,7 +357,7 @@ export default function FieldingView({
                             {showDiamond ? "Hide" : "Show"} diamond
                         </button>
 
-<div className={cn(
+                        <div className={cn(
                             "grid transition-[grid-template-rows] duration-300 ease-in-out",
                             showDiamond ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                         )}>
