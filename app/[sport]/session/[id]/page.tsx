@@ -24,7 +24,7 @@ import AttendanceSection from "@/components/sports/attendance-section";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
-import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel } from "@/config/config-resolver";
+import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel, type SignupConfirmationDialog } from "@/config/config-resolver";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
@@ -49,6 +49,7 @@ async function SessionSignupsContent({
   playerCap,
   viewData,
   isAdmin,
+  signupConfirmationDialog,
 }: {
   sessionId: string;
   sport: string;
@@ -59,6 +60,7 @@ async function SessionSignupsContent({
   playerCap: number | null;
   viewData: StoredViewInstance[];
   isAdmin: boolean;
+  signupConfirmationDialog?: SignupConfirmationDialog;
 }) {
   const userId = user?.id ?? null;
   const canSignup = userRole >= signupRole;
@@ -77,6 +79,12 @@ async function SessionSignupsContent({
   const requestApproved = accessRequestStatus === "approved";
   const showTeamGate = needsTeamAccess && !requestApproved;
   const showSignupButton = canSignup || requestApproved;
+
+  // Only pass the dialog config if the user's role is at or below the configured maxRole
+  const activeDialog =
+    signupConfirmationDialog && !!user && userRole <= signupConfirmationDialog.maxRole
+      ? signupConfirmationDialog
+      : undefined;
 
   return (
     <div className="space-y-6">
@@ -98,11 +106,12 @@ async function SessionSignupsContent({
             userSignupStatus={userSignupStatus}
             isEligible
             showStatusText={false}
+            signupConfirmationDialog={activeDialog}
           />
         )}
       </div>
 
-      {(canSignup || requestApproved) && (
+      {user && (
         <div className="space-y-2">
           <AttendanceSection
             sport={sport}
@@ -313,6 +322,7 @@ export default async function SessionDetailPage({
           playerCap={session.player_cap}
           viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
           isAdmin={isAdmin}
+          signupConfirmationDialog={tab.signupConfirmationDialog}
         />
       </Suspense>
     </div>

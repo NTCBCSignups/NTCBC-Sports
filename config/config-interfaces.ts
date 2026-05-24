@@ -30,6 +30,16 @@ export enum PillColor {
 /** Maps each access level to the minimum Role required. */
 export type TabPermissions = Record<AccessLevel, Role>;
 
+/** Confirmation dialog shown before signup for users at or below a given role. */
+export interface SignupConfirmationDialog {
+  /** Show the dialog for users whose role is at or below this level. */
+  maxRole: Role;
+  /** Prompt message asking the user to confirm eligibility. */
+  message: string;
+  /** Message shown when the user answers "No". */
+  rejectedMessage: string;
+}
+
 /** Default values applied to every tab during resolution. */
 export interface TabDefaults {
   permissions: TabPermissions;
@@ -61,6 +71,8 @@ export interface SessionTab {
   defaultTitlePrefix?: string;
   /** Color token used for session type pills. */
   sessionPillColor?: PillColor;
+  /** Optional confirmation dialog before signup for lower-role users. */
+  signupConfirmationDialog?: SignupConfirmationDialog;
 }
 
 export interface AdminTabMeta {
