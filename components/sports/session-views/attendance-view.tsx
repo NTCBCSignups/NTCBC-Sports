@@ -52,24 +52,24 @@ export default function AttendanceView({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-5 w-5"
                         onClick={() => handleStatusChange(signup, "waitlisted")}
                         disabled={pending === signup.id}
                         title="Move to waitlist"
                     >
-                        <ArrowDown className="h-4 w-4" />
+                        <ArrowDown className="h-3 w-3" />
                     </Button>
                 )}
                 {signup.status === "waitlisted" && (
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-5 w-5"
                         onClick={() => handleStatusChange(signup, "confirmed")}
                         disabled={pending === signup.id}
                         title="Promote to confirmed"
                     >
-                        <ArrowUp className="h-4 w-4" />
+                        <ArrowUp className="h-3 w-3" />
                     </Button>
                 )}
             </>
