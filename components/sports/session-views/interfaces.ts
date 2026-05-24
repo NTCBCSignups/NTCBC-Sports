@@ -9,6 +9,10 @@ export interface SessionViewProps {
     currentUserId?: string | null;
     /** The stored data for this view. */
     viewData: unknown;
+    /** Optional admin context — when present, views may render admin actions. */
+    isAdmin?: boolean;
+    sport?: string;
+    sessionId?: string;
 }
 
 /**

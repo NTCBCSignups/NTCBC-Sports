@@ -60,6 +60,7 @@ export default function SessionSignupsTable({
           No sign-ups yet.
         </div>
       ) : (
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -67,19 +68,17 @@ export default function SessionSignupsTable({
               <TableHead className="w-6 px-0"></TableHead>
               <TableHead>Name</TableHead>
               {showTimestamp && <TableHead>Signed up</TableHead>}
-              <TableHead className={renderActions ? "" : "sticky right-0 bg-muted/50 border-l"}>
-                Status
+              <TableHead className="sticky right-0 bg-card border-l z-10">
+                <div className="absolute inset-0 bg-muted/50" />
+                <span className="relative">Status</span>
               </TableHead>
-              {renderActions && (
-                <TableHead className="text-right">Actions</TableHead>
-              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {(() => {
               let activeIndex = 0;
               let declinedIndex = 0;
-              const colCount = 3 + (showTimestamp ? 1 : 0) + 1 + (renderActions ? 1 : 0);
+              const colCount = 3 + (showTimestamp ? 1 : 0) + 1;
               return sortedSignups.map((signup) => {
                 const isCurrentUser = currentUserId === signup.user_id;
                 const isDeclined = signup.status === "declined";
@@ -109,14 +108,12 @@ export default function SessionSignupsTable({
                           <LocalTimestamp date={signup.created_at} />
                         </TableCell>
                       )}
-                      <TableCell className={renderActions ? "" : `sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-status-info" : "bg-card"}`}>
-                        <StatusBadge status={signup.status as "confirmed" | "waitlisted" | "declined"} />
+                      <TableCell className={`sticky right-0 border-l group-hover:bg-muted/50 ${isCurrentUser ? "bg-status-info" : "bg-card"}`}>
+                        <div className="flex items-center justify-between gap-1">
+                          <StatusBadge status={signup.status as "confirmed" | "waitlisted" | "declined"} />
+                          {renderActions && renderActions(signup)}
+                        </div>
                       </TableCell>
-                      {renderActions && (
-                        <TableCell className="text-right">
-                          {renderActions(signup)}
-                        </TableCell>
-                      )}
                     </TableRow>
                   </Fragment>
                 );
@@ -124,6 +121,7 @@ export default function SessionSignupsTable({
             })()}
           </TableBody>
         </Table>
+        </div>
       )}
     </div>
   );
