@@ -77,8 +77,8 @@ export default function CustomOrderedView({
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
-                            <TableHead className="w-12">#</TableHead>
-                            <TableHead className="w-8 px-1"></TableHead>
+                            <TableHead className="w-8">#</TableHead>
+                            <TableHead className="w-6 px-0"></TableHead>
                             <TableHead>Name</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -93,7 +93,7 @@ export default function CustomOrderedView({
                                     <TableCell className="font-mono text-xs">
                                         {index + 1}
                                     </TableCell>
-                                    <TableCell className="px-1 align-middle">
+                                    <TableCell className="px-0 align-middle">
                                         {teamMemberIds.has(signup.user_id) && <TeamMemberBadge />}
                                     </TableCell>
                                     <TableCell>

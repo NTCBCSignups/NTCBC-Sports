@@ -6,12 +6,23 @@ import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
   signUpForSession,
   cancelSignup,
   declineSession,
   type SignupPlacement,
 } from "@/lib/actions/signups";
 import type { SignupStatus } from "@/lib/supabase/types";
+import type { SignupConfirmationDialog } from "@/config/config-resolver";
 import { feedback, toastClasses } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +34,8 @@ interface SignupButtonProps {
   userSignupStatus: SignupStatus | null;
   isEligible: boolean;
   showStatusText?: boolean;
+  /** When provided, shows a confirmation dialog before signup. */
+  signupConfirmationDialog?: SignupConfirmationDialog;
   className?: string;
   buttonClassName?: string;
 }
@@ -52,6 +65,7 @@ export default function SignupButton({
   userSignupStatus,
   isEligible,
   showStatusText = true,
+  signupConfirmationDialog,
   className,
   buttonClassName,
 }: SignupButtonProps) {
@@ -59,6 +73,8 @@ export default function SignupButton({
   const [pending, setPending] = useState(false);
   const [localStatus, setLocalStatus] = useState(userSignupStatus);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showRejectedMessage, setShowRejectedMessage] = useState(false);
 
   const handleSignup = async () => {
     setPending(true);
@@ -76,15 +92,30 @@ export default function SignupButton({
     setPending(false);
   };
 
+  const initiateSignup = () => {
+    if (signupConfirmationDialog) {
+      setShowRejectedMessage(false);
+      setShowConfirmDialog(true);
+    } else {
+      handleSignup();
+    }
+  };
+
+  const handleConfirmYes = () => {
+    setShowConfirmDialog(false);
+    handleSignup();
+  };
+
   const handleCancel = async () => {
     setPending(true);
     setError(null);
+    const previousStatus = localStatus;
     const result = await cancelSignup(sessionId);
     if ("error" in result) {
       setError(result.error);
     } else {
       setLocalStatus("cancelled");
-      toast("Your sign-up has been cancelled.");
+      toast("Response removed.");
       router.refresh();
     }
     setPending(false);
@@ -103,6 +134,52 @@ export default function SignupButton({
     }
     setPending(false);
   };
+
+  const confirmationDialog = signupConfirmationDialog && (
+    <AlertDialog open={showConfirmDialog} onOpenChange={(open) => {
+      if (!open && !showRejectedMessage) setShowConfirmDialog(false);
+    }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Signup Confirmation</AlertDialogTitle>
+          <AlertDialogDescription>
+            {showRejectedMessage
+              ? signupConfirmationDialog.rejectedMessage
+              : signupConfirmationDialog.message}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-row justify-end">
+          {showRejectedMessage ? (
+            <AlertDialogCancel onClick={() => {
+              setShowConfirmDialog(false);
+            }}>
+              Dismiss
+            </AlertDialogCancel>
+          ) : (
+            <>
+              <AlertDialogAction onClick={(e) => {
+                e.preventDefault();
+                handleConfirmYes();
+              }}>
+                Yes
+              </AlertDialogAction>
+              <AlertDialogCancel onClick={(e) => {
+                e.preventDefault();
+                const hasRejectedMessage = !!signupConfirmationDialog.rejectedMessage;
+                if (hasRejectedMessage) {
+                  setShowRejectedMessage(true);
+                } else {
+                  setShowConfirmDialog(false);
+                }
+              }}>
+                No
+              </AlertDialogCancel>
+            </>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   if (localStatus === "confirmed" || localStatus === "waitlisted") {
     return (
@@ -123,7 +200,7 @@ export default function SignupButton({
             disabled={pending}
             className={cn("px-8", buttonClassName)}
           >
-            {pending ? "Cancelling..." : "Cancel Sign-up"}
+            {pending ? "Cancelling..." : "Remove Sign-up"}
           </Button>
         </div>
         {error && <p className={feedback.error}>{error}</p>}
@@ -141,17 +218,28 @@ export default function SignupButton({
               <span className="font-semibold">unable to join</span>.
             </span>
           )}
-          {isOpen && isEligible && (
+          <div className="flex flex-wrap gap-2">
+            {isOpen && isEligible && (
+              <Button
+                onClick={initiateSignup}
+                disabled={pending}
+                className={cn("px-8", buttonClassName)}
+              >
+                {pending ? "Signing up..." : "Sign up instead"}
+              </Button>
+            )}
             <Button
-              onClick={handleSignup}
+              variant="destructive"
+              onClick={handleCancel}
               disabled={pending}
               className={cn("px-8", buttonClassName)}
             >
-              {pending ? "Signing up..." : "Sign up instead"}
+              {pending ? "Cancelling..." : "Remove Attendance"}
             </Button>
-          )}
+          </div>
         </div>
         {error && <p className={feedback.error}>{error}</p>}
+        {confirmationDialog}
       </div>
     );
   }
@@ -161,7 +249,7 @@ export default function SignupButton({
       <Button
         disabled
         className={cn(
-          "w-full sm:w-auto px-8 has-[>svg]:px-8",
+          "px-8 has-[>svg]:px-8",
           buttonClassName,
         )}
       >
@@ -176,7 +264,7 @@ export default function SignupButton({
       <Button
         disabled
         className={cn(
-          "w-full sm:w-auto px-8 has-[>svg]:px-8",
+          "px-8 has-[>svg]:px-8",
           buttonClassName,
         )}
       >
@@ -189,10 +277,10 @@ export default function SignupButton({
     <div className={cn("space-y-2", className)}>
       <div className="flex flex-wrap gap-2">
         <Button
-          onClick={handleSignup}
+          onClick={initiateSignup}
           disabled={pending}
           className={cn(
-            "w-full sm:w-auto px-8 has-[>svg]:px-8",
+            "px-8 has-[>svg]:px-8",
             buttonClassName,
           )}
         >
@@ -203,7 +291,7 @@ export default function SignupButton({
           onClick={handleDecline}
           disabled={pending}
           className={cn(
-            "w-full sm:w-auto px-8",
+            "px-8",
             buttonClassName,
           )}
         >
@@ -211,6 +299,7 @@ export default function SignupButton({
         </Button>
       </div>
       {error && <p className={feedback.error}>{error}</p>}
+      {confirmationDialog}
     </div>
   );
 }

@@ -164,7 +164,7 @@ export async function cancelSignup(
     .maybeSingle();
 
   if (fetchError) return { error: fetchError.message };
-  if (!row || row.status === "cancelled" || row.status === "declined") {
+  if (!row || row.status === "cancelled") {
     revalidatePath(`/${sport}/session/${sessionId}`);
     revalidatePath(`/${sport}`);
     return { success: true };
