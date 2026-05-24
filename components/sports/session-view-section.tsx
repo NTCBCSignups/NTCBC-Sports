@@ -2,15 +2,15 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import SessionSignupsTable from "@/components/sports/session-signups-table";
+import AttendanceView from "@/components/sports/session-views/attendance-view";
 import ViewToggle from "@/components/sports/view-toggle";
 import EditViewsDialog from "@/components/sports/edit-views-dialog";
-import { getSessionView, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
+import { getSessionView } from "@/components/sports/session-views/registry";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
 
-interface AttendanceSectionProps {
+interface SessionViewSectionProps {
     sport: string;
     sessionId: string;
     signups: SignupRow[];
@@ -29,7 +29,7 @@ interface AttendanceSectionProps {
  * - Non-empty, all disabled: shows collapsed hint (count + user's row).
  * - Non-empty, has enabled: shows view toggle + active view component.
  */
-export default function AttendanceSection({
+export default function SessionViewSection({
     sport,
     sessionId,
     signups,
@@ -38,7 +38,7 @@ export default function AttendanceSection({
     currentUserId,
     viewData,
     isAdmin,
-}: AttendanceSectionProps) {
+}: SessionViewSectionProps) {
     const searchParams = useSearchParams();
     const [activeView, setActiveView] = useState<string | null>(
         searchParams.get("view"),
@@ -56,7 +56,7 @@ export default function AttendanceSection({
         window.history.replaceState(null, "", newUrl);
     };
 
-    // Empty viewData = no views configured yet → show attendance table directly
+    // Empty viewData = no views configured yet → fall back to attendance view
     if (viewData.length === 0) {
         return (
             <div className="space-y-2">
@@ -72,12 +72,15 @@ export default function AttendanceSection({
                         />
                     )}
                 </div>
-                <SessionSignupsTable
+                <AttendanceView
                     signups={signups}
                     teamMemberIds={teamMemberIds}
                     playerCap={playerCap}
                     currentUserId={currentUserId}
-                    showTimestamp
+                    viewData={null}
+                    isAdmin={isAdmin}
+                    sport={sport}
+                    sessionId={sessionId}
                 />
             </div>
         );
@@ -129,6 +132,9 @@ export default function AttendanceSection({
                     playerCap={playerCap}
                     currentUserId={currentUserId}
                     viewData={activeInstance!.data}
+                    isAdmin={isAdmin}
+                    sport={sport}
+                    sessionId={sessionId}
                 />
             ) : configuredViews.length === 0 ? (
                 <CollapsedAttendanceHint

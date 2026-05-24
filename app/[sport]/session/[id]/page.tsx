@@ -20,7 +20,7 @@ import SessionDialog from "@/components/sports/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
 import AdminButton from "@/components/sports/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
-import AttendanceSection from "@/components/sports/attendance-section";
+import SessionViewSection from "@/components/sports/session-view-section";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
@@ -113,7 +113,7 @@ async function SessionSignupsContent({
 
       {user && (
         <div className="space-y-2">
-          <AttendanceSection
+          <SessionViewSection
             sport={sport}
             sessionId={sessionId}
             signups={rawSignups}
