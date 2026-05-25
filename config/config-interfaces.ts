@@ -12,6 +12,7 @@ export enum Role {
 
 /** Access level actions that can be gated per tab. */
 export enum AccessLevel {
+  overview = "overview",
   view = "view",
   signup = "signup",
   admin = "admin",
@@ -119,4 +120,12 @@ export interface ResolvedSportConfig extends Omit<SportConfig, "tabs"> {
   tabs: ResolvedSessionTab[];
   /** True if any tab requires a higher signup role than the default. */
   hasRestrictedAccess: boolean;
+}
+
+// ── Access banner text (data-driven) ─────────────────────────────
+
+/** Text pair for access banners, with label interpolation. */
+export interface AccessBannerText {
+  title: (label: string) => string;
+  message: (label: string) => string;
 }

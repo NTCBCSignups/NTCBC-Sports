@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, XCircle } from "lucide-react";
 import { requestTeamAccess } from "@/lib/actions/team-access";
-import { resolvedSportsConfig, AccessLevel, Role } from "@/config/config-resolver";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 import { colors } from "@/lib/styles";
 import StatusBanner from "@/components/sports/status-banner";
@@ -12,25 +11,21 @@ import StatusBanner from "@/components/sports/status-banner";
 interface TeamAccessBannerProps {
   requestStatus: AccessRequestStatus | null;
   sport: string;
-}
-
-function getRestrictedTabLabels(sport: string): string {
-  const config = resolvedSportsConfig[sport];
-  const labels = config?.tabs
-    ?.filter((t) => t.permissions[AccessLevel.signup] > Role.user)
-    .map((t) => t.label.toLowerCase()) ?? [];
-  if (labels.length === 0) return "restricted sessions";
-  if (labels.length === 1) return labels[0];
-  return labels.slice(0, -1).join(", ") + " and " + labels[labels.length - 1];
+  /** Tab label(s) describing what's restricted (e.g. "scheduled games"). */
+  label: string;
+  /** Banner message describing what access grants. */
+  bannerMessage?: string;
 }
 
 export default function TeamAccessBanner({
   requestStatus,
   sport,
+  label,
+  bannerMessage,
 }: TeamAccessBannerProps) {
   const [pending, setPending] = useState(false);
   const [localStatus, setLocalStatus] = useState(requestStatus);
-  const restrictedLabels = getRestrictedTabLabels(sport);
+  const restrictedLabels = label;
 
   const handleRequest = async () => {
     setPending(true);
@@ -72,7 +67,7 @@ export default function TeamAccessBanner({
       variant="info"
       icon={<Shield className="h-5 w-5 text-info shrink-0 mt-0.5" />}
       title="Team members only"
-      message={<>{restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved for approved team members. Request access to sign up for those sessions.</>}
+      message={<>{bannerMessage || <>{restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved for approved team members. Request access to sign up for those sessions.</>}</>}
     >
       <Button
         size="sm"

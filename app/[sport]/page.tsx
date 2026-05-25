@@ -9,56 +9,120 @@ import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
 import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
+import type { ResolvedSessionTab, AccessBannerText } from "@/config/config-resolver";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
 
+// ── Access level ordering (for finding first unmet level) ────────
+const ACCESS_LEVELS: Exclude<AccessLevel, "admin">[] = [
+  AccessLevel.overview,
+  AccessLevel.view,
+  AccessLevel.signup,
+];
+
+// ── Access banner text (data-driven) ─────────────────────────────
+function buildAccessLevelText(
+  openTitle: (l: string) => string,
+  teamTitle: string,
+  description: (l: string) => string,
+) {
+  return {
+    open: {
+      title: openTitle,
+      message: (l: string) => `Sign in with your Google account to ${description(l)}.`,
+    },
+    teamSignedOut: {
+      title: () => teamTitle,
+      message: (l: string) => `Sign in and request team access to ${description(l)}.`,
+    },
+    teamSignedIn: {
+      title: () => teamTitle,
+      message: (l: string) => `Request team access to ${description(l)}.`,
+    },
+  };
+}
+
+const ACCESS_LEVEL_TEXT: Record<
+  Exclude<AccessLevel, "admin">,
+  { open: AccessBannerText; teamSignedOut: AccessBannerText; teamSignedIn: AccessBannerText }
+> = {
+  [AccessLevel.overview]: buildAccessLevelText(
+    (l) => `Sign in to view ${l}`,
+    "Team members only",
+    (l) => `view and sign up for ${l}`,
+  ),
+  [AccessLevel.view]: buildAccessLevelText(
+    (l) => `Sign in to view ${l}`,
+    "Team access required",
+    (l) => `view details and sign up for ${l}`,
+  ),
+  [AccessLevel.signup]: buildAccessLevelText(
+    (l) => `Sign in to sign up for ${l}`,
+    "Team access required to sign up",
+    (l) => `sign up for ${l}`,
+  ),
+};
+
 /**
- * Returns the appropriate access gate banner for a tab based on user state.
- * - Anon user → SignInToSignupBanner (with contextual text)
- * - Signed-in user lacking access → TeamAccessBanner (with request button)
- * - User has access → null
+ * Finds the first AccessLevel the user doesn't meet for a tab.
+ * Returns null if the user meets all levels (or only lacks admin).
  */
-function getAccessGateBanner({
+function getFirstUnmetLevel(tab: ResolvedSessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
+  for (const level of ACCESS_LEVELS) {
+    if (userRole < tab.permissions[level]) return level;
+  }
+  return null;
+}
+
+/**
+ * Pure lookup — resolves the pre-composed banner text for a given scenario.
+ */
+function getBannerText(level: Exclude<AccessLevel, "admin">, requiredRole: Role, isSignedIn: boolean): AccessBannerText {
+  const entry = ACCESS_LEVEL_TEXT[level];
+  if (requiredRole >= Role.teamUser) return isSignedIn ? entry.teamSignedIn : entry.teamSignedOut;
+  return entry.open;
+}
+
+/**
+ * Returns the appropriate banner JSX for a tab, or null if no banner needed.
+ * Purely data-driven: looks up text by the first unmet AccessLevel.
+ */
+function renderAccessBanner({
   userId,
+  tab,
   userRole,
-  requiredViewRole,
   accessRequestStatus,
   sport,
-  label,
 }: {
   userId: string | null;
+  tab: ResolvedSessionTab;
   userRole: Role;
-  requiredViewRole: Role;
   accessRequestStatus: AccessRequestStatus | null;
   sport: string;
-  label: string;
 }) {
-  if (userRole >= requiredViewRole) return null;
+  const unmetLevel = getFirstUnmetLevel(tab, userRole);
+  if (!unmetLevel) return null;
 
-  // Anon user — needs to sign in
+  const requiredRole = tab.permissions[unmetLevel];
+  const text = getBannerText(unmetLevel, requiredRole, !!userId);
+  const label = tab.label.toLowerCase();
+
   if (!userId) {
     return (
       <SignInToSignupBanner
-        title={
-          requiredViewRole >= Role.teamUser
-            ? "Team members only"
-            : `Sign in to view ${label}`
-        }
-        message={
-          requiredViewRole >= Role.teamUser
-            ? `Sign in and request team access to view and sign up for ${label}.`
-            : `Sign in with your Google account to view and sign up for ${label}.`
-        }
+        title={text.title(label)}
+        message={text.message(label)}
       />
     );
   }
 
-  // Signed-in user lacking team access
   return (
     <TeamAccessBanner
       requestStatus={accessRequestStatus}
       sport={sport}
+      label={label}
+      bannerMessage={text.message(label)}
     />
   );
 }
@@ -90,7 +154,7 @@ async function SportSessionsContent({
   const userRole = roleResult.role;
 
   const needsAccessRequest = !!userId && config.tabs.some((t) =>
-    userRole < t.permissions[AccessLevel.view] || userRole < t.permissions[AccessLevel.signup]
+    getFirstUnmetLevel(t, userRole) !== null
   );
 
   const sessionIds = sessionsWithCounts.map((session) => session.id);
@@ -110,41 +174,43 @@ async function SportSessionsContent({
   const showAll = configTabs.length > 1;
   const ALL_VALUE = "all";
 
-  const typeOptions = configTabs.map((t) => {
+  // Per-tab: resolve banner + sessions using the data-driven access level lookup
+  const tabAccess = configTabs.map((t) => {
+    const unmetLevel = getFirstUnmetLevel(t, userRole);
+    const isGated = unmetLevel === AccessLevel.overview;
+    const banner = renderAccessBanner({ userId, tab: t, userRole, accessRequestStatus, sport });
+    return { tab: t, unmetLevel, isGated, banner };
+  });
+
+  const typeOptions = tabAccess.map(({ tab: t, isGated, banner }) => {
     const sessions = sessionsByType[t.value] ?? [];
-    const canView = userRole >= t.permissions[AccessLevel.view];
-    const gateBanner = getAccessGateBanner({
-      userId,
-      userRole,
-      requiredViewRole: t.permissions[AccessLevel.view],
-      accessRequestStatus,
-      sport,
-      label: t.label.toLowerCase(),
-    });
 
     return {
       value: t.value,
       label: t.label,
       content: (
         <div className="space-y-4">
-          {gateBanner ? (
-            gateBanner
+          {isGated ? (
+            banner
           ) : sessions.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              {sessions.map((session) => (
-                <SessionCard
-                  key={session.id}
-                  session={session}
-                  highlighted={session.id === highlight}
-                  returnTab={t.value}
-                  userRole={userRole}
-                  userSignupStatus={
-                    userSignupStatusBySession.get(session.id) ?? null
-                  }
-                />
-              ))}
-            </div>
-          ) : !canView ? null : (
+            <>
+              {banner}
+              <div className="grid gap-6 md:grid-cols-2">
+                {sessions.map((session) => (
+                  <SessionCard
+                    key={session.id}
+                    session={session}
+                    highlighted={session.id === highlight}
+                    returnTab={t.value}
+                    userRole={userRole}
+                    userSignupStatus={
+                      userSignupStatusBySession.get(session.id) ?? null
+                    }
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
             <p className="text-sm text-muted-foreground py-8 text-center">
               No upcoming {t.label.toLowerCase()}.
             </p>
@@ -154,65 +220,48 @@ async function SportSessionsContent({
     };
   });
 
-  const viewableSessions = sessionsWithCounts.filter((session) => {
-    const tab = configTabs.find((t) => t.value === session.session_type);
-    return !tab || userRole >= tab.permissions[AccessLevel.view];
+  // "All" tab: show sessions from non-gated tabs, plus a banner if any tabs are restricted
+  const viewableSessions = sessionsWithCounts.filter((s) => {
+    const access = tabAccess.find((a) => a.tab.value === s.session_type);
+    return !access || !access.isGated;
   });
 
-  const hasHiddenSessions = sessionsWithCounts.length > viewableSessions.length;
+  // "All" tab banner: derived from restricted tabs' labels and highest unmet level
+  const restrictedTabs = tabAccess.filter((a) => a.unmetLevel !== null);
+  const allBanner = (() => {
+    if (restrictedTabs.length === 0) return null;
 
-  // Determine the "All" tab banner based on which tabs are restricted
-  const hiddenTabs = configTabs.filter((t) => userRole < t.permissions[AccessLevel.view]);
-  const lowestHiddenRole = hasHiddenSessions
-    ? Math.min(...hiddenTabs.map((t) => t.permissions[AccessLevel.view])) as Role
-    : Role.anon;
-  const hasViewableSessions = viewableSessions.length > 0;
+    // Use the most restrictive (earliest in access level order) unmet level
+    const highestRestriction = restrictedTabs.reduce((worst, a) => {
+      const wIdx = ACCESS_LEVELS.indexOf(worst.unmetLevel!);
+      const aIdx = ACCESS_LEVELS.indexOf(a.unmetLevel!);
+      return aIdx < wIdx ? a : worst;
+    });
 
-  const allGateBanner = (() => {
-    if (!hasHiddenSessions) return null;
+    const unmetLevel = highestRestriction.unmetLevel!;
+    const requiredRole = highestRestriction.tab.permissions[unmetLevel];
+    const text = getBannerText(unmetLevel, requiredRole, !!userId);
 
-    // Signed-in user lacking team access → show request banner
-    if (userId) {
-      return (
-        <TeamAccessBanner
-          requestStatus={accessRequestStatus}
-          sport={sport}
-        />
-      );
-    }
+    // Compose label: use tab name if only one, otherwise "some sessions"
+    const label = restrictedTabs.length === 1
+      ? restrictedTabs[0].tab.label.toLowerCase()
+      : "some sessions";
 
-    // Anon user — wording depends on whether they can already see some sessions
-    if (hasViewableSessions) {
-      // They can see some but not all
+    if (!userId) {
       return (
         <SignInToSignupBanner
-          title={
-            lowestHiddenRole >= Role.teamUser
-              ? "Some sessions require team access"
-              : "Sign in to view more sessions"
-          }
-          message={
-            lowestHiddenRole >= Role.teamUser
-              ? "Sign in and request team access to view all sessions."
-              : "Sign in with your Google account to view all sessions."
-          }
+          title={text.title(label)}
+          message={text.message(label)}
         />
       );
     }
 
-    // They can't see anything
     return (
-      <SignInToSignupBanner
-        title={
-          lowestHiddenRole >= Role.teamUser
-            ? "Team members only"
-            : "Sign in to view sessions"
-        }
-        message={
-          lowestHiddenRole >= Role.teamUser
-            ? "Sign in and request team access to view and sign up for sessions."
-            : "Sign in with your Google account to view and sign up for sessions."
-        }
+      <TeamAccessBanner
+        requestStatus={accessRequestStatus}
+        sport={sport}
+        label={label}
+        bannerMessage={text.message(label)}
       />
     );
   })();
@@ -223,7 +272,7 @@ async function SportSessionsContent({
       label: "All",
       content: (
         <div className="space-y-4">
-          {allGateBanner}
+          {allBanner}
           {viewableSessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
               {viewableSessions.map((session) => (
@@ -239,7 +288,7 @@ async function SportSessionsContent({
                 />
               ))}
             </div>
-          ) : !hasHiddenSessions ? (
+          ) : restrictedTabs.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
               No upcoming sessions.
             </p>

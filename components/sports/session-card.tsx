@@ -69,7 +69,7 @@ export default function SessionCard({
     <Card className={cn(
       "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
       canView && "hover:shadow-lg",
-      !canView && "opacity-60 cursor-default",
+      !canView && "cursor-default",
       isCancelled && "opacity-60",
       highlighted && "ring-2 ring-info bg-status-info/50",
     )}>

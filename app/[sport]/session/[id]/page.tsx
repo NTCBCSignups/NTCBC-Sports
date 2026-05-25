@@ -49,6 +49,7 @@ async function SessionSignupsContent({
   playerCap,
   viewData,
   isAdmin,
+  tabLabel,
   signupConfirmationDialog,
 }: {
   sessionId: string;
@@ -60,6 +61,7 @@ async function SessionSignupsContent({
   playerCap: number | null;
   viewData: StoredViewInstance[];
   isAdmin: boolean;
+  tabLabel: string;
   signupConfirmationDialog?: SignupConfirmationDialog;
 }) {
   const userId = user?.id ?? null;
@@ -96,6 +98,7 @@ async function SessionSignupsContent({
           <TeamAccessBanner
             requestStatus={accessRequestStatus}
             sport={sport}
+            label={tabLabel.toLowerCase()}
           />
         )}
 
@@ -322,6 +325,7 @@ export default async function SessionDetailPage({
           playerCap={session.player_cap}
           viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
           isAdmin={isAdmin}
+          tabLabel={tab.label}
           signupConfirmationDialog={tab.signupConfirmationDialog}
         />
       </Suspense>

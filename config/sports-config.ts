@@ -19,6 +19,7 @@ export const SPORT_DEFAULTS = {
   adminTabs: DEFAULT_ADMIN_TABS,
   tab: {
     permissions: {
+      [AccessLevel.overview]: Role.anon,
       [AccessLevel.view]: Role.anon,
       [AccessLevel.signup]: Role.user,
       [AccessLevel.admin]: Role.admin,
@@ -148,7 +149,7 @@ export const sportsConfig: Record<string, SportConfig> = {
         label: "Drop-in Practice",
         defaultTitlePrefix: "Practice",
         sessionPillColor: PillColor.emerald,
-        permissions: { [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.user },
+        permissions: { [AccessLevel.overview]: Role.user, [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.user },
         signupConfirmationDialog: {
           maxRole: Role.user,
           message: "Do you go to NTCBC? (Only) If not, have you been approved by a leader to participate?",
@@ -160,14 +161,14 @@ export const sportsConfig: Record<string, SportConfig> = {
         label: "Scheduled Games",
         defaultTitlePrefix: "Game",
         sessionPillColor: PillColor.indigo,
-        permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
+        permissions: { [AccessLevel.overview]: Role.user, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
       },
       {
         value: "umpiring",
         label: "Umpiring",
         defaultTitlePrefix: "Umpiring",
         sessionPillColor: PillColor.amber,
-        permissions: { [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
+        permissions: { [AccessLevel.overview]: Role.teamUser, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
       },
     ],
   },
