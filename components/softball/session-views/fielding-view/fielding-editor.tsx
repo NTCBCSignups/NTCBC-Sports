@@ -8,14 +8,7 @@
  * relying on onChange callbacks or unmount timing.
  */
 
-import { memo, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { memo, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +30,12 @@ interface FieldingCellProps {
 }
 
 const FieldingCell = memo(function FieldingCell({ matrix, inning, position, unique, confirmed }: FieldingCellProps) {
+    const [inputValue, setInputValue] = useState("");
+    const [open, setOpen] = useState(false);
+    const [highlightIndex, setHighlightIndex] = useState(0);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
     // Subscribe to this cell's value
     const cellValue = useSyncExternalStore(
         (cb) => matrix.subscribeCell(inning, position, cb),
@@ -48,7 +47,6 @@ const FieldingCell = memo(function FieldingCell({ matrix, inning, position, uniq
         (cb) => matrix.subscribeInning(inning, cb),
         () => {
             if (!unique) return "";
-            // Serialize taken set for stable snapshot comparison
             const taken = matrix.getTaken(inning, position);
             return Array.from(taken).sort().join(",");
         },
@@ -56,34 +54,113 @@ const FieldingCell = memo(function FieldingCell({ matrix, inning, position, uniq
 
     const taken = unique ? new Set(takenSnapshot ? takenSnapshot.split(",") : []) : null;
 
+    const selectedName = cellValue
+        ? displayName(confirmed.find((s) => s.user_id === cellValue)?.profiles ?? null)
+        : "";
+
+    // Build filtered options
+    const query = inputValue.toLowerCase();
+    const options = [
+        { id: null, name: "Unassigned", taken: false },
+        ...confirmed.map((s) => ({
+            id: s.user_id,
+            name: displayName(s.profiles),
+            taken: taken?.has(s.user_id) ?? false,
+        })),
+    ].filter((o) => !query || o.name.toLowerCase().includes(query));
+
+    // Reset highlight when options change
+    useEffect(() => { setHighlightIndex(0); }, [options.length]);
+
+    // Close on outside click
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+                setOpen(false);
+                setInputValue("");
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [open]);
+
+    const selectOption = (id: string | null) => {
+        matrix.assign(inning, position, id);
+        setOpen(false);
+        setInputValue("");
+        inputRef.current?.blur();
+    };
+
     return (
         <td className="px-1 py-0.5">
-            <Select
-                value={cellValue ?? "__unassigned__"}
-                onValueChange={(v) =>
-                    matrix.assign(inning, position, v === "__unassigned__" ? null : v)
-                }
-            >
-                <SelectTrigger className={cn("h-7 text-xs w-[120px]", !cellValue && "text-destructive/70")}>
-                    <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                    {confirmed.map((s) => {
-                        const isTaken = taken?.has(s.user_id) ?? false;
-                        return (
-                            <SelectItem
-                                key={s.user_id}
-                                value={s.user_id}
-                                className={isTaken ? "opacity-50" : ""}
+            <div ref={wrapperRef} className="relative">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    className={cn(
+                        "h-7 text-xs w-[120px] rounded-md border border-input bg-background px-2 py-1 outline-none focus:ring-1 focus:ring-ring truncate",
+                        !cellValue && !open && "text-destructive/70",
+                    )}
+                    placeholder="Unassigned"
+                    value={open ? inputValue : selectedName}
+                    onChange={(e) => {
+                        setInputValue(e.target.value);
+                        setHighlightIndex(0);
+                        if (!open) setOpen(true);
+                    }}
+                    onFocus={(e) => {
+                        setInputValue(selectedName);
+                        setOpen(true);
+                        // Select all text so typing replaces it, but copy still works
+                        requestAnimationFrame(() => e.target.select());
+                    }}
+                    onKeyDown={(e) => {
+                        if (!open) return;
+                        if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setHighlightIndex((i) => Math.min(i + 1, options.length - 1));
+                        } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setHighlightIndex((i) => Math.max(i - 1, 0));
+                        } else if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (options[highlightIndex]) selectOption(options[highlightIndex].id);
+                        } else if (e.key === "Escape") {
+                            setOpen(false);
+                            setInputValue("");
+                            inputRef.current?.blur();
+                        } else if (e.key === "Tab") {
+                            // Autocomplete top match on Tab
+                            if (options.length > 0) {
+                                e.preventDefault();
+                                selectOption(options[highlightIndex]?.id ?? options[0].id);
+                            }
+                        }
+                    }}
+                />
+                {open && options.length > 0 && (
+                    <ul className="absolute z-50 mt-1 max-h-[180px] w-[180px] overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md">
+                        {options.map((o, i) => (
+                            <li
+                                key={o.id ?? "__unassigned__"}
+                                className={cn(
+                                    "cursor-pointer px-2 py-1 text-xs",
+                                    i === highlightIndex && "bg-accent text-accent-foreground",
+                                    o.taken && "opacity-50",
+                                )}
+                                onMouseEnter={() => setHighlightIndex(i)}
+                                onMouseDown={(e) => {
+                                    e.preventDefault(); // prevent blur before select
+                                    selectOption(o.id);
+                                }}
                             >
-                                {displayName(s.profiles)}
-                                {isTaken && " (assigned)"}
-                            </SelectItem>
-                        );
-                    })}
-                </SelectContent>
-            </Select>
+                                {o.name}{o.taken && " (assigned)"}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
         </td>
     );
 });
