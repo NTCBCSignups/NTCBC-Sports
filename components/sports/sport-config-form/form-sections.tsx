@@ -225,6 +225,8 @@ export function SessionTabsSection({
                 items={state.tabs}
                 onReorder={(tabs) => setState((prev) => ({ ...prev, tabs }))}
                 keyExtractor={(tab) => tab.key}
+                className="max-h-[60vh] overflow-y-auto pr-1"
+                itemClassName={() => "items-start flex-col gap-3 sm:flex-row sm:items-center"}
                 renderItem={(tab, index) => {
                     const isDefault = state.defaultTab
                         ? tab.value === state.defaultTab
@@ -259,32 +261,32 @@ export function SessionTabsSection({
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex w-full items-center justify-end gap-1 shrink-0 sm:w-auto">
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 px-2"
+                                    className="h-8 w-8 p-0 sm:w-auto sm:px-2"
                                     onClick={() => openEditTabDialog(tab.key)}
                                 >
-                                    <Pencil className="h-3.5 w-3.5 mr-1" />
-                                    Edit
+                                    <Pencil className="h-3.5 w-3.5 sm:mr-1" />
+                                    <span className="hidden sm:inline">Edit</span>
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 px-2"
+                                    className="h-8 w-8 p-0 sm:w-auto sm:px-2"
                                     onClick={() => openPermissionsDialog(tab.key)}
                                 >
-                                    <Shield className="h-3.5 w-3.5 mr-1" />
-                                    Permissions
+                                    <Shield className="h-3.5 w-3.5 sm:mr-1" />
+                                    <span className="hidden sm:inline">Permissions</span>
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 px-2 text-destructive hover:text-destructive"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                     onClick={() => requestDeleteTab(tab.key)}
                                 >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -388,6 +390,8 @@ export function AdminTabsSection({
                 items={state.adminTabs}
                 onReorder={(adminTabs) => setState((prev) => ({ ...prev, adminTabs }))}
                 keyExtractor={(tab) => tab.key}
+                className="max-h-[60vh] overflow-y-auto pr-1"
+                itemClassName={() => "items-start flex-col gap-3 sm:flex-row sm:items-center"}
                 renderItem={(tab) => {
                     const Icon = getAdminTabIcon(tab.iconName);
                     const definition = getAdminTabDefinition(tab.id);
@@ -405,22 +409,22 @@ export function AdminTabsSection({
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex w-full items-center justify-end gap-1 shrink-0 sm:w-auto">
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 px-2"
+                                    className="h-8 w-8 p-0 sm:w-auto sm:px-2"
                                     onClick={() => openEditAdminTabDialog(tab.key)}
                                 >
-                                    <Pencil className="h-3.5 w-3.5 mr-1" />
-                                    Edit
+                                    <Pencil className="h-3.5 w-3.5 sm:mr-1" />
+                                    <span className="hidden sm:inline">Edit</span>
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 px-2 text-destructive hover:text-destructive"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                     onClick={() => requestDeleteAdminTab(tab.key)}
                                 >
                                     <Trash2 className="h-3.5 w-3.5" />
