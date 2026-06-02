@@ -29,7 +29,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getAdminTabDefinition, type AdminTabDefinition } from "@/config/admin-tab-metadata";
 import {
     PillColor,
     Role,
@@ -37,6 +36,10 @@ import {
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
+import {
+    getAdminTabDefinition,
+    type AdminTabDefinition,
+} from "./admin-tab-ui-metadata";
 import {
     ACCESS_LEVEL_OPTIONS,
     PILL_COLOR_OPTIONS,

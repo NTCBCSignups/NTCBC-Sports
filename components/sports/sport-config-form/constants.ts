@@ -38,13 +38,4 @@ export const ACCESS_LEVEL_OPTIONS: Array<{ value: AccessLevel; label: string; de
     },
 ];
 
-export const PILL_COLOR_OPTIONS: PillColor[] = [
-    PillColor.gray,
-    PillColor.emerald,
-    PillColor.indigo,
-    PillColor.amber,
-    PillColor.blue,
-    PillColor.rose,
-    PillColor.teal,
-    PillColor.violet,
-];
+export const PILL_COLOR_OPTIONS: PillColor[] = Object.values(PillColor);

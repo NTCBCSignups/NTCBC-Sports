@@ -6,12 +6,14 @@ import {
     Role,
 } from "@/config/config-resolver";
 import {
-    ADMIN_TAB_DEFINITIONS,
-    ADMIN_TAB_ICON_OPTIONS,
-    getAdminTabDefinition,
     SETTINGS_TAB_ID,
 } from "@/config/admin-tab-metadata";
 import { createSessionTabId } from "@/config/session-tab-rules";
+import {
+    ADMIN_TAB_DEFINITIONS,
+    ADMIN_TAB_ICON_OPTIONS,
+    getAdminTabDefinition,
+} from "./admin-tab-ui-metadata";
 import {
     ACCESS_LEVEL_OPTIONS,
     ROLE_OPTIONS,

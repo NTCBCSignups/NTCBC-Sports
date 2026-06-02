@@ -8,8 +8,6 @@ import {
     setUnsavedSettingsChanges,
 } from "@/components/sports/settings-unsaved-guard";
 import {
-    ADMIN_TAB_DEFINITIONS,
-    ADMIN_TAB_ICON_OPTIONS,
     isAdminTabIconName,
     SETTINGS_TAB_ID,
     SETTINGS_TAB_LABEL,
@@ -24,6 +22,10 @@ import {
     AUTO_DEFAULT_ADMIN_TAB_VALUE,
     AUTO_DEFAULT_TAB_VALUE,
 } from "./constants";
+import {
+    ADMIN_TAB_DEFINITIONS,
+    ADMIN_TAB_ICON_OPTIONS,
+} from "./admin-tab-ui-metadata";
 import {
     AdminTabDialog,
     DeleteTargetDialog,

@@ -15,13 +15,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { getAdminTabIcon } from "@/components/sports/admin-tab-icons";
 import {
-    getAdminTabDefinition,
     SETTINGS_TAB_ICON_NAME,
     SETTINGS_TAB_ID,
     SETTINGS_TAB_LABEL,
 } from "@/config/admin-tab-metadata";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
+import { getAdminTabDefinition } from "./admin-tab-ui-metadata";
 import {
     AUTO_DEFAULT_ADMIN_TAB_VALUE,
     AUTO_DEFAULT_TAB_VALUE,
