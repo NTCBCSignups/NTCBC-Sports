@@ -31,6 +31,28 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 - **DON'T** experiment in production. Use `supabase start` for a local Postgres or a Supabase branch DB for ad-hoc exploration; promote successful experiments by writing a real migration.
 
+### Sport config seeding policy
+
+- Keep `sport_configs` schema changes in migrations only. Do not put runtime data inserts in migration files.
+- Apply migrations first:
+
+  ```bash
+  npx supabase link --project-ref <project_ref>
+  npx supabase db push --linked
+  ```
+
+- Seed or backfill sport config rows as a **one-time operator task** using a temporary TSX script.
+  - Create script under `scripts/`.
+  - Run it once with `npx tsx ... --apply`.
+  - Delete the script after execution.
+  - Do not commit one-time seed scripts.
+
+- Verify seed success with a linked query:
+
+  ```bash
+  npx supabase db query --linked "select id, name, auth_enabled from public.sport_configs;"
+  ```
+
 ### Recovering from drift
 
 If schema changes ever land outside the migration system (e.g. a hotfix run in the SQL editor), reconcile immediately:

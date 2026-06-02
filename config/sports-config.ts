@@ -1,6 +1,9 @@
 /**
  * Raw sport config data and defaults. Internal to config/ — do not import
  * directly. Use config-resolver.ts as the single consumer entry point.
+ *
+ * Note: [sport]-routed sports are expected to come from DB-backed config.
+ * This file currently stores legacy file-backed sports only.
  */
 
 import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults, type AdminTabMeta } from "./config-interfaces";
@@ -117,66 +120,5 @@ export const sportsConfig: Record<string, SportConfig> = {
         },
       ],
     },
-  },
-  softball: {
-    id: "softball",
-    authEnabled: true,
-    adminTabs: [
-      ...DEFAULT_ADMIN_TABS,
-      { id: "ccsa", label: "CCSA Sync", iconName: "RefreshCw" },
-    ],
-    emoji: "🥎",
-    name: "Softball",
-    type: "Drop-in Practices & Scheduled CCSA Games",
-    location: {
-      name: "Various locations",
-      address: "See individual sessions",
-    },
-    day: "Click to see schedule",
-    organizers: "Brandon Cho, Joshua Wong, Isaac Ng",
-    notes: [
-      "Our team plays in the CCSA (Christian Community Softball Association), a Toronto-area church softball league that runs during the summer with Senior and Junior divisions.",
-      "Team registration for the 2026 season is now closed, but if you're an NTCBC Member, you're welcome to join our drop-in practice sessions! It's a great time for us to connect not only through the game but also with each other and the message of the gospel. Everyone, regardless of your faith background, is welcome.",
-      "Softball has two session types: Drop-in Practice (open to all) & Scheduled Games (team members only).",
-      "Sign in with Google to sign up for sessions. If you can no longer attend, please cancel your signup.",
-      "Please contact the leaders if you have any questions.",
-    ],
-    description: "Join us for Drop-in Practices. Scheduled Games are only open to confirmed CCSA Team Members.",
-    defaultTab: "",
-    tabs: [
-      {
-        value: "drop_in_practice",
-        label: "Practices",
-        defaultTitlePrefix: "Practices",
-        sessionPillColor: PillColor.emerald,
-        permissions: { [AccessLevel.overview]: Role.user, [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.user },
-        signupConfirmationDialog: {
-          maxRole: Role.user,
-          message: "Do you go to NTCBC? (Only) If not, have you been approved by a leader to participate?",
-          rejectedMessage: "This session is for team members, NTCBC goers and approved participants. Please contact the leaders if you'd like to join.",
-        },
-      },
-      {
-        value: "scheduled_game",
-        label: "Games",
-        defaultTitlePrefix: "Game",
-        sessionPillColor: PillColor.indigo,
-        permissions: { [AccessLevel.overview]: Role.user, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
-      },
-      {
-        value: "socials",
-        label: "Socials",
-        defaultTitlePrefix: "Social",
-        sessionPillColor: PillColor.gray,
-        permissions: { [AccessLevel.overview]: Role.teamUser, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
-      },
-      {
-        value: "umpiring",
-        label: "Umpiring",
-        defaultTitlePrefix: "Umpiring",
-        sessionPillColor: PillColor.amber,
-        permissions: { [AccessLevel.overview]: Role.teamUser, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
-      },
-    ],
   },
 } satisfies Record<string, SportConfig>;
