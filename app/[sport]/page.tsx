@@ -8,8 +8,9 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
-import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
-import type { ResolvedSessionTab, AccessBannerText } from "@/config/config-resolver";
+import { Role, AccessLevel } from "@/config/config-resolver";
+import type { ResolvedSessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
@@ -128,19 +129,20 @@ function renderAccessBanner({
 }
 
 async function SportSessionsContent({
+  config,
   sport,
   tab,
   highlight,
   scrollTo,
   userId,
 }: {
+  config: ResolvedSportConfig;
   sport: string;
   tab?: string;
   highlight?: string;
   scrollTo?: string;
   userId: string | null;
 }) {
-  const config = resolvedSportsConfig[sport];
   const supabase = await createClient();
 
   // ── Roles & sessions (parallel) ────────────────────────────────
@@ -335,7 +337,7 @@ export default async function SportAuthPage({
   searchParams: Promise<{ tab?: string; highlight?: string; session?: string }>;
 }) {
   const { sport } = await params;
-  const config = resolvedSportsConfig[sport];
+  const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
 
   const { tab, highlight, session } = await searchParams;
@@ -358,6 +360,7 @@ export default async function SportAuthPage({
     >
       <Suspense fallback={<LoadingContent />}>
         <SportSessionsContent
+          config={config}
           sport={sport}
           tab={tab}
           highlight={highlight}

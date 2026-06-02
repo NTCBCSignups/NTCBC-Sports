@@ -4,16 +4,24 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import PageHeader from "@/components/sports/page-header";
 import {
-  resolvedSportsConfig,
+  type ResolvedSportConfig,
   Role,
 } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import AdminLayout from "@/components/sports/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
 import { getAccessRequests } from "@/lib/get-data";
 
-async function AdminShell({ sport, tab }: { sport: string; tab: string }) {
-  const config = resolvedSportsConfig[sport];
+async function AdminShell({
+  sport,
+  tab,
+  config,
+}: {
+  sport: string;
+  tab: string;
+  config: ResolvedSportConfig;
+}) {
   const adminTabs = config.adminTabs ?? [];
 
   const accessRequests = await getAccessRequests(sport);
@@ -42,7 +50,7 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { sport } = await params;
-  const config = resolvedSportsConfig[sport];
+  const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
 
   const { tab = "upcoming" } = await searchParams;
@@ -62,7 +70,7 @@ export default async function AdminPage({
 
       <div className="flex flex-col md:flex-row gap-8">
         <Suspense fallback={<LoadingAdminContent />}>
-          <AdminShell sport={sport} tab={tab} />
+          <AdminShell sport={sport} tab={tab} config={config} />
         </Suspense>
       </div>
     </div>
