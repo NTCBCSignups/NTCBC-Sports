@@ -1,5 +1,4 @@
 import "server-only";
-import { unstable_cache } from "next/cache";
 import {
     resolvedSportsConfig,
     resolveSportConfigRow,
@@ -14,26 +13,12 @@ export function sportConfigCacheTag(sport: string): string {
     return `sport-config:${sport}`;
 }
 
-function getCachedSportConfigRow(sport: string) {
-    return unstable_cache(
-        async () => getSportConfigRow(sport),
-        ["sport-config", sport],
-        { tags: [SPORT_CONFIGS_CACHE_TAG, sportConfigCacheTag(sport)] },
-    )();
-}
-
-const getCachedSportConfigRows = unstable_cache(
-    async () => getSportConfigRows(),
-    ["sport-configs:all"],
-    { tags: [SPORT_CONFIGS_CACHE_TAG] },
-);
-
 /**
  * Returns resolved config with DB-first lookup and file fallback.
  * Consumers can migrate to this helper incrementally.
  */
 export async function getResolvedSportConfig(sport: string): Promise<ResolvedSportConfig | null> {
-    const row = await getCachedSportConfigRow(sport);
+    const row = await getSportConfigRow(sport);
     const dbResolved = row ? resolveSportConfigRow(row) : null;
     if (dbResolved) return dbResolved;
     return resolvedSportsConfig[sport] ?? null;
@@ -41,7 +26,7 @@ export async function getResolvedSportConfig(sport: string): Promise<ResolvedSpo
 
 /** Returns resolved config plus source metadata for debugging and rollout checks. */
 export async function getResolvedSportConfigWithSource(sport: string): Promise<SourcedSportConfig | null> {
-    const row = await getCachedSportConfigRow(sport);
+    const row = await getSportConfigRow(sport);
     const dbResolved = row ? resolveSportConfigRow(row) : null;
     if (dbResolved) {
         return { source: "database", config: dbResolved };
@@ -59,7 +44,7 @@ export async function getResolvedSportConfigWithSource(sport: string): Promise<S
  */
 export async function getResolvedSportsConfigBySport(): Promise<Record<string, ResolvedSportConfig>> {
     const merged: Record<string, ResolvedSportConfig> = { ...resolvedSportsConfig };
-    const dbRows = await getCachedSportConfigRows();
+    const dbRows = await getSportConfigRows();
 
     for (const row of dbRows) {
         const resolved = resolveSportConfigRow(row);
