@@ -1,11 +1,14 @@
-import { resolvedSportsConfig } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import SessionAccordion, { type SessionSignupEntry } from "@/components/sports/admin-session-accordion";
 import { getAllSessions, getSessionSignups, getTeamMembers } from "@/lib/get-data";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import type { SignupStatus } from "@/lib/supabase/types";
 
 export default async function AdminTabPast({ sport }: { sport: string }) {
-    const config = resolvedSportsConfig[sport];
+    const config = await getResolvedSportConfig(sport);
+    if (!config) {
+        return <p className="text-sm text-muted-foreground py-4">Sport config not found.</p>;
+    }
 
     const [sessions, teamMemberIds] = await Promise.all([
         getAllSessions(sport),

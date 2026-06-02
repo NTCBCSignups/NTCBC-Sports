@@ -9,11 +9,12 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
-import { resolvedSportsConfig } from "@/config/config-resolver";
+import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
 import { cn } from "@/lib/utils";
 
-export default function Home() {
-  const sports = Object.values(resolvedSportsConfig);
+export default async function Home() {
+  const sportsBySlug = await getResolvedSportsConfigBySport();
+  const sports = Object.values(sportsBySlug);
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">

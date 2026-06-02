@@ -350,6 +350,7 @@ export default async function SportAuthPage({
     <SportPageShell
       user={user}
       sport={sport}
+      config={config}
       actions={
         user ? (
           <Suspense>

@@ -144,6 +144,7 @@ export default async function SessionDetailPage({
   const { fromTab } = await searchParams;
   const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
+  const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
 
   const supabase = await createClient();
 
@@ -206,6 +207,8 @@ export default async function SessionDetailPage({
               <div className="flex items-center gap-2">
                 <SessionDialog
                   sport={sport}
+                  sessionTabs={sessionTabs}
+                  defaultTab={config.defaultTab}
                   session={session}
                 />
                 <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
