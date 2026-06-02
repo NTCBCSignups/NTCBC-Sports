@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
+import { Role } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 
 /**
  * Reads the authenticated user forwarded by middleware via the
@@ -49,9 +50,8 @@ export async function getUserSportRole(
     userId: string,
     sport: string,
 ): Promise<UserSportRole> {
-    const sportConfig = resolvedSportsConfig[sport];
-
-    const [{ data: profile }, { data: sportRole }] = await Promise.all([
+    const [sportConfig, { data: profile }, { data: sportRole }] = await Promise.all([
+        getResolvedSportConfig(sport),
         supabase.from("profiles").select("role").eq("id", userId).single(),
         supabase
             .from("sport_roles")
