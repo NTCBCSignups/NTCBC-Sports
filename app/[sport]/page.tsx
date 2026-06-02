@@ -9,7 +9,7 @@ import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
-import type { ResolvedSessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
+import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
@@ -69,7 +69,7 @@ const ACCESS_LEVEL_TEXT: Record<
  * Finds the first AccessLevel the user doesn't meet for a tab.
  * Returns null if the user meets all levels (or only lacks admin).
  */
-function getFirstUnmetLevel(tab: ResolvedSessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
+function getFirstUnmetLevel(tab: SessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
   for (const level of ACCESS_LEVELS) {
     if (userRole < tab.permissions[level]) return level;
   }
@@ -97,7 +97,7 @@ function renderAccessBanner({
   sport,
 }: {
   userId: string | null;
-  tab: ResolvedSessionTab;
+  tab: SessionTab;
   userRole: Role;
   accessRequestStatus: AccessRequestStatus | null;
   sport: string;

@@ -5,12 +5,6 @@ import {
 } from "@/config/config-resolver";
 import { getSportConfigRow, getSportConfigRows } from "@/lib/get-data";
 
-export const SPORT_CONFIGS_CACHE_TAG = "sport-configs";
-
-export function sportConfigCacheTag(sport: string): string {
-    return `sport-config:${sport}`;
-}
-
 /**
  * Returns resolved config from the database.
  */

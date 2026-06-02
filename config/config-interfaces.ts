@@ -110,12 +110,9 @@ export interface SportConfig {
 
 // ── Runtime config interfaces ────────────────────────────────────
 
-/** A session tab consumed at runtime by the app. */
-export type ResolvedSessionTab = SessionTab;
-
 /** A sport config with all tab permissions resolved and computed flags. */
 export interface ResolvedSportConfig extends Omit<SportConfig, "tabs"> {
-  tabs: ResolvedSessionTab[];
+  tabs: SessionTab[];
   /** True if any tab requires a higher signup role than the default. */
   hasRestrictedAccess: boolean;
 }
@@ -129,19 +126,6 @@ export interface AccessBannerText {
 }
 
 // ── DB-backed config interfaces (for source abstraction) ────────
-
-/**
- * Explicit sport config fields stored as first-class DB columns.
- * These are global website-facing values shared across sport pages.
- */
-export interface SportConfigCoreFields {
-  id: string;
-  authEnabled: boolean;
-  emoji: string;
-  name: string;
-  type: string;
-  description: string | null;
-}
 
 /**
  * Flexible DB payload for sport-specific and future-extensible settings.

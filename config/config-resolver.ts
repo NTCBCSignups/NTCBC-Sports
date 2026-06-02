@@ -6,9 +6,9 @@
 import {
   AccessLevel,
   Role,
+  type SessionTab,
   type SportConfig,
   type SportConfigDbRow,
-  type ResolvedSessionTab,
   type ResolvedSportConfig,
 } from "./config-interfaces";
 
@@ -99,7 +99,7 @@ export function resolveSportConfigRow(row: SportConfigDbRow): ResolvedSportConfi
  * searching `config.tabs` and duplicating the fallback to defaults
  * for unknown session types.
  */
-export function getResolvedTab(config: ResolvedSportConfig, sessionType: string): ResolvedSessionTab {
+export function getResolvedTab(config: ResolvedSportConfig, sessionType: string): SessionTab {
   const matchingTab = config.tabs.find((t) => t.value === sessionType);
   if (matchingTab) return matchingTab;
 

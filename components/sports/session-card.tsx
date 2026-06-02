@@ -15,13 +15,13 @@ import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
-import { AccessLevel, Role, type ResolvedSessionTab } from "@/config/config-resolver";
+import { AccessLevel, Role, type SessionTab } from "@/config/config-resolver";
 import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
   session: SportSession & { signup_count: number };
-  tab: ResolvedSessionTab;
+  tab: SessionTab;
   highlighted?: boolean;
   userSignupStatus?: SignupStatus | null;
   returnTab?: string;
