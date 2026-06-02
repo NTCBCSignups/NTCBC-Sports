@@ -8,17 +8,12 @@ import {
   type ResolvedSportConfig,
   Role,
 } from "@/config/config-resolver";
+import { SETTINGS_ADMIN_TAB } from "@/config/admin-tab-metadata";
 import { getResolvedSportConfigWithSource } from "@/lib/get-sport-config";
 import AdminLayout from "@/components/sports/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
 import { getAccessRequests } from "@/lib/get-data";
-
-const SETTINGS_ADMIN_TAB: AdminTabMeta = {
-  id: "settings",
-  label: "Settings",
-  iconName: "SlidersHorizontal",
-};
 
 function withSettingsTab(tabs: AdminTabMeta[], enabled: boolean): AdminTabMeta[] {
   const nonSettingsTabs = tabs.filter((tab) => tab.id !== SETTINGS_ADMIN_TAB.id);

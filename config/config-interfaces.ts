@@ -68,6 +68,8 @@ export interface ResponseTableConfig {
 }
 
 export interface SessionTab {
+  /** Stable tab identifier used for immutable value enforcement. */
+  id?: string;
   value: string;
   label: string;
   /** Per-tab access control. Omitted keys fall back to defaults during resolution. */

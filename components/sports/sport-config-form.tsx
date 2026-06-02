@@ -45,6 +45,9 @@ import {
     ADMIN_TAB_ICON_OPTIONS,
     getAdminTabDefinition,
     isAdminTabIconName,
+    SETTINGS_TAB_ICON_NAME,
+    SETTINGS_TAB_ID,
+    SETTINGS_TAB_LABEL,
 } from "@/config/admin-tab-metadata";
 import {
     AccessLevel,
@@ -54,6 +57,10 @@ import {
     type ResolvedSportConfig,
     type SignupConfirmationDialog,
 } from "@/config/config-resolver";
+import {
+    createSessionTabId,
+    SESSION_TAB_RULES,
+} from "@/config/session-tab-rules";
 import {
     updateSportConfig,
     type UpdateSportConfigInput,
@@ -77,6 +84,7 @@ interface EditableTabPermissions {
 
 interface EditableTab {
     key: string;
+    id: string;
     value: string;
     label: string;
     defaultTitlePrefix: string;
@@ -121,9 +129,6 @@ type PendingDeleteTarget =
 
 const AUTO_DEFAULT_TAB_VALUE = "__auto-default-tab__";
 const AUTO_DEFAULT_ADMIN_TAB_VALUE = "__auto-default-admin-tab__";
-const SETTINGS_TAB_ID = "settings";
-const SETTINGS_TAB_LABEL = "Settings";
-const SETTINGS_TAB_ICON_NAME = "SlidersHorizontal";
 
 const ROLE_OPTIONS: Array<{ value: Role; label: string; description: string }> = [
     { value: Role.anon, label: "Anyone", description: "No sign-in required" },
@@ -182,6 +187,7 @@ function createDefaultPermissions(): EditableTabPermissions {
 function createBlankTabDraft(): EditableTab {
     return {
         key: createKey("tab"),
+        id: createSessionTabId(),
         value: "",
         label: "",
         defaultTitlePrefix: "",
@@ -201,7 +207,7 @@ function createEditableAdminTab(tab: AdminTabMeta): EditableAdminTab {
 }
 
 function createAdminTabDraft(tabId?: string): AdminTabDraft {
-    const fallbackDefinition = ADMIN_TAB_DEFINITIONS.find((definition) => definition.id !== "settings")
+    const fallbackDefinition = ADMIN_TAB_DEFINITIONS.find((definition) => definition.id !== SETTINGS_TAB_ID)
         ?? ADMIN_TAB_DEFINITIONS[0];
     const definition = (tabId ? getAdminTabDefinition(tabId) : undefined) ?? fallbackDefinition;
 
@@ -248,6 +254,7 @@ function buildInitialState(sport: string, config: ResolvedSportConfig): SportCon
         defaultAdminTab: config.defaultAdminTab ?? "",
         tabs: (config.tabs ?? []).map((tab) => ({
             key: createKey("tab"),
+            id: tab.id ?? createSessionTabId(),
             value: tab.value,
             label: tab.label,
             defaultTitlePrefix: tab.defaultTitlePrefix ?? "",
@@ -398,7 +405,7 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
     const addableAdminTabDefinitions = useMemo(() => {
         const selected = new Set(state.adminTabs.map((tab) => tab.id));
         return ADMIN_TAB_DEFINITIONS.filter((definition) => (
-            definition.id !== "settings" && !selected.has(definition.id)
+            definition.id !== SETTINGS_TAB_ID && !selected.has(definition.id)
         ));
     }, [state.adminTabs]);
 
@@ -471,7 +478,7 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
 
     const handleSave = () => {
         const trimmedTabs = state.tabs.map((tab) => ({
-            key: tab.key,
+            id: tab.id.trim(),
             value: tab.value.trim(),
             label: tab.label.trim(),
             defaultTitlePrefix: tab.defaultTitlePrefix.trim(),
@@ -495,6 +502,21 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
 
         if (trimmedTabs.some((tab) => tab.value.length === 0 || tab.label.length === 0)) {
             toast.error("Every session tab needs both a label and value.", {
+                className: toastClasses.red,
+            });
+            return;
+        }
+
+        if (trimmedTabs.some((tab) => tab.id.length === 0)) {
+            toast.error("Every session tab needs an internal id.", {
+                className: toastClasses.red,
+            });
+            return;
+        }
+
+        const normalizedTabIds = trimmedTabs.map((tab) => tab.id);
+        if (new Set(normalizedTabIds).size !== normalizedTabIds.length) {
+            toast.error("Session tab ids must be unique.", {
                 className: toastClasses.red,
             });
             return;
@@ -598,6 +620,7 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
             defaultTab,
             defaultAdminTab: normalizedDefaultAdminTab,
             tabs: trimmedTabs.map((tab) => ({
+                id: tab.id,
                 value: tab.value,
                 label: tab.label,
                 defaultTitlePrefix: tab.defaultTitlePrefix || undefined,
@@ -643,7 +666,8 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
         const previousTab = editingTabKey
             ? state.tabs.find((tab) => tab.key === editingTabKey)
             : undefined;
-        const nextValue = tabDialogMode === "edit"
+        const lockTabValue = SESSION_TAB_RULES.valueImmutableAfterCreate && tabDialogMode === "edit";
+        const nextValue = lockTabValue
             ? (previousTab?.value.trim() ?? "")
             : tabDraft.value.trim();
         const nextLabel = tabDraft.label.trim();
@@ -1345,14 +1369,14 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
                                 <Input
                                     id="tab-value"
                                     value={tabDraft.value}
-                                    disabled={tabDialogMode === "edit"}
+                                    disabled={SESSION_TAB_RULES.valueImmutableAfterCreate && tabDialogMode === "edit"}
                                     onChange={(event) => setTabDraft((prev) => ({
                                         ...prev,
                                         value: event.target.value,
                                     }))}
                                     placeholder="e.g. open-gym"
                                 />
-                                {tabDialogMode === "edit" && (
+                                {SESSION_TAB_RULES.valueImmutableAfterCreate && tabDialogMode === "edit" && (
                                     <p className="text-xs text-muted-foreground">
                                         Tab value is fixed after creation.
                                     </p>

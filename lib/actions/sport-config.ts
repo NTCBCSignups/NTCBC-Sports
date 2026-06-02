@@ -8,9 +8,14 @@ import {
     AccessLevel,
     PillColor,
     Role,
+    type SessionTab,
     type SportConfigPayload,
 } from "@/config/config-resolver";
-import { ADMIN_TAB_ICON_NAMES } from "@/config/admin-tab-metadata";
+import {
+    ADMIN_TAB_ICON_NAMES,
+    SETTINGS_TAB_ID,
+} from "@/config/admin-tab-metadata";
+import { validateImmutableSessionTabValues } from "@/config/session-tab-rules";
 
 const roleSchema = z.nativeEnum(Role);
 
@@ -21,6 +26,7 @@ const signupDialogSchema = z.object({
 });
 
 const tabSchema = z.object({
+    id: z.string().min(1),
     value: z.string().min(1),
     label: z.string().min(1),
     defaultTitlePrefix: z.string().optional(),
@@ -69,6 +75,15 @@ const updateSportConfigInputSchema = z.object({
         });
     }
 
+    const normalizedTabIds = value.tabs.map((tab) => tab.id.trim());
+    if (new Set(normalizedTabIds).size !== normalizedTabIds.length) {
+        context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["tabs"],
+            message: "Session tab ids must be unique",
+        });
+    }
+
     if (value.defaultTab && !value.tabs.some((tab) => tab.value.trim() === value.defaultTab?.trim())) {
         context.addIssue({
             code: z.ZodIssueCode.custom,
@@ -80,7 +95,7 @@ const updateSportConfigInputSchema = z.object({
     const defaultAdminTab = value.defaultAdminTab?.trim();
     if (defaultAdminTab) {
         const validAdminTabIds = new Set<string>([
-            "settings",
+            SETTINGS_TAB_ID,
             ...value.adminTabs.map((tab) => tab.id.trim()),
         ]);
         if (!validAdminTabIds.has(defaultAdminTab)) {
@@ -155,6 +170,22 @@ export async function updateSportConfig(
         && !Array.isArray(existing.config)
             ? (existing.config as SportConfigPayload)
             : {};
+
+    const existingTabs: SessionTab[] = Array.isArray(existingConfig.tabs)
+        ? existingConfig.tabs.filter((tab): tab is SessionTab => (
+            !!tab
+            && typeof tab === "object"
+            && typeof tab.value === "string"
+            && (tab.id === undefined || typeof tab.id === "string")
+        ))
+        : [];
+    const immutableValueResult = validateImmutableSessionTabValues(existingTabs, parsed.data.tabs);
+    if (!immutableValueResult.success) {
+        return {
+            success: false,
+            error: immutableValueResult.error,
+        };
+    }
 
     // Preserve unknown keys by overlaying managed fields on top of existing JSON payload.
     const mergedConfig: SportConfigPayload = {
