@@ -14,13 +14,14 @@ import CountdownTimer from "@/components/sports/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
-import { sessionTypePillClass } from "@/lib/session-type-pill";
-import { resolvedSportsConfig, getResolvedTab, AccessLevel, Role } from "@/config/config-resolver";
+import { sessionPillClassFromColor } from "@/lib/session-type-pill";
+import { AccessLevel, Role, type ResolvedSessionTab } from "@/config/config-resolver";
 import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
 interface SessionCardProps {
   session: SportSession & { signup_count: number };
+  tab: ResolvedSessionTab;
   highlighted?: boolean;
   userSignupStatus?: SignupStatus | null;
   returnTab?: string;
@@ -44,6 +45,7 @@ function getSignupStatus(session: SportSession): {
 
 export default function SessionCard({
   session,
+  tab,
   highlighted,
   userSignupStatus,
   returnTab,
@@ -51,8 +53,6 @@ export default function SessionCard({
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
   const status = getSignupStatus(session);
-  const sportConfig = resolvedSportsConfig[session.sport];
-  const tab = getResolvedTab(sportConfig, session.session_type);
   const canView = userRole === undefined || userRole >= tab.permissions[AccessLevel.view];
   const canSignup = userRole === undefined || userRole >= tab.permissions[AccessLevel.signup];
   const href = returnTab
@@ -97,7 +97,7 @@ export default function SessionCard({
               variant="outline"
               className={cn(
                 "rounded-full border font-normal shadow-none",
-                sessionTypePillClass(sportConfig, session.session_type),
+                sessionPillClassFromColor(tab.sessionPillColor),
               )}
             >
               {sessionTypeLabel}

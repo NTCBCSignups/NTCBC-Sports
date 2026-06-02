@@ -8,7 +8,7 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
-import { Role, AccessLevel } from "@/config/config-resolver";
+import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { ResolvedSessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
@@ -173,6 +173,7 @@ async function SportSessionsContent({
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
   const configTabs = config.tabs ?? [];
+  const tabByType = new Map(configTabs.map((tabItem) => [tabItem.value, tabItem]));
   const showAll = configTabs.length > 1;
   const ALL_VALUE = "all";
 
@@ -202,6 +203,7 @@ async function SportSessionsContent({
                   <SessionCard
                     key={session.id}
                     session={session}
+                    tab={t}
                     highlighted={session.id === highlight}
                     returnTab={t.value}
                     userRole={userRole}
@@ -281,6 +283,7 @@ async function SportSessionsContent({
                 <SessionCard
                   key={session.id}
                   session={session}
+                  tab={tabByType.get(session.session_type) ?? getResolvedTab(config, session.session_type)}
                   highlighted={session.id === highlight}
                   returnTab={ALL_VALUE}
                   userRole={userRole}

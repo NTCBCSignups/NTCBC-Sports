@@ -11,6 +11,10 @@ const SESSION_PILL_COLOR_CLASSES: Record<PillColor, string> = {
     "border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-50 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200",
 };
 
+export function sessionPillClassFromColor(color: PillColor): string {
+  return SESSION_PILL_COLOR_CLASSES[color];
+}
+
 export function sessionTypePillClass(
   config: ResolvedSportConfig,
   sessionType: string,
@@ -19,5 +23,5 @@ export function sessionTypePillClass(
     config.tabs.find((tab) => tab.value === sessionType)?.sessionPillColor ??
     PillColor.gray;
 
-  return SESSION_PILL_COLOR_CLASSES[color];
+  return sessionPillClassFromColor(color);
 }
