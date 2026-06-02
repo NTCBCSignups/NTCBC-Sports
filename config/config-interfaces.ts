@@ -129,3 +129,61 @@ export interface AccessBannerText {
   title: (label: string) => string;
   message: (label: string) => string;
 }
+
+// ── DB-backed config interfaces (for source abstraction) ────────
+
+/**
+ * Explicit sport config fields stored as first-class DB columns.
+ * These are global website-facing values shared across sport pages.
+ */
+export interface SportConfigCoreFields {
+  id: string;
+  authEnabled: boolean;
+  emoji: string;
+  name: string;
+  type: string;
+  description: string | null;
+}
+
+/**
+ * Flexible DB payload for sport-specific and future-extensible settings.
+ * Known keys are typed for safety; additional keys are allowed for expansion.
+ */
+export interface SportConfigPayload {
+  day?: string;
+  organizers?: string;
+  location?: SportConfig["location"];
+  waiverLink?: string;
+  notes?: string[];
+  responseTable?: ResponseTableConfig;
+  multiSession?: boolean;
+  tabs?: SessionTab[];
+  defaultTab?: string;
+  adminTabs?: AdminTabMeta[];
+  [key: string]: unknown;
+}
+
+/**
+ * Raw DB row shape for public.sport_configs.
+ */
+export interface SportConfigDbRow {
+  id: string;
+  auth_enabled: boolean;
+  emoji: string;
+  name: string;
+  type: string;
+  description: string | null;
+  config: SportConfigPayload;
+  updated_by: string | null;
+  updated_at: string;
+  created_at: string;
+}
+
+/** Source tag for config provider selection during migration period. */
+export type SportConfigSource = "file" | "database";
+
+/** Sport config with explicit source metadata for tracing and debugging. */
+export interface SourcedSportConfig {
+  source: SportConfigSource;
+  config: SportConfig;
+}
