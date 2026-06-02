@@ -6,16 +6,12 @@
  * This file currently stores legacy file-backed sports only.
  */
 
-import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults, type AdminTabMeta } from "./config-interfaces";
+import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults } from "./config-interfaces";
+import { DEFAULT_ADMIN_TABS } from "./admin-tab-metadata";
 
 // ── Defaults ─────────────────────────────────────────────────────
 
-export const DEFAULT_ADMIN_TABS: AdminTabMeta[] = [
-  { id: "requests", label: "Access Requests", iconName: "ClipboardList" },
-  { id: "create", label: "Create Session", iconName: "Plus" },
-  { id: "upcoming", label: "Upcoming Sessions", iconName: "Calendar" },
-  { id: "past", label: "Past Sessions", iconName: "History" },
-];
+export { DEFAULT_ADMIN_TABS };
 
 export const SPORT_DEFAULTS = {
   authEnabled: false,

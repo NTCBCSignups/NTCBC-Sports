@@ -4,22 +4,14 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useOptimistic, useTransition, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import {
-  ClipboardList, Plus, Calendar, History,
-  RefreshCw, SlidersHorizontal, type LucideIcon,
-} from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 import type { AdminTabMeta } from "@/config/config-resolver";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
-
-/** Map from iconName strings in sports-config to actual Lucide components. */
-const iconMap: Record<string, LucideIcon> = {
-  ClipboardList,
-  Plus,
-  Calendar,
-  History,
-  RefreshCw,
-  SlidersHorizontal,
-};
+import { getAdminTabIcon } from "@/components/sports/admin-tab-icons";
+import {
+  clearUnsavedSettingsChanges,
+  confirmLeaveWithUnsavedSettings,
+} from "@/components/sports/settings-unsaved-guard";
 
 interface SidebarTab {
   id: string;
@@ -30,24 +22,39 @@ interface SidebarTab {
 interface AdminLayoutProps {
   pendingRequestCount: number;
   tabs: AdminTabMeta[];
+  defaultTab: string;
   children: ReactNode;
 }
 
-export default function AdminLayout({ pendingRequestCount, tabs, children }: AdminLayoutProps) {
+export default function AdminLayout({ pendingRequestCount, tabs, defaultTab, children }: AdminLayoutProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-  const serverTab = searchParams.get("tab") || "upcoming";
+  const requestedTab = searchParams.get("tab");
+  const resolvedTab = requestedTab && tabs.some((tab) => tab.id === requestedTab)
+    ? requestedTab
+    : defaultTab;
+  const serverTab = resolvedTab;
   const [activeTab, setActiveTab] = useOptimistic(serverTab);
 
   const allTabs: SidebarTab[] = tabs.map((t) => ({
     id: t.id,
     label: t.label,
-    icon: iconMap[t.iconName] ?? Calendar,
+    icon: getAdminTabIcon(t.iconName),
   }));
 
   const navigate = (tab: string) => {
+    if (tab === activeTab) {
+      return;
+    }
+
+    if (!confirmLeaveWithUnsavedSettings()) {
+      return;
+    }
+
+    clearUnsavedSettingsChanges();
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
     const url = `${pathname}?${params.toString()}`;

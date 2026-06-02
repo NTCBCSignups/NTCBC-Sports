@@ -10,6 +10,7 @@ import {
     Role,
     type SportConfigPayload,
 } from "@/config/config-resolver";
+import { ADMIN_TAB_ICON_NAMES } from "@/config/admin-tab-metadata";
 
 const roleSchema = z.nativeEnum(Role);
 
@@ -36,7 +37,7 @@ const tabSchema = z.object({
 const adminTabSchema = z.object({
     id: z.string().min(1),
     label: z.string().min(1),
-    iconName: z.string().min(1),
+    iconName: z.enum(ADMIN_TAB_ICON_NAMES),
 });
 
 const updateSportConfigInputSchema = z.object({
@@ -55,8 +56,50 @@ const updateSportConfigInputSchema = z.object({
     }),
     notes: z.array(z.string().min(1)),
     defaultTab: z.string().optional(),
+    defaultAdminTab: z.string().optional(),
     tabs: z.array(tabSchema),
     adminTabs: z.array(adminTabSchema),
+}).superRefine((value, context) => {
+    const normalizedTabValues = value.tabs.map((tab) => tab.value.trim().toLowerCase());
+    if (new Set(normalizedTabValues).size !== normalizedTabValues.length) {
+        context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["tabs"],
+            message: "Session tab values must be unique",
+        });
+    }
+
+    if (value.defaultTab && !value.tabs.some((tab) => tab.value.trim() === value.defaultTab?.trim())) {
+        context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["defaultTab"],
+            message: "Default tab must match one of the session tab values",
+        });
+    }
+
+    const defaultAdminTab = value.defaultAdminTab?.trim();
+    if (defaultAdminTab) {
+        const validAdminTabIds = new Set<string>([
+            "settings",
+            ...value.adminTabs.map((tab) => tab.id.trim()),
+        ]);
+        if (!validAdminTabIds.has(defaultAdminTab)) {
+            context.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["defaultAdminTab"],
+                message: "Default admin tab must match an available admin tab",
+            });
+        }
+    }
+
+    const adminTabIds = value.adminTabs.map((tab) => tab.id.trim());
+    if (new Set(adminTabIds).size !== adminTabIds.length) {
+        context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["adminTabs"],
+            message: "Admin tabs cannot include duplicate tab ids",
+        });
+    }
 });
 
 export type UpdateSportConfigInput = z.infer<typeof updateSportConfigInputSchema>;
@@ -125,6 +168,7 @@ export async function updateSportConfig(
         },
         notes: parsed.data.notes,
         defaultTab: parsed.data.defaultTab ?? "",
+        defaultAdminTab: parsed.data.defaultAdminTab ?? "",
         tabs: parsed.data.tabs,
         adminTabs: parsed.data.adminTabs,
     };

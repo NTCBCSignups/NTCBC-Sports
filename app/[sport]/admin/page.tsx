@@ -21,33 +21,50 @@ const SETTINGS_ADMIN_TAB: AdminTabMeta = {
 };
 
 function withSettingsTab(tabs: AdminTabMeta[], enabled: boolean): AdminTabMeta[] {
-  if (!enabled) return tabs;
-  if (tabs.some((tab) => tab.id === SETTINGS_ADMIN_TAB.id)) return tabs;
-  return [...tabs, SETTINGS_ADMIN_TAB];
+  const nonSettingsTabs = tabs.filter((tab) => tab.id !== SETTINGS_ADMIN_TAB.id);
+  if (!enabled) return nonSettingsTabs;
+  return [SETTINGS_ADMIN_TAB, ...nonSettingsTabs];
+}
+
+function resolveDefaultAdminTab(tabs: AdminTabMeta[], configuredDefaultTab?: string): string {
+  const normalizedConfiguredDefault = configuredDefaultTab?.trim();
+  if (normalizedConfiguredDefault && tabs.some((tab) => tab.id === normalizedConfiguredDefault)) {
+    return normalizedConfiguredDefault;
+  }
+
+  if (tabs.some((tab) => tab.id === SETTINGS_ADMIN_TAB.id)) {
+    return SETTINGS_ADMIN_TAB.id;
+  }
+
+  return tabs[0]?.id ?? SETTINGS_ADMIN_TAB.id;
 }
 
 async function AdminShell({
   sport,
-  tab,
+  requestedTab,
   config,
   showSettingsTab,
 }: {
   sport: string;
-  tab: string;
+  requestedTab?: string;
   config: ResolvedSportConfig;
   showSettingsTab: boolean;
 }) {
   const adminTabs = withSettingsTab(config.adminTabs ?? [], showSettingsTab);
+  const defaultTab = resolveDefaultAdminTab(adminTabs, config.defaultAdminTab);
+  const activeTab = requestedTab && adminTabs.some((tab) => tab.id === requestedTab)
+    ? requestedTab
+    : defaultTab;
 
   const accessRequests = await getAccessRequests(sport);
   const pendingRequestCount = accessRequests.filter(
     (r) => r.status === "pending",
   ).length;
 
-  const TabComponent = getAdminTabComponent(tab);
+  const TabComponent = getAdminTabComponent(activeTab);
 
   return (
-    <AdminLayout pendingRequestCount={pendingRequestCount} tabs={adminTabs}>
+    <AdminLayout pendingRequestCount={pendingRequestCount} tabs={adminTabs} defaultTab={activeTab}>
       {TabComponent ? (
         <TabComponent sport={sport} />
       ) : (
@@ -69,7 +86,7 @@ export default async function AdminPage({
   if (!sourcedConfig) notFound();
   const { config, source } = sourcedConfig;
 
-  const { tab = "upcoming" } = await searchParams;
+  const { tab } = await searchParams;
   const supabase = await createClient();
   const user = await getUser();
 
@@ -88,7 +105,7 @@ export default async function AdminPage({
         <Suspense fallback={<LoadingAdminContent />}>
           <AdminShell
             sport={sport}
-            tab={tab}
+            requestedTab={tab}
             config={config}
             showSettingsTab={source === "database"}
           />

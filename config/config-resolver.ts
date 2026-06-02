@@ -107,6 +107,7 @@ export function sportConfigFromDbRow(row: SportConfigDbRow): SportConfig | null 
     multiSession: payload.multiSession,
     tabs: payload.tabs,
     defaultTab: payload.defaultTab,
+    defaultAdminTab: payload.defaultAdminTab,
     adminTabs: payload.adminTabs,
   };
 }

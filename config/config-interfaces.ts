@@ -24,6 +24,10 @@ export enum PillColor {
   emerald = "emerald",
   indigo = "indigo",
   amber = "amber",
+  blue = "blue",
+  rose = "rose",
+  teal = "teal",
+  violet = "violet",
 }
 
 // ── Types ────────────────────────────────────────────────────────
@@ -102,6 +106,7 @@ export interface SportConfig {
   description?: string;
   tabs?: SessionTab[];
   defaultTab?: string;
+  defaultAdminTab?: string;
   authEnabled?: boolean;
   /** Extra sport-specific tabs to show in the admin sidebar. */
   adminTabs?: AdminTabMeta[];
@@ -159,6 +164,7 @@ export interface SportConfigPayload {
   multiSession?: boolean;
   tabs?: SessionTab[];
   defaultTab?: string;
+  defaultAdminTab?: string;
   adminTabs?: AdminTabMeta[];
   [key: string]: unknown;
 }
