@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInSportTimezone } from "@/lib/timezone";
-import type { AccessRequestStatus, Profile, SignupStatus } from "@/lib/supabase/types";
+import type { AccessRequestStatus, Profile, SignupStatus, SportSession } from "@/lib/supabase/types";
 import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resolver";
 
 // ── Data functions ──────────────────────────────────────────────
@@ -16,12 +16,12 @@ export async function getUpcomingSessions(sport: string) {
         .neq("signups.status", "cancelled")
         .neq("signups.status", "declined")
         .gte("date", getTodayInSportTimezone())
-        .order("date", { ascending: true });
+        .order("date", { ascending: true })
+        .returns<(SportSession & { signups: [{ count: number }] })[]>();
 
     return (data ?? []).map((s) => ({
         ...s,
-        signup_count:
-            (s.signups as unknown as { count: number }[])?.[0]?.count ?? 0,
+        signup_count: s.signups[0]?.count ?? 0,
     }));
 }
 
