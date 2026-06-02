@@ -1,31 +1,12 @@
 /**
- * Raw sport config data and defaults. Internal to config/ — do not import
+ * Raw file-backed sport config data. Internal to config/ — do not import
  * directly. Use config-resolver.ts as the single consumer entry point.
  *
  * Note: [sport]-routed sports are expected to come from DB-backed config.
  * This file currently stores legacy file-backed sports only.
  */
 
-import { AccessLevel, Role, PillColor, type SportConfig, type TabDefaults } from "./config-interfaces";
-import { DEFAULT_ADMIN_TABS } from "./admin-tab-metadata";
-
-// ── Defaults ─────────────────────────────────────────────────────
-
-export { DEFAULT_ADMIN_TABS };
-
-export const SPORT_DEFAULTS = {
-  authEnabled: false,
-  adminTabs: DEFAULT_ADMIN_TABS,
-  tab: {
-    permissions: {
-      [AccessLevel.overview]: Role.anon,
-      [AccessLevel.view]: Role.anon,
-      [AccessLevel.signup]: Role.user,
-      [AccessLevel.admin]: Role.admin,
-    },
-    sessionPillColor: PillColor.gray,
-  } satisfies TabDefaults,
-} as const;
+import type { SportConfig } from "./config-interfaces";
 
 // ── Sport configurations ─────────────────────────────────────────
 

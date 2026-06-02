@@ -6,15 +6,34 @@
 
 import {
   AccessLevel,
+  PillColor,
+  Role,
   type SportConfig,
   type SportConfigDbRow,
   type ResolvedSessionTab,
   type ResolvedSportConfig,
+  type TabDefaults,
 } from "./config-interfaces";
-import { SPORT_DEFAULTS, sportsConfig } from "./sports-config";
+import { DEFAULT_ADMIN_TABS } from "./admin-tab-metadata";
+import { sportsConfig } from "./sports-config";
 
 // Re-export everything consumers need from a single entry point
 export * from "./config-interfaces";
+
+// Resolver-owned defaults used by merge logic for both file and DB config sources.
+const SPORT_DEFAULTS = {
+  authEnabled: false,
+  adminTabs: DEFAULT_ADMIN_TABS,
+  tab: {
+    permissions: {
+      [AccessLevel.overview]: Role.anon,
+      [AccessLevel.view]: Role.anon,
+      [AccessLevel.signup]: Role.user,
+      [AccessLevel.admin]: Role.admin,
+    },
+    sessionPillColor: PillColor.gray,
+  } satisfies TabDefaults,
+} as const;
 
 /**
  * Recursively merges `defaults` under `overrides`. Nested plain objects are
