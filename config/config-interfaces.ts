@@ -45,12 +45,6 @@ export interface SignupConfirmationDialog {
   rejectedMessage: string;
 }
 
-/** Default values applied to every tab during resolution. */
-export interface TabDefaults {
-  permissions: TabPermissions;
-  sessionPillColor: PillColor;
-}
-
 // ── Raw config interfaces (authored in sports-config) ────────────
 
 export interface ResponseTableEntry {
@@ -72,12 +66,12 @@ export interface SessionTab {
   id?: string;
   value: string;
   label: string;
-  /** Per-tab access control. Omitted keys fall back to defaults during resolution. */
-  permissions?: Partial<TabPermissions>;
+  /** Per-tab access control configured in the settings page. */
+  permissions: TabPermissions;
   /** Default prefix for session titles */
   defaultTitlePrefix?: string;
-  /** Color token used for session type pills. */
-  sessionPillColor?: PillColor;
+  /** Color token used for session type pills, configured in settings. */
+  sessionPillColor: PillColor;
   /** Optional confirmation dialog before signup for lower-role users. */
   signupConfirmationDialog?: SignupConfirmationDialog;
 }
@@ -114,13 +108,10 @@ export interface SportConfig {
   adminTabs?: AdminTabMeta[];
 }
 
-// ── Resolved config interfaces (all defaults applied) ────────────
+// ── Runtime config interfaces ────────────────────────────────────
 
-/** A session tab with all defaults fully resolved — no optionals for defaulted fields. */
-export interface ResolvedSessionTab extends Omit<SessionTab, "permissions" | "sessionPillColor"> {
-  permissions: TabPermissions;
-  sessionPillColor: PillColor;
-}
+/** A session tab consumed at runtime by the app. */
+export type ResolvedSessionTab = SessionTab;
 
 /** A sport config with all tab permissions resolved and computed flags. */
 export interface ResolvedSportConfig extends Omit<SportConfig, "tabs"> {
@@ -187,11 +178,3 @@ export interface SportConfigDbRow {
   created_at: string;
 }
 
-/** Source tag for config provider selection during migration period. */
-export type SportConfigSource = "file" | "database";
-
-/** Sport config with explicit source metadata for tracing and debugging. */
-export interface SourcedSportConfig {
-  source: SportConfigSource;
-  config: ResolvedSportConfig;
-}

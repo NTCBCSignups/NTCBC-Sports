@@ -9,15 +9,14 @@ import {
   Role,
 } from "@/config/config-resolver";
 import { SETTINGS_ADMIN_TAB } from "@/config/admin-tab-metadata";
-import { getResolvedSportConfigWithSource } from "@/lib/get-sport-config";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import AdminLayout from "@/components/sports/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
 import { getAccessRequests } from "@/lib/get-data";
 
-function withSettingsTab(tabs: AdminTabMeta[], enabled: boolean): AdminTabMeta[] {
+function withSettingsTab(tabs: AdminTabMeta[]): AdminTabMeta[] {
   const nonSettingsTabs = tabs.filter((tab) => tab.id !== SETTINGS_ADMIN_TAB.id);
-  if (!enabled) return nonSettingsTabs;
   return [SETTINGS_ADMIN_TAB, ...nonSettingsTabs];
 }
 
@@ -38,14 +37,12 @@ async function AdminShell({
   sport,
   requestedTab,
   config,
-  showSettingsTab,
 }: {
   sport: string;
   requestedTab?: string;
   config: ResolvedSportConfig;
-  showSettingsTab: boolean;
 }) {
-  const adminTabs = withSettingsTab(config.adminTabs ?? [], showSettingsTab);
+  const adminTabs = withSettingsTab(config.adminTabs ?? []);
   const defaultTab = resolveDefaultAdminTab(adminTabs, config.defaultAdminTab);
   const activeTab = requestedTab && adminTabs.some((tab) => tab.id === requestedTab)
     ? requestedTab
@@ -77,9 +74,8 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { sport } = await params;
-  const sourcedConfig = await getResolvedSportConfigWithSource(sport);
-  if (!sourcedConfig) notFound();
-  const { config, source } = sourcedConfig;
+  const config = await getResolvedSportConfig(sport);
+  if (!config) notFound();
 
   const { tab } = await searchParams;
   const supabase = await createClient();
@@ -102,7 +98,6 @@ export default async function AdminPage({
             sport={sport}
             requestedTab={tab}
             config={config}
-            showSettingsTab={source === "database"}
           />
         </Suspense>
       </div>

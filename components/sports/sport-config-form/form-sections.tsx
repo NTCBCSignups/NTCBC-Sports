@@ -34,13 +34,11 @@ import type {
 } from "./types";
 
 interface SportConfigSettingsSectionProps {
-    source: "file" | "database";
     state: SportConfigFormState;
     setState: Dispatch<SetStateAction<SportConfigFormState>>;
 }
 
 export function SportConfigSettingsSection({
-    source,
     state,
     setState,
 }: SportConfigSettingsSectionProps) {
@@ -57,10 +55,6 @@ export function SportConfigSettingsSection({
                 <div className="space-y-2">
                     <Label htmlFor="sport-id">ID</Label>
                     <Input id="sport-id" value={state.id} disabled />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="source">Source</Label>
-                    <Input id="source" value={source} disabled />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="emoji">Emoji</Label>
@@ -316,7 +310,6 @@ export function SessionTabsSection({
 }
 
 interface AdminTabsSectionProps {
-    source: "file" | "database";
     state: SportConfigFormState;
     setState: Dispatch<SetStateAction<SportConfigFormState>>;
     defaultAdminTabValue: string;
@@ -327,7 +320,6 @@ interface AdminTabsSectionProps {
 }
 
 export function AdminTabsSection({
-    source,
     state,
     setState,
     defaultAdminTabValue,
@@ -378,21 +370,19 @@ export function AdminTabsSection({
                 </p>
             </div>
 
-            {source === "database" && (
-                <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/30 px-3 py-2">
-                    <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <SettingsTabIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium text-foreground">{SETTINGS_TAB_LABEL}</span>
-                            <Badge variant="outline">{SETTINGS_TAB_ID}</Badge>
-                            <Badge variant="secondary">Pinned first</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            This tab is always shown first and cannot be edited, removed, or reordered here.
-                        </p>
+            <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/30 px-3 py-2">
+                <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <SettingsTabIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">{SETTINGS_TAB_LABEL}</span>
+                        <Badge variant="outline">{SETTINGS_TAB_ID}</Badge>
+                        <Badge variant="secondary">Pinned first</Badge>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                        This tab is always shown first and cannot be edited, removed, or reordered here.
+                    </p>
                 </div>
-            )}
+            </div>
 
             <DraggableList
                 items={state.adminTabs}

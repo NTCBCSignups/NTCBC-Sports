@@ -9,11 +9,16 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
+import { sportsConfig as legacySportsConfig } from "@/config/sports-config";
 import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
 import { cn } from "@/lib/utils";
 
 export default async function Home() {
-  const sportsBySlug = await getResolvedSportsConfigBySport();
+  const dbSportsBySlug = await getResolvedSportsConfigBySport();
+  const sportsBySlug = {
+    ...dbSportsBySlug,
+    ...legacySportsConfig,
+  };
   const sports = Object.values(sportsBySlug);
 
   return (

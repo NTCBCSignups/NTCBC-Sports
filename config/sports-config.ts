@@ -1,9 +1,7 @@
 /**
- * Raw file-backed sport config data. Internal to config/ — do not import
- * directly. Use config-resolver.ts as the single consumer entry point.
+ * Legacy file-backed sport config used by legacy basketball/volleyball flows.
  *
- * Note: [sport]-routed sports are expected to come from DB-backed config.
- * This file currently stores legacy file-backed sports only.
+ * [sport]-routed runtime/admin pages use DB-backed config via get-sport-config.
  */
 
 import type { SportConfig } from "./config-interfaces";

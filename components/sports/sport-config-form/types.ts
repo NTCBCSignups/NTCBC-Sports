@@ -9,7 +9,6 @@ import {
 
 export interface SportConfigFormProps {
     sport: string;
-    source: "file" | "database";
     initialConfig: ResolvedSportConfig;
 }
 

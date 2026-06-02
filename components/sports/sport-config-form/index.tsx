@@ -59,7 +59,7 @@ import type {
     TabDialogMode,
 } from "./types";
 
-export default function SportConfigForm({ sport, source, initialConfig }: SportConfigFormProps) {
+export default function SportConfigForm({ sport, initialConfig }: SportConfigFormProps) {
     const initialState = useMemo(
         () => buildInitialState(sport, initialConfig),
         [sport, initialConfig],
@@ -228,9 +228,7 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
 
     const defaultAdminTabOptions: DefaultAdminTabOption[] = (() => {
         const options = [
-            ...(source === "database"
-                ? [{ value: SETTINGS_TAB_ID, label: SETTINGS_TAB_LABEL }]
-                : []),
+            { value: SETTINGS_TAB_ID, label: SETTINGS_TAB_LABEL },
             ...state.adminTabs.map((tab) => ({
                 value: tab.id.trim(),
                 label: tab.label.trim() || tab.id.trim(),
@@ -729,7 +727,6 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
     return (
         <section className="space-y-4">
             <SportConfigSettingsSection
-                source={source}
                 state={state}
                 setState={setState}
             />
@@ -751,7 +748,6 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
             />
 
             <AdminTabsSection
-                source={source}
                 state={state}
                 setState={setState}
                 defaultAdminTabValue={defaultAdminTabValue}
