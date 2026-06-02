@@ -146,8 +146,8 @@ export const sportsConfig: Record<string, SportConfig> = {
     tabs: [
       {
         value: "drop_in_practice",
-        label: "Drop-in Practice",
-        defaultTitlePrefix: "Practice",
+        label: "Practices",
+        defaultTitlePrefix: "Practices",
         sessionPillColor: PillColor.emerald,
         permissions: { [AccessLevel.overview]: Role.user, [AccessLevel.view]: Role.user, [AccessLevel.signup]: Role.user },
         signupConfirmationDialog: {
@@ -158,10 +158,17 @@ export const sportsConfig: Record<string, SportConfig> = {
       },
       {
         value: "scheduled_game",
-        label: "Scheduled Games",
+        label: "Games",
         defaultTitlePrefix: "Game",
         sessionPillColor: PillColor.indigo,
         permissions: { [AccessLevel.overview]: Role.user, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
+      },
+      {
+        value: "socials",
+        label: "Socials",
+        defaultTitlePrefix: "Social",
+        sessionPillColor: PillColor.gray,
+        permissions: { [AccessLevel.overview]: Role.teamUser, [AccessLevel.view]: Role.teamUser, [AccessLevel.signup]: Role.teamUser },
       },
       {
         value: "umpiring",
