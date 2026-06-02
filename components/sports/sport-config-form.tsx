@@ -82,7 +82,7 @@ const PILL_COLOR_OPTIONS: PillColor[] = [
 function buildInitialState(sport: string, config: ResolvedSportConfig): SportConfigFormState {
     return {
         id: sport,
-        authEnabled: config.authEnabled,
+        authEnabled: config.authEnabled ?? false,
         emoji: config.emoji,
         name: config.name,
         type: config.type,
