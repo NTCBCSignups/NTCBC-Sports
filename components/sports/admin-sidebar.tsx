@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   ClipboardList, Plus, Calendar, History,
-  RefreshCw, type LucideIcon,
+  RefreshCw, SlidersHorizontal, type LucideIcon,
 } from "lucide-react";
 import type { AdminTabMeta } from "@/config/config-resolver";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
@@ -18,6 +18,7 @@ const iconMap: Record<string, LucideIcon> = {
   Calendar,
   History,
   RefreshCw,
+  SlidersHorizontal,
 };
 
 interface SidebarTab {

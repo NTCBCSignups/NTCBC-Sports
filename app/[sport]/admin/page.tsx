@@ -4,25 +4,40 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import PageHeader from "@/components/sports/page-header";
 import {
+  type AdminTabMeta,
   type ResolvedSportConfig,
   Role,
 } from "@/config/config-resolver";
-import { getResolvedSportConfig } from "@/lib/get-sport-config";
+import { getResolvedSportConfigWithSource } from "@/lib/get-sport-config";
 import AdminLayout from "@/components/sports/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
 import { getAccessRequests } from "@/lib/get-data";
 
+const SETTINGS_ADMIN_TAB: AdminTabMeta = {
+  id: "settings",
+  label: "Settings",
+  iconName: "SlidersHorizontal",
+};
+
+function withSettingsTab(tabs: AdminTabMeta[], enabled: boolean): AdminTabMeta[] {
+  if (!enabled) return tabs;
+  if (tabs.some((tab) => tab.id === SETTINGS_ADMIN_TAB.id)) return tabs;
+  return [...tabs, SETTINGS_ADMIN_TAB];
+}
+
 async function AdminShell({
   sport,
   tab,
   config,
+  showSettingsTab,
 }: {
   sport: string;
   tab: string;
   config: ResolvedSportConfig;
+  showSettingsTab: boolean;
 }) {
-  const adminTabs = config.adminTabs ?? [];
+  const adminTabs = withSettingsTab(config.adminTabs ?? [], showSettingsTab);
 
   const accessRequests = await getAccessRequests(sport);
   const pendingRequestCount = accessRequests.filter(
@@ -50,8 +65,9 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { sport } = await params;
-  const config = await getResolvedSportConfig(sport);
-  if (!config) notFound();
+  const sourcedConfig = await getResolvedSportConfigWithSource(sport);
+  if (!sourcedConfig) notFound();
+  const { config, source } = sourcedConfig;
 
   const { tab = "upcoming" } = await searchParams;
   const supabase = await createClient();
@@ -70,7 +86,12 @@ export default async function AdminPage({
 
       <div className="flex flex-col md:flex-row gap-8">
         <Suspense fallback={<LoadingAdminContent />}>
-          <AdminShell sport={sport} tab={tab} config={config} />
+          <AdminShell
+            sport={sport}
+            tab={tab}
+            config={config}
+            showSettingsTab={source === "database"}
+          />
         </Suspense>
       </div>
     </div>
