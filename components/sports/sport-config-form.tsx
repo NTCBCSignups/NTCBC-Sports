@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toastClasses } from "@/lib/styles";
+import {
+    updateSportConfig,
+    type UpdateSportConfigInput,
+} from "@/lib/actions/sport-config";
 import {
     Select,
     SelectContent,
@@ -18,6 +24,7 @@ import {
     Role,
     type AdminTabMeta,
     type ResolvedSportConfig,
+    type SignupConfirmationDialog,
 } from "@/config/config-resolver";
 
 interface SportConfigFormProps {
@@ -31,6 +38,7 @@ interface EditableTab {
     label: string;
     defaultTitlePrefix: string;
     sessionPillColor: PillColor;
+    signupConfirmationDialog?: SignupConfirmationDialog;
     permissions: {
         overview: Role;
         view: Role;
@@ -91,6 +99,7 @@ function buildInitialState(sport: string, config: ResolvedSportConfig): SportCon
             label: tab.label,
             defaultTitlePrefix: tab.defaultTitlePrefix ?? "",
             sessionPillColor: tab.sessionPillColor,
+            signupConfirmationDialog: tab.signupConfirmationDialog,
             permissions: {
                 overview: tab.permissions[AccessLevel.overview],
                 view: tab.permissions[AccessLevel.view],
@@ -116,12 +125,64 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
         [sport, initialConfig],
     );
     const [state, setState] = useState(initialState);
+    const [savedState, setSavedState] = useState(initialState);
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         setState(initialState);
+        setSavedState(initialState);
     }, [initialState]);
 
-    const isDirty = JSON.stringify(state) !== JSON.stringify(initialState);
+    const isDirty = JSON.stringify(state) !== JSON.stringify(savedState);
+
+    const handleSave = () => {
+        const notes = state.notesText
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+
+        const payload: UpdateSportConfigInput = {
+            id: state.id,
+            authEnabled: state.authEnabled,
+            emoji: state.emoji.trim(),
+            name: state.name.trim(),
+            type: state.type.trim(),
+            description: state.description.trim() || undefined,
+            day: state.day.trim(),
+            organizers: state.organizers.trim(),
+            location: {
+                name: state.locationName.trim(),
+                address: state.locationAddress.trim(),
+                mapsLink: state.locationMapsLink.trim() || undefined,
+            },
+            notes,
+            defaultTab: state.defaultTab.trim(),
+            tabs: state.tabs.map((tab) => ({
+                value: tab.value.trim(),
+                label: tab.label.trim(),
+                defaultTitlePrefix: tab.defaultTitlePrefix.trim() || undefined,
+                sessionPillColor: tab.sessionPillColor,
+                permissions: tab.permissions,
+                signupConfirmationDialog: tab.signupConfirmationDialog,
+            })),
+            adminTabs: state.adminTabs.map((tab) => ({
+                id: tab.id.trim(),
+                label: tab.label.trim(),
+                iconName: tab.iconName.trim(),
+            })),
+        };
+
+        startTransition(async () => {
+            const result = await updateSportConfig(sport, payload);
+            if (result.success) {
+                setSavedState(structuredClone(state));
+                toast.success("Sport config saved.", { className: toastClasses.green });
+                return;
+            }
+
+            toast.error(result.error, { className: toastClasses.red });
+        });
+    };
 
     return (
         <section className="space-y-4">
@@ -129,7 +190,7 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
                 <div className="space-y-1">
                     <h3 className="text-base font-semibold text-foreground">Sport Config Settings</h3>
                     <p className="text-sm text-muted-foreground">
-                        Changes are local-only in this implementation slice. Save wiring is added next.
+                        Edit and save sport-level settings. Unknown JSON keys are preserved on save.
                     </p>
                 </div>
 
@@ -415,12 +476,16 @@ export default function SportConfigForm({ sport, source, initialConfig }: SportC
                     type="button"
                     variant="outline"
                     disabled={!isDirty}
-                    onClick={() => setState(initialState)}
+                    onClick={() => setState(savedState)}
                 >
                     Reset
                 </Button>
-                <Button type="button" disabled>
-                    Save (next slice)
+                <Button
+                    type="button"
+                    disabled={!isDirty || isPending}
+                    onClick={handleSave}
+                >
+                    {isPending ? "Saving..." : "Save"}
                 </Button>
                 <span className="text-xs text-muted-foreground">
                     {isDirty ? "Unsaved local changes" : "No local changes"}
