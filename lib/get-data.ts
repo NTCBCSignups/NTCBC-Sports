@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import type { AccessRequestStatus, Profile, SignupStatus } from "@/lib/supabase/types";
+import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resolver";
 
 // ── Data functions ──────────────────────────────────────────────
 // Centralized queries using the user's Supabase client (respects RLS).
@@ -142,4 +143,62 @@ export async function getUserSignupStatus(
         .single();
 
     return (data?.status as SignupStatus) ?? null;
+}
+
+function normalizeSportConfigPayload(payload: unknown): SportConfigPayload {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        return {};
+    }
+    return payload as SportConfigPayload;
+}
+
+function mapSportConfigRow(row: {
+    id: string;
+    auth_enabled: boolean;
+    emoji: string;
+    name: string;
+    type: string;
+    description: string | null;
+    config: unknown;
+    updated_by: string | null;
+    updated_at: string;
+    created_at: string;
+}): SportConfigDbRow {
+    return {
+        id: row.id,
+        auth_enabled: row.auth_enabled,
+        emoji: row.emoji,
+        name: row.name,
+        type: row.type,
+        description: row.description,
+        config: normalizeSportConfigPayload(row.config),
+        updated_by: row.updated_by,
+        updated_at: row.updated_at,
+        created_at: row.created_at,
+    };
+}
+
+/** Single sport config row by sport id. */
+export async function getSportConfigRow(sport: string): Promise<SportConfigDbRow | null> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from("sport_configs")
+        .select("id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at")
+        .eq("id", sport)
+        .maybeSingle();
+
+    if (error || !data) return null;
+    return mapSportConfigRow(data);
+}
+
+/** All sport config rows. */
+export async function getSportConfigRows(): Promise<SportConfigDbRow[]> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from("sport_configs")
+        .select("id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at")
+        .order("id", { ascending: true });
+
+    if (error || !data) return [];
+    return data.map((row) => mapSportConfigRow(row));
 }

@@ -185,5 +185,5 @@ export type SportConfigSource = "file" | "database";
 /** Sport config with explicit source metadata for tracing and debugging. */
 export interface SourcedSportConfig {
   source: SportConfigSource;
-  config: SportConfig;
+  config: ResolvedSportConfig;
 }

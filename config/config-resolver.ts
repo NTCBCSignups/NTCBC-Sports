@@ -7,6 +7,7 @@
 import {
   AccessLevel,
   type SportConfig,
+  type SportConfigDbRow,
   type ResolvedSessionTab,
   type ResolvedSportConfig,
 } from "./config-interfaces";
@@ -61,6 +62,59 @@ export function resolveSportConfig(config: SportConfig): ResolvedSportConfig {
       (t) => t.permissions[AccessLevel.signup] > SPORT_DEFAULTS.tab.permissions[AccessLevel.signup],
     ),
   } as ResolvedSportConfig;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
+function isLocation(value: SportConfig["location"] | undefined): value is SportConfig["location"] {
+  return !!value
+    && isNonEmptyString(value.name)
+    && isNonEmptyString(value.address)
+    && (value.mapsLink === undefined || typeof value.mapsLink === "string");
+}
+
+/**
+ * Converts a DB row into the raw SportConfig shape expected by resolveSportConfig.
+ * Returns null when required shared fields are missing.
+ */
+export function sportConfigFromDbRow(row: SportConfigDbRow): SportConfig | null {
+  const payload = row.config;
+
+  if (!isNonEmptyString(payload.day)) return null;
+  if (!isNonEmptyString(payload.organizers)) return null;
+  if (!isStringArray(payload.notes)) return null;
+  if (!isLocation(payload.location)) return null;
+
+  return {
+    id: row.id as SportConfig["id"],
+    authEnabled: row.auth_enabled,
+    emoji: row.emoji,
+    name: row.name,
+    type: row.type,
+    description: row.description ?? undefined,
+    day: payload.day,
+    organizers: payload.organizers,
+    location: payload.location,
+    waiverLink: payload.waiverLink,
+    notes: payload.notes,
+    responseTable: payload.responseTable,
+    multiSession: payload.multiSession,
+    tabs: payload.tabs,
+    defaultTab: payload.defaultTab,
+    adminTabs: payload.adminTabs,
+  };
+}
+
+/** Resolves a DB row directly to a fully merged sport config. */
+export function resolveSportConfigRow(row: SportConfigDbRow): ResolvedSportConfig | null {
+  const config = sportConfigFromDbRow(row);
+  return config ? resolveSportConfig(config) : null;
 }
 
 // ── Convenience helpers ─────────────────────────────────────────
