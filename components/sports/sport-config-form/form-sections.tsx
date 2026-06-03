@@ -225,7 +225,6 @@ export function SessionTabsSection({
                 items={state.tabs}
                 onReorder={(tabs) => setState((prev) => ({ ...prev, tabs }))}
                 keyExtractor={(tab) => tab.key}
-                className="max-h-[60vh] overflow-y-auto pr-1"
                 itemClassName={() => "items-start flex-col gap-3 sm:flex-row sm:items-center"}
                 renderItem={(tab, index) => {
                     const isDefault = state.defaultTab
@@ -390,7 +389,6 @@ export function AdminTabsSection({
                 items={state.adminTabs}
                 onReorder={(adminTabs) => setState((prev) => ({ ...prev, adminTabs }))}
                 keyExtractor={(tab) => tab.key}
-                className="max-h-[60vh] overflow-y-auto pr-1"
                 itemClassName={() => "items-start flex-col gap-3 sm:flex-row sm:items-center"}
                 renderItem={(tab) => {
                     const Icon = getAdminTabIcon(tab.iconName);
