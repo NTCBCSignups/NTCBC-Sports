@@ -180,7 +180,7 @@ export default function EditViewsDialog({
                 showCloseButton={step.kind !== "edit"}
                 className={cn(
                     "transition-[max-width] duration-200",
-                    step.kind === "edit" ? "max-w-[95vw] sm:max-w-[95vw] sm:w-fit overflow-x-auto" : "sm:max-w-md",
+                    step.kind === "edit" ? "max-w-[95vw] sm:max-w-lg overflow-x-auto" : "sm:max-w-md",
                 )}
             >
                 {step.kind === "edit" && (
