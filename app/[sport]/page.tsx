@@ -8,6 +8,7 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
+import CalendarExportButton from "@/components/sports/calendar-export-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
 import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
@@ -339,9 +340,16 @@ export default async function SportAuthPage({
       config={config}
       actions={
         user ? (
-          <Suspense>
-            <AdminButtonGate sport={sport} userId={user.id} />
-          </Suspense>
+          <>
+            <CalendarExportButton
+              sport={sport}
+              userId={user.id}
+              tabs={config.tabs.map((t) => ({ value: t.value, label: t.label }))}
+            />
+            <Suspense>
+              <AdminButtonGate sport={sport} userId={user.id} />
+            </Suspense>
+          </>
         ) : null
       }
     >
