@@ -1,4 +1,4 @@
-import { AccessLevel, Role, type SessionTab } from "@/config/config-interfaces";
+import { AccessLevel, Role, type SessionTab } from "@/config/config-resolver";
 
 // ── Access level ordering (for finding first unmet level) ────────
 export const ACCESS_LEVELS: Exclude<AccessLevel, "admin">[] = [

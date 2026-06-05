@@ -2,16 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserSportRole } from "@/lib/supabase/user";
 import { getFirstUnmetLevel } from "@/lib/tab-access";
+import { getSessionsWithClient } from "@/lib/get-data";
 import { sessionsToIcal } from "@/lib/calendar-export";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { AccessLevel } from "@/config/config-resolver";
-import { SPORT_TIMEZONE } from "@/lib/timezone";
-import { formatInTimeZone } from "date-fns-tz";
-import type { SportSession } from "@/lib/supabase/types";
-
-function getTodayString(): string {
-    return formatInTimeZone(new Date(), SPORT_TIMEZONE, "yyyy-MM-dd");
-}
 
 export async function GET(
     request: NextRequest,
@@ -75,27 +69,9 @@ export async function GET(
     const isDownload = mode === "download";
     const fetchHistory = isDownload && includeHistory;
 
-    let query = supabase
-        .from("sessions")
-        .select("*")
-        .eq("sport", sport);
-
-    if (!fetchHistory) {
-        query = query.gte("date", getTodayString());
-    }
-
-    query = query.order("date", { ascending: true });
-
-    const { data: sessions } = await query.returns<SportSession[]>();
-    if (!sessions) {
-        return new Response(
-            sessionsToIcal([], {
-                calendarName: `NTCBC ${config.name} Sessions`,
-                includeCancelled: !isDownload,
-            }),
-            { status: 200, headers: buildHeaders(config.name, sport, isDownload) },
-        );
-    }
+    const sessions = await getSessionsWithClient(supabase, sport, {
+        includeHistory: fetchHistory,
+    });
 
     // ── Filter by access + tab ───────────────────────────────────
     let filtered = sessions.filter((s) => visibleTypes.has(s.session_type));
@@ -115,15 +91,11 @@ export async function GET(
 
     return new Response(ical, {
         status: 200,
-        headers: buildHeaders(config.name, sport, isDownload),
+        headers: buildHeaders(sport, isDownload),
     });
 }
 
-function buildHeaders(
-    sportName: string,
-    sport: string,
-    isDownload: boolean,
-): HeadersInit {
+function buildHeaders(sport: string, isDownload: boolean): HeadersInit {
     const headers: HeadersInit = {
         "Content-Type": "text/calendar; charset=utf-8",
         "Cache-Control": "no-cache, no-store, must-revalidate",

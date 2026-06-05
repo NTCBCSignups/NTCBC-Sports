@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInSportTimezone } from "@/lib/timezone";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccessRequestStatus, Profile, SignupStatus, SportSession } from "@/lib/supabase/types";
 import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resolver";
 
@@ -33,6 +34,28 @@ export async function getAllSessions(sport: string) {
         .select("*")
         .eq("sport", sport)
         .order("date", { ascending: false });
+
+    return data ?? [];
+}
+
+/** Sessions for a sport using a provided client (e.g., admin client for API routes). */
+export async function getSessionsWithClient(
+    supabase: SupabaseClient,
+    sport: string,
+    options?: { includeHistory?: boolean },
+): Promise<SportSession[]> {
+    let query = supabase
+        .from("sessions")
+        .select("*")
+        .eq("sport", sport);
+
+    if (!options?.includeHistory) {
+        query = query.gte("date", getTodayInSportTimezone());
+    }
+
+    const { data } = await query
+        .order("date", { ascending: true })
+        .returns<SportSession[]>();
 
     return data ?? [];
 }

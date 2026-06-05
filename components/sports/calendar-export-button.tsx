@@ -115,9 +115,9 @@ export default function CalendarExportButton({
                     </div>
 
                     {/* Warning */}
-                    <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/50">
-                        <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                        <p className="text-xs text-amber-800 dark:text-amber-300">
+                    <div className="flex items-start gap-2 rounded-md border border-status-warning-border bg-status-warning p-3">
+                        <AlertTriangle className="h-4 w-4 text-status-warning-foreground mt-0.5 shrink-0" />
+                        <p className="text-xs text-status-warning-foreground">
                             This link is personal to your account. Do not share it with others.
                         </p>
                     </div>

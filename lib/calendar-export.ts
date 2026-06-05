@@ -1,4 +1,5 @@
 import { SPORT_TIMEZONE } from "@/lib/timezone";
+import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { SportSession } from "@/lib/supabase/types";
 
 export interface CalendarExportOptions {
@@ -18,7 +19,7 @@ export function sessionsToIcal(
 ): string {
     const filtered = options.includeCancelled
         ? sessions
-        : sessions.filter((s) => s.status !== "cancelled");
+        : sessions.filter((s) => s.status !== SESSION_STATUS.cancelled);
 
     const events = filtered.map((s) => buildVEvent(s));
 
@@ -60,7 +61,7 @@ function buildVEvent(session: SportSession): string[] {
 
     if (location) lines.push(`LOCATION:${escapeText(location)}`);
     if (description) lines.push(`DESCRIPTION:${escapeText(description)}`);
-    if (session.status === "cancelled") lines.push("STATUS:CANCELLED");
+    if (session.status === SESSION_STATUS.cancelled) lines.push("STATUS:CANCELLED");
 
     lines.push("END:VEVENT");
     return lines;
