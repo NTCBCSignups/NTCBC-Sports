@@ -68,10 +68,9 @@ export async function GET(
 
     // ── Fetch sessions ───────────────────────────────────────────
     const isDownload = mode === "download";
-    const fetchHistory = isDownload && includeHistory;
 
     const sessions = await getSessionsWithClient(supabase, sport, {
-        includeHistory: fetchHistory,
+        includeHistory,
     });
 
     // ── Filter by access + tab ───────────────────────────────────

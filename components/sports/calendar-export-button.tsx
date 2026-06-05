@@ -69,7 +69,7 @@ export default function CalendarExportButton({
                 params.append("tab", tab);
             }
         }
-        if (mode === "download" && includeHistory) params.set("history", "true");
+        if (includeHistory) params.set("history", "true");
         return `${base}?${params.toString()}`;
     }
 
@@ -157,19 +157,17 @@ export default function CalendarExportButton({
                         ))}
                     </div>
 
-                    {/* Include history checkbox (download only) */}
-                    {mode === "download" && (
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="cal-history"
-                                checked={includeHistory}
-                                onCheckedChange={(checked) => setIncludeHistory(checked === true)}
-                            />
-                            <Label htmlFor="cal-history" className="text-sm font-normal">
-                                Include past sessions
-                            </Label>
-                        </div>
-                    )}
+                    {/* Include history checkbox */}
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="cal-history"
+                            checked={includeHistory}
+                            onCheckedChange={(checked) => setIncludeHistory(checked === true)}
+                        />
+                        <Label htmlFor="cal-history" className="text-sm font-normal">
+                            Include past sessions
+                        </Label>
+                    </div>
 
                     {/* Warning (subscribe only) */}
                     {mode === "subscribe" && (
