@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { CalendarDays, Copy, Download, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+type ExportMode = "subscribe" | "download";
 
 interface TabOption {
     value: string;
@@ -32,6 +35,7 @@ export default function CalendarExportButton({
     userId,
     tabs,
 }: CalendarExportButtonProps) {
+    const [mode, setMode] = useState<ExportMode>("subscribe");
     const [selectedTabs, setSelectedTabs] = useState<Set<string>>(
         () => new Set(tabs.map((t) => t.value)),
     );
@@ -55,7 +59,7 @@ export default function CalendarExportButton({
         });
     }
 
-    function buildUrl(mode: "subscribe" | "download"): string {
+    function buildUrl(): string {
         const base = `${window.location.origin}/api/calendar/${sport}`;
         const params = new URLSearchParams();
         params.set("userId", userId);
@@ -70,7 +74,7 @@ export default function CalendarExportButton({
     }
 
     function handleSubscribe() {
-        const httpUrl = buildUrl("subscribe");
+        const httpUrl = buildUrl();
         const webcalUrl = httpUrl.replace(/^https?:\/\//, "webcal://");
         navigator.clipboard.writeText(webcalUrl).then(() => {
             toast.success("Subscription URL copied to clipboard", {
@@ -81,7 +85,7 @@ export default function CalendarExportButton({
     }
 
     function handleDownload() {
-        const url = buildUrl("download");
+        const url = buildUrl();
         const a = document.createElement("a");
         a.href = url;
         a.download = `ntcbc-${sport}-sessions.ics`;
@@ -109,6 +113,27 @@ export default function CalendarExportButton({
                 </DialogHeader>
 
                 <div className="space-y-5">
+                    {/* Mode tabs */}
+                    <div className="flex gap-2">
+                        <ModeTab
+                            active={mode === "subscribe"}
+                            onClick={() => setMode("subscribe")}
+                            label="Subscribe"
+                        />
+                        <ModeTab
+                            active={mode === "download"}
+                            onClick={() => setMode("download")}
+                            label="Download"
+                        />
+                    </div>
+
+                    {/* Mode description */}
+                    <p className="text-sm text-muted-foreground">
+                        {mode === "subscribe"
+                            ? "Your calendar app will automatically sync with new and updated sessions. Cancelled sessions appear as strikethrough."
+                            : "Download a snapshot of current sessions as an .ics file. This is a one-time export that won't update automatically."}
+                    </p>
+
                     {/* Session type selection */}
                     <div className="space-y-3">
                         <Label className="text-sm font-medium">Session types</Label>
@@ -132,38 +157,70 @@ export default function CalendarExportButton({
                         ))}
                     </div>
 
-                    {/* Include history checkbox */}
-                    <div className="flex items-center gap-2">
-                        <Checkbox
-                            id="cal-history"
-                            checked={includeHistory}
-                            onCheckedChange={(checked) => setIncludeHistory(checked === true)}
-                        />
-                        <Label htmlFor="cal-history" className="text-sm font-normal">
-                            Include past sessions (download only)
-                        </Label>
-                    </div>
+                    {/* Include history checkbox (download only) */}
+                    {mode === "download" && (
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="cal-history"
+                                checked={includeHistory}
+                                onCheckedChange={(checked) => setIncludeHistory(checked === true)}
+                            />
+                            <Label htmlFor="cal-history" className="text-sm font-normal">
+                                Include past sessions
+                            </Label>
+                        </div>
+                    )}
 
-                    {/* Warning */}
-                    <div className="flex items-start gap-2 rounded-md border border-status-warning-border bg-status-warning p-3">
-                        <AlertTriangle className="h-4 w-4 text-status-warning-foreground mt-0.5 shrink-0" />
-                        <p className="text-xs text-status-warning-foreground">
-                            This link is personal to your account. Do not share it with others.
-                        </p>
-                    </div>
+                    {/* Warning (subscribe only) */}
+                    {mode === "subscribe" && (
+                        <div className="flex items-start gap-2 rounded-md border border-status-warning-border bg-status-warning p-3">
+                            <AlertTriangle className="h-4 w-4 text-status-warning-foreground mt-0.5 shrink-0" />
+                            <p className="text-xs text-status-warning-foreground">
+                                This link is personal to your account. Do not share it with others.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                <DialogFooter className="gap-2 sm:gap-0">
-                    <Button variant="outline" onClick={handleSubscribe} disabled={!hasSelection}>
-                        <Copy className="h-4 w-4" />
-                        Copy Subscription URL
-                    </Button>
-                    <Button onClick={handleDownload} disabled={!hasSelection}>
-                        <Download className="h-4 w-4" />
-                        Download .ics
-                    </Button>
+                <DialogFooter>
+                    {mode === "subscribe" ? (
+                        <Button onClick={handleSubscribe} disabled={!hasSelection}>
+                            <Copy className="h-4 w-4" />
+                            Copy Subscription URL
+                        </Button>
+                    ) : (
+                        <Button onClick={handleDownload} disabled={!hasSelection}>
+                            <Download className="h-4 w-4" />
+                            Download .ics
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function ModeTab({
+    active,
+    onClick,
+    label,
+}: {
+    active: boolean;
+    onClick: () => void;
+    label: string;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-foreground hover:bg-accent",
+            )}
+        >
+            {label}
+        </button>
     );
 }
