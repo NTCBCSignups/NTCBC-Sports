@@ -11,7 +11,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { CalendarDays, Copy, Download, AlertTriangle } from "lucide-react";
@@ -33,16 +32,39 @@ export default function CalendarExportButton({
     userId,
     tabs,
 }: CalendarExportButtonProps) {
-    const [selectedTab, setSelectedTab] = useState("all");
+    const [selectedTabs, setSelectedTabs] = useState<Set<string>>(
+        () => new Set(tabs.map((t) => t.value)),
+    );
     const [includeHistory, setIncludeHistory] = useState(false);
     const [open, setOpen] = useState(false);
+
+    const allSelected = selectedTabs.size === tabs.length;
+
+    function toggleAll(checked: boolean) {
+        setSelectedTabs(
+            checked ? new Set(tabs.map((t) => t.value)) : new Set(),
+        );
+    }
+
+    function toggleTab(value: string, checked: boolean) {
+        setSelectedTabs((prev) => {
+            const next = new Set(prev);
+            if (checked) next.add(value);
+            else next.delete(value);
+            return next;
+        });
+    }
 
     function buildUrl(mode: "subscribe" | "download"): string {
         const base = `${window.location.origin}/api/calendar/${sport}`;
         const params = new URLSearchParams();
         params.set("userId", userId);
         params.set("mode", mode);
-        if (selectedTab !== "all") params.set("tab", selectedTab);
+        if (!allSelected) {
+            for (const tab of selectedTabs) {
+                params.append("tab", tab);
+            }
+        }
         if (mode === "download" && includeHistory) params.set("history", "true");
         return `${base}?${params.toString()}`;
     }
@@ -69,6 +91,8 @@ export default function CalendarExportButton({
         setOpen(false);
     }
 
+    const hasSelection = selectedTabs.size > 0;
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -87,19 +111,25 @@ export default function CalendarExportButton({
                 <div className="space-y-5">
                     {/* Session type selection */}
                     <div className="space-y-3">
-                        <Label className="text-sm font-medium">Session type</Label>
-                        <RadioGroup value={selectedTab} onValueChange={setSelectedTab}>
-                            <div className="flex items-center gap-2">
-                                <RadioGroupItem value="all" id="cal-all" />
-                                <Label htmlFor="cal-all" className="font-normal">All Sessions</Label>
+                        <Label className="text-sm font-medium">Session types</Label>
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="cal-all"
+                                checked={allSelected}
+                                onCheckedChange={(checked) => toggleAll(checked === true)}
+                            />
+                            <Label htmlFor="cal-all" className="font-normal">All Sessions</Label>
+                        </div>
+                        {tabs.map((tab) => (
+                            <div key={tab.value} className="flex items-center gap-2 ml-4">
+                                <Checkbox
+                                    id={`cal-${tab.value}`}
+                                    checked={selectedTabs.has(tab.value)}
+                                    onCheckedChange={(checked) => toggleTab(tab.value, checked === true)}
+                                />
+                                <Label htmlFor={`cal-${tab.value}`} className="font-normal">{tab.label}</Label>
                             </div>
-                            {tabs.map((tab) => (
-                                <div key={tab.value} className="flex items-center gap-2">
-                                    <RadioGroupItem value={tab.value} id={`cal-${tab.value}`} />
-                                    <Label htmlFor={`cal-${tab.value}`} className="font-normal">{tab.label}</Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
+                        ))}
                     </div>
 
                     {/* Include history checkbox */}
@@ -124,11 +154,11 @@ export default function CalendarExportButton({
                 </div>
 
                 <DialogFooter className="gap-2 sm:gap-0">
-                    <Button variant="outline" onClick={handleSubscribe}>
+                    <Button variant="outline" onClick={handleSubscribe} disabled={!hasSelection}>
                         <Copy className="h-4 w-4" />
                         Copy Subscription URL
                     </Button>
-                    <Button onClick={handleDownload}>
+                    <Button onClick={handleDownload} disabled={!hasSelection}>
                         <Download className="h-4 w-4" />
                         Download .ics
                     </Button>

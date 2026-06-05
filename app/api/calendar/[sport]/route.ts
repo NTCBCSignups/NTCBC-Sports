@@ -16,7 +16,7 @@ export async function GET(
 
     const userId = searchParams.get("userId");
     const mode = searchParams.get("mode") ?? "subscribe";
-    const tab = searchParams.get("tab");
+    const tabFilters = searchParams.getAll("tab");
     const includeHistory = searchParams.get("history") === "true";
 
     // ── Validate sport ───────────────────────────────────────────
@@ -57,8 +57,9 @@ export async function GET(
     );
     const visibleTypes = new Set(visibleTabs.map((t) => t.value));
 
-    // Validate requested tab filter
-    if (tab && !visibleTypes.has(tab)) {
+    // Validate requested tab filters
+    const invalidTab = tabFilters.find((t) => !visibleTypes.has(t));
+    if (invalidTab) {
         return NextResponse.json(
             { error: "You don't have access to this session type" },
             { status: 403 },
@@ -75,13 +76,14 @@ export async function GET(
 
     // ── Filter by access + tab ───────────────────────────────────
     let filtered = sessions.filter((s) => visibleTypes.has(s.session_type));
-    if (tab) {
-        filtered = filtered.filter((s) => s.session_type === tab);
+    if (tabFilters.length > 0) {
+        const tabSet = new Set(tabFilters);
+        filtered = filtered.filter((s) => tabSet.has(s.session_type));
     }
 
     // ── Generate iCal ────────────────────────────────────────────
-    const calendarName = tab
-        ? `NTCBC ${config.name} - ${visibleTabs.find((t) => t.value === tab)?.label ?? tab}`
+    const calendarName = tabFilters.length === 1
+        ? `NTCBC ${config.name} - ${visibleTabs.find((t) => t.value === tabFilters[0])?.label ?? tabFilters[0]}`
         : `NTCBC ${config.name} Sessions`;
 
     const ical = sessionsToIcal(filtered, {
