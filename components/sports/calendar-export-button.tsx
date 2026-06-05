@@ -130,8 +130,8 @@ export default function CalendarExportButton({
                     {/* Mode description */}
                     <p className="text-sm text-muted-foreground">
                         {mode === "subscribe"
-                            ? "Your calendar app will automatically sync with new and updated sessions. Cancelled sessions appear as strikethrough."
-                            : "Download a snapshot of current sessions as an .ics file. This is a one-time export that won't update automatically."}
+                            ? "Your calendar app will create a new calendar that automatically sync for new/updated sessions. Cancelled sessions appear as strikethrough."
+                            : "Download a snapshot of current sessions as an .ics file. You own the calendar events in a calendar of your choosing but this is a one-time export that won't update automatically."}
                     </p>
 
                     {/* Session type selection */}
