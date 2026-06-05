@@ -40,6 +40,7 @@ export default function CalendarExportButton({
         () => new Set(tabs.map((t) => t.value)),
     );
     const [includeHistory, setIncludeHistory] = useState(false);
+    const [includeDeclined, setIncludeDeclined] = useState(false);
     const [open, setOpen] = useState(false);
 
     const allSelected = selectedTabs.size === tabs.length;
@@ -70,6 +71,7 @@ export default function CalendarExportButton({
             }
         }
         if (includeHistory) params.set("history", "true");
+        if (includeDeclined) params.set("includeDeclined", "true");
         return `${base}?${params.toString()}`;
     }
 
@@ -166,6 +168,18 @@ export default function CalendarExportButton({
                         />
                         <Label htmlFor="cal-history" className="text-sm font-normal">
                             Include past sessions
+                        </Label>
+                    </div>
+
+                    {/* Include declined checkbox */}
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="cal-declined"
+                            checked={includeDeclined}
+                            onCheckedChange={(checked) => setIncludeDeclined(checked === true)}
+                        />
+                        <Label htmlFor="cal-declined" className="text-sm font-normal">
+                            Include sessions you're not able to join
                         </Label>
                     </div>
 

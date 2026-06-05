@@ -18,6 +18,7 @@ export async function GET(
     const mode = searchParams.get("mode") ?? "subscribe";
     const tabFilters = searchParams.getAll("tab");
     const includeHistory = searchParams.get("history") === "true";
+    const includeDeclined = searchParams.get("includeDeclined") === "true";
 
     // ── Validate sport ───────────────────────────────────────────
     const config = await getResolvedSportConfig(sport);
@@ -78,6 +79,20 @@ export async function GET(
     if (tabFilters.length > 0) {
         const tabSet = new Set(tabFilters);
         filtered = filtered.filter((s) => tabSet.has(s.session_type));
+    }
+
+    // ── Exclude sessions user declined ───────────────────────────
+    if (!includeDeclined) {
+        const { data: declinedSignups } = await supabase
+            .from("signups")
+            .select("session_id")
+            .eq("user_id", userId)
+            .eq("status", "declined");
+
+        if (declinedSignups && declinedSignups.length > 0) {
+            const declinedIds = new Set(declinedSignups.map((s) => s.session_id));
+            filtered = filtered.filter((s) => !declinedIds.has(s.id));
+        }
     }
 
     // ── Generate iCal ────────────────────────────────────────────
