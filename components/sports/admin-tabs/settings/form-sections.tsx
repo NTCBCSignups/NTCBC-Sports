@@ -1,7 +1,8 @@
-import type { Dispatch, SetStateAction } from "react";
-import { Pencil, Plus, Shield, Trash2 } from "lucide-react";
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { CalendarDays, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +15,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getAdminTabIcon } from "@/components/sports/admin-tab-icons";
+import SessionCard from "@/components/sports/session-card";
+import SessionTabPills from "@/components/sports/session-tab-pills";
 import {
     SETTINGS_TAB_ICON_NAME,
     SETTINGS_TAB_ID,
     SETTINGS_TAB_LABEL,
 } from "@/config/admin-tab-metadata";
+import { AccessLevel, Role } from "@/config/config-resolver";
+import { SESSION_STATUS } from "@/lib/supabase/types";
+import type { SportSession } from "@/lib/supabase/types";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
 import { getAdminTabDefinition } from "./admin-tab-ui-metadata";
@@ -33,28 +39,53 @@ import type {
     SportConfigFormState,
 } from "./types";
 
-interface SportConfigSettingsSectionProps {
+interface GeneralSettingsSectionProps {
     state: SportConfigFormState;
     setState: Dispatch<SetStateAction<SportConfigFormState>>;
 }
 
-export function SportConfigSettingsSection({
+export function GeneralSettingsSection({
     state,
     setState,
-}: SportConfigSettingsSectionProps) {
+}: GeneralSettingsSectionProps) {
+    const [showPreview, setShowPreview] = useState(false);
+
     return (
         <div className="rounded-lg border bg-card p-6 space-y-4">
             <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">Sport Config Settings</h3>
+                <h3 className="text-base font-semibold text-foreground">General</h3>
                 <p className="text-sm text-muted-foreground">
-                    Edit and save sport-level settings. Unknown JSON keys are preserved on save.
+                    Basic info and logistics for this sport.
                 </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex items-center gap-2 pt-4">
+                <input
+                    id="auth-enabled"
+                    type="checkbox"
+                    checked={state.authEnabled}
+                    onChange={(event) => setState((prev) => ({ ...prev, authEnabled: event.target.checked }))}
+                    className="h-4 w-4 rounded border-input"
+                />
+                <Label htmlFor="auth-enabled">Enable Google Login</Label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 pt-4">
                 <div className="space-y-2">
-                    <Label htmlFor="sport-id">ID</Label>
-                    <Input id="sport-id" value={state.id} disabled />
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                        id="name"
+                        value={state.name}
+                        onChange={(event) => setState((prev) => ({ ...prev, name: event.target.value }))}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="organizers">Organisers</Label>
+                    <Input
+                        id="organizers"
+                        value={state.organizers}
+                        onChange={(event) => setState((prev) => ({ ...prev, organizers: event.target.value }))}
+                    />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="emoji">Emoji</Label>
@@ -65,14 +96,6 @@ export function SportConfigSettingsSection({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                        id="name"
-                        value={state.name}
-                        onChange={(event) => setState((prev) => ({ ...prev, name: event.target.value }))}
-                    />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="type">Type</Label>
                     <Input
                         id="type"
@@ -89,33 +112,8 @@ export function SportConfigSettingsSection({
                         onChange={(event) => setState((prev) => ({ ...prev, description: event.target.value }))}
                     />
                 </div>
-                <div className="flex items-center gap-2 sm:col-span-2">
-                    <input
-                        id="auth-enabled"
-                        type="checkbox"
-                        checked={state.authEnabled}
-                        onChange={(event) => setState((prev) => ({ ...prev, authEnabled: event.target.checked }))}
-                        className="h-4 w-4 rounded border-input"
-                    />
-                    <Label htmlFor="auth-enabled">Auth enabled</Label>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-interface DisplayAndLogisticsSectionProps {
-    state: SportConfigFormState;
-    setState: Dispatch<SetStateAction<SportConfigFormState>>;
-}
-
-export function DisplayAndLogisticsSection({ state, setState }: DisplayAndLogisticsSectionProps) {
-    return (
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-            <h3 className="text-base font-semibold text-foreground">Display and Logistics</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                    <Label htmlFor="day">Day</Label>
+                    <Label htmlFor="day">Schedule</Label>
                     <Input
                         id="day"
                         value={state.day}
@@ -123,15 +121,7 @@ export function DisplayAndLogisticsSection({ state, setState }: DisplayAndLogist
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="organizers">Organizers</Label>
-                    <Input
-                        id="organizers"
-                        value={state.organizers}
-                        onChange={(event) => setState((prev) => ({ ...prev, organizers: event.target.value }))}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="location-name">Location name</Label>
+                    <Label htmlFor="location-name">Location</Label>
                     <Input
                         id="location-name"
                         value={state.locationName}
@@ -139,29 +129,59 @@ export function DisplayAndLogisticsSection({ state, setState }: DisplayAndLogist
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="location-address">Location address</Label>
+                    <Label htmlFor="location-address">Address</Label>
                     <Input
                         id="location-address"
                         value={state.locationAddress}
                         onChange={(event) => setState((prev) => ({ ...prev, locationAddress: event.target.value }))}
                     />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="maps-link">Location maps link</Label>
+                <div className="space-y-2">
+                    <Label htmlFor="maps-link">Maps link</Label>
                     <Input
                         id="maps-link"
                         value={state.locationMapsLink}
                         onChange={(event) => setState((prev) => ({ ...prev, locationMapsLink: event.target.value }))}
                     />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="notes">Notes (one per line)</Label>
-                    <Textarea
-                        id="notes"
-                        rows={6}
-                        value={state.notesText}
-                        onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
-                    />
+
+            </div>
+
+            <div className="space-y-2">
+                <button
+                    type="button"
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                    {showPreview ? "Hide" : "Show"} preview
+                </button>
+                <div className={cn(
+                    "grid transition-[grid-template-rows] duration-300 ease-in-out",
+                    showPreview ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                )}>
+                    <div className="overflow-hidden">
+                        <div className="rounded-lg border border-dashed bg-muted/30 p-4">
+                            <Card className="max-w-sm overflow-hidden">
+                                <CardHeader>
+                                    <CardTitle className="text-2xl">
+                                        {state.emoji} {state.name || "Sport Name"}
+                                    </CardTitle>
+                                    <CardDescription>{state.type || "Type"}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                                    {state.day && (
+                                        <div className="flex items-center gap-2">
+                                            <CalendarDays className="h-4 w-4" />
+                                            <span>{state.day}</span>
+                                        </div>
+                                    )}
+                                    {state.description && (
+                                        <p>{state.description}</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -189,16 +209,28 @@ export function SessionTabsSection({
     requestDeleteTab,
     openAddTabDialog,
 }: SessionTabsSectionProps) {
+    const [showPreview, setShowPreview] = useState(false);
+
     return (
         <div className="rounded-lg border bg-card p-6 space-y-4">
             <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">Session Tabs</h3>
+                <h3 className="text-base font-semibold text-foreground">Sports Page</h3>
                 <p className="text-sm text-muted-foreground">
-                    Drag to reorder tabs. Edit tab details and permissions separately so each step stays simple.
+                    Configure the public-facing page content and session tabs.
                 </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 pt-4">
+                <Label htmlFor="notes">Notes (one per line)</Label>
+                <Textarea
+                    id="notes"
+                    rows={6}
+                    value={state.notesText}
+                    onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
+                />
+            </div>
+
+            <div className="space-y-2 pt-4">
                 <Label htmlFor="default-tab">Default tab</Label>
                 <Select
                     value={defaultTabValue}
@@ -306,6 +338,79 @@ export function SessionTabsSection({
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 Add Session Tab
             </Button>
+
+            <div className="space-y-2">
+                <button
+                    type="button"
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                    {showPreview ? "Hide" : "Show"} preview
+                </button>
+                <div className={cn(
+                    "grid transition-[grid-template-rows] duration-300 ease-in-out",
+                    showPreview ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                )}>
+                    <div className="overflow-hidden">
+                        <div className="rounded-lg border border-dashed bg-muted/30 p-4 space-y-4">
+                            <SessionTabPills
+                                tabs={state.tabs.map((tab) => ({
+                                    value: tab.value || tab.key,
+                                    label: tab.label || "Untitled",
+                                }))}
+                                activeValue={state.defaultTab || state.tabs[0]?.value || ""}
+                                interactive={false}
+                            />
+
+                            {state.tabs.length > 0 && (() => {
+                                const firstTab = state.tabs[0];
+                                const mockSession: SportSession & { signup_count: number } = {
+                                    id: "preview",
+                                    sport: state.id,
+                                    session_type: firstTab.value,
+                                    title: null,
+                                    date: "2025-01-04",
+                                    time_start: "19:00",
+                                    time_end: "21:00",
+                                    location_name: state.locationName || "Venue",
+                                    location_address: state.locationAddress || "",
+                                    location_maps_link: null,
+                                    player_cap: 20,
+                                    signup_open: new Date(Date.now() - 86400000).toISOString(),
+                                    signup_close: new Date(Date.now() + 86400000).toISOString(),
+                                    notes: null,
+                                    status: SESSION_STATUS.active,
+                                    status_notes: null,
+                                    alt_session_views: [],
+                                    created_by: null,
+                                    created_at: new Date().toISOString(),
+                                    signup_count: 8,
+                                };
+                                const mockTab = {
+                                    value: firstTab.value,
+                                    label: firstTab.label || "Untitled",
+                                    defaultTitlePrefix: firstTab.defaultTitlePrefix || undefined,
+                                    sessionPillColor: firstTab.sessionPillColor,
+                                    permissions: {
+                                        [AccessLevel.overview]: Role.anon,
+                                        [AccessLevel.view]: Role.anon,
+                                        [AccessLevel.signup]: Role.user,
+                                        [AccessLevel.admin]: Role.admin,
+                                    },
+                                };
+                                return (
+                                    <div className="max-w-sm pointer-events-none">
+                                        <SessionCard
+                                            session={mockSession}
+                                            tab={mockTab}
+                                        />
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
@@ -334,16 +439,13 @@ export function AdminTabsSection({
     return (
         <div className="rounded-lg border bg-card p-6 space-y-4">
             <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">Admin Tabs</h3>
+                <h3 className="text-base font-semibold text-foreground">Admin Page</h3>
                 <p className="text-sm text-muted-foreground">
                     Choose which admin pages appear in the sidebar, then drag to reorder them.
                 </p>
-                <p className="text-xs text-muted-foreground">
-                    Settings is pinned first and managed by the system.
-                </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 pt-4">
                 <Label htmlFor="default-admin-tab">Default admin tab</Label>
                 <Select
                     value={defaultAdminTabValue}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import SessionTabPills from "@/components/sports/session-tab-pills";
 
 interface FilterOption {
     value: string;
@@ -80,33 +80,11 @@ export default function SessionFilter({
     return (
         <div className="space-y-4">
             {showFilters && (
-                <div
-                    role="tablist"
-                    aria-label="Session filter"
-                    className="flex gap-3 overflow-x-auto pb-1 sm:flex-wrap"
-                >
-                    {options.map((opt) => {
-                        const selected = opt.value === value;
-
-                        return (
-                            <button
-                                key={opt.value}
-                                type="button"
-                                role="tab"
-                                aria-selected={selected}
-                                onClick={() => handleChange(opt.value)}
-                                className={cn(
-                                    "rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                                    selected
-                                        ? "bg-primary text-primary-foreground shadow-sm"
-                                        : "bg-muted text-foreground hover:bg-accent",
-                                )}
-                            >
-                                {opt.label}
-                            </button>
-                        );
-                    })}
-                </div>
+                <SessionTabPills
+                    tabs={options.map((opt) => ({ value: opt.value, label: opt.label }))}
+                    activeValue={value}
+                    onSelect={handleChange}
+                />
             )}
 
             {options.map((opt) =>

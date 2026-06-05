@@ -34,10 +34,9 @@ import {
 } from "./dialogs";
 import {
     AdminTabsSection,
-    DisplayAndLogisticsSection,
     FormActionsRow,
+    GeneralSettingsSection,
     SessionTabsSection,
-    SportConfigSettingsSection,
 } from "./form-sections";
 import {
     buildInitialState,
@@ -726,12 +725,7 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
 
     return (
         <section className="space-y-4">
-            <SportConfigSettingsSection
-                state={state}
-                setState={setState}
-            />
-
-            <DisplayAndLogisticsSection
+            <GeneralSettingsSection
                 state={state}
                 setState={setState}
             />
