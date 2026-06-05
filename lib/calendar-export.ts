@@ -48,7 +48,7 @@ function buildVEvent(session: SportSession): string[] {
     const descriptionParts: string[] = [];
     if (session.notes) descriptionParts.push(session.notes);
     if (session.location_maps_link) descriptionParts.push(session.location_maps_link);
-    const description = descriptionParts.join("\\n\\n");
+    const description = descriptionParts.join("\n\n");
 
     const lines: string[] = [
         "BEGIN:VEVENT",
