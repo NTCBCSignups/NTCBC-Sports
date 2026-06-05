@@ -99,7 +99,6 @@ export function DraggableList<T>({
 
     const handleTouchMove = (e: React.TouchEvent) => {
         if (dragIndex === null || dragSection === null || !containerRef.current) return;
-        e.preventDefault();
         const touch = e.touches[0];
         const elements = containerRef.current.querySelectorAll<HTMLElement>(
             `[data-section="${dragSection}"]`,
@@ -173,7 +172,7 @@ export function DraggableList<T>({
                         onTouchEnd={handleTouchEnd}
                         className={cn(
                             "flex items-center gap-2 rounded-md border px-3 py-2 transition-colors",
-                            draggable && "cursor-grab active:cursor-grabbing",
+                            draggable && "cursor-grab active:cursor-grabbing touch-none",
                             isDragging ? "bg-muted border-primary" : "bg-card",
                             itemClassName?.(item, index, isDragging),
                         )}
@@ -211,7 +210,7 @@ export function DraggableList<T>({
                                 onTouchMove={handleTouchMove}
                                 onTouchEnd={handleTouchEnd}
                                 className={cn(
-                                    "flex items-center gap-2 rounded-md border px-3 py-2 cursor-grab active:cursor-grabbing transition-colors opacity-50",
+                                    "flex items-center gap-2 rounded-md border px-3 py-2 cursor-grab active:cursor-grabbing touch-none transition-colors opacity-50",
                                     isDragging ? "bg-muted border-primary" : "bg-card",
                                     hiddenItemClassName?.(item, index, isDragging),
                                 )}

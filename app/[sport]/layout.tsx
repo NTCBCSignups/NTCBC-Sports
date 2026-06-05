@@ -3,7 +3,7 @@ import Link from "next/link";
 import AuthButton from "@/components/sports/auth-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import LayoutHeader from "@/components/sports/layout-header";
-import { resolvedSportsConfig } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { getUser } from "@/lib/supabase/user";
 import { notFound } from "next/navigation";
 
@@ -15,7 +15,7 @@ export default async function SportLayout({
   params: Promise<{ sport: string }>;
 }) {
   const { sport } = await params;
-  const config = resolvedSportsConfig[sport];
+  const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
 
   const user = config.authEnabled ? await getUser() : null;

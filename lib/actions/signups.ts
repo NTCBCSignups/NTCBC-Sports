@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
-import { resolvedSportsConfig, getResolvedTab, AccessLevel } from "@/config/config-resolver";
+import { getResolvedTab, AccessLevel } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
 export interface SignupPlacement {
@@ -81,7 +82,9 @@ export async function signUpForSession(
   if (!session) return { error: "Session not found" };
 
   const sport = session.sport;
-  const tab = getResolvedTab(resolvedSportsConfig[sport], session.session_type);
+  const sportConfig = await getResolvedSportConfig(sport);
+  if (!sportConfig) return { error: "Sport config not found" };
+  const tab = getResolvedTab(sportConfig, session.session_type);
 
   const { role } = await getUserSportRole(supabase, user.id, sport);
   if (role < tab.permissions[AccessLevel.signup]) {
@@ -219,7 +222,9 @@ export async function declineSession(
   if (!session) return { error: "Session not found" };
 
   const sport = session.sport;
-  const tab = getResolvedTab(resolvedSportsConfig[sport], session.session_type);
+  const sportConfig = await getResolvedSportConfig(sport);
+  if (!sportConfig) return { error: "Sport config not found" };
+  const tab = getResolvedTab(sportConfig, session.session_type);
 
   const { role } = await getUserSportRole(supabase, user.id, sport);
   if (role < tab.permissions[AccessLevel.signup]) {

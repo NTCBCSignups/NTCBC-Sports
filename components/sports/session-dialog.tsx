@@ -14,13 +14,26 @@ import { Pencil } from "lucide-react";
 import SessionForm from "@/components/sports/session-form";
 import type { SportSession } from "@/lib/supabase/types";
 
+interface SessionTypeOption {
+  value: string;
+  label: string;
+}
+
 interface SessionDialogProps {
   sport: string;
+  sessionTabs: SessionTypeOption[];
+  defaultTab?: string;
   session?: SportSession;
   trigger?: ReactNode;
 }
 
-export default function SessionDialog({ sport, session, trigger }: SessionDialogProps) {
+export default function SessionDialog({
+  sport,
+  sessionTabs,
+  defaultTab,
+  session,
+  trigger,
+}: SessionDialogProps) {
   const [open, setOpen] = useState(false);
   const isEdit = !!session;
 
@@ -43,6 +56,8 @@ export default function SessionDialog({ sport, session, trigger }: SessionDialog
         </DialogHeader>
         <SessionForm
           sport={sport}
+          sessionTabs={sessionTabs}
+          defaultTab={defaultTab}
           session={session}
           onSuccess={() => setOpen(false)}
         />

@@ -8,8 +8,9 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
-import { resolvedSportsConfig, Role, AccessLevel } from "@/config/config-resolver";
-import type { ResolvedSessionTab, AccessBannerText } from "@/config/config-resolver";
+import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
+import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
@@ -68,7 +69,7 @@ const ACCESS_LEVEL_TEXT: Record<
  * Finds the first AccessLevel the user doesn't meet for a tab.
  * Returns null if the user meets all levels (or only lacks admin).
  */
-function getFirstUnmetLevel(tab: ResolvedSessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
+function getFirstUnmetLevel(tab: SessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
   for (const level of ACCESS_LEVELS) {
     if (userRole < tab.permissions[level]) return level;
   }
@@ -96,7 +97,7 @@ function renderAccessBanner({
   sport,
 }: {
   userId: string | null;
-  tab: ResolvedSessionTab;
+  tab: SessionTab;
   userRole: Role;
   accessRequestStatus: AccessRequestStatus | null;
   sport: string;
@@ -128,19 +129,20 @@ function renderAccessBanner({
 }
 
 async function SportSessionsContent({
+  config,
   sport,
   tab,
   highlight,
   scrollTo,
   userId,
 }: {
+  config: ResolvedSportConfig;
   sport: string;
   tab?: string;
   highlight?: string;
   scrollTo?: string;
   userId: string | null;
 }) {
-  const config = resolvedSportsConfig[sport];
   const supabase = await createClient();
 
   // ── Roles & sessions (parallel) ────────────────────────────────
@@ -171,6 +173,7 @@ async function SportSessionsContent({
   const sessionsByType = Object.groupBy(sessionsWithCounts, (s) => s.session_type);
 
   const configTabs = config.tabs ?? [];
+  const tabByType = new Map(configTabs.map((tabItem) => [tabItem.value, tabItem]));
   const showAll = configTabs.length > 1;
   const ALL_VALUE = "all";
 
@@ -200,6 +203,7 @@ async function SportSessionsContent({
                   <SessionCard
                     key={session.id}
                     session={session}
+                    tab={t}
                     highlighted={session.id === highlight}
                     returnTab={t.value}
                     userRole={userRole}
@@ -279,6 +283,7 @@ async function SportSessionsContent({
                 <SessionCard
                   key={session.id}
                   session={session}
+                  tab={tabByType.get(session.session_type) ?? getResolvedTab(config, session.session_type)}
                   highlighted={session.id === highlight}
                   returnTab={ALL_VALUE}
                   userRole={userRole}
@@ -335,7 +340,7 @@ export default async function SportAuthPage({
   searchParams: Promise<{ tab?: string; highlight?: string; session?: string }>;
 }) {
   const { sport } = await params;
-  const config = resolvedSportsConfig[sport];
+  const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
 
   const { tab, highlight, session } = await searchParams;
@@ -348,6 +353,7 @@ export default async function SportAuthPage({
     <SportPageShell
       user={user}
       sport={sport}
+      config={config}
       actions={
         user ? (
           <Suspense>
@@ -358,6 +364,7 @@ export default async function SportAuthPage({
     >
       <Suspense fallback={<LoadingContent />}>
         <SportSessionsContent
+          config={config}
           sport={sport}
           tab={tab}
           highlight={highlight}

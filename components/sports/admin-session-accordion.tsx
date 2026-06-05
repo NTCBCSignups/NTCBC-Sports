@@ -44,6 +44,8 @@ export default function SessionAccordion({
     teamMemberIds,
     muted,
 }: SessionAccordionProps) {
+    const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
+
     if (sessions.length === 0) {
         return (
             <p className="text-sm text-muted-foreground py-4">No sessions.</p>
@@ -131,6 +133,8 @@ export default function SessionAccordion({
                                     <div className="flex shrink-0 items-center gap-1 -mt-1">
                                         <SessionDialog
                                             sport={sport}
+                                            sessionTabs={sessionTabs}
+                                            defaultTab={config.defaultTab}
                                             session={session}
                                             trigger={
                                                 <Button variant="ghost" size="icon" className="h-8 w-8">

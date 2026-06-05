@@ -17,11 +17,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink } from "lucide-react";
 import { createSession, updateSession, type CreateSessionResult } from "@/lib/actions/sessions";
-import { resolvedSportsConfig } from "@/config/config-resolver";
 import type { SportSession } from "@/lib/supabase/types";
+
+interface SessionTypeOption {
+  value: string;
+  label: string;
+}
 
 interface SessionFormProps {
   sport: string;
+  sessionTabs: SessionTypeOption[];
+  defaultTab?: string;
   session?: SportSession;
   onSuccess?: () => void;
 }
@@ -49,14 +55,18 @@ function QuickFillButton({ label, onClick }: { label: string; onClick: () => voi
   );
 }
 
-export default function SessionForm({ sport, session, onSuccess }: SessionFormProps) {
+export default function SessionForm({
+  sport,
+  sessionTabs,
+  defaultTab,
+  session,
+  onSuccess,
+}: SessionFormProps) {
   const isEdit = !!session;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
-  const sportConfig = resolvedSportsConfig[sport];
-  const tabs = sportConfig?.tabs ?? [];
-  const defaultSessionType = session?.session_type ?? sportConfig?.defaultTab ?? tabs[0]?.value ?? "";
+  const defaultSessionType = session?.session_type ?? defaultTab ?? sessionTabs[0]?.value ?? "";
   const [sessionType, setSessionType] =
     useState(defaultSessionType);
   const [mapsLink, setMapsLink] = useState(session?.location_maps_link ?? "");
@@ -204,7 +214,7 @@ export default function SessionForm({ sport, session, onSuccess }: SessionFormPr
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {tabs.map((tab) => (
+            {sessionTabs.map((tab) => (
               <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
             ))}
           </SelectContent>

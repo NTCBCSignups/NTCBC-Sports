@@ -24,7 +24,8 @@ import SessionViewSection from "@/components/sports/session-view-section";
 import CountdownTimer from "@/components/sports/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
-import { resolvedSportsConfig, getResolvedTab, Role, AccessLevel, type SignupConfirmationDialog } from "@/config/config-resolver";
+import { getResolvedTab, Role, AccessLevel, type SignupConfirmationDialog } from "@/config/config-resolver";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
@@ -141,8 +142,9 @@ export default async function SessionDetailPage({
 }) {
   const { sport, id } = await params;
   const { fromTab } = await searchParams;
-  const config = resolvedSportsConfig[sport];
+  const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
+  const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
 
   const supabase = await createClient();
 
@@ -205,6 +207,8 @@ export default async function SessionDetailPage({
               <div className="flex items-center gap-2">
                 <SessionDialog
                   sport={sport}
+                  sessionTabs={sessionTabs}
+                  defaultTab={config.defaultTab}
                   session={session}
                 />
                 <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />

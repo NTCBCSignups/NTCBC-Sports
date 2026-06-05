@@ -24,6 +24,10 @@ export enum PillColor {
   emerald = "emerald",
   indigo = "indigo",
   amber = "amber",
+  blue = "blue",
+  rose = "rose",
+  teal = "teal",
+  violet = "violet",
 }
 
 // ── Types ────────────────────────────────────────────────────────
@@ -39,12 +43,6 @@ export interface SignupConfirmationDialog {
   message: string;
   /** Message shown when the user answers "No". */
   rejectedMessage: string;
-}
-
-/** Default values applied to every tab during resolution. */
-export interface TabDefaults {
-  permissions: TabPermissions;
-  sessionPillColor: PillColor;
 }
 
 // ── Raw config interfaces (authored in sports-config) ────────────
@@ -64,14 +62,16 @@ export interface ResponseTableConfig {
 }
 
 export interface SessionTab {
+  /** Stable tab identifier used for immutable value enforcement. */
+  id?: string;
   value: string;
   label: string;
-  /** Per-tab access control. Omitted keys fall back to defaults during resolution. */
-  permissions?: Partial<TabPermissions>;
+  /** Per-tab access control configured in the settings page. */
+  permissions: TabPermissions;
   /** Default prefix for session titles */
   defaultTitlePrefix?: string;
-  /** Color token used for session type pills. */
-  sessionPillColor?: PillColor;
+  /** Color token used for session type pills, configured in settings. */
+  sessionPillColor: PillColor;
   /** Optional confirmation dialog before signup for lower-role users. */
   signupConfirmationDialog?: SignupConfirmationDialog;
 }
@@ -102,22 +102,17 @@ export interface SportConfig {
   description?: string;
   tabs?: SessionTab[];
   defaultTab?: string;
+  defaultAdminTab?: string;
   authEnabled?: boolean;
   /** Extra sport-specific tabs to show in the admin sidebar. */
   adminTabs?: AdminTabMeta[];
 }
 
-// ── Resolved config interfaces (all defaults applied) ────────────
-
-/** A session tab with all defaults fully resolved — no optionals for defaulted fields. */
-export interface ResolvedSessionTab extends Omit<SessionTab, "permissions" | "sessionPillColor"> {
-  permissions: TabPermissions;
-  sessionPillColor: PillColor;
-}
+// ── Runtime config interfaces ────────────────────────────────────
 
 /** A sport config with all tab permissions resolved and computed flags. */
 export interface ResolvedSportConfig extends Omit<SportConfig, "tabs"> {
-  tabs: ResolvedSessionTab[];
+  tabs: SessionTab[];
   /** True if any tab requires a higher signup role than the default. */
   hasRestrictedAccess: boolean;
 }
@@ -129,3 +124,41 @@ export interface AccessBannerText {
   title: (label: string) => string;
   message: (label: string) => string;
 }
+
+// ── DB-backed config interfaces (for source abstraction) ────────
+
+/**
+ * Flexible DB payload for sport-specific and future-extensible settings.
+ * Known keys are typed for safety; additional keys are allowed for expansion.
+ */
+export interface SportConfigPayload {
+  day?: string;
+  organizers?: string;
+  location?: SportConfig["location"];
+  waiverLink?: string;
+  notes?: string[];
+  responseTable?: ResponseTableConfig;
+  multiSession?: boolean;
+  tabs?: SessionTab[];
+  defaultTab?: string;
+  defaultAdminTab?: string;
+  adminTabs?: AdminTabMeta[];
+  [key: string]: unknown;
+}
+
+/**
+ * Raw DB row shape for public.sport_configs.
+ */
+export interface SportConfigDbRow {
+  id: string;
+  auth_enabled: boolean;
+  emoji: string;
+  name: string;
+  type: string;
+  description: string | null;
+  config: SportConfigPayload;
+  updated_by: string | null;
+  updated_at: string;
+  created_at: string;
+}
+
