@@ -33,7 +33,7 @@ export function sessionsToIcal(
         `X-WR-TIMEZONE:${SPORT_TIMEZONE}`,
         ...events.flat(),
         "END:VCALENDAR",
-    ].join("\r\n");
+    ].map(foldLine).join("\r\n");
 }
 
 function buildVEvent(session: SportSession): string[] {
@@ -93,4 +93,20 @@ function escapeText(text: string): string {
         .replace(/;/g, "\\;")
         .replace(/,/g, "\\,")
         .replace(/\n/g, "\\n");
+}
+
+/**
+ * Folds a line per RFC 5545 §3.1: lines longer than 75 octets are split
+ * with a CRLF followed by a single whitespace character (space).
+ */
+function foldLine(line: string): string {
+    if (line.length <= 75) return line;
+    const chunks: string[] = [];
+    chunks.push(line.slice(0, 75));
+    let i = 75;
+    while (i < line.length) {
+        chunks.push(" " + line.slice(i, i + 74));
+        i += 74;
+    }
+    return chunks.join("\r\n");
 }
