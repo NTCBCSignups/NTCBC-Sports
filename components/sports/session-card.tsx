@@ -15,7 +15,8 @@ import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
-import { AccessLevel, Role, type SessionTab } from "@/config/config-resolver";
+import { Role, type SessionTab } from "@/config/config-resolver";
+import { canView as checkCanView, canSignup as checkCanSignup } from "@/lib/tab-access";
 import { SESSION_STATUS } from "@/lib/supabase/types";
 import type { SignupStatus, SportSession } from "@/lib/supabase/types";
 
@@ -53,8 +54,8 @@ export default function SessionCard({
 }: SessionCardProps) {
   const isOpen = isSignupOpen(session);
   const status = getSignupStatus(session);
-  const canView = userRole === undefined || userRole >= tab.permissions[AccessLevel.view];
-  const canSignup = userRole === undefined || userRole >= tab.permissions[AccessLevel.signup];
+  const canView = userRole === undefined || checkCanView(tab, userRole);
+  const canSignup = userRole === undefined || checkCanSignup(tab, userRole);
   const href = returnTab
     ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
     : `/${session.sport}/session/${session.id}`;

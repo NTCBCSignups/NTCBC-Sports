@@ -1,0 +1,96 @@
+import { SPORT_TIMEZONE } from "@/lib/timezone";
+import { SESSION_STATUS } from "@/lib/supabase/types";
+import type { SportSession } from "@/lib/supabase/types";
+
+export interface CalendarExportOptions {
+    /** Calendar display name (X-WR-CALNAME). */
+    calendarName: string;
+    /** Whether to include cancelled sessions (with STATUS:CANCELLED). */
+    includeCancelled: boolean;
+}
+
+/**
+ * Converts an array of SportSession objects into a valid iCalendar string.
+ * Pure function — no side effects or external dependencies beyond types.
+ */
+export function sessionsToIcal(
+    sessions: SportSession[],
+    options: CalendarExportOptions,
+): string {
+    const filtered = options.includeCancelled
+        ? sessions
+        : sessions.filter((s) => s.status !== SESSION_STATUS.cancelled);
+
+    const events = filtered.map((s) => buildVEvent(s));
+
+    return [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//NTCBC//Sports Calendar//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        `X-WR-CALNAME:${escapeText(options.calendarName)}`,
+        `X-WR-TIMEZONE:${SPORT_TIMEZONE}`,
+        ...events.flat(),
+        "END:VCALENDAR",
+    ].join("\r\n");
+}
+
+function buildVEvent(session: SportSession): string[] {
+    const dtStart = toIcalDateTime(session.date, session.time_start);
+    const dtEnd = toIcalDateTime(session.date, session.time_end);
+    const uid = `${session.id}@ntcbc-sports`;
+    const summary = session.title || `${session.session_type} session`;
+    const location = [session.location_name, session.location_address]
+        .filter(Boolean)
+        .join(", ");
+
+    const descriptionParts: string[] = [];
+    if (session.notes) descriptionParts.push(session.notes);
+    if (session.location_maps_link) descriptionParts.push(session.location_maps_link);
+    const description = descriptionParts.join("\\n\\n");
+
+    const lines: string[] = [
+        "BEGIN:VEVENT",
+        `UID:${uid}`,
+        `DTSTAMP:${formatUtcNow()}`,
+        `DTSTART;TZID=${SPORT_TIMEZONE}:${dtStart}`,
+        `DTEND;TZID=${SPORT_TIMEZONE}:${dtEnd}`,
+        `SUMMARY:${escapeText(summary)}`,
+    ];
+
+    if (location) lines.push(`LOCATION:${escapeText(location)}`);
+    if (description) lines.push(`DESCRIPTION:${escapeText(description)}`);
+    if (session.status === SESSION_STATUS.cancelled) lines.push("STATUS:CANCELLED");
+
+    lines.push("END:VEVENT");
+    return lines;
+}
+
+/** Converts "YYYY-MM-DD" + "HH:MM" into iCal local datetime "YYYYMMDDTHHMMSS". */
+function toIcalDateTime(date: string, time: string): string {
+    const [year, month, day] = date.split("-");
+    const [hour, minute] = time.split(":");
+    return `${year}${month}${day}T${hour}${minute}00`;
+}
+
+/** Returns current UTC timestamp in iCal format. */
+function formatUtcNow(): string {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(now.getUTCDate()).padStart(2, "0");
+    const h = String(now.getUTCHours()).padStart(2, "0");
+    const min = String(now.getUTCMinutes()).padStart(2, "0");
+    const s = String(now.getUTCSeconds()).padStart(2, "0");
+    return `${y}${m}${d}T${h}${min}${s}Z`;
+}
+
+/** Escapes special characters for iCalendar text values. */
+function escapeText(text: string): string {
+    return text
+        .replace(/\\/g, "\\\\")
+        .replace(/;/g, "\\;")
+        .replace(/,/g, "\\,")
+        .replace(/\n/g, "\\n");
+}

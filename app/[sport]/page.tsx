@@ -8,19 +8,14 @@ import TeamAccessBanner from "@/components/sports/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
+import CalendarExportButton from "@/components/sports/calendar-export-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
+import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
-
-// ── Access level ordering (for finding first unmet level) ────────
-const ACCESS_LEVELS: Exclude<AccessLevel, "admin">[] = [
-  AccessLevel.overview,
-  AccessLevel.view,
-  AccessLevel.signup,
-];
 
 // ── Access banner text (data-driven) ─────────────────────────────
 function buildAccessLevelText(
@@ -64,17 +59,6 @@ const ACCESS_LEVEL_TEXT: Record<
     (l) => `sign up for ${l}`,
   ),
 };
-
-/**
- * Finds the first AccessLevel the user doesn't meet for a tab.
- * Returns null if the user meets all levels (or only lacks admin).
- */
-function getFirstUnmetLevel(tab: SessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
-  for (const level of ACCESS_LEVELS) {
-    if (userRole < tab.permissions[level]) return level;
-  }
-  return null;
-}
 
 /**
  * Pure lookup — resolves the pre-composed banner text for a given scenario.
@@ -332,6 +316,29 @@ async function AdminButtonGate({ sport, userId }: { sport: string; userId: strin
   return <AdminButton sport={sport} />;
 }
 
+async function CalendarExportGate({
+  sport,
+  userId,
+  config,
+}: {
+  sport: string;
+  userId: string;
+  config: ResolvedSportConfig;
+}) {
+  const supabase = await createClient();
+  const { role } = await getUserSportRole(supabase, userId, sport);
+  const visibleTabs = config.tabs
+    .filter((t) => getFirstUnmetLevel(t, role) !== AccessLevel.overview)
+    .map((t) => ({ value: t.value, label: t.label }));
+  return (
+    <CalendarExportButton
+      sport={sport}
+      userId={userId}
+      tabs={visibleTabs}
+    />
+  );
+}
+
 export default async function SportAuthPage({
   params,
   searchParams,
@@ -356,9 +363,14 @@ export default async function SportAuthPage({
       config={config}
       actions={
         user ? (
-          <Suspense>
-            <AdminButtonGate sport={sport} userId={user.id} />
-          </Suspense>
+          <>
+            <Suspense>
+              <CalendarExportGate sport={sport} userId={user.id} config={config} />
+            </Suspense>
+            <Suspense>
+              <AdminButtonGate sport={sport} userId={user.id} />
+            </Suspense>
+          </>
         ) : null
       }
     >

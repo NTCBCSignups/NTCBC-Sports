@@ -7,7 +7,6 @@ export default function AdminButton({ sport }: { sport: string }) {
     <Button asChild variant="outline" size="sm">
       <Link href={`/${sport}/admin`}>
         <Settings className="h-4 w-4" />
-        Admin
       </Link>
     </Button>
   );

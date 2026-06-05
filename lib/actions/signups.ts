@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
-import { getResolvedTab, AccessLevel } from "@/config/config-resolver";
+import { getResolvedTab } from "@/config/config-resolver";
+import { canSignup } from "@/lib/tab-access";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
@@ -87,7 +88,7 @@ export async function signUpForSession(
   const tab = getResolvedTab(sportConfig, session.session_type);
 
   const { role } = await getUserSportRole(supabase, user.id, sport);
-  if (role < tab.permissions[AccessLevel.signup]) {
+  if (!canSignup(tab, role)) {
     return { error: "You don't have permission to sign up for this session" };
   }
 
@@ -227,7 +228,7 @@ export async function declineSession(
   const tab = getResolvedTab(sportConfig, session.session_type);
 
   const { role } = await getUserSportRole(supabase, user.id, sport);
-  if (role < tab.permissions[AccessLevel.signup]) {
+  if (!canSignup(tab, role)) {
     return { error: "You don't have permission to respond to this session" };
   }
 
