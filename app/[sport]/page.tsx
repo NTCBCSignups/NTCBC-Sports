@@ -10,17 +10,11 @@ import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
+import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
 import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
 import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
-
-// ── Access level ordering (for finding first unmet level) ────────
-const ACCESS_LEVELS: Exclude<AccessLevel, "admin">[] = [
-  AccessLevel.overview,
-  AccessLevel.view,
-  AccessLevel.signup,
-];
 
 // ── Access banner text (data-driven) ─────────────────────────────
 function buildAccessLevelText(
@@ -64,17 +58,6 @@ const ACCESS_LEVEL_TEXT: Record<
     (l) => `sign up for ${l}`,
   ),
 };
-
-/**
- * Finds the first AccessLevel the user doesn't meet for a tab.
- * Returns null if the user meets all levels (or only lacks admin).
- */
-function getFirstUnmetLevel(tab: SessionTab, userRole: Role): Exclude<AccessLevel, "admin"> | null {
-  for (const level of ACCESS_LEVELS) {
-    if (userRole < tab.permissions[level]) return level;
-  }
-  return null;
-}
 
 /**
  * Pure lookup — resolves the pre-composed banner text for a given scenario.
