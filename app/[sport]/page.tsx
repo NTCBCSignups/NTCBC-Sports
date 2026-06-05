@@ -316,6 +316,29 @@ async function AdminButtonGate({ sport, userId }: { sport: string; userId: strin
   return <AdminButton sport={sport} />;
 }
 
+async function CalendarExportGate({
+  sport,
+  userId,
+  config,
+}: {
+  sport: string;
+  userId: string;
+  config: ResolvedSportConfig;
+}) {
+  const supabase = await createClient();
+  const { role } = await getUserSportRole(supabase, userId, sport);
+  const visibleTabs = config.tabs
+    .filter((t) => getFirstUnmetLevel(t, role) !== AccessLevel.overview)
+    .map((t) => ({ value: t.value, label: t.label }));
+  return (
+    <CalendarExportButton
+      sport={sport}
+      userId={userId}
+      tabs={visibleTabs}
+    />
+  );
+}
+
 export default async function SportAuthPage({
   params,
   searchParams,
@@ -341,11 +364,9 @@ export default async function SportAuthPage({
       actions={
         user ? (
           <>
-            <CalendarExportButton
-              sport={sport}
-              userId={user.id}
-              tabs={config.tabs.map((t) => ({ value: t.value, label: t.label }))}
-            />
+            <Suspense>
+              <CalendarExportGate sport={sport} userId={user.id} config={config} />
+            </Suspense>
             <Suspense>
               <AdminButtonGate sport={sport} userId={user.id} />
             </Suspense>
