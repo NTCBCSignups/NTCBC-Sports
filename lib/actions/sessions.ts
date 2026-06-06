@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
+import { getSessionPath } from "@/lib/session-route";
 import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
 
 export interface CreateSessionInput {
@@ -67,7 +68,7 @@ export async function updateSession(
   if (error) return { error: error.message };
 
   revalidatePath(`/${sport}`);
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
@@ -102,7 +103,7 @@ export async function cancelSession(sport: string, sessionId: string, reason?: s
   if (error) return { error: error.message };
 
   revalidatePath(`/${sport}`);
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
@@ -120,7 +121,7 @@ export async function restoreSession(sport: string, sessionId: string): Promise<
   if (error) return { error: error.message };
 
   revalidatePath(`/${sport}`);
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }
@@ -141,6 +142,6 @@ export async function saveSessionViews(
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   return { success: true };
 }

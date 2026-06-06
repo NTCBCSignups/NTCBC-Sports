@@ -7,6 +7,8 @@ export interface CalendarExportOptions {
     calendarName: string;
     /** Whether to include cancelled sessions (with STATUS:CANCELLED). */
     includeCancelled: boolean;
+    /** Optional callback to generate a public URL for each session event. */
+    buildSessionUrl?: (session: SportSession) => string | null;
 }
 
 /**
@@ -21,7 +23,7 @@ export function sessionsToIcal(
         ? sessions
         : sessions.filter((s) => s.status !== SESSION_STATUS.cancelled);
 
-    const events = filtered.map((s) => buildVEvent(s));
+    const events = filtered.map((s) => buildVEvent(s, options));
 
     return [
         "BEGIN:VCALENDAR",
@@ -36,7 +38,7 @@ export function sessionsToIcal(
     ].map(foldLine).join("\r\n");
 }
 
-function buildVEvent(session: SportSession): string[] {
+function buildVEvent(session: SportSession, options: CalendarExportOptions): string[] {
     const dtStart = toIcalDateTime(session.date, session.time_start);
     const dtEnd = toIcalDateTime(session.date, session.time_end);
     const uid = `${session.id}@ntcbc-sports`;
@@ -44,10 +46,11 @@ function buildVEvent(session: SportSession): string[] {
     const location = [session.location_name, session.location_address]
         .filter(Boolean)
         .join(", ");
+    const sessionLink = options.buildSessionUrl?.(session) ?? null;
 
     const descriptionParts: string[] = [];
     if (session.notes) descriptionParts.push(session.notes);
-    if (session.location_maps_link) descriptionParts.push(session.location_maps_link);
+    if (sessionLink) descriptionParts.push(`${sessionLink}`);
     const description = descriptionParts.join("\n\n");
 
     const lines: string[] = [
@@ -61,6 +64,7 @@ function buildVEvent(session: SportSession): string[] {
 
     if (location) lines.push(`LOCATION:${escapeText(location)}`);
     if (description) lines.push(`DESCRIPTION:${escapeText(description)}`);
+    if (sessionLink) lines.push(`URL:${sessionLink}`);
     if (session.status === SESSION_STATUS.cancelled) lines.push("STATUS:CANCELLED");
 
     lines.push("END:VEVENT");

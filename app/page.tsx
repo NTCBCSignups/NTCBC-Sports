@@ -15,11 +15,11 @@ import { cn } from "@/lib/utils";
 
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
-  const sportsBySlug = {
-    ...dbSportsBySlug,
-    ...legacySportsConfig,
-  };
-  const sports = Object.values(sportsBySlug);
+  const legacySports = Object.values(legacySportsConfig);
+  const dynamicSports = Object.values(dbSportsBySlug).filter(
+    (s) => !(s.id in legacySportsConfig),
+  );
+  const sports = [...legacySports, ...dynamicSports];
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">

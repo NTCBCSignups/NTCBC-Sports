@@ -7,6 +7,7 @@ import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capaci
 import { getResolvedTab } from "@/config/config-resolver";
 import { canSignup } from "@/lib/tab-access";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
+import { getSessionPath } from "@/lib/session-route";
 import { getUserSportRole, getUser, requireSportAdmin } from "@/lib/supabase/user";
 
 export interface SignupPlacement {
@@ -142,7 +143,7 @@ export async function signUpForSession(
     }
   }
 
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}`);
   return {
     success: true,
@@ -169,7 +170,7 @@ export async function cancelSignup(
 
   if (fetchError) return { error: fetchError.message };
   if (!row || row.status === "cancelled") {
-    revalidatePath(`/${sport}/session/${sessionId}`);
+    revalidatePath(getSessionPath(sport, sessionId));
     revalidatePath(`/${sport}`);
     return { success: true };
   }
@@ -201,7 +202,7 @@ export async function cancelSignup(
     }
   }
 
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}`);
   return { success: true };
 }
@@ -275,7 +276,7 @@ export async function declineSession(
     if (error) return { error: error.message };
   }
 
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}`);
   return { success: true };
 }
@@ -315,7 +316,7 @@ export async function adminUpdateSignupStatus(
     if (promoError) return { error: promoError };
   }
 
-  revalidatePath(`/${sport}/session/${sessionId}`);
+  revalidatePath(getSessionPath(sport, sessionId));
   revalidatePath(`/${sport}/admin`);
   return { success: true };
 }

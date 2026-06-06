@@ -15,6 +15,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
+import { getSessionPath } from "@/lib/session-route";
 import { Role, type SessionTab } from "@/config/config-resolver";
 import { canView as checkCanView, canSignup as checkCanSignup } from "@/lib/tab-access";
 import { SESSION_STATUS } from "@/lib/supabase/types";
@@ -56,9 +57,7 @@ export default function SessionCard({
   const status = getSignupStatus(session);
   const canView = userRole === undefined || checkCanView(tab, userRole);
   const canSignup = userRole === undefined || checkCanSignup(tab, userRole);
-  const href = returnTab
-    ? `/${session.sport}/session/${session.id}?fromTab=${encodeURIComponent(returnTab)}`
-    : `/${session.sport}/session/${session.id}`;
+  const href = getSessionPath(session.sport, session.id, { fromTab: returnTab });
   const sessionTypeLabel = tab.label;
   const prefix = tab.defaultTitlePrefix ?? sessionTypeLabel;
   const fallbackTitle = `${prefix}: ${formatDate(session.date, "short", true)}`;

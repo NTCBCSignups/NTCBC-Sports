@@ -5,6 +5,7 @@ import { getFirstUnmetLevel } from "@/lib/tab-access";
 import { getSessionsWithClient } from "@/lib/get-data";
 import { sessionsToIcal } from "@/lib/calendar-export";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
+import { getSessionUrl } from "@/lib/session-route";
 import { AccessLevel } from "@/config/config-resolver";
 
 export async function GET(
@@ -100,9 +101,14 @@ export async function GET(
         ? `NTCBC ${config.name} - ${visibleTabs.find((t) => t.value === tabFilters[0])?.label ?? tabFilters[0]}`
         : `NTCBC ${config.name} Sessions`;
 
+    const proto = request.headers.get("x-forwarded-proto") ?? "https";
+    const host = request.headers.get("host") ?? request.nextUrl.host;
+    const origin = `${proto}://${host}`;
+
     const ical = sessionsToIcal(filtered, {
         calendarName,
         includeCancelled: !isDownload,
+        buildSessionUrl: (session) => getSessionUrl(origin, sport, session.id),
     });
 
     return new Response(ical, {

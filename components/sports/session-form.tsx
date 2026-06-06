@@ -17,6 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink } from "lucide-react";
 import { createSession, updateSession, type CreateSessionResult } from "@/lib/actions/sessions";
+import { getSessionPath } from "@/lib/session-route";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionTypeOption {
@@ -199,7 +200,7 @@ export default function SessionForm({
   };
 
   const createdSessionHref = createdSessionId
-    ? `/${sport}/session/${createdSessionId}`
+    ? getSessionPath(sport, createdSessionId)
     : "#";
 
   return (
