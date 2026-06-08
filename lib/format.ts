@@ -3,8 +3,14 @@ export function formatDate(
     weekday: "short" | "long" = "short",
     includeYear = false,
 ): string {
-    const [year, month, day] = dateStr.split("-").map(Number) as [number, number, number];
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts.map(Number);
+    if (!year || !month || !day || month < 1 || month > 12 || day < 1 || day > 31) {
+        return dateStr;
+    }
     const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return dateStr;
     return date.toLocaleDateString("en-US", {
         weekday,
         month: "short",
@@ -14,8 +20,11 @@ export function formatDate(
 }
 
 export function formatTime(time: string): string {
-    const [h, m] = time.split(":") as [string, string];
-    const hour = parseInt(h);
+    const parts = time.split(":");
+    if (parts.length < 2) return time;
+    const [h, m] = parts;
+    const hour = parseInt(h!);
+    if (isNaN(hour)) return time;
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${m} ${ampm}`;
