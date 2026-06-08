@@ -5,10 +5,10 @@ import Link from "next/link";
 
 export default function SportError({
     error,
-    reset,
+    unstable_retry,
 }: {
     error: Error & { digest?: string };
-    reset: () => void;
+    unstable_retry: () => void;
 }) {
     useEffect(() => {
         console.error(error);
@@ -22,7 +22,7 @@ export default function SportError({
             </p>
             <div className="flex gap-3">
                 <button
-                    onClick={reset}
+                    onClick={() => unstable_retry()}
                     className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                     Try again
