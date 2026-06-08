@@ -43,7 +43,7 @@ function formatGameTitle(game: ScheduleGame, gameNumber: number, teamId: number)
 
 /** Compute time_end by adding GAME_DURATION_HOURS to the start time. */
 function computeEndTime(startTime: string): string {
-    const [h, m] = startTime.split(":").map(Number);
+    const [h, m] = startTime.split(":").map(Number) as [number, number];
     const endHour = (h + GAME_DURATION_HOURS) % 24;
     return `${String(endHour).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
@@ -54,7 +54,7 @@ function mapsLink(parkName: string): string {
 }
 
 function printDate(dateStr: string): string {
-    const [year, month, day] = dateStr.split("-").map(Number);
+    const [year, month, day] = dateStr.split("-").map(Number) as [number, number, number];
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString("en-US", {
         weekday: "short",
@@ -65,7 +65,7 @@ function printDate(dateStr: string): string {
 }
 
 function printTime(time: string): string {
-    const [h, m] = time.split(":");
+    const [h, m] = time.split(":") as [string, string];
     const hour = parseInt(h);
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
@@ -114,7 +114,7 @@ async function run(email: string) {
     }
 
     for (let i = 0; i < ourGames.length; i++) {
-        const game = ourGames[i];
+        const game = ourGames[i]!;
         const title = formatGameTitle(game, i + 1, teamId);
         console.log(`${title}`);
         console.log(`  Date:     ${printDate(game.date)}`);
@@ -206,7 +206,7 @@ async function run(email: string) {
 const args = process.argv.slice(2);
 
 if (args.length >= 1) {
-    run(args[0]).catch(console.error);
+    run(args[0]!).catch(console.error);
 } else {
     console.log("Usage: npx tsx scripts/get-schedule.ts <email>");
 }

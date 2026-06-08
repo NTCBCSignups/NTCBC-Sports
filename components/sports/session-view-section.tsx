@@ -94,7 +94,7 @@ export default function SessionViewSection({
     const resolvedView = configuredViews.length > 0
         ? configuredViews.some((v) => v.id === activeView)
             ? activeView!
-            : configuredViews[0].id
+            : configuredViews[0]!.id
         : null;
 
     const activeInstance = resolvedView ? viewData.find((v) => v.id === Number(resolvedView)) : null;

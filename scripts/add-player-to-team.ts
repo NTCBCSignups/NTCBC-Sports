@@ -25,7 +25,7 @@ function parseProfileAccessCode(code: string): { playerId: number; playerPw: str
             "Invalid profile access code. Expected format: P00000-AAAAAAAAAAAA",
         );
     }
-    return { playerId: parseInt(match[1], 10), playerPw: match[2] };
+    return { playerId: parseInt(match[1]!, 10), playerPw: match[2]! };
 }
 
 // ── Main ─────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ async function run(email: string, profileAccessCode: string) {
 const args = process.argv.slice(2);
 
 if (args.length >= 2) {
-    run(args[0], args[1]).catch(console.error);
+    run(args[0]!, args[1]!).catch(console.error);
 } else {
     console.log("Usage: npx tsx scripts/add-player-to-team.ts <email> <profile-access-code>");
 }

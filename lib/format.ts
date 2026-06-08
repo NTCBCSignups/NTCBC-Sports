@@ -3,7 +3,7 @@ export function formatDate(
     weekday: "short" | "long" = "short",
     includeYear = false,
 ): string {
-    const [year, month, day] = dateStr.split("-").map(Number);
+    const [year, month, day] = dateStr.split("-").map(Number) as [number, number, number];
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString("en-US", {
         weekday,
@@ -14,7 +14,7 @@ export function formatDate(
 }
 
 export function formatTime(time: string): string {
-    const [h, m] = time.split(":");
+    const [h, m] = time.split(":") as [string, string];
     const hour = parseInt(h);
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;

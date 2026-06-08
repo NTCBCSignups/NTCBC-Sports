@@ -174,7 +174,7 @@ export default function SportPage({
         <div className="space-y-2">
           <h2 className="font-semibold text-foreground">Attendance</h2>
           <Tabs
-            defaultValue={config.responseTable.sessions[0].time}
+            defaultValue={config.responseTable.sessions[0]!.time}
             className="gap-4"
           >
             <TabsList className="max-sm:w-full rounded-full">

@@ -590,7 +590,7 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
             return;
         }
 
-        const firstDefinition = addableAdminTabDefinitions[0];
+        const firstDefinition = addableAdminTabDefinitions[0]!;
         setAdminTabDialogMode("add");
         setEditingAdminTabKey(null);
         setAdminTabDraft(createAdminTabDraft(firstDefinition.id));

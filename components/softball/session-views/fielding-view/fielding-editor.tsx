@@ -134,7 +134,7 @@ const FieldingCell = memo(function FieldingCell({ matrix, inning, position, uniq
                             // Autocomplete top match on Tab
                             if (options.length > 0) {
                                 e.preventDefault();
-                                selectOption(options[highlightIndex]?.id ?? options[0].id);
+                                selectOption(options[highlightIndex]?.id ?? options[0]!.id);
                             }
                         }
                     }}

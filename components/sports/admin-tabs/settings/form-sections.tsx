@@ -363,7 +363,7 @@ export function SessionTabsSection({
                             />
 
                             {state.tabs.length > 0 && (() => {
-                                const firstTab = state.tabs[0];
+                                const firstTab = state.tabs[0]!;
                                 const mockSession: SportSession & { signup_count: number } = {
                                     id: "preview",
                                     sport: state.id,

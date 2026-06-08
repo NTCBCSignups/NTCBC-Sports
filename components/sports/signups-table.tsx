@@ -112,7 +112,7 @@ export default function SignupsTable({
                   </TableCell>
                   {hasTimestamp && (
                     <TableCell className="text-xs">
-                      {formatTimestamp(response["Timestamp"])}
+                      {formatTimestamp(response["Timestamp"] ?? "")}
                     </TableCell>
                   )}
                   {displayColumns.map((col) => (

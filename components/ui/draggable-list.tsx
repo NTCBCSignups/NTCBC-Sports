@@ -59,12 +59,12 @@ export function DraggableList<T>({
         if (section === "visible") {
             const next = [...items];
             const [moved] = next.splice(from, 1);
-            next.splice(to, 0, moved);
+            if (moved) next.splice(to, 0, moved);
             onReorder(next);
         } else if (hiddenItems && onHiddenReorder) {
             const next = [...hiddenItems];
             const [moved] = next.splice(from, 1);
-            next.splice(to, 0, moved);
+            if (moved) next.splice(to, 0, moved);
             onHiddenReorder(next);
         }
     };
@@ -100,11 +100,14 @@ export function DraggableList<T>({
     const handleTouchMove = (e: React.TouchEvent) => {
         if (dragIndex === null || dragSection === null || !containerRef.current) return;
         const touch = e.touches[0];
+        if (!touch) return;
         const elements = containerRef.current.querySelectorAll<HTMLElement>(
             `[data-section="${dragSection}"]`,
         );
         for (let i = 0; i < elements.length; i++) {
-            const rect = elements[i].getBoundingClientRect();
+            const el = elements[i];
+            if (!el) continue;
+            const rect = el.getBoundingClientRect();
             if (touch.clientY >= rect.top && touch.clientY <= rect.bottom && i !== dragIndex) {
                 moveItem(dragSection, dragIndex, i);
                 setDragIndex(i);

@@ -35,8 +35,8 @@ function saveCookies(jar: string[]) {
 function captureCookies(response: Response) {
     const setCookies = response.headers.getSetCookie?.() ?? [];
     for (const sc of setCookies) {
-        const nameVal = sc.split(";")[0];
-        const name = nameVal.split("=")[0];
+        const nameVal = sc.split(";")[0]!;
+        const name = nameVal.split("=")[0]!;
         cookies = cookies.filter((c) => !c.startsWith(`${name}=`));
         cookies.push(nameVal);
     }

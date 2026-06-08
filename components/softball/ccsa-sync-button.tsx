@@ -79,8 +79,8 @@ function fuzzyNameMatch<T extends { full_name: string }>(
     for (const m of list) {
         const parts = (m.full_name ?? "").toLowerCase().trim().split(/\s+/);
         if (parts.length < 2) continue;
-        const mFirst = parts[0];
-        const mLast = parts[parts.length - 1];
+        const mFirst = parts[0]!;
+        const mLast = parts[parts.length - 1]!;
 
         if (mLast === pLast && (mFirst.includes(pFirst) || pFirst.includes(mFirst))) return m;
     }
