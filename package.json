@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "qrcode": "qrencode -t UTF8 \"http://$(ifconfig | grep \"inet \" | grep -v 127.0.0.1 | awk '{print $2}' | head -n 1):3000\""
   },
   "dependencies": {
