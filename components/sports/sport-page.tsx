@@ -170,7 +170,7 @@ export default function SportPage({
         </Button>
       )}
 
-      {isFormOpen && config.responseTable && formResponses && (
+      {isFormOpen && config.responseTable && config.responseTable.sessions.length > 0 && formResponses && (
         <div className="space-y-2">
           <h2 className="font-semibold text-foreground">Attendance</h2>
           <Tabs
