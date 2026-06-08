@@ -46,8 +46,6 @@ export async function getScheduleData(sport: Sport): Promise<{
     const SHEET_TAB = isProd ? 'prod' : 'dev';
     const RANGE = `${SHEET_TAB}!A2:I`;
 
-    console.log(`[${sport}] Environment: ${environment}, Using ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} sheet: ${SHEET_TAB}`);
-
     if (!SHEET_ID || !API_KEY) {
       console.error(`Missing Google Sheets configuration for ${sport}`);
       return { scheduleData: null, isFormOpen: false };
