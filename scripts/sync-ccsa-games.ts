@@ -208,5 +208,5 @@ const args = process.argv.slice(2);
 if (args.length >= 1) {
     run(args[0]!).catch(console.error);
 } else {
-    console.log("Usage: npx tsx scripts/get-schedule.ts <email>");
+    console.log("Usage: npx tsx scripts/sync-ccsa-games.ts <email>");
 }
