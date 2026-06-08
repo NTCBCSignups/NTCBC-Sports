@@ -16,11 +16,11 @@ import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { Pencil, Trash2, Plus, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session-views/registry";
+import { getSessionView, getAllSessionViews, DEFAULT_VIEW_TYPE } from "@/components/sports/session/session-views/registry";
 import { saveSessionViews } from "@/lib/actions/sessions";
-import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { SignupRow } from "@/components/sports/session/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
-import type { SessionViewEditorHandle } from "@/components/sports/session-views/interfaces";
+import type { SessionViewEditorHandle } from "@/components/sports/session/session-views/interfaces";
 
 interface EditViewsDialogProps {
     sport: string;

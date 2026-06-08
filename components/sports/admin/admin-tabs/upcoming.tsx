@@ -1,5 +1,5 @@
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
-import SessionAccordion, { type SessionSignupEntry } from "@/components/sports/admin-session-accordion";
+import SessionAccordion, { type SessionSignupEntry } from "@/components/sports/admin/admin-session-accordion";
 import { getAllSessions, getSessionSignups, getTeamMembers } from "@/lib/get-data";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import type { SignupStatus } from "@/lib/supabase/types";

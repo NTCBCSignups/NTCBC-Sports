@@ -12,8 +12,8 @@ import {
 import { ScheduleData } from "@/lib/schedule-utils";
 import { SportConfig } from "@/config/config-resolver";
 import { formatDate } from "@/lib/format";
-import CountdownTimer from "@/components/sports/countdown-timer";
-import SignupsTable from "@/components/sports/signups-table";
+import CountdownTimer from "@/components/sports/session/countdown-timer";
+import SignupsTable from "@/components/sports/signup/signups-table";
 import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 

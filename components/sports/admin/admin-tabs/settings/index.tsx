@@ -6,7 +6,7 @@ import {
     clearUnsavedSettingsChanges,
     confirmLeaveWithUnsavedSettings,
     setUnsavedSettingsChanges,
-} from "@/components/sports/settings-unsaved-guard";
+} from "@/components/sports/admin/settings-unsaved-guard";
 import {
     isAdminTabIconName,
     SETTINGS_TAB_ID,

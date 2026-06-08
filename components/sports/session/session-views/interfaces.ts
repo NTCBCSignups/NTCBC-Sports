@@ -1,5 +1,5 @@
 import type { ComponentType, Ref } from "react";
-import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { SignupRow } from "@/components/sports/session/session-signups-table";
 
 /** Props passed to every session view component (read-only viewer). */
 export interface SessionViewProps {

@@ -1,9 +1,9 @@
 import type { ComponentType } from "react";
-import AdminTabRequests from "@/components/sports/admin-tabs/requests";
-import AdminTabCreate from "@/components/sports/admin-tabs/create";
-import AdminTabUpcoming from "@/components/sports/admin-tabs/upcoming";
-import AdminTabPast from "@/components/sports/admin-tabs/past";
-import AdminTabSettings from "@/components/sports/admin-tabs/settings";
+import AdminTabRequests from "@/components/sports/admin/admin-tabs/requests";
+import AdminTabCreate from "@/components/sports/admin/admin-tabs/create";
+import AdminTabUpcoming from "@/components/sports/admin/admin-tabs/upcoming";
+import AdminTabPast from "@/components/sports/admin/admin-tabs/past";
+import AdminTabSettings from "@/components/sports/admin/admin-tabs/settings";
 import CcsaAdminTab from "@/components/softball/admin-tabs/ccsa-sync";
 
 /**

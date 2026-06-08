@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { type LucideIcon } from "lucide-react";
 import type { AdminTabMeta } from "@/config/config-resolver";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
-import { getAdminTabIcon } from "@/components/sports/admin-tab-icons";
+import { getAdminTabIcon } from "@/components/sports/admin/admin-tab-icons";
 import {
   clearUnsavedSettingsChanges,
   confirmLeaveWithUnsavedSettings,
-} from "@/components/sports/settings-unsaved-guard";
+} from "@/components/sports/admin/settings-unsaved-guard";
 
 interface SidebarTab {
   id: string;

@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { displayName } from "@/lib/format";
-import type { SessionViewEditorProps } from "@/components/sports/session-views/interfaces";
+import type { SessionViewEditorProps } from "@/components/sports/session/session-views/interfaces";
 import { ALL_POSITIONS, FieldingMatrix, parseData } from "./fielding-data";
 import { FieldingTable } from "./fielding-shared";
 

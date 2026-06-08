@@ -14,9 +14,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getAdminTabIcon } from "@/components/sports/admin-tab-icons";
-import SessionCard from "@/components/sports/session-card";
-import SessionTabPills from "@/components/sports/session-tab-pills";
+import { getAdminTabIcon } from "@/components/sports/admin/admin-tab-icons";
+import SessionCard from "@/components/sports/session/session-card";
+import SessionTabPills from "@/components/sports/session/session-tab-pills";
 import {
     SETTINGS_TAB_ICON_NAME,
     SETTINGS_TAB_ID,

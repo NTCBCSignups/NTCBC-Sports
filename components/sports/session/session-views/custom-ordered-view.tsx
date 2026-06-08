@@ -12,10 +12,10 @@ import {
 import { EyeOff, Plus, Trash2 } from "lucide-react";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { TeamMemberBadge } from "@/components/sports/badges";
-import SignupSummaryHeader from "@/components/sports/signup-summary-header";
+import SignupSummaryHeader from "@/components/sports/signup/signup-summary-header";
 import { displayName } from "@/lib/format";
 import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
-import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { SignupRow } from "@/components/sports/session/session-signups-table";
 
 const SPACER_PREFIX = "__SPACER_";
 const isSpacer = (entry: string) => entry.startsWith(SPACER_PREFIX);

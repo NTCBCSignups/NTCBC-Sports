@@ -11,17 +11,17 @@ import {
   UserStar,
 } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
-import SignupButton from "@/components/sports/signup-button";
-import TeamAccessBanner from "@/components/sports/team-access-banner";
-import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
-import CancelSessionButton from "@/components/sports/cancel-session-button";
-import RestoreSessionButton from "@/components/sports/restore-session-button";
-import SessionDialog from "@/components/sports/session-dialog";
+import SignupButton from "@/components/sports/signup/signup-button";
+import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
+import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-banner";
+import CancelSessionButton from "@/components/sports/session/cancel-session-button";
+import RestoreSessionButton from "@/components/sports/session/restore-session-button";
+import SessionDialog from "@/components/sports/session/session-dialog";
 import StatusBanner from "@/components/sports/status-banner";
-import AdminButton from "@/components/sports/admin-button";
+import AdminButton from "@/components/sports/admin/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
-import SessionViewSection from "@/components/sports/session-view-section";
-import CountdownTimer from "@/components/sports/countdown-timer";
+import SessionViewSection from "@/components/sports/session/session-view-section";
+import CountdownTimer from "@/components/sports/session/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
 import { getResolvedTab, Role, AccessLevel, type SignupConfirmationDialog } from "@/config/config-resolver";

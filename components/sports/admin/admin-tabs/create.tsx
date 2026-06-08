@@ -1,4 +1,4 @@
-import SessionForm from "@/components/sports/session-form";
+import SessionForm from "@/components/sports/session/session-form";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 
 export default async function AdminTabCreate({ sport }: { sport: string }) {
