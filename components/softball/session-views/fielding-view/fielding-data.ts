@@ -218,7 +218,7 @@ export class FieldingMatrix {
             for (let i = lastAssignedInning + 1; i <= totalInnings; i++) {
                 if (!this.data[i]?.[pos.key]) {
                     if (!this.data[i]) this.data[i] = {};
-                    this.data[i][pos.key] = lastValue;
+                    this.data[i]![pos.key] = lastValue;
                     this.notify(i, pos.key);
                     this.notifyInning(i);
                 }
@@ -231,7 +231,7 @@ export class FieldingMatrix {
         for (const pos of positions) {
             for (let i = 1; i <= totalInnings; i++) {
                 if (this.data[i]?.[pos.key]) {
-                    delete this.data[i][pos.key];
+                    delete this.data[i]![pos.key];
                     this.notify(i, pos.key);
                     this.notifyInning(i);
                 }

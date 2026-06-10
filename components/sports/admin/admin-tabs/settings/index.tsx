@@ -6,7 +6,7 @@ import {
     clearUnsavedSettingsChanges,
     confirmLeaveWithUnsavedSettings,
     setUnsavedSettingsChanges,
-} from "@/components/sports/settings-unsaved-guard";
+} from "@/components/sports/admin/settings-unsaved-guard";
 import {
     isAdminTabIconName,
     SETTINGS_TAB_ID,
@@ -590,7 +590,7 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
             return;
         }
 
-        const firstDefinition = addableAdminTabDefinitions[0];
+        const firstDefinition = addableAdminTabDefinitions[0]!;
         setAdminTabDialogMode("add");
         setEditingAdminTabKey(null);
         setAdminTabDraft(createAdminTabDraft(firstDefinition.id));

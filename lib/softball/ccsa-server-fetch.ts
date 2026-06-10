@@ -33,8 +33,8 @@ export function installCookieFetch(initialCookies: string[] = []): void {
         // Capture Set-Cookie headers
         const setCookies = response.headers.getSetCookie?.() ?? [];
         for (const sc of setCookies) {
-            const nameVal = sc.split(";")[0];
-            const name = nameVal.split("=")[0];
+            const nameVal = sc.split(";")[0]!;
+            const name = nameVal.split("=")[0]!;
             _capturedCookies = _capturedCookies.filter((c) => !c.startsWith(`${name}=`));
             _capturedCookies.push(nameVal);
         }

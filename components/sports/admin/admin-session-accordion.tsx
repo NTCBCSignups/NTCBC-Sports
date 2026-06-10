@@ -8,11 +8,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { CalendarDays, MapPin, Pencil } from "lucide-react";
 import { getResolvedTab, type ResolvedSportConfig } from "@/config/config-resolver";
-import AdminSessionSignups from "@/components/sports/admin-session-signups";
-import DeleteSessionButton from "@/components/sports/delete-session-button";
-import CancelSessionButton from "@/components/sports/cancel-session-button";
-import RestoreSessionButton from "@/components/sports/restore-session-button";
-import SessionDialog from "@/components/sports/session-dialog";
+import AdminSessionSignups from "@/components/sports/admin/admin-session-signups";
+import DeleteSessionButton from "@/components/sports/session/delete-session-button";
+import CancelSessionButton from "@/components/sports/session/cancel-session-button";
+import RestoreSessionButton from "@/components/sports/session/restore-session-button";
+import SessionDialog from "@/components/sports/session/session-dialog";
 import { formatDate, formatTime } from "@/lib/format";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";

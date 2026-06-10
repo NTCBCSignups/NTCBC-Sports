@@ -12,8 +12,8 @@ import {
 import { ScheduleData } from "@/lib/schedule-utils";
 import { SportConfig } from "@/config/config-resolver";
 import { formatDate } from "@/lib/format";
-import CountdownTimer from "@/components/sports/countdown-timer";
-import SignupsTable from "@/components/sports/signups-table";
+import CountdownTimer from "@/components/sports/session/countdown-timer";
+import SignupsTable from "@/components/sports/signup/signups-table";
 import PageHeader from "@/components/sports/page-header";
 import type { User } from "@supabase/supabase-js";
 
@@ -170,11 +170,11 @@ export default function SportPage({
         </Button>
       )}
 
-      {isFormOpen && config.responseTable && formResponses && (
+      {isFormOpen && config.responseTable && config.responseTable.sessions.length > 0 && formResponses && (
         <div className="space-y-2">
           <h2 className="font-semibold text-foreground">Attendance</h2>
           <Tabs
-            defaultValue={config.responseTable.sessions[0].time}
+            defaultValue={config.responseTable.sessions[0]!.time}
             className="gap-4"
           >
             <TabsList className="max-sm:w-full rounded-full">

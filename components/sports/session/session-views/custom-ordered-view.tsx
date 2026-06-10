@@ -12,10 +12,10 @@ import {
 import { EyeOff, Plus, Trash2 } from "lucide-react";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { TeamMemberBadge } from "@/components/sports/badges";
-import SignupSummaryHeader from "@/components/sports/signup-summary-header";
+import SignupSummaryHeader from "@/components/sports/signup/signup-summary-header";
 import { displayName } from "@/lib/format";
 import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
-import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { SignupRow } from "@/components/sports/session/session-signups-table";
 
 const SPACER_PREFIX = "__SPACER_";
 const isSpacer = (entry: string) => entry.startsWith(SPACER_PREFIX);
@@ -114,7 +114,7 @@ function splitBySpacers(entries: OrderEntry[]): Group[] {
         if (entry.type === "spacer") {
             groups.push({ label: entry.label, entries: [] });
         } else {
-            groups[groups.length - 1].entries.push(entry);
+            groups[groups.length - 1]!.entries.push(entry);
         }
     }
     return groups;
@@ -250,10 +250,10 @@ function OrderedContent({
     const nonEmptyGroups = groups.filter((g) => g.entries.length > 0);
 
     // If only 1 group (no spacers or all in one group), split players in half for 2 columns
-    if (nonEmptyGroups.length === 1 && nonEmptyGroups[0].entries.length > 1) {
-        const entries = nonEmptyGroups[0].entries;
+    if (nonEmptyGroups.length === 1 && nonEmptyGroups[0]!.entries.length > 1) {
+        const entries = nonEmptyGroups[0]!.entries;
         const mid = Math.ceil(entries.length / 2);
-        const leftGroup: Group = { label: nonEmptyGroups[0].label, entries: entries.slice(0, mid) };
+        const leftGroup: Group = { label: nonEmptyGroups[0]!.label, entries: entries.slice(0, mid) };
         const rightGroup: Group = { label: "", entries: entries.slice(mid) };
 
         return (
@@ -416,7 +416,7 @@ export function CustomOrderedEditor({
         setVisibleItems((prev) => {
             const next = [...prev];
             const [moved] = next.splice(index, 1);
-            setHiddenItems((h) => [...h, moved]);
+            if (moved) setHiddenItems((h) => [...h, moved]);
             return next;
         });
     };
@@ -425,7 +425,7 @@ export function CustomOrderedEditor({
         setHiddenItems((prev) => {
             const next = [...prev];
             const [moved] = next.splice(index, 1);
-            setVisibleItems((v) => [...v, moved]);
+            if (moved) setVisibleItems((v) => [...v, moved]);
             return next;
         });
     };

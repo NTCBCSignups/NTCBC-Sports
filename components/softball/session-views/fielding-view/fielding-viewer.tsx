@@ -19,7 +19,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { displayName } from "@/lib/format";
-import type { SessionViewProps } from "@/components/sports/session-views/interfaces";
+import type { SessionViewProps } from "@/components/sports/session/session-views/interfaces";
 import { ALL_POSITIONS, POSITION_GROUPS, getEffectiveAssignment, parseData } from "./fielding-data";
 import { CollapsibleDiamond, FieldingTable } from "./fielding-shared";
 

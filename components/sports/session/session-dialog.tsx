@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
-import SessionForm from "@/components/sports/session-form";
+import SessionForm from "@/components/sports/session/session-form";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionTypeOption {

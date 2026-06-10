@@ -77,7 +77,7 @@ export default function AdminAccessRequests({
                 <StatusBadge status={request.status} />
               </TableCell>
               <TableCell className="text-xs text-muted-foreground">
-                {formatDate(request.created_at.split("T")[0])}
+                {formatDate(request.created_at.split("T")[0]!)}
               </TableCell>
               <TableCell>
                 <div className="flex justify-center gap-1">

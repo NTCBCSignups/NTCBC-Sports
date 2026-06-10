@@ -38,7 +38,7 @@ async function run(email: string) {
 const args = process.argv.slice(2);
 
 if (args.length >= 1) {
-    run(args[0]).catch(console.error);
+    run(args[0]!).catch(console.error);
 } else {
     console.log("Usage: npx tsx scripts/get-allplayerinfo.ts <email>");
 }

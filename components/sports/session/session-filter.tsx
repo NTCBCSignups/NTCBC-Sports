@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
-import SessionTabPills from "@/components/sports/session-tab-pills";
+import SessionTabPills from "@/components/sports/session/session-tab-pills";
 
 interface FilterOption {
     value: string;

@@ -10,7 +10,7 @@ import {
 } from "@/config/config-resolver";
 import { SETTINGS_ADMIN_TAB } from "@/config/admin-tab-metadata";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
-import AdminLayout from "@/components/sports/admin-sidebar";
+import AdminLayout from "@/components/sports/admin/admin-sidebar";
 import { getAdminTabComponent } from "@/config/admin-tab-registry";
 import { LoadingAdminContent } from "@/components/sports/loading-content";
 import { getAccessRequests } from "@/lib/get-data";

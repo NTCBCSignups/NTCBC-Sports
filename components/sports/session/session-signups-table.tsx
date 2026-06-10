@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge, TeamMemberBadge } from "@/components/sports/badges";
-import SignupSummaryHeader from "@/components/sports/signup-summary-header";
+import SignupSummaryHeader from "@/components/sports/signup/signup-summary-header";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 import { displayName } from "@/lib/format";
 import type { Profile, SignupStatus } from "@/lib/supabase/types";

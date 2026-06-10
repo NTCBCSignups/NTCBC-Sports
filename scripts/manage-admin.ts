@@ -84,7 +84,7 @@ async function main() {
             return;
         }
 
-        const selectedUser = users[index];
+        const selectedUser = users[index]!;
         console.log(`\n${action === "add" ? "Adding" : "Removing"} admin: ${selectedUser.full_name} (${selectedUser.email}) for ${sport}`);
 
         const confirm = await prompt(rl, "Confirm? (y/n): ");

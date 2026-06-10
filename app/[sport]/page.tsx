@@ -2,13 +2,13 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
-import SessionCard from "@/components/sports/session-card";
-import SessionFilter from "@/components/sports/session-filter";
-import TeamAccessBanner from "@/components/sports/team-access-banner";
-import SignInToSignupBanner from "@/components/sports/sign-in-to-signup-banner";
+import SessionCard from "@/components/sports/session/session-card";
+import SessionFilter from "@/components/sports/session/session-filter";
+import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
+import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
-import AdminButton from "@/components/sports/admin-button";
-import CalendarExportButton from "@/components/sports/calendar-export-button";
+import AdminButton from "@/components/sports/admin/admin-button";
+import CalendarExportButton from "@/components/sports/session/calendar-export-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
 import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
@@ -232,7 +232,7 @@ async function SportSessionsContent({
 
     // Compose label: use tab name if only one, otherwise "some sessions"
     const label = restrictedTabs.length === 1
-      ? restrictedTabs[0].tab.label.toLowerCase()
+      ? restrictedTabs[0]!.tab.label.toLowerCase()
       : "some sessions";
 
     if (!userId) {
@@ -293,7 +293,7 @@ async function SportSessionsContent({
   const scrollSession = scrollTo ? sessionsWithCounts.find((s) => s.id === scrollTo) : null;
   const resolvedValue = tab ?? scrollSession?.session_type;
   const validValues = filterOptions.map((o) => o.value);
-  const fallback = config.defaultTab || (showAll ? ALL_VALUE : configTabs[0]?.value);
+  const fallback = config.defaultTab || (showAll ? ALL_VALUE : configTabs[0]?.value) || ALL_VALUE;
   const defaultValue =
     validValues.find((v) => v === resolvedValue) ?? fallback;
 

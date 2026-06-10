@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/sports/badges";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
-import CountdownTimer from "@/components/sports/countdown-timer";
+import CountdownTimer from "@/components/sports/session/countdown-timer";
 import { formatDate, formatTime } from "@/lib/format";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import { cn } from "@/lib/utils";

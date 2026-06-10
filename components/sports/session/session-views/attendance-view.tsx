@@ -4,11 +4,11 @@ import { useImperativeHandle, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
-import SessionSignupsTable from "@/components/sports/session-signups-table";
+import SessionSignupsTable from "@/components/sports/session/session-signups-table";
 import { adminUpdateSignupStatus } from "@/lib/actions/signups";
 import { toastClasses } from "@/lib/styles";
 import { displayName } from "@/lib/format";
-import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { SignupRow } from "@/components/sports/session/session-signups-table";
 import type { SessionViewProps, SessionViewEditorProps } from "./interfaces";
 
 /**

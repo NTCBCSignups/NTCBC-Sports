@@ -2,12 +2,12 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import AttendanceView from "@/components/sports/session-views/attendance-view";
-import ViewToggle from "@/components/sports/view-toggle";
-import EditViewsDialog from "@/components/sports/edit-views-dialog";
-import { getSessionView } from "@/components/sports/session-views/registry";
+import AttendanceView from "@/components/sports/session/session-views/attendance-view";
+import ViewToggle from "@/components/sports/session/view-toggle";
+import EditViewsDialog from "@/components/sports/session/edit-views-dialog";
+import { getSessionView } from "@/components/sports/session/session-views/registry";
 import { displayName } from "@/lib/format";
-import type { SignupRow } from "@/components/sports/session-signups-table";
+import type { SignupRow } from "@/components/sports/session/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
 
 interface SessionViewSectionProps {
@@ -94,7 +94,7 @@ export default function SessionViewSection({
     const resolvedView = configuredViews.length > 0
         ? configuredViews.some((v) => v.id === activeView)
             ? activeView!
-            : configuredViews[0].id
+            : configuredViews[0]!.id
         : null;
 
     const activeInstance = resolvedView ? viewData.find((v) => v.id === Number(resolvedView)) : null;

@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import AdminAccessRequests from "@/components/sports/admin-access-requests";
+import AdminAccessRequests from "@/components/sports/admin/admin-access-requests";
 import { getAccessRequests } from "@/lib/get-data";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 

@@ -1,5 +1,5 @@
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
-import SportConfigForm from "@/components/sports/admin-tabs/settings/index";
+import SportConfigForm from "@/components/sports/admin/admin-tabs/settings/index";
 
 export default async function AdminTabSettings({ sport }: { sport: string }) {
     const config = await getResolvedSportConfig(sport);
