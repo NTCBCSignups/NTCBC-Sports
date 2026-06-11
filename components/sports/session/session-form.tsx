@@ -17,6 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink } from "lucide-react";
 import { createSession, updateSession, type CreateSessionResult } from "@/lib/actions/sessions";
+import { parseSessionInput } from "@/lib/actions/session-validation";
 import { getSessionPath } from "@/lib/session-route";
 import type { SportSession } from "@/lib/supabase/types";
 
@@ -127,54 +128,32 @@ export default function SessionForm({
     const signupOpen = new Date(form.get("signup_open") as string);
     const signupClose = new Date(form.get("signup_close") as string);
 
-    const sessionStart = new Date(`${date}T${timeStart}`);
-    const sessionEnd = new Date(`${date}T${timeEnd}`);
-
-    if (timeStart >= timeEnd) {
-      setError("Session start time must be before end time");
-      setPending(false);
-      return;
-    }
-
-    if (signupOpen >= signupClose) {
-      setError("Sign-up open time must be before sign-up close time");
-      setPending(false);
-      return;
-    }
-
-    if (signupOpen > sessionStart) {
-      setError("Sign-up open time cannot be after session start time");
-      setPending(false);
-      return;
-    }
-
-    const endOfSessionDay = new Date(`${date}T23:59`);
-    if (signupClose > endOfSessionDay) {
-      setError("Sign-up close time must be on the session date (by 11:59 PM)");
-      setPending(false);
-      return;
-    }
-
     const input = {
       session_type: sessionType,
-      title: (form.get("title") as string) || undefined,
+      title: form.get("title") as string,
       date: date,
       time_start: timeStart,
       time_end: timeEnd,
       location_name: form.get("location_name") as string,
       location_address: form.get("location_address") as string,
-      location_maps_link:
-        (form.get("location_maps_link") as string) || undefined,
+      location_maps_link: form.get("location_maps_link") as string,
       player_cap: (form.get("player_cap") as string)
         ? parseInt(form.get("player_cap") as string)
         : null,
       signup_open: signupOpen.toISOString(),
       signup_close: signupClose.toISOString(),
-      notes: (form.get("notes") as string) || undefined,
+      notes: form.get("notes") as string,
     };
 
+    const parsed = parseSessionInput(input);
+    if (!parsed.success) {
+      setError(parsed.error);
+      setPending(false);
+      return;
+    }
+
     if (isEdit) {
-      const result = await updateSession(sport, session.id, input);
+      const result = await updateSession(sport, session.id, parsed.data);
       if ("error" in result) {
         setError(result.error);
         toast.error(result.error, { className: toastClasses.red });
@@ -183,7 +162,7 @@ export default function SessionForm({
         onSuccess?.();
       }
     } else {
-      const result = await createSession(sport, input);
+      const result = await createSession(sport, parsed.data);
       if ("error" in result) {
         setError(result.error);
         toast.error(result.error, { className: toastClasses.red });

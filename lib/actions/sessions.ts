@@ -5,21 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
 import { getSessionPath } from "@/lib/session-route";
 import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
+import { parseSessionInput, type CreateSessionInput } from "@/lib/actions/session-validation";
 
-export interface CreateSessionInput {
-  session_type: string;
-  title?: string;
-  date: string;
-  time_start: string;
-  time_end: string;
-  location_name: string;
-  location_address: string;
-  location_maps_link?: string;
-  player_cap?: number | null;
-  signup_open: string;
-  signup_close: string;
-  notes?: string;
-}
+export type { CreateSessionInput } from "@/lib/actions/session-validation";
 
 export type CreateSessionResult =
   | { error: string }
@@ -30,6 +18,9 @@ export type SessionActionResult =
   | { success: true };
 
 export async function createSession(sport: string, input: CreateSessionInput): Promise<CreateSessionResult> {
+  const parsed = parseSessionInput(input);
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
@@ -37,7 +28,7 @@ export async function createSession(sport: string, input: CreateSessionInput): P
   const { data, error } = await supabase
     .from("sessions")
     .insert({
-      ...input,
+      ...parsed.data,
       sport,
       created_by: result.user.id,
     })
@@ -54,15 +45,18 @@ export async function createSession(sport: string, input: CreateSessionInput): P
 export async function updateSession(
   sport: string,
   sessionId: string,
-  input: Partial<CreateSessionInput>,
+  input: CreateSessionInput,
 ): Promise<SessionActionResult> {
+  const parsed = parseSessionInput(input);
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase
     .from("sessions")
-    .update(input)
+    .update(parsed.data)
     .eq("id", sessionId);
 
   if (error) return { error: error.message };
