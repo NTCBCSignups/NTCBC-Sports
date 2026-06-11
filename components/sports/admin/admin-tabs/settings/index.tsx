@@ -14,7 +14,7 @@ import {
 } from "@/config/admin-tab-metadata";
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
 import { updateSportConfig, type UpdateSportConfigInput } from "@/lib/actions/sport-config";
-import { toastClasses } from "@/lib/styles";
+import { statusColors, toastClasses } from "@/lib/styles";
 import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constants";
 import { ADMIN_TAB_DEFINITIONS, ADMIN_TAB_ICON_OPTIONS } from "./admin-tab-ui-metadata";
 import { AdminTabDialog, DeleteTargetDialog, PermissionsDialog, SessionTabDialog } from "./dialogs";
@@ -713,6 +713,16 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
 
   return (
     <section className="space-y-4">
+      {isDirty && (
+        <div className="sticky top-0 z-40 -mx-1 px-1">
+          <div
+            className={`rounded-lg border px-3 py-2 text-xs font-medium ${statusColors.amber.border} ${statusColors.amber.bg} ${statusColors.amber.text}`}
+          >
+            You have unsaved changes
+          </div>
+        </div>
+      )}
+
       <GeneralSettingsSection state={state} setState={setState} />
 
       <SessionTabsSection

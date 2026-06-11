@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -6,7 +8,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, MapPin, Pencil } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CalendarDays, MapPin, MoreVertical, Pencil } from "lucide-react";
 import { getResolvedTab, type ResolvedSportConfig } from "@/config/config-resolver";
 import AdminSessionSignups from "@/components/sports/admin/admin-session-signups";
 import DeleteSessionButton from "@/components/sports/session/delete-session-button";
@@ -121,14 +129,16 @@ export default function SessionAccordion({
                     {formatTime(session.time_start)} – {formatTime(session.time_end)} ·{" "}
                     {session.location_address}
                   </div>
-                  <div className="flex shrink-0 items-center gap-1 -mt-1">
+
+                  {/* Desktop: inline action buttons */}
+                  <div className="hidden md:flex shrink-0 items-center gap-1.5 -mt-1">
                     <SessionDialog
                       sport={sport}
                       sessionTabs={sessionTabs}
                       defaultTab={config.defaultTab}
                       session={session}
                       trigger={
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-9 w-9">
                           <Pencil className="h-4 w-4" />
                           <span className="sr-only">Edit {session.title || "session"}</span>
                         </Button>
@@ -141,6 +151,39 @@ export default function SessionAccordion({
                       <CancelSessionButton sport={sport} sessionId={session.id} />
                     )}
                     <DeleteSessionButton sport={sport} sessionId={session.id} />
+                  </div>
+
+                  {/* Mobile: overflow dropdown menu */}
+                  <div className="md:hidden shrink-0 -mt-1">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10">
+                          <MoreVertical className="h-5 w-5" />
+                          <span className="sr-only">Session actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <SessionDialog
+                          sport={sport}
+                          sessionTabs={sessionTabs}
+                          defaultTab={config.defaultTab}
+                          session={session}
+                          trigger={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                          }
+                        />
+                        {session.status === SESSION_STATUS.cancelled && (
+                          <RestoreSessionButton sport={sport} sessionId={session.id} asMenuItem />
+                        )}
+                        {session.status !== SESSION_STATUS.cancelled && (
+                          <CancelSessionButton sport={sport} sessionId={session.id} asMenuItem />
+                        )}
+                        <DeleteSessionButton sport={sport} sessionId={session.id} asMenuItem />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
                 <AdminSessionSignups
