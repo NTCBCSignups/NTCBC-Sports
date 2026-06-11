@@ -179,7 +179,7 @@ export default function SessionForm({
         <Label htmlFor="session_type">Session Type</Label>
         <Select value={sessionType} onValueChange={(v) => setSessionType(v)}>
           <SelectTrigger id="session_type">
-            <SelectValue />
+            <SelectValue placeholder="Select a session type" />
           </SelectTrigger>
           <SelectContent>
             {sessionTabs.map((tab) => (

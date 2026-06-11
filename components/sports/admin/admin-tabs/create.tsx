@@ -12,7 +12,7 @@ export default async function AdminTabCreate({ sport }: { sport: string }) {
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold text-foreground">Create Session</h2>
-      <div className="rounded-lg border bg-card p-6">
+      <div className="rounded-lg border bg-card p-4 sm:p-6">
         <SessionForm sport={sport} sessionTabs={sessionTabs} defaultTab={config.defaultTab} />
       </div>
     </section>
