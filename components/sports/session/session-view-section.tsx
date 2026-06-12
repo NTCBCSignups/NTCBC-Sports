@@ -100,7 +100,7 @@ export default function SessionViewSection({
   const entry = activeInstance ? getSessionView(activeInstance.type) : undefined;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         {configuredViews.length > 1 ? (
           <ViewToggle
