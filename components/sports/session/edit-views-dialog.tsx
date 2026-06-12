@@ -139,7 +139,7 @@ export default function EditViewsDialog({
     const newView: StoredViewInstance = { id: maxId + 1, type, label: newName.trim(), data: null };
     setItems(hasAttendance ? [...items, newView] : [...instances, newView]);
     setNewName("");
-    setStep({ kind: "list" });
+    setStep({ kind: "edit", viewId: newView.id });
   };
 
   const handleDelete = (viewId: number) => {
