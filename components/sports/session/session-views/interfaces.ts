@@ -38,6 +38,14 @@ export interface SessionViewEditorProps {
 }
 
 /**
+ * Editor components may optionally declare a static `dialogClassName`
+ * to override the default dialog sizing when their editor is active.
+ */
+export type EditorComponentType = ComponentType<SessionViewEditorProps> & {
+  dialogClassName?: string;
+};
+
+/**
  * Defines a session view type. Each instance requires exactly
  * one View component and one Editor component.
  */
@@ -45,6 +53,6 @@ export class SessionView {
   constructor(
     public readonly label: string,
     public readonly ViewComponent: ComponentType<SessionViewProps>,
-    public readonly EditorComponent: ComponentType<SessionViewEditorProps>,
+    public readonly EditorComponent: EditorComponentType,
   ) {}
 }

@@ -95,13 +95,7 @@ export default function EditViewsDialog({
       return hasAtt
         ? updated
         : [
-            {
-              id: 0,
-              type: DEFAULT_VIEW_TYPE,
-              label: "Attendance",
-              data: null,
-              enabled: true,
-            },
+            { id: 0, type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true },
             ...updated,
           ];
     }
@@ -142,12 +136,7 @@ export default function EditViewsDialog({
   const handleCreate = (type: string) => {
     if (!newName.trim()) return;
     const maxId = instances.length > 0 ? Math.max(...instances.map((v) => v.id)) : -1;
-    const newView: StoredViewInstance = {
-      id: maxId + 1,
-      type,
-      label: newName.trim(),
-      data: null,
-    };
+    const newView: StoredViewInstance = { id: maxId + 1, type, label: newName.trim(), data: null };
     setItems(hasAttendance ? [...items, newView] : [...instances, newView]);
     setNewName("");
     setStep({ kind: "list" });
@@ -181,6 +170,15 @@ export default function EditViewsDialog({
 
   const isAttendanceView = (instance: StoredViewInstance) => instance.type === DEFAULT_VIEW_TYPE;
 
+  // Resolve the active editor entry (used for both dialog sizing and rendering)
+  const activeEntry =
+    step.kind === "edit"
+      ? (() => {
+          const inst = instances.find((v) => v.id === step.viewId);
+          return inst ? getSessionView(inst.type) : undefined;
+        })()
+      : undefined;
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -194,7 +192,12 @@ export default function EditViewsDialog({
           showCloseButton={step.kind !== "edit"}
           className={cn(
             "transition-[max-width] duration-200",
-            step.kind === "edit" ? "sm:max-w-lg overflow-x-auto" : "sm:max-w-md",
+            step.kind === "edit"
+              ? cn(
+                  "max-w-[95vw] sm:max-w-lg overflow-x-auto",
+                  activeEntry?.EditorComponent.dialogClassName,
+                )
+              : "sm:max-w-md",
           )}
         >
           {step.kind === "edit" && (
@@ -268,12 +271,7 @@ export default function EditViewsDialog({
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0"
-                            onClick={() =>
-                              setStep({
-                                kind: "edit",
-                                viewId: instance.id,
-                              })
-                            }
+                            onClick={() => setStep({ kind: "edit", viewId: instance.id })}
                           >
                             <Pencil className="h-3 w-3" />
                           </Button>
@@ -371,8 +369,7 @@ export default function EditViewsDialog({
           {step.kind === "edit" &&
             (() => {
               const instance = instances.find((v) => v.id === step.viewId);
-              const entry = instance ? getSessionView(instance.type) : undefined;
-              if (!instance || !entry) {
+              if (!instance || !activeEntry) {
                 return (
                   <div className="flex items-center gap-3 py-8 justify-center">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -396,7 +393,7 @@ export default function EditViewsDialog({
                       ← Back
                     </Button>
                   </div>
-                  <entry.EditorComponent
+                  <activeEntry.EditorComponent
                     signups={signups}
                     teamMemberIds={teamMemberIds}
                     viewData={instance.data}
