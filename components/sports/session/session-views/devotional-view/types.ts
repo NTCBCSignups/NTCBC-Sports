@@ -60,8 +60,6 @@ export interface DevotionalSection {
 export interface DevotionalViewData {
     /** Devotional title, e.g. "Spiritual Worship". */
     title: string;
-    /** Whether the facilitator view toggle defaults to ON for admins. */
-    facilitatorViewDefault: boolean;
     /** Ordered sections. */
     sections: DevotionalSection[];
 }
@@ -86,7 +84,6 @@ export function generateId(): string {
 export function createDefaultDevotionalData(): DevotionalViewData {
     return {
         title: "",
-        facilitatorViewDefault: true,
         sections: [],
     };
 }
@@ -95,7 +92,6 @@ export function createDefaultDevotionalData(): DevotionalViewData {
 export function createTemplateDevotionalData(): DevotionalViewData {
     return {
         title: "",
-        facilitatorViewDefault: true,
         sections: [
             { id: generateId(), type: "iceBreaker", items: [] },
             { id: generateId(), type: "passage", items: [] },
