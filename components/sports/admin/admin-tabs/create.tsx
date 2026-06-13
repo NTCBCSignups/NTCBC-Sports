@@ -2,25 +2,19 @@ import SessionForm from "@/components/sports/session/session-form";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 
 export default async function AdminTabCreate({ sport }: { sport: string }) {
-    const config = await getResolvedSportConfig(sport);
-    if (!config) {
-        return <p className="text-sm text-muted-foreground py-4">Sport config not found.</p>;
-    }
+  const config = await getResolvedSportConfig(sport);
+  if (!config) {
+    return <p className="text-sm text-muted-foreground py-4">Sport config not found.</p>;
+  }
 
-    const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
+  const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
 
-    return (
-        <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">
-                Create Session
-            </h2>
-            <div className="rounded-lg border bg-card p-6">
-                <SessionForm
-                    sport={sport}
-                    sessionTabs={sessionTabs}
-                    defaultTab={config.defaultTab}
-                />
-            </div>
-        </section>
-    );
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold text-foreground">Create Session</h2>
+      <div className="rounded-lg border bg-card p-6">
+        <SessionForm sport={sport} sessionTabs={sessionTabs} defaultTab={config.defaultTab} />
+      </div>
+    </section>
+  );
 }

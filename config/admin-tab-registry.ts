@@ -12,14 +12,14 @@ import CcsaAdminTab from "@/components/softball/admin-tabs/ccsa-sync";
  * implementations and the generic admin page.
  */
 const adminTabComponents: Record<string, ComponentType<{ sport: string }>> = {
-    requests: AdminTabRequests,
-    create: AdminTabCreate,
-    upcoming: AdminTabUpcoming,
-    past: AdminTabPast,
-    settings: AdminTabSettings,
-    ccsa: CcsaAdminTab,
+  requests: AdminTabRequests,
+  create: AdminTabCreate,
+  upcoming: AdminTabUpcoming,
+  past: AdminTabPast,
+  settings: AdminTabSettings,
+  ccsa: CcsaAdminTab,
 };
 
 export function getAdminTabComponent(tabId: string) {
-    return adminTabComponents[tabId];
+  return adminTabComponents[tabId];
 }

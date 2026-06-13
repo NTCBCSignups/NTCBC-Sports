@@ -43,9 +43,7 @@ export default function SignupsTable({
   const hiddenHeaders = new Set(["Timestamp", ...hiddenColumns]);
   if (filterColumn) hiddenHeaders.add(filterColumn.header);
 
-  const displayColumns = columns.filter(
-    (col) => !hiddenHeaders.has(col.header),
-  );
+  const displayColumns = columns.filter((col) => !hiddenHeaders.has(col.header));
   const hasTimestamp = columns.some((col) => col.header === "Timestamp");
 
   const isOverCap = sorted.length > playerCap;
@@ -54,9 +52,7 @@ export default function SignupsTable({
     <div className="flex border-b">
       <div className="flex-1 px-4 py-3 border-r">
         <p className="text-xs text-muted-foreground mb-0.5">Capacity</p>
-        <p
-          className={`text-sm font-semibold ${isOverCap ? colors.warning : "text-foreground"}`}
-        >
+        <p className={`text-sm font-semibold ${isOverCap ? colors.warning : "text-foreground"}`}>
           {sorted.length} / {playerCap}
         </p>
       </div>
@@ -77,9 +73,7 @@ export default function SignupsTable({
         </div>
         <div className="overflow-hidden rounded-lg border bg-card">
           {infoTiles}
-          <div className="p-6 text-center text-sm text-muted-foreground">
-            No sign-ups yet.
-          </div>
+          <div className="p-6 text-center text-sm text-muted-foreground">No sign-ups yet.</div>
         </div>
       </div>
     );
@@ -97,9 +91,7 @@ export default function SignupsTable({
               {displayColumns.map((col) => (
                 <TableHead key={col.header}>{col.header}</TableHead>
               ))}
-              <TableHead className="sticky right-0 bg-muted/50 border-l">
-                Status
-              </TableHead>
+              <TableHead className="sticky right-0 bg-muted/50 border-l">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -107,18 +99,14 @@ export default function SignupsTable({
               const isConfirmed = index < playerCap;
               return (
                 <TableRow key={index}>
-                  <TableCell className="font-mono text-xs">
-                    {index + 1}
-                  </TableCell>
+                  <TableCell className="font-mono text-xs">{index + 1}</TableCell>
                   {hasTimestamp && (
                     <TableCell className="text-xs">
                       {formatTimestamp(response["Timestamp"] ?? "")}
                     </TableCell>
                   )}
                   {displayColumns.map((col) => (
-                    <TableCell key={col.header}>
-                      {response[col.header]}
-                    </TableCell>
+                    <TableCell key={col.header}>{response[col.header]}</TableCell>
                   ))}
                   <TableCell className="sticky right-0 bg-card border-l">
                     <StatusBadge status={isConfirmed ? "confirmed" : "waitlisted"} />

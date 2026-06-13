@@ -1,26 +1,23 @@
 import {
-    Calendar,
-    ClipboardList,
-    History,
-    Plus,
-    RefreshCw,
-    SlidersHorizontal,
-    type LucideIcon,
+  Calendar,
+  ClipboardList,
+  History,
+  Plus,
+  RefreshCw,
+  SlidersHorizontal,
+  type LucideIcon,
 } from "lucide-react";
-import {
-    isAdminTabIconName,
-    type AdminTabIconName,
-} from "@/config/admin-tab-metadata";
+import { isAdminTabIconName, type AdminTabIconName } from "@/config/admin-tab-metadata";
 
 export const adminTabIconMap: Record<AdminTabIconName, LucideIcon> = {
-    ClipboardList,
-    Plus,
-    Calendar,
-    History,
-    RefreshCw,
-    SlidersHorizontal,
+  ClipboardList,
+  Plus,
+  Calendar,
+  History,
+  RefreshCw,
+  SlidersHorizontal,
 };
 
 export function getAdminTabIcon(iconName: string): LucideIcon {
-    return isAdminTabIconName(iconName) ? adminTabIconMap[iconName] : Calendar;
+  return isAdminTabIconName(iconName) ? adminTabIconMap[iconName] : Calendar;
 }

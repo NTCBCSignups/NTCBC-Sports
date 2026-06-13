@@ -7,7 +7,7 @@ import {
   PillColor,
   type SportConfig,
 } from "@/config/config-resolver";
-import { TAB_A, TAB_B, BASE_CONFIG, VALID_DB_ROW } from "../fixtures/config";
+import { TAB_A, BASE_CONFIG, VALID_DB_ROW } from "../fixtures/config";
 
 // ── resolveSportConfig ───────────────────────────────────────────
 
@@ -65,7 +65,10 @@ describe("sportConfigFromDbRow", () => {
   });
 
   it("returns null when notes is not an array", () => {
-    const row = { ...VALID_DB_ROW, config: { ...VALID_DB_ROW.config, notes: "bad" as unknown as string[] } };
+    const row = {
+      ...VALID_DB_ROW,
+      config: { ...VALID_DB_ROW.config, notes: "bad" as unknown as string[] },
+    };
     expect(sportConfigFromDbRow(row)).toBeNull();
   });
 
@@ -130,8 +133,6 @@ describe("getResolvedTab", () => {
 
   it("throws when config has no tabs at all", () => {
     const emptyResolved = resolveSportConfig({ ...BASE_CONFIG, tabs: [] });
-    expect(() => getResolvedTab(emptyResolved, "anything")).toThrow(
-      /no configured session tabs/,
-    );
+    expect(() => getResolvedTab(emptyResolved, "anything")).toThrow(/no configured session tabs/);
   });
 });

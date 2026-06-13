@@ -1,12 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import { sportsConfig as legacySportsConfig } from "@/config/sports-config";
@@ -16,22 +10,14 @@ import { cn } from "@/lib/utils";
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
   const legacySports = Object.values(legacySportsConfig);
-  const dynamicSports = Object.values(dbSportsBySlug).filter(
-    (s) => !(s.id in legacySportsConfig),
-  );
+  const dynamicSports = Object.values(dbSportsBySlug).filter((s) => !(s.id in legacySportsConfig));
   const sports = [...legacySports, ...dynamicSports];
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
       <div>
         <h1 className="text-4xl font-bold text-foreground mb-4 flex items-center gap-3">
-          <Image
-            src="/favicon.ico"
-            alt="NTCBC"
-            width={36}
-            height={36}
-            className="rounded-sm"
-          />
+          <Image src="/favicon.ico" alt="NTCBC" width={36} height={36} className="rounded-sm" />
           NTCBC Sports
         </h1>
       </div>
@@ -39,26 +25,22 @@ export default async function Home() {
       <div className="space-y-2">
         <h2 className="font-semibold text-foreground">About Sports Ministry</h2>
         <p className="text-sm text-muted-foreground">
-          Our sports programs are part of North Toronto Chinese Baptist
-          Church&apos;s (NTCBC) ministry to build community and share the gospel
-          through recreation. Everyone is welcome regardless of skill level or
-          faith background. Come join us for great games and fellowship!
+          Our sports programs are part of North Toronto Chinese Baptist Church&apos;s (NTCBC)
+          ministry to build community and share the gospel through recreation. Everyone is welcome
+          regardless of skill level or faith background. Come join us for great games and
+          fellowship!
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {sports.map((sport) => (
           <Link key={sport.id} href={`/${sport.id}`} className="block">
-            <Card
-              className="flex h-full flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-            >
+            <Card className="flex h-full flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="text-2xl">
                   {sport.emoji} {sport.name}
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  {sport.type}
-                </CardDescription>
+                <CardDescription className="text-muted-foreground">{sport.type}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col flex-1 space-y-4">
                 <div className="flex-1 space-y-2 text-sm text-muted-foreground">
@@ -82,12 +64,7 @@ export default async function Home() {
                     <p className="text-muted-foreground">{sport.description}</p>
                   )}
                 </div>
-                <span
-                  className={cn(
-                    buttonVariants(),
-                    "w-full rounded-full has-[>svg]:px-8",
-                  )}
-                >
+                <span className={cn(buttonVariants(), "w-full rounded-full has-[>svg]:px-8")}>
                   View sign-ups <ArrowRight className="w-4 h-4 shrink-0" />
                 </span>
               </CardContent>

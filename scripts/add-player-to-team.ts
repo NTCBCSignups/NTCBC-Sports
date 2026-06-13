@@ -19,32 +19,30 @@ import { team } from "../lib/softball/ccsa-api";
 const PAC_RE = /^P(\d{5})-([A-Z]{12})$/;
 
 function parseProfileAccessCode(code: string): { playerId: number; playerPw: string } {
-    const match = code.trim().toUpperCase().match(PAC_RE);
-    if (!match) {
-        throw new Error(
-            "Invalid profile access code. Expected format: P00000-AAAAAAAAAAAA",
-        );
-    }
-    return { playerId: parseInt(match[1]!, 10), playerPw: match[2]! };
+  const match = code.trim().toUpperCase().match(PAC_RE);
+  if (!match) {
+    throw new Error("Invalid profile access code. Expected format: P00000-AAAAAAAAAAAA");
+  }
+  return { playerId: parseInt(match[1]!, 10), playerPw: match[2]! };
 }
 
 // ── Main ─────────────────────────────────────────────────────────
 
 async function run(email: string, profileAccessCode: string) {
-    const { playerId, playerPw } = parseProfileAccessCode(profileAccessCode);
+  const { playerId, playerPw } = parseProfileAccessCode(profileAccessCode);
 
-    await ensureAuth(email);
+  await ensureAuth(email);
 
-    const userTeam = await team.userTeam();
-    const teamId = userTeam?.teamid;
-    if (!teamId) {
-        console.error("Could not determine your team ID.");
-        return;
-    }
+  const userTeam = await team.userTeam();
+  const teamId = userTeam?.teamid;
+  if (!teamId) {
+    console.error("Could not determine your team ID.");
+    return;
+  }
 
-    console.log(`Adding player ${playerId} to team ${teamId}...`);
-    const result = await team.addPlayer(teamId, playerId, playerPw);
-    console.log(`Added: ${result.firstname} ${result.lastname} (ID ${result.playerid})`);
+  console.log(`Adding player ${playerId} to team ${teamId}...`);
+  const result = await team.addPlayer(teamId, playerId, playerPw);
+  console.log(`Added: ${result.firstname} ${result.lastname} (ID ${result.playerid})`);
 }
 
 // ── CLI ──────────────────────────────────────────────────────────
@@ -52,7 +50,7 @@ async function run(email: string, profileAccessCode: string) {
 const args = process.argv.slice(2);
 
 if (args.length >= 2) {
-    run(args[0]!, args[1]!).catch(console.error);
+  run(args[0]!, args[1]!).catch(console.error);
 } else {
-    console.log("Usage: npx tsx scripts/add-player-to-team.ts <email> <profile-access-code>");
+  console.log("Usage: npx tsx scripts/add-player-to-team.ts <email> <profile-access-code>");
 }

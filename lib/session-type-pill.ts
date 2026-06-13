@@ -1,8 +1,7 @@
 import { PillColor, type ResolvedSportConfig } from "@/config/config-resolver";
 
 const SESSION_PILL_COLOR_CLASSES: Record<PillColor, string> = {
-  [PillColor.gray]:
-    "border-border bg-muted text-muted-foreground hover:bg-muted",
+  [PillColor.gray]: "border-border bg-muted text-muted-foreground hover:bg-muted",
   [PillColor.emerald]:
     "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
   [PillColor.indigo]:
@@ -23,13 +22,9 @@ export function sessionPillClassFromColor(color: PillColor): string {
   return SESSION_PILL_COLOR_CLASSES[color];
 }
 
-export function sessionTypePillClass(
-  config: ResolvedSportConfig,
-  sessionType: string,
-): string {
+export function sessionTypePillClass(config: ResolvedSportConfig, sessionType: string): string {
   const color =
-    config.tabs.find((tab) => tab.value === sessionType)?.sessionPillColor ??
-    PillColor.gray;
+    config.tabs.find((tab) => tab.value === sessionType)?.sessionPillColor ?? PillColor.gray;
 
   return sessionPillClassFromColor(color);
 }

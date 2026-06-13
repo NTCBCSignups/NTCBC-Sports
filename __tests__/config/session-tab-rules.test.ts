@@ -76,7 +76,9 @@ describe("validateImmutableSessionTabValues", () => {
   it("ignores tabs without an id", () => {
     const prevWithNoId = [{ id: undefined, value: "old" }];
     const nextWithNoId = [{ id: undefined, value: "new" }];
-    expect(validateImmutableSessionTabValues(prevWithNoId, nextWithNoId)).toEqual({ success: true });
+    expect(validateImmutableSessionTabValues(prevWithNoId, nextWithNoId)).toEqual({
+      success: true,
+    });
   });
 
   it("normalizes whitespace when comparing values", () => {

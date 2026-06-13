@@ -1,6 +1,8 @@
 import CustomOrderedView, { CustomOrderedEditor } from "./custom-ordered-view";
 import AttendanceView, { AttendanceEditor } from "./attendance-view";
-import SoftballFieldingView, { SoftballFieldingEditor } from "@/components/softball/session-views/fielding-view";
+import SoftballFieldingView, {
+  SoftballFieldingEditor,
+} from "@/components/softball/session-views/fielding-view";
 import { SessionView } from "./interfaces";
 
 /**
@@ -9,34 +11,26 @@ import { SessionView } from "./interfaces";
  * Admins can create any of these for any session.
  */
 const sessionViewRegistry: Record<string, SessionView> = {
-    attendanceView: new SessionView(
-        "Attendance",
-        AttendanceView,
-        AttendanceEditor,
-    ),
-    customOrderedView: new SessionView(
-        "Custom Ordered View",
-        CustomOrderedView,
-        CustomOrderedEditor,
-    ),
-    softballFieldingView: new SessionView(
-        "CCSA Softball - Fielding View",
-        SoftballFieldingView,
-        SoftballFieldingEditor,
-    ),
+  attendanceView: new SessionView("Attendance", AttendanceView, AttendanceEditor),
+  customOrderedView: new SessionView("Custom Ordered View", CustomOrderedView, CustomOrderedEditor),
+  softballFieldingView: new SessionView(
+    "CCSA Softball - Fielding View",
+    SoftballFieldingView,
+    SoftballFieldingEditor,
+  ),
 };
 
 /** The registry key for the built-in default view. */
 export const DEFAULT_VIEW_TYPE = "attendanceView";
 
 export function getSessionView(viewId: string): SessionView | undefined {
-    return sessionViewRegistry[viewId];
+  return sessionViewRegistry[viewId];
 }
 
 /** Returns all registered view types (id + label) for admin UI. */
 export function getAllSessionViews(): { id: string; label: string }[] {
-    return Object.entries(sessionViewRegistry).map(([id, entry]) => ({
-        id,
-        label: entry.label,
-    }));
+  return Object.entries(sessionViewRegistry).map(([id, entry]) => ({
+    id,
+    label: entry.label,
+  }));
 }

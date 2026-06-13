@@ -9,9 +9,7 @@ export function getSessionPath(
   sessionId: string,
   options: SessionRouteOptions = {},
 ): string {
-  const path = SESSION_ROUTE_PATTERN
-    .replace("{sport}", sport)
-    .replace("{sessionId}", sessionId);
+  const path = SESSION_ROUTE_PATTERN.replace("{sport}", sport).replace("{sessionId}", sessionId);
 
   if (!options.fromTab) return path;
 

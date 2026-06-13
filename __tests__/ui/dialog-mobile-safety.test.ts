@@ -47,9 +47,7 @@ describe("Dialog mobile safety", () => {
     const violations = findViolations();
 
     if (violations.length > 0) {
-      const msg = violations
-        .map((v) => `  ${v.file} — "${v.detail}"`)
-        .join("\n");
+      const msg = violations.map((v) => `  ${v.file} — "${v.detail}"`).join("\n");
       expect.fail(
         `Unprefixed max-w/max-h overrides found:\n${msg}\n\n` +
           `Use a responsive prefix (e.g. sm:max-w-lg) to preserve mobile constraints.`,

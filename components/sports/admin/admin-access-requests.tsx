@@ -31,25 +31,17 @@ interface AdminAccessRequestsProps {
   requests: AccessRequestRow[];
 }
 
-export default function AdminAccessRequests({
-  sport,
-  requests,
-}: AdminAccessRequestsProps) {
+export default function AdminAccessRequests({ sport, requests }: AdminAccessRequestsProps) {
   const [pending, setPending] = useState<string | null>(null);
 
-  const handleReview = async (
-    requestId: string,
-    status: "approved" | "rejected",
-  ) => {
+  const handleReview = async (requestId: string, status: "approved" | "rejected") => {
     setPending(requestId);
     await reviewTeamAccessRequest(sport, requestId, status);
     setPending(null);
   };
 
   if (requests.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-4">No access requests.</p>
-    );
+    return <p className="text-sm text-muted-foreground py-4">No access requests.</p>;
   }
 
   return (
@@ -67,9 +59,7 @@ export default function AdminAccessRequests({
         <TableBody>
           {requests.map((request) => (
             <TableRow key={request.id}>
-              <TableCell>
-                {displayName(request.profiles)}
-              </TableCell>
+              <TableCell>{displayName(request.profiles)}</TableCell>
               <TableCell className="text-sm text-muted-foreground">
                 {request.profiles?.email ?? "—"}
               </TableCell>

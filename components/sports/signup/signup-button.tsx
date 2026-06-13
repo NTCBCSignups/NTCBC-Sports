@@ -47,14 +47,10 @@ const signupToastClassByStatus: Record<ActiveSignupStatus, string> = {
 
 function signupMessage(placement: SignupPlacement): string {
   if (placement.status === "waitlisted") {
-    return `You are on the waitlist.${
-      placement.position ? ` You are #${placement.position}` : ""
-    }`;
+    return `You are on the waitlist.${placement.position ? ` You are #${placement.position}` : ""}`;
   }
 
-  const position = placement.position
-    ? `#${placement.position}`
-    : "on the list";
+  const position = placement.position ? `#${placement.position}` : "on the list";
   const cap = placement.playerCap ? ` / ${placement.playerCap}` : "";
   return `You are confirmed for this session. You are ${position}${cap}`;
 }
@@ -109,7 +105,6 @@ export default function SignupButton({
   const handleCancel = async () => {
     setPending(true);
     setError(null);
-    const previousStatus = localStatus;
     const result = await cancelSignup(sessionId);
     if ("error" in result) {
       setError(result.error);
@@ -136,9 +131,12 @@ export default function SignupButton({
   };
 
   const confirmationDialog = signupConfirmationDialog && (
-    <AlertDialog open={showConfirmDialog} onOpenChange={(open) => {
-      if (!open && !showRejectedMessage) setShowConfirmDialog(false);
-    }}>
+    <AlertDialog
+      open={showConfirmDialog}
+      onOpenChange={(open) => {
+        if (!open && !showRejectedMessage) setShowConfirmDialog(false);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Signup Confirmation</AlertDialogTitle>
@@ -150,28 +148,34 @@ export default function SignupButton({
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row justify-end">
           {showRejectedMessage ? (
-            <AlertDialogCancel onClick={() => {
-              setShowConfirmDialog(false);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowConfirmDialog(false);
+              }}
+            >
               Dismiss
             </AlertDialogCancel>
           ) : (
             <>
-              <AlertDialogAction onClick={(e) => {
-                e.preventDefault();
-                handleConfirmYes();
-              }}>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleConfirmYes();
+                }}
+              >
                 Yes
               </AlertDialogAction>
-              <AlertDialogCancel onClick={(e) => {
-                e.preventDefault();
-                const hasRejectedMessage = !!signupConfirmationDialog.rejectedMessage;
-                if (hasRejectedMessage) {
-                  setShowRejectedMessage(true);
-                } else {
-                  setShowConfirmDialog(false);
-                }
-              }}>
+              <AlertDialogCancel
+                onClick={(e) => {
+                  e.preventDefault();
+                  const hasRejectedMessage = !!signupConfirmationDialog.rejectedMessage;
+                  if (hasRejectedMessage) {
+                    setShowRejectedMessage(true);
+                  } else {
+                    setShowConfirmDialog(false);
+                  }
+                }}
+              >
                 No
               </AlertDialogCancel>
             </>
@@ -214,8 +218,7 @@ export default function SignupButton({
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {showStatusText && (
             <span className="text-sm text-muted-foreground">
-              You marked this session as{" "}
-              <span className="font-semibold">unable to join</span>.
+              You marked this session as <span className="font-semibold">unable to join</span>.
             </span>
           )}
           <div className="flex flex-wrap gap-2">
@@ -246,13 +249,7 @@ export default function SignupButton({
 
   if (!isOpen) {
     return (
-      <Button
-        disabled
-        className={cn(
-          "px-8 has-[>svg]:px-8",
-          buttonClassName,
-        )}
-      >
+      <Button disabled className={cn("px-8 has-[>svg]:px-8", buttonClassName)}>
         <Lock className="h-4 w-4 shrink-0" />
         Sign-ups closed
       </Button>
@@ -261,13 +258,7 @@ export default function SignupButton({
 
   if (!isEligible) {
     return (
-      <Button
-        disabled
-        className={cn(
-          "px-8 has-[>svg]:px-8",
-          buttonClassName,
-        )}
-      >
+      <Button disabled className={cn("px-8 has-[>svg]:px-8", buttonClassName)}>
         Team members only
       </Button>
     );
@@ -279,10 +270,7 @@ export default function SignupButton({
         <Button
           onClick={initiateSignup}
           disabled={pending}
-          className={cn(
-            "px-8 has-[>svg]:px-8",
-            buttonClassName,
-          )}
+          className={cn("px-8 has-[>svg]:px-8", buttonClassName)}
         >
           {pending ? "Signing up..." : "Sign up"}
         </Button>
@@ -290,10 +278,7 @@ export default function SignupButton({
           variant="outline"
           onClick={handleDecline}
           disabled={pending}
-          className={cn(
-            "px-8",
-            buttonClassName,
-          )}
+          className={cn("px-8", buttonClassName)}
         >
           {pending ? "..." : "Unable to join"}
         </Button>
