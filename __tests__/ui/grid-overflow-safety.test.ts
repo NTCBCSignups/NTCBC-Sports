@@ -29,12 +29,12 @@ function findViolations(): FileViolation[] {
     // Only check files that contain form-related elements
     if (!/(<form|<Input|<Select|<Textarea)/i.test(content)) continue;
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    for (const [i, line] of lines.entries()) {
       const classMatches = [...line.matchAll(/className="([^"]*\bgrid\b[^"]*)"/g)];
 
       for (const match of classMatches) {
         const classes = match[1];
+        if (!classes) continue;
         // Only flag grids that define responsive column layouts
         if (!/(?:sm|md|lg|xl|2xl)?:?grid-cols-/.test(classes)) continue;
         // Check if min-w-0 is present (either on grid or as child selector)
