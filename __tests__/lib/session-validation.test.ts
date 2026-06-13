@@ -1,25 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { createSessionInputSchema } from "@/lib/actions/session-validation";
-
-// ── Fixtures ─────────────────────────────────────────────────────
-
-const VALID_INPUT = {
-  session_type: "regular",
-  title: "Week 1",
-  date: "2025-03-15",
-  time_start: "18:00",
-  time_end: "20:00",
-  location_name: "Gym",
-  location_address: "123 Main St",
-  location_maps_link: null,
-  player_cap: 12,
-  signup_open: "2025-03-14T09:00",
-  signup_close: "2025-03-15T17:00",
-  notes: null,
-};
+import { VALID_SESSION_INPUT } from "../fixtures/session";
 
 function parseInput(overrides: Record<string, unknown> = {}) {
-  return createSessionInputSchema.safeParse({ ...VALID_INPUT, ...overrides });
+  return createSessionInputSchema.safeParse({ ...VALID_SESSION_INPUT, ...overrides });
 }
 
 function getErrors(overrides: Record<string, unknown> = {}) {

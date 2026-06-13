@@ -4,72 +4,10 @@ import {
   sportConfigFromDbRow,
   resolveSportConfigRow,
   getResolvedTab,
-  AccessLevel,
-  Role,
   PillColor,
   type SportConfig,
-  type SportConfigDbRow,
-  type SessionTab,
 } from "@/config/config-resolver";
-
-// ── Fixtures ─────────────────────────────────────────────────────
-
-const TAB_A: SessionTab = {
-  id: "tab-a",
-  value: "regular",
-  label: "Regular",
-  sessionPillColor: PillColor.emerald,
-  permissions: {
-    [AccessLevel.overview]: Role.anon,
-    [AccessLevel.view]: Role.anon,
-    [AccessLevel.signup]: Role.user,
-    [AccessLevel.admin]: Role.admin,
-  },
-};
-
-const TAB_B: SessionTab = {
-  id: "tab-b",
-  value: "competitive",
-  label: "Competitive",
-  sessionPillColor: PillColor.indigo,
-  permissions: {
-    [AccessLevel.overview]: Role.anon,
-    [AccessLevel.view]: Role.anon,
-    [AccessLevel.signup]: Role.teamUser,
-    [AccessLevel.admin]: Role.admin,
-  },
-};
-
-const BASE_CONFIG: SportConfig = {
-  id: "volleyball",
-  emoji: "🏐",
-  name: "Volleyball",
-  type: "volleyball",
-  day: "Saturdays",
-  organizers: "John",
-  location: { name: "Gym", address: "123 St" },
-  notes: ["Bring shoes"],
-  tabs: [TAB_A, TAB_B],
-};
-
-const VALID_DB_ROW: SportConfigDbRow = {
-  id: "volleyball",
-  auth_enabled: true,
-  emoji: "🏐",
-  name: "Volleyball",
-  type: "volleyball",
-  description: null,
-  config: {
-    day: "Saturdays",
-    organizers: "John",
-    location: { name: "Gym", address: "123 St" },
-    notes: ["Bring shoes"],
-    tabs: [TAB_A],
-  },
-  updated_by: null,
-  updated_at: "2024-01-01",
-  created_at: "2024-01-01",
-};
+import { TAB_A, TAB_B, BASE_CONFIG, VALID_DB_ROW } from "../fixtures/config";
 
 // ── resolveSportConfig ───────────────────────────────────────────
 

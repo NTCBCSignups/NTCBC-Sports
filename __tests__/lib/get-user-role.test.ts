@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getUserRole } from "@/lib/supabase/user";
 import { Role } from "@/config/config-resolver";
-import type { User } from "@supabase/supabase-js";
-
-const MOCK_USER = { id: "user-123" } as User;
+import { MOCK_USER } from "../fixtures/user";
 
 describe("getUserRole", () => {
   it("returns anon when user is null", () => {
