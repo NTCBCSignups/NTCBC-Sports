@@ -4,8 +4,8 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
     alias: {
-      "server-only": new URL("./__tests__/stubs/server-only.ts", import.meta.url).pathname,
-      "next/headers": new URL("./__tests__/stubs/next-headers.ts", import.meta.url).pathname,
+      "server-only": new URL("./__tests__/mocks/server-only.ts", import.meta.url).pathname,
+      "next/headers": new URL("./__tests__/mocks/next-headers.ts", import.meta.url).pathname,
     },
   },
   test: {
