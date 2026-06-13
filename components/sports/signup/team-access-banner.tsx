@@ -46,7 +46,12 @@ export default function TeamAccessBanner({
         variant="warning"
         icon={<Clock className={`h-5 w-5 ${colors.warning} shrink-0 mt-0.5`} />}
         title="Request pending"
-        message={<>Your request to join the team is awaiting leader approval. You&apos;ll be able to sign up for {restrictedLabels} once approved.</>}
+        message={
+          <>
+            Your request to join the team is awaiting leader approval. You&apos;ll be able to sign
+            up for {restrictedLabels} once approved.
+          </>
+        }
       />
     );
   }
@@ -67,13 +72,18 @@ export default function TeamAccessBanner({
       variant="info"
       icon={<Shield className="h-5 w-5 text-info shrink-0 mt-0.5" />}
       title="Team members only"
-      message={<>{bannerMessage || <>{restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved for approved team members. Request access to sign up for those sessions.</>}</>}
+      message={
+        <>
+          {bannerMessage || (
+            <>
+              {restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved
+              for approved team members. Request access to sign up for those sessions.
+            </>
+          )}
+        </>
+      }
     >
-      <Button
-        size="sm"
-        onClick={handleRequest}
-        disabled={pending}
-      >
+      <Button size="sm" onClick={handleRequest} disabled={pending}>
         {pending ? "Requesting..." : "Request to join"}
       </Button>
     </StatusBanner>

@@ -1,7 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AccessRequestStatus, Profile, SignupStatus, SportSession } from "@/lib/supabase/types";
+import type {
+  AccessRequestStatus,
+  Profile,
+  SignupStatus,
+  SportSession,
+} from "@/lib/supabase/types";
 import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resolver";
 
 // ── Data functions ──────────────────────────────────────────────
@@ -9,219 +14,212 @@ import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resol
 
 /** Upcoming sessions with signup counts for a sport page. */
 export async function getUpcomingSessions(sport: string) {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("sessions")
-        .select("*, signups(count)")
-        .eq("sport", sport)
-        .neq("signups.status", "cancelled")
-        .neq("signups.status", "declined")
-        .gte("date", getTodayInSportTimezone())
-        .order("date", { ascending: true })
-        .returns<(SportSession & { signups: [{ count: number }] })[]>();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sessions")
+    .select("*, signups(count)")
+    .eq("sport", sport)
+    .neq("signups.status", "cancelled")
+    .neq("signups.status", "declined")
+    .gte("date", getTodayInSportTimezone())
+    .order("date", { ascending: true })
+    .returns<(SportSession & { signups: [{ count: number }] })[]>();
 
-    return (data ?? []).map((s) => ({
-        ...s,
-        signup_count: s.signups[0]?.count ?? 0,
-    }));
+  return (data ?? []).map((s) => ({
+    ...s,
+    signup_count: s.signups[0]?.count ?? 0,
+  }));
 }
 
 /** All sessions for admin view (upcoming + past). */
 export async function getAllSessions(sport: string) {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("sessions")
-        .select("*")
-        .eq("sport", sport)
-        .order("date", { ascending: false });
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("sport", sport)
+    .order("date", { ascending: false });
 
-    return data ?? [];
+  return data ?? [];
 }
 
 /** Sessions for a sport using a provided client (e.g., admin client for API routes). */
 export async function getSessionsWithClient(
-    supabase: SupabaseClient,
-    sport: string,
-    options?: { includeHistory?: boolean },
+  supabase: SupabaseClient,
+  sport: string,
+  options?: { includeHistory?: boolean },
 ): Promise<SportSession[]> {
-    let query = supabase
-        .from("sessions")
-        .select("*")
-        .eq("sport", sport);
+  let query = supabase.from("sessions").select("*").eq("sport", sport);
 
-    if (!options?.includeHistory) {
-        query = query.gte("date", getTodayInSportTimezone());
-    }
+  if (!options?.includeHistory) {
+    query = query.gte("date", getTodayInSportTimezone());
+  }
 
-    const { data } = await query
-        .order("date", { ascending: true })
-        .returns<SportSession[]>();
+  const { data } = await query.order("date", { ascending: true }).returns<SportSession[]>();
 
-    return data ?? [];
+  return data ?? [];
 }
 
 /** Single session by ID. */
 export async function getSession(sessionId: string) {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("sessions")
-        .select("*")
-        .eq("id", sessionId)
-        .single();
+  const supabase = await createClient();
+  const { data } = await supabase.from("sessions").select("*").eq("id", sessionId).single();
 
-    return data;
+  return data;
 }
 
 /** All signups for a session (with profile info). */
 export async function getSessionSignups(sessionId: string) {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("signups")
-        .select("*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true });
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("signups")
+    .select("*, profiles(id, email, full_name, avatar_url, role, created_at, updated_at)")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true });
 
-    return (data ?? []).map((s) => ({
-        ...s,
-        profiles: (s.profiles ?? null) as Profile | null,
-    }));
+  return (data ?? []).map((s) => ({
+    ...s,
+    profiles: (s.profiles ?? null) as Profile | null,
+  }));
 }
 
 /** Access requests for a sport (admin view). */
 export async function getAccessRequests(sport: string) {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("team_access_requests")
-        .select(
-            "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
-        )
-        .eq("sport", sport)
-        .order("created_at", { ascending: false });
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("team_access_requests")
+    .select(
+      "*, profiles!team_access_requests_user_id_fkey(id, email, full_name, avatar_url, role, created_at, updated_at)",
+    )
+    .eq("sport", sport)
+    .order("created_at", { ascending: false });
 
-    return (data ?? []).map((r) => ({
-        ...r,
-        profiles: (r.profiles ?? null) as Profile | null,
-    }));
+  return (data ?? []).map((r) => ({
+    ...r,
+    profiles: (r.profiles ?? null) as Profile | null,
+  }));
 }
 
 /** Team member user IDs for a sport. */
 export async function getTeamMembers(sport: string) {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("sport_roles")
-        .select("user_id")
-        .eq("sport", sport)
-        .eq("is_team_member", true);
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sport_roles")
+    .select("user_id")
+    .eq("sport", sport)
+    .eq("is_team_member", true);
 
-    return new Set((data ?? []).map((m) => m.user_id));
+  return new Set((data ?? []).map((m) => m.user_id));
 }
 
 /** Current user's access request status for a sport. */
 export async function getUserAccessRequestStatus(
-    userId: string,
-    sport: string,
+  userId: string,
+  sport: string,
 ): Promise<AccessRequestStatus | null> {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("team_access_requests")
-        .select("status")
-        .eq("user_id", userId)
-        .eq("sport", sport)
-        .single();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("team_access_requests")
+    .select("status")
+    .eq("user_id", userId)
+    .eq("sport", sport)
+    .single();
 
-    return (data?.status as AccessRequestStatus) ?? null;
+  return (data?.status as AccessRequestStatus) ?? null;
 }
 
 /** Current user's signup statuses for a list of sessions. */
 export async function getUserSignupStatuses(
-    userId: string,
-    sessionIds: string[],
+  userId: string,
+  sessionIds: string[],
 ): Promise<Map<string, SignupStatus>> {
-    if (sessionIds.length === 0) return new Map();
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("signups")
-        .select("session_id, status")
-        .eq("user_id", userId)
-        .in("session_id", sessionIds)
-        .neq("status", "cancelled");
+  if (sessionIds.length === 0) return new Map();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("signups")
+    .select("session_id, status")
+    .eq("user_id", userId)
+    .in("session_id", sessionIds)
+    .neq("status", "cancelled");
 
-    return new Map(
-        (data ?? []).map((s) => [s.session_id, s.status as SignupStatus]),
-    );
+  return new Map((data ?? []).map((s) => [s.session_id, s.status as SignupStatus]));
 }
 
 /** Current user's signup status for a single session. */
 export async function getUserSignupStatus(
-    userId: string,
-    sessionId: string,
+  userId: string,
+  sessionId: string,
 ): Promise<SignupStatus | null> {
-    const supabase = await createClient();
-    const { data } = await supabase
-        .from("signups")
-        .select("status")
-        .eq("session_id", sessionId)
-        .eq("user_id", userId)
-        .neq("status", "cancelled")
-        .single();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("signups")
+    .select("status")
+    .eq("session_id", sessionId)
+    .eq("user_id", userId)
+    .neq("status", "cancelled")
+    .single();
 
-    return (data?.status as SignupStatus) ?? null;
+  return (data?.status as SignupStatus) ?? null;
 }
 
 function normalizeSportConfigPayload(payload: unknown): SportConfigPayload {
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-        return {};
-    }
-    return payload as SportConfigPayload;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return {};
+  }
+  return payload as SportConfigPayload;
 }
 
 function mapSportConfigRow(row: {
-    id: string;
-    auth_enabled: boolean;
-    emoji: string;
-    name: string;
-    type: string;
-    description: string | null;
-    config: unknown;
-    updated_by: string | null;
-    updated_at: string;
-    created_at: string;
+  id: string;
+  auth_enabled: boolean;
+  emoji: string;
+  name: string;
+  type: string;
+  description: string | null;
+  config: unknown;
+  updated_by: string | null;
+  updated_at: string;
+  created_at: string;
 }): SportConfigDbRow {
-    return {
-        id: row.id,
-        auth_enabled: row.auth_enabled,
-        emoji: row.emoji,
-        name: row.name,
-        type: row.type,
-        description: row.description,
-        config: normalizeSportConfigPayload(row.config),
-        updated_by: row.updated_by,
-        updated_at: row.updated_at,
-        created_at: row.created_at,
-    };
+  return {
+    id: row.id,
+    auth_enabled: row.auth_enabled,
+    emoji: row.emoji,
+    name: row.name,
+    type: row.type,
+    description: row.description,
+    config: normalizeSportConfigPayload(row.config),
+    updated_by: row.updated_by,
+    updated_at: row.updated_at,
+    created_at: row.created_at,
+  };
 }
 
 /** Single sport config row by sport id. */
 export async function getSportConfigRow(sport: string): Promise<SportConfigDbRow | null> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-        .from("sport_configs")
-        .select("id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at")
-        .eq("id", sport)
-        .maybeSingle();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("sport_configs")
+    .select(
+      "id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at",
+    )
+    .eq("id", sport)
+    .maybeSingle();
 
-    if (error || !data) return null;
-    return mapSportConfigRow(data);
+  if (error || !data) return null;
+  return mapSportConfigRow(data);
 }
 
 /** All sport config rows. */
 export async function getSportConfigRows(): Promise<SportConfigDbRow[]> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-        .from("sport_configs")
-        .select("id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at")
-        .order("id", { ascending: true });
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("sport_configs")
+    .select(
+      "id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at",
+    )
+    .order("id", { ascending: true });
 
-    if (error || !data) return [];
-    return data.map((row) => mapSportConfigRow(row));
+  if (error || !data) return [];
+  return data.map((row) => mapSportConfigRow(row));
 }

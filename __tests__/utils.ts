@@ -25,7 +25,5 @@ export function walkDir(dir: string, ext: string): string[] {
 
 /** Format violations into a readable failure message. */
 export function formatViolations(violations: FileViolation[]): string {
-  return violations
-    .map((v) => `  ${v.file}:${v.line}\n    ${v.detail}`)
-    .join("\n");
+  return violations.map((v) => `  ${v.file}:${v.line}\n    ${v.detail}`).join("\n");
 }

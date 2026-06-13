@@ -29,6 +29,8 @@ describe("getUserRole", () => {
   });
 
   it("returns teamUser when only teamUser is true (admin is false)", () => {
-    expect(getUserRole(MOCK_USER, { [Role.admin]: false, [Role.teamUser]: true })).toBe(Role.teamUser);
+    expect(getUserRole(MOCK_USER, { [Role.admin]: false, [Role.teamUser]: true })).toBe(
+      Role.teamUser,
+    );
   });
 });

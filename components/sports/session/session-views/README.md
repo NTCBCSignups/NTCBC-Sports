@@ -21,14 +21,14 @@ import { useImperativeHandle } from "react";
 import type { SessionViewEditorProps } from "@/components/sports/session-views/interfaces";
 
 export function MyEditor({ signups, viewData, ref }: SessionViewEditorProps) {
-    const [state, setState] = useState(parseInitialData(viewData));
+  const [state, setState] = useState(parseInitialData(viewData));
 
-    // This is how the dialog pulls your data on save — no onChange callback needed.
-    useImperativeHandle(ref, () => ({
-        getCurrentData: () => state,
-    }));
+  // This is how the dialog pulls your data on save — no onChange callback needed.
+  useImperativeHandle(ref, () => ({
+    getCurrentData: () => state,
+  }));
 
-    return <div>...</div>;
+  return <div>...</div>;
 }
 ```
 

@@ -12,33 +12,30 @@ import { ensureAuth } from "./ccsa-test-client";
 import { team } from "../lib/softball/ccsa-api";
 
 async function run(email: string) {
-    await ensureAuth(email);
+  await ensureAuth(email);
 
-    // Get user's team
-    console.log("\nFetching user team...");
-    const userTeam = await team.userTeam();
-    console.log("User team:", JSON.stringify(userTeam, null, 2));
+  // Get user's team
+  console.log("\nFetching user team...");
+  const userTeam = await team.userTeam();
+  console.log("User team:", JSON.stringify(userTeam, null, 2));
 
-    const teamId = userTeam?.teamid;
-    if (!teamId) {
-        console.error("Could not determine team ID from:", userTeam);
-        return;
-    }
+  const teamId = userTeam?.teamid;
+  if (!teamId) {
+    console.error("Could not determine team ID from:", userTeam);
+    return;
+  }
 
-    // Pull allPlayerInfo
-    console.log(`\nFetching allPlayerInfo for team ${teamId}...`);
-    const allPlayerInfo = await team.allPlayerInfo(teamId);
-    console.log(
-        "allPlayerInfo:",
-        JSON.stringify(allPlayerInfo, null, 2)
-    );
+  // Pull allPlayerInfo
+  console.log(`\nFetching allPlayerInfo for team ${teamId}...`);
+  const allPlayerInfo = await team.allPlayerInfo(teamId);
+  console.log("allPlayerInfo:", JSON.stringify(allPlayerInfo, null, 2));
 }
 
 // CLI
 const args = process.argv.slice(2);
 
 if (args.length >= 1) {
-    run(args[0]!).catch(console.error);
+  run(args[0]!).catch(console.error);
 } else {
-    console.log("Usage: npx tsx scripts/get-allplayerinfo.ts <email>");
+  console.log("Usage: npx tsx scripts/get-allplayerinfo.ts <email>");
 }

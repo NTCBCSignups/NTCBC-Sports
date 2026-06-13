@@ -26,15 +26,19 @@ interface AdminLayoutProps {
   children: ReactNode;
 }
 
-export default function AdminLayout({ pendingRequestCount, tabs, defaultTab, children }: AdminLayoutProps) {
+export default function AdminLayout({
+  pendingRequestCount,
+  tabs,
+  defaultTab,
+  children,
+}: AdminLayoutProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const requestedTab = searchParams.get("tab");
-  const resolvedTab = requestedTab && tabs.some((tab) => tab.id === requestedTab)
-    ? requestedTab
-    : defaultTab;
+  const resolvedTab =
+    requestedTab && tabs.some((tab) => tab.id === requestedTab) ? requestedTab : defaultTab;
   const serverTab = resolvedTab;
   const [activeTab, setActiveTab] = useOptimistic(serverTab);
 
@@ -124,9 +128,7 @@ export default function AdminLayout({ pendingRequestCount, tabs, defaultTab, chi
       {/* Content area — show loading instantly on tab switch */}
       <div className="flex-1 min-w-0">
         {isPending && <LoadingAdminContent />}
-        <div className={isPending ? "hidden" : undefined}>
-          {children}
-        </div>
+        <div className={isPending ? "hidden" : undefined}>{children}</div>
       </div>
     </>
   );

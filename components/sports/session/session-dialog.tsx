@@ -51,7 +51,9 @@ export default function SessionDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update the session details below." : "Fill in the details to create a new session."}
+            {isEdit
+              ? "Update the session details below."
+              : "Fill in the details to create a new session."}
           </DialogDescription>
         </DialogHeader>
         <SessionForm

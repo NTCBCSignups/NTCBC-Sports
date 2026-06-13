@@ -28,9 +28,7 @@ export function resolveSportConfig(config: SportConfig): ResolvedSportConfig {
   return {
     ...config,
     tabs,
-    hasRestrictedAccess: tabs.some(
-      (t) => t.permissions[AccessLevel.signup] > Role.user,
-    ),
+    hasRestrictedAccess: tabs.some((t) => t.permissions[AccessLevel.signup] > Role.user),
   };
 }
 
@@ -43,10 +41,12 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isLocation(value: SportConfig["location"] | undefined): value is SportConfig["location"] {
-  return !!value
-    && isNonEmptyString(value.name)
-    && isNonEmptyString(value.address)
-    && (value.mapsLink === undefined || typeof value.mapsLink === "string");
+  return (
+    !!value &&
+    isNonEmptyString(value.name) &&
+    isNonEmptyString(value.address) &&
+    (value.mapsLink === undefined || typeof value.mapsLink === "string")
+  );
 }
 
 /**
@@ -114,4 +114,3 @@ export function getResolvedTab(config: ResolvedSportConfig, sessionType: string)
     label: sessionType,
   };
 }
-

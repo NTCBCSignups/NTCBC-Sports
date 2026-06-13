@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink } from "lucide-react";
-import { createSession, updateSession, type CreateSessionResult } from "@/lib/actions/sessions";
+import { createSession, updateSession } from "@/lib/actions/sessions";
 import { parseSessionInput } from "@/lib/actions/session-validation";
 import { getSessionPath } from "@/lib/session-route";
 import type { SportSession } from "@/lib/supabase/types";
@@ -69,21 +69,14 @@ export default function SessionForm({
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
   const defaultSessionType = session?.session_type ?? defaultTab ?? sessionTabs[0]?.value ?? "";
-  const [sessionType, setSessionType] =
-    useState(defaultSessionType);
+  const [sessionType, setSessionType] = useState(defaultSessionType);
   const [mapsLink, setMapsLink] = useState(session?.location_maps_link ?? "");
 
   const autoFillSignupClose = (form: HTMLFormElement) => {
     const date = (form.elements.namedItem("date") as HTMLInputElement)?.value;
-    const timeEnd = (
-      form.elements.namedItem("time_end") as HTMLInputElement
-    )?.value;
-    const signupCloseInput = form.elements.namedItem(
-      "signup_close",
-    ) as HTMLInputElement;
-    const signupOpenInput = form.elements.namedItem(
-      "signup_open",
-    ) as HTMLInputElement;
+    const timeEnd = (form.elements.namedItem("time_end") as HTMLInputElement)?.value;
+    const signupCloseInput = form.elements.namedItem("signup_close") as HTMLInputElement;
+    const signupOpenInput = form.elements.namedItem("signup_open") as HTMLInputElement;
 
     // Auto-fill signup_close if it's empty and we have both date and time_end
     if (date && timeEnd && signupCloseInput && !signupCloseInput.value) {
@@ -178,24 +171,21 @@ export default function SessionForm({
     setPending(false);
   };
 
-  const createdSessionHref = createdSessionId
-    ? getSessionPath(sport, createdSessionId)
-    : "#";
+  const createdSessionHref = createdSessionId ? getSessionPath(sport, createdSessionId) : "#";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
       <div className="space-y-2">
         <Label htmlFor="session_type">Session Type</Label>
-        <Select
-          value={sessionType}
-          onValueChange={(v) => setSessionType(v)}
-        >
+        <Select value={sessionType} onValueChange={(v) => setSessionType(v)}>
           <SelectTrigger id="session_type">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {sessionTabs.map((tab) => (
-              <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
+              <SelectItem key={tab.value} value={tab.value}>
+                {tab.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -206,7 +196,12 @@ export default function SessionForm({
           <Label htmlFor="title">
             Title <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Input id="title" name="title" placeholder="e.g. Week 5 vs Team B" defaultValue={session?.title ?? ""} />
+          <Input
+            id="title"
+            name="title"
+            placeholder="e.g. Week 5 vs Team B"
+            defaultValue={session?.title ?? ""}
+          />
         </div>
 
         <div className="space-y-2">
@@ -248,7 +243,14 @@ export default function SessionForm({
 
         <div className="space-y-2">
           <Label htmlFor="time_end">End Time</Label>
-          <Input id="time_end" name="time_end" type="time" required defaultValue={session?.time_end} onChange={handleDateOrTimeChange} />
+          <Input
+            id="time_end"
+            name="time_end"
+            type="time"
+            required
+            defaultValue={session?.time_end}
+            onChange={handleDateOrTimeChange}
+          />
         </div>
 
         <div className="space-y-2">
@@ -319,7 +321,9 @@ export default function SessionForm({
                   const form = document.getElementById("signup_close")?.closest("form");
                   const dateInput = form?.elements.namedItem("date") as HTMLInputElement | null;
                   if (dateInput?.value) {
-                    const signupCloseInput = form?.elements.namedItem("signup_close") as HTMLInputElement;
+                    const signupCloseInput = form?.elements.namedItem(
+                      "signup_close",
+                    ) as HTMLInputElement;
                     signupCloseInput.value = `${dateInput.value}T23:59`;
                   }
                 }}
@@ -361,7 +365,13 @@ export default function SessionForm({
       )}
 
       <Button type="submit" disabled={pending}>
-        {pending ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Session")}
+        {pending
+          ? isEdit
+            ? "Saving..."
+            : "Creating..."
+          : isEdit
+            ? "Save Changes"
+            : "Create Session"}
       </Button>
     </form>
   );

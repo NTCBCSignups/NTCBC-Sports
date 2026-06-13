@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
   output: "standalone",
   headers: async () => [
@@ -21,6 +23,22 @@ const nextConfig: NextConfig = {
         {
           key: "Permissions-Policy",
           value: "camera=(), microphone=(), geolocation=()",
+        },
+        {
+          key: "Content-Security-Policy",
+          value: [
+            "default-src 'self'",
+            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com`,
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob: https://*.googleusercontent.com https://*.supabase.co",
+            "font-src 'self'",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://va.vercel-scripts.com",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "upgrade-insecure-requests",
+          ].join("; "),
         },
       ],
     },

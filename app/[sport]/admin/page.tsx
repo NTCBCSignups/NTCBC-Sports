@@ -3,11 +3,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import PageHeader from "@/components/sports/page-header";
-import {
-  type AdminTabMeta,
-  type ResolvedSportConfig,
-  Role,
-} from "@/config/config-resolver";
+import { type AdminTabMeta, type ResolvedSportConfig, Role } from "@/config/config-resolver";
 import { SETTINGS_ADMIN_TAB } from "@/config/admin-tab-metadata";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import AdminLayout from "@/components/sports/admin/admin-sidebar";
@@ -44,14 +40,11 @@ async function AdminShell({
 }) {
   const adminTabs = withSettingsTab(config.adminTabs ?? []);
   const defaultTab = resolveDefaultAdminTab(adminTabs, config.defaultAdminTab);
-  const activeTab = requestedTab && adminTabs.some((tab) => tab.id === requestedTab)
-    ? requestedTab
-    : defaultTab;
+  const activeTab =
+    requestedTab && adminTabs.some((tab) => tab.id === requestedTab) ? requestedTab : defaultTab;
 
   const accessRequests = await getAccessRequests(sport);
-  const pendingRequestCount = accessRequests.filter(
-    (r) => r.status === "pending",
-  ).length;
+  const pendingRequestCount = accessRequests.filter((r) => r.status === "pending").length;
 
   const TabComponent = getAdminTabComponent(activeTab);
 
@@ -94,11 +87,7 @@ export default async function AdminPage({
 
       <div className="flex flex-col md:flex-row gap-8">
         <Suspense fallback={<LoadingAdminContent />}>
-          <AdminShell
-            sport={sport}
-            requestedTab={tab}
-            config={config}
-          />
+          <AdminShell sport={sport} requestedTab={tab} config={config} />
         </Suspense>
       </div>
     </div>

@@ -6,8 +6,8 @@ For CCSA, session cookies are persisted to a temp file (`ccsa-cookies.json` in `
 
 ## Files
 
-| Script | Purpose |
-|---|---|
-| `ccsa-test-client.ts` | Shared CCSA API client & auth helpers |
-| `get-allplayerinfo.ts` | Fetch team roster |
-| `add-player-to-team.ts` | Add a player by profile access code |
+| Script                  | Purpose                               |
+| ----------------------- | ------------------------------------- |
+| `ccsa-test-client.ts`   | Shared CCSA API client & auth helpers |
+| `get-allplayerinfo.ts`  | Fetch team roster                     |
+| `add-player-to-team.ts` | Add a player by profile access code   |

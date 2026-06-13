@@ -9,15 +9,14 @@ import { parseSessionInput, type CreateSessionInput } from "@/lib/actions/sessio
 
 export type { CreateSessionInput } from "@/lib/actions/session-validation";
 
-export type CreateSessionResult =
-  | { error: string }
-  | { success: true; sessionId: string };
+export type CreateSessionResult = { error: string } | { success: true; sessionId: string };
 
-export type SessionActionResult =
-  | { error: string }
-  | { success: true };
+export type SessionActionResult = { error: string } | { success: true };
 
-export async function createSession(sport: string, input: CreateSessionInput): Promise<CreateSessionResult> {
+export async function createSession(
+  sport: string,
+  input: CreateSessionInput,
+): Promise<CreateSessionResult> {
   const parsed = parseSessionInput(input);
   if (!parsed.success) return { error: parsed.error };
 
@@ -54,10 +53,7 @@ export async function updateSession(
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const { error } = await supabase
-    .from("sessions")
-    .update(parsed.data)
-    .eq("id", sessionId);
+  const { error } = await supabase.from("sessions").update(parsed.data).eq("id", sessionId);
 
   if (error) return { error: error.message };
 
@@ -67,15 +63,15 @@ export async function updateSession(
   return { success: true };
 }
 
-export async function deleteSession(sport: string, sessionId: string): Promise<SessionActionResult> {
+export async function deleteSession(
+  sport: string,
+  sessionId: string,
+): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const { error } = await supabase
-    .from("sessions")
-    .delete()
-    .eq("id", sessionId);
+  const { error } = await supabase.from("sessions").delete().eq("id", sessionId);
 
   if (error) return { error: error.message };
 
@@ -84,7 +80,11 @@ export async function deleteSession(sport: string, sessionId: string): Promise<S
   return { success: true };
 }
 
-export async function cancelSession(sport: string, sessionId: string, reason?: string): Promise<SessionActionResult> {
+export async function cancelSession(
+  sport: string,
+  sessionId: string,
+  reason?: string,
+): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
@@ -102,7 +102,10 @@ export async function cancelSession(sport: string, sessionId: string, reason?: s
   return { success: true };
 }
 
-export async function restoreSession(sport: string, sessionId: string): Promise<SessionActionResult> {
+export async function restoreSession(
+  sport: string,
+  sessionId: string,
+): Promise<SessionActionResult> {
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };

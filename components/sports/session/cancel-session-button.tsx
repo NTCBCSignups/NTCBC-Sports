@@ -56,12 +56,7 @@ export default function CancelSessionButton({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {variant === "icon" ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className={colors.warningHover}
-            title="Cancel session"
-          >
+          <Button variant="ghost" size="sm" className={colors.warningHover} title="Cancel session">
             <XCircle className="h-4 w-4" />
           </Button>
         ) : (
@@ -75,8 +70,8 @@ export default function CancelSessionButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Cancel this session?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will mark the session as cancelled. Participants will see
-            that the session is no longer happening.
+            This will mark the session as cancelled. Participants will see that the session is no
+            longer happening.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Input
@@ -87,11 +82,7 @@ export default function CancelSessionButton({
         />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Go Back</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            onClick={handleCancel}
-            disabled={pending}
-          >
+          <Button variant="destructive" onClick={handleCancel} disabled={pending}>
             {pending ? "Cancelling..." : "Cancel Session"}
           </Button>
         </AlertDialogFooter>

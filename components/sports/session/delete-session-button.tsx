@@ -23,10 +23,7 @@ interface DeleteSessionButtonProps {
   sessionId: string;
 }
 
-export default function DeleteSessionButton({
-  sport,
-  sessionId,
-}: DeleteSessionButtonProps) {
+export default function DeleteSessionButton({ sport, sessionId }: DeleteSessionButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -62,17 +59,12 @@ export default function DeleteSessionButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this session?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the
-            session and its sign-ups.
+            This action cannot be undone. This will permanently delete the session and its sign-ups.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={pending}
-          >
+          <Button variant="destructive" onClick={handleDelete} disabled={pending}>
             {pending ? "Deleting..." : "Delete Session"}
           </Button>
         </AlertDialogFooter>

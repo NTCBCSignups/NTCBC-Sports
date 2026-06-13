@@ -1,12 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/sports/badges";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
@@ -34,7 +29,8 @@ function getSignupStatus(session: SportSession): {
   label: string;
   variant: "default" | "secondary" | "outline" | "destructive";
 } {
-  if (session.status === SESSION_STATUS.cancelled) return { label: "Cancelled", variant: "destructive" };
+  if (session.status === SESSION_STATUS.cancelled)
+    return { label: "Cancelled", variant: "destructive" };
 
   const now = new Date();
   const open = session.signup_open ? new Date(session.signup_open) : null;
@@ -66,13 +62,15 @@ export default function SessionCard({
   const isCancelled = session.status === SESSION_STATUS.cancelled;
 
   const card = (
-    <Card className={cn(
-      "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
-      canView && "hover:shadow-lg",
-      !canView && "cursor-default",
-      isCancelled && "opacity-60",
-      highlighted && "ring-2 ring-info bg-status-info/50",
-    )}>
+    <Card
+      className={cn(
+        "relative flex h-full flex-col gap-2 overflow-hidden transition-shadow",
+        canView && "hover:shadow-lg",
+        !canView && "cursor-default",
+        isCancelled && "opacity-60",
+        highlighted && "ring-2 ring-info bg-status-info/50",
+      )}
+    >
       {canView && (
         <Link
           href={href}
@@ -90,9 +88,7 @@ export default function SessionCard({
       <CardHeader className="relative z-20 pb-0 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-2">
-            <CardTitle className="text-xl leading-tight">
-              {displayTitle}
-            </CardTitle>
+            <CardTitle className="text-xl leading-tight">{displayTitle}</CardTitle>
             <Badge
               variant="outline"
               className={cn(
@@ -106,9 +102,7 @@ export default function SessionCard({
           <div className="flex shrink-0 flex-wrap justify-end gap-2">
             {(userSignupStatus === "confirmed" ||
               userSignupStatus === "waitlisted" ||
-              userSignupStatus === "declined") && (
-                <StatusBadge status={userSignupStatus} />
-              )}
+              userSignupStatus === "declined") && <StatusBadge status={userSignupStatus} />}
             {canSignup && (
               <Badge variant={status.variant} className="shrink-0">
                 {status.label}
@@ -125,8 +119,7 @@ export default function SessionCard({
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 shrink-0" />
           <span className="font-semibold">
-            {formatTime(session.time_start)} –{" "}
-            {formatTime(session.time_end)}
+            {formatTime(session.time_start)} – {formatTime(session.time_end)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -137,7 +130,8 @@ export default function SessionCard({
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 shrink-0" />
             <span>
-              {session.signup_count}{session.player_cap ? ` / ${session.player_cap}` : " signed up"}
+              {session.signup_count}
+              {session.player_cap ? ` / ${session.player_cap}` : " signed up"}
             </span>
           </div>
         )}

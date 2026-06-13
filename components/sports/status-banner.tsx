@@ -11,7 +11,10 @@ interface StatusBannerProps {
   children?: ReactNode;
 }
 
-const variantStyles: Record<BannerVariant, { border: string; bg: string; foreground: string; muted: string }> = {
+const variantStyles: Record<
+  BannerVariant,
+  { border: string; bg: string; foreground: string; muted: string }
+> = {
   info: {
     border: statusColors.info.border,
     bg: statusColors.info.bg,
@@ -32,7 +35,13 @@ const variantStyles: Record<BannerVariant, { border: string; bg: string; foregro
   },
 };
 
-export default function StatusBanner({ variant, icon, title, message, children }: StatusBannerProps) {
+export default function StatusBanner({
+  variant,
+  icon,
+  title,
+  message,
+  children,
+}: StatusBannerProps) {
   const styles = variantStyles[variant];
 
   return (

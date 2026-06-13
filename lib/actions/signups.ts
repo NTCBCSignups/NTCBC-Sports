@@ -16,24 +16,17 @@ export interface SignupPlacement {
   playerCap: number | null;
 }
 
-export type SignupActionResult =
-  | { error: string }
-  | ({ success: true } & SignupPlacement);
+export type SignupActionResult = { error: string } | ({ success: true } & SignupPlacement);
 
-export type CancelSignupResult =
-  | { error: string }
-  | { success: true };
+export type CancelSignupResult = { error: string } | { success: true };
 
-export type AdminSignupActionResult =
-  | { error: string }
-  | { success: true };
+export type AdminSignupActionResult = { error: string } | { success: true };
 
-async function getSessionSport(supabase: Awaited<ReturnType<typeof createClient>>, sessionId: string) {
-  const { data } = await supabase
-    .from("sessions")
-    .select("sport")
-    .eq("id", sessionId)
-    .single();
+async function getSessionSport(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sessionId: string,
+) {
+  const { data } = await supabase.from("sessions").select("sport").eq("id", sessionId).single();
   return data?.sport ?? null;
 }
 
@@ -44,11 +37,7 @@ async function getSignupPlacement(
   status: "confirmed" | "waitlisted",
 ): Promise<SignupPlacement> {
   const [{ data: session }, { data: signups }] = await Promise.all([
-    supabase
-      .from("sessions")
-      .select("player_cap")
-      .eq("id", sessionId)
-      .single(),
+    supabase.from("sessions").select("player_cap").eq("id", sessionId).single(),
     supabase
       .from("signups")
       .select("user_id")
@@ -57,19 +46,16 @@ async function getSignupPlacement(
       .order("created_at", { ascending: true }),
   ]);
 
-  const position =
-    signups?.findIndex((signup) => signup.user_id === userId) ?? -1;
+  const position = signups?.findIndex((signup) => signup.user_id === userId) ?? -1;
 
   return {
     status,
     position: position >= 0 ? position + 1 : null,
-    playerCap: status === "confirmed" ? session?.player_cap ?? null : null,
+    playerCap: status === "confirmed" ? (session?.player_cap ?? null) : null,
   };
 }
 
-export async function signUpForSession(
-  sessionId: string,
-): Promise<SignupActionResult> {
+export async function signUpForSession(sessionId: string): Promise<SignupActionResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -104,12 +90,7 @@ export async function signUpForSession(
   if (existingSignup?.status === "confirmed" || existingSignup?.status === "waitlisted") {
     return {
       success: true,
-      ...(await getSignupPlacement(
-        supabase,
-        sessionId,
-        user.id,
-        existingSignup.status,
-      )),
+      ...(await getSignupPlacement(supabase, sessionId, user.id, existingSignup.status)),
     };
   }
 
@@ -151,9 +132,7 @@ export async function signUpForSession(
   };
 }
 
-export async function cancelSignup(
-  sessionId: string,
-): Promise<CancelSignupResult> {
+export async function cancelSignup(sessionId: string): Promise<CancelSignupResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -177,20 +156,14 @@ export async function cancelSignup(
 
   const wasConfirmed = row.status === "confirmed";
 
-  const { error } = await supabase
-    .from("signups")
-    .update({ status: "cancelled" })
-    .eq("id", row.id);
+  const { error } = await supabase.from("signups").update({ status: "cancelled" }).eq("id", row.id);
 
   if (error) return { error: error.message };
 
   if (wasConfirmed) {
     try {
       const admin = createAdminClient();
-      const { error: promoError } = await promoteOneFromWaitlist(
-        admin,
-        sessionId,
-      );
+      const { error: promoError } = await promoteOneFromWaitlist(admin, sessionId);
       if (promoError) return { error: promoError };
     } catch (e) {
       return {
@@ -207,9 +180,7 @@ export async function cancelSignup(
   return { success: true };
 }
 
-export async function declineSession(
-  sessionId: string,
-): Promise<CancelSignupResult> {
+export async function declineSession(sessionId: string): Promise<CancelSignupResult> {
   const supabase = await createClient();
   const user = await getUser();
 
@@ -301,18 +272,12 @@ export async function adminUpdateSignupStatus(
     return { error: beforeError?.message ?? "Signup not found" };
   }
 
-  const { error } = await supabase
-    .from("signups")
-    .update({ status })
-    .eq("id", signupId);
+  const { error } = await supabase.from("signups").update({ status }).eq("id", signupId);
 
   if (error) return { error: error.message };
 
   if (before.status === "confirmed" && status === "cancelled") {
-    const { error: promoError } = await promoteOneFromWaitlist(
-      supabase,
-      before.session_id,
-    );
+    const { error: promoError } = await promoteOneFromWaitlist(supabase, before.session_id);
     if (promoError) return { error: promoError };
   }
 

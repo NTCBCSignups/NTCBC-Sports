@@ -28,12 +28,8 @@ export default function SignInToSignupBanner({
 
   return (
     <div className="rounded-lg border border-status-info-border bg-status-info p-4">
-      <p className="font-medium text-status-info-foreground">
-        {title}
-      </p>
-      <p className="mt-1 text-sm text-status-info-foreground/80">
-        {message}
-      </p>
+      <p className="font-medium text-status-info-foreground">{title}</p>
+      <p className="mt-1 text-sm text-status-info-foreground/80">{message}</p>
       <Button
         type="button"
         size="sm"

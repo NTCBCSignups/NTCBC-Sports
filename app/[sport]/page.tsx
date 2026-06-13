@@ -14,7 +14,11 @@ import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config
 import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { LoadingContent } from "@/components/sports/loading-content";
-import { getUpcomingSessions, getUserAccessRequestStatus, getUserSignupStatuses } from "@/lib/get-data";
+import {
+  getUpcomingSessions,
+  getUserAccessRequestStatus,
+  getUserSignupStatuses,
+} from "@/lib/get-data";
 import type { SignupStatus, AccessRequestStatus } from "@/lib/supabase/types";
 
 // ── Access banner text (data-driven) ─────────────────────────────
@@ -63,7 +67,11 @@ const ACCESS_LEVEL_TEXT: Record<
 /**
  * Pure lookup — resolves the pre-composed banner text for a given scenario.
  */
-function getBannerText(level: Exclude<AccessLevel, "admin">, requiredRole: Role, isSignedIn: boolean): AccessBannerText {
+function getBannerText(
+  level: Exclude<AccessLevel, "admin">,
+  requiredRole: Role,
+  isSignedIn: boolean,
+): AccessBannerText {
   const entry = ACCESS_LEVEL_TEXT[level];
   if (requiredRole >= Role.teamUser) return isSignedIn ? entry.teamSignedIn : entry.teamSignedOut;
   return entry.open;
@@ -94,12 +102,7 @@ function renderAccessBanner({
   const label = tab.label.toLowerCase();
 
   if (!userId) {
-    return (
-      <SignInToSignupBanner
-        title={text.title(label)}
-        message={text.message(label)}
-      />
-    );
+    return <SignInToSignupBanner title={text.title(label)} message={text.message(label)} />;
   }
 
   return (
@@ -139,16 +142,13 @@ async function SportSessionsContent({
 
   const userRole = roleResult.role;
 
-  const needsAccessRequest = !!userId && config.tabs.some((t) =>
-    getFirstUnmetLevel(t, userRole) !== null
-  );
+  const needsAccessRequest =
+    !!userId && config.tabs.some((t) => getFirstUnmetLevel(t, userRole) !== null);
 
   const sessionIds = sessionsWithCounts.map((session) => session.id);
 
   const [accessRequestStatus, userSignupStatusBySession] = await Promise.all([
-    needsAccessRequest
-      ? getUserAccessRequestStatus(userId!, sport)
-      : Promise.resolve(null),
+    needsAccessRequest ? getUserAccessRequestStatus(userId!, sport) : Promise.resolve(null),
     userId
       ? getUserSignupStatuses(userId, sessionIds)
       : Promise.resolve(new Map<string, SignupStatus>()),
@@ -191,9 +191,7 @@ async function SportSessionsContent({
                     highlighted={session.id === highlight}
                     returnTab={t.value}
                     userRole={userRole}
-                    userSignupStatus={
-                      userSignupStatusBySession.get(session.id) ?? null
-                    }
+                    userSignupStatus={userSignupStatusBySession.get(session.id) ?? null}
                   />
                 ))}
               </div>
@@ -231,17 +229,11 @@ async function SportSessionsContent({
     const text = getBannerText(unmetLevel, requiredRole, !!userId);
 
     // Compose label: use tab name if only one, otherwise "some sessions"
-    const label = restrictedTabs.length === 1
-      ? restrictedTabs[0]!.tab.label.toLowerCase()
-      : "some sessions";
+    const label =
+      restrictedTabs.length === 1 ? restrictedTabs[0]!.tab.label.toLowerCase() : "some sessions";
 
     if (!userId) {
-      return (
-        <SignInToSignupBanner
-          title={text.title(label)}
-          message={text.message(label)}
-        />
-      );
+      return <SignInToSignupBanner title={text.title(label)} message={text.message(label)} />;
     }
 
     return (
@@ -256,35 +248,36 @@ async function SportSessionsContent({
 
   const allOption = showAll
     ? {
-      value: ALL_VALUE,
-      label: "All",
-      content: (
-        <div className="space-y-4">
-          {allBanner}
-          {viewableSessions.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              {viewableSessions.map((session) => (
-                <SessionCard
-                  key={session.id}
-                  session={session}
-                  tab={tabByType.get(session.session_type) ?? getResolvedTab(config, session.session_type)}
-                  highlighted={session.id === highlight}
-                  returnTab={ALL_VALUE}
-                  userRole={userRole}
-                  userSignupStatus={
-                    userSignupStatusBySession.get(session.id) ?? null
-                  }
-                />
-              ))}
-            </div>
-          ) : restrictedTabs.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No upcoming sessions.
-            </p>
-          ) : null}
-        </div>
-      ),
-    }
+        value: ALL_VALUE,
+        label: "All",
+        content: (
+          <div className="space-y-4">
+            {allBanner}
+            {viewableSessions.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {viewableSessions.map((session) => (
+                  <SessionCard
+                    key={session.id}
+                    session={session}
+                    tab={
+                      tabByType.get(session.session_type) ??
+                      getResolvedTab(config, session.session_type)
+                    }
+                    highlighted={session.id === highlight}
+                    returnTab={ALL_VALUE}
+                    userRole={userRole}
+                    userSignupStatus={userSignupStatusBySession.get(session.id) ?? null}
+                  />
+                ))}
+              </div>
+            ) : restrictedTabs.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">
+                No upcoming sessions.
+              </p>
+            ) : null}
+          </div>
+        ),
+      }
     : null;
 
   const filterOptions = allOption ? [allOption, ...typeOptions] : typeOptions;
@@ -294,8 +287,7 @@ async function SportSessionsContent({
   const resolvedValue = tab ?? scrollSession?.session_type;
   const validValues = filterOptions.map((o) => o.value);
   const fallback = config.defaultTab || (showAll ? ALL_VALUE : configTabs[0]?.value) || ALL_VALUE;
-  const defaultValue =
-    validValues.find((v) => v === resolvedValue) ?? fallback;
+  const defaultValue = validValues.find((v) => v === resolvedValue) ?? fallback;
 
   return (
     <div className="space-y-4">
@@ -330,13 +322,7 @@ async function CalendarExportGate({
   const visibleTabs = config.tabs
     .filter((t) => getFirstUnmetLevel(t, role) !== AccessLevel.overview)
     .map((t) => ({ value: t.value, label: t.label }));
-  return (
-    <CalendarExportButton
-      sport={sport}
-      userId={userId}
-      tabs={visibleTabs}
-    />
-  );
+  return <CalendarExportButton sport={sport} userId={userId} tabs={visibleTabs} />;
 }
 
 export default async function SportAuthPage({

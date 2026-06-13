@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, X } from "lucide-react";
 import { adminUpdateSignupStatus } from "@/lib/actions/signups";
-import SessionSignupsTable, { type SignupRow } from "@/components/sports/session/session-signups-table";
+import SessionSignupsTable, {
+  type SignupRow,
+} from "@/components/sports/session/session-signups-table";
 import { colors } from "@/lib/styles";
 
 interface AdminSessionSignupsProps {

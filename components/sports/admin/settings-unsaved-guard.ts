@@ -1,31 +1,24 @@
-export const SETTINGS_UNSAVED_WARNING_MESSAGE = "You have unsaved changes in Settings. Leave without saving?";
+export const SETTINGS_UNSAVED_WARNING_MESSAGE =
+  "You have unsaved changes in Settings. Leave without saving?";
 
-declare global {
-    interface Window {
-        SETTINGS_DIRTY?: boolean;
-    }
-}
+let settingsDirty = false;
 
 export function hasUnsavedSettingsChanges(): boolean {
-    return typeof window !== "undefined" && window.SETTINGS_DIRTY === true;
+  return settingsDirty;
 }
 
 export function setUnsavedSettingsChanges(isDirty: boolean): void {
-    if (typeof window === "undefined") {
-        return;
-    }
-
-    window.SETTINGS_DIRTY = isDirty;
+  settingsDirty = isDirty;
 }
 
 export function clearUnsavedSettingsChanges(): void {
-    setUnsavedSettingsChanges(false);
+  setUnsavedSettingsChanges(false);
 }
 
 export function confirmLeaveWithUnsavedSettings(): boolean {
-    if (!hasUnsavedSettingsChanges()) {
-        return true;
-    }
+  if (!hasUnsavedSettingsChanges()) {
+    return true;
+  }
 
-    return window.confirm(SETTINGS_UNSAVED_WARNING_MESSAGE);
+  return window.confirm(SETTINGS_UNSAVED_WARNING_MESSAGE);
 }

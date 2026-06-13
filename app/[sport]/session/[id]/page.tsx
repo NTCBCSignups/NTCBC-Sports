@@ -3,13 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
-import {
-  Ban,
-  CalendarDays,
-  Clock,
-  MapPin,
-  UserStar,
-} from "lucide-react";
+import { Ban, CalendarDays, Clock, MapPin, UserStar } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
 import SignupButton from "@/components/sports/signup/signup-button";
 import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
@@ -24,7 +18,12 @@ import SessionViewSection from "@/components/sports/session/session-view-section
 import CountdownTimer from "@/components/sports/session/countdown-timer";
 import LocalTimestamp from "@/components/sports/local-timestamp";
 
-import { getResolvedTab, Role, AccessLevel, type SignupConfirmationDialog } from "@/config/config-resolver";
+import {
+  getResolvedTab,
+  Role,
+  AccessLevel,
+  type SignupConfirmationDialog,
+} from "@/config/config-resolver";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -69,15 +68,12 @@ async function SessionSignupsContent({
   const canSignup = userRole >= signupRole;
   const needsTeamAccess = !!user && userRole < signupRole;
 
-  const [rawSignups, teamMemberIds, userSignupStatus, accessRequestStatus] =
-    await Promise.all([
-      getSessionSignups(sessionId),
-      getTeamMembers(sport),
-      userId ? getUserSignupStatus(userId, sessionId) : Promise.resolve(null),
-      needsTeamAccess
-        ? getUserAccessRequestStatus(userId!, sport)
-        : Promise.resolve(null),
-    ]);
+  const [rawSignups, teamMemberIds, userSignupStatus, accessRequestStatus] = await Promise.all([
+    getSessionSignups(sessionId),
+    getTeamMembers(sport),
+    userId ? getUserSignupStatus(userId, sessionId) : Promise.resolve(null),
+    needsTeamAccess ? getUserAccessRequestStatus(userId!, sport) : Promise.resolve(null),
+  ]);
 
   const requestApproved = accessRequestStatus === "approved";
   const showTeamGate = needsTeamAccess && !requestApproved;
@@ -92,9 +88,7 @@ async function SessionSignupsContent({
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        {!user && signupRole > userRole && (
-          <SignInToSignupBanner />
-        )}
+        {!user && signupRole > userRole && <SignInToSignupBanner />}
         {showTeamGate && (
           <TeamAccessBanner
             requestStatus={accessRequestStatus}
@@ -159,9 +153,7 @@ export default async function SessionDetailPage({
 
   // Redirect to sport page if session doesn't exist or user lacks view access
   const tab = getResolvedTab(config, session?.session_type ?? "");
-  const userRole = user
-    ? roleResult.role
-    : Role.anon;
+  const userRole = user ? roleResult.role : Role.anon;
 
   if (!session || userRole < tab.permissions[AccessLevel.view]) {
     redirect(`/${sport}`);
@@ -179,11 +171,7 @@ export default async function SessionDetailPage({
       <PageHeader
         backHref={`/${sport}?${backParams.toString()}`}
         backLabel={`Back to ${config.name}`}
-        actions={
-          isAdmin ? (
-            <AdminButton sport={sport} />
-          ) : null
-        }
+        actions={isAdmin ? <AdminButton sport={sport} /> : null}
       />
 
       <div className="space-y-6">
@@ -200,7 +188,14 @@ export default async function SessionDetailPage({
             </Badge>
           </div>
           <div className="space-y-3">
-            <h1 className={cn("text-4xl font-bold", session.status === SESSION_STATUS.cancelled ? "text-muted-foreground line-through" : "text-foreground")}>
+            <h1
+              className={cn(
+                "text-4xl font-bold",
+                session.status === SESSION_STATUS.cancelled
+                  ? "text-muted-foreground line-through"
+                  : "text-foreground",
+              )}
+            >
               {session.title || formatDate(session.date, "long", true)}
             </h1>
             {isAdmin && session.status !== SESSION_STATUS.cancelled && (
@@ -236,12 +231,8 @@ export default async function SessionDetailPage({
                   </a>
                 ) : (
                   <>
-                    <span className="text-muted-foreground">
-                      {session.location_name}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {session.location_address}
-                    </span>
+                    <span className="text-muted-foreground">{session.location_name}</span>
+                    <span className="text-muted-foreground">{session.location_address}</span>
                   </>
                 )}
               </div>
@@ -250,7 +241,9 @@ export default async function SessionDetailPage({
               <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
               <div className="flex flex-col">
                 <span className="font-medium text-foreground">Date</span>
-                <span className="text-muted-foreground">{formatDate(session.date, "long", true)}</span>
+                <span className="text-muted-foreground">
+                  {formatDate(session.date, "long", true)}
+                </span>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -258,8 +251,7 @@ export default async function SessionDetailPage({
               <div className="flex flex-col">
                 <span className="font-medium text-foreground">Time</span>
                 <span className="text-muted-foreground">
-                  {formatTime(session.time_start)} –{" "}
-                  {formatTime(session.time_end)}
+                  {formatTime(session.time_start)} – {formatTime(session.time_end)}
                 </span>
               </div>
             </div>
@@ -276,9 +268,7 @@ export default async function SessionDetailPage({
               <div className="flex items-start gap-2">
                 <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
                 <div className="flex flex-col">
-                  <span className="font-medium text-foreground">
-                    Sign-ups open from
-                  </span>
+                  <span className="font-medium text-foreground">Sign-ups open from</span>
                   <span className="text-muted-foreground">
                     <LocalTimestamp date={session.signup_open} weekday="long" />
                   </span>
@@ -310,11 +300,19 @@ export default async function SessionDetailPage({
           variant="destructive"
           icon={<Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />}
           title="Session cancelled"
-          message={<>{session.status_notes && <>{session.status_notes}{session.status_notes.endsWith(".") ? " " : ". "}</>}You can no longer sign up for this session.</>}
+          message={
+            <>
+              {session.status_notes && (
+                <>
+                  {session.status_notes}
+                  {session.status_notes.endsWith(".") ? " " : ". "}
+                </>
+              )}
+              You can no longer sign up for this session.
+            </>
+          }
         >
-          {isAdmin && (
-            <RestoreSessionButton sport={sport} sessionId={session.id} variant="full" />
-          )}
+          {isAdmin && <RestoreSessionButton sport={sport} sessionId={session.id} variant="full" />}
         </StatusBanner>
       )}
 

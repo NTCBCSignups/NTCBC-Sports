@@ -8,7 +8,9 @@ function parseInput(overrides: Record<string, unknown> = {}) {
 
 function getErrors(overrides: Record<string, unknown> = {}) {
   const result = parseInput(overrides);
-  return result.success ? [] : result.error.issues.map((i) => ({ path: i.path.join("."), message: i.message }));
+  return result.success
+    ? []
+    : result.error.issues.map((i) => ({ path: i.path.join("."), message: i.message }));
 }
 
 // ── Basic field validation ───────────────────────────────────────
@@ -66,7 +68,10 @@ describe("createSessionInputSchema - time logic", () => {
   it("fails when start time >= end time", () => {
     const errors = getErrors({ time_start: "20:00", time_end: "18:00" });
     expect(errors).toContainEqual(
-      expect.objectContaining({ path: "time_end", message: expect.stringContaining("before end time") }),
+      expect.objectContaining({
+        path: "time_end",
+        message: expect.stringContaining("before end time"),
+      }),
     );
   });
 
@@ -81,7 +86,10 @@ describe("createSessionInputSchema - time logic", () => {
       signup_close: "2025-03-15T17:00",
     });
     expect(errors).toContainEqual(
-      expect.objectContaining({ path: "signup_close", message: expect.stringContaining("before sign-up close") }),
+      expect.objectContaining({
+        path: "signup_close",
+        message: expect.stringContaining("before sign-up close"),
+      }),
     );
   });
 
@@ -93,7 +101,10 @@ describe("createSessionInputSchema - time logic", () => {
       signup_close: "2025-03-15T20:00",
     });
     expect(errors).toContainEqual(
-      expect.objectContaining({ path: "signup_open", message: expect.stringContaining("after session start") }),
+      expect.objectContaining({
+        path: "signup_open",
+        message: expect.stringContaining("after session start"),
+      }),
     );
   });
 
@@ -104,7 +115,10 @@ describe("createSessionInputSchema - time logic", () => {
       signup_close: "2025-03-16T01:00",
     });
     expect(errors).toContainEqual(
-      expect.objectContaining({ path: "signup_close", message: expect.stringContaining("session date") }),
+      expect.objectContaining({
+        path: "signup_close",
+        message: expect.stringContaining("session date"),
+      }),
     );
   });
 });

@@ -161,4 +161,3 @@ export interface SportConfigDbRow {
   updated_at: string;
   created_at: string;
 }
-

@@ -35,11 +35,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
 
   if (!user) {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleSignIn}
-      >
+      <Button variant="ghost" size="sm" onClick={handleSignIn}>
         <LogIn className="h-4 w-4" />
         Sign in
       </Button>
@@ -51,6 +47,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2 px-2">
           {user.user_metadata?.avatar_url && (
+            // eslint-disable-next-line @next/next/no-img-element -- external OAuth avatar, domains vary
             <img
               src={user.user_metadata.avatar_url}
               alt=""

@@ -18,10 +18,10 @@ export default async function VolleyballPage() {
   const formResponses =
     isFormOpen && scheduleData?.response_sheet_id && config.responseTable
       ? await getFormResponses(
-        scheduleData.response_sheet_id,
-        config.responseTable.sheetTab,
-        config.responseTable.columns,
-      )
+          scheduleData.response_sheet_id,
+          config.responseTable.sheetTab,
+          config.responseTable.columns,
+        )
       : [];
 
   // Middleware validates the JWT and forwards the user via request header.

@@ -8,10 +8,10 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !key) {
-    throw new Error(
-        "Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. " +
-        "Ensure they are set in .env.local or your deployment environment.",
-    );
+  throw new Error(
+    "Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. " +
+      "Ensure they are set in .env.local or your deployment environment.",
+  );
 }
 
 export const SUPABASE_URL: string = url;
