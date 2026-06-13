@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "fs";
+import { readFileSync } from "fs";
 import path from "path";
+import { walkDir, type FileViolation } from "../utils";
 
 /**
  * Scans all .tsx files for <DialogContent> and <AlertDialogContent> usages and
@@ -17,23 +18,9 @@ const EXCLUDED = ["components/ui/dialog.tsx", "components/ui/alert-dialog.tsx"];
 const RESPONSIVE = /^(?:sm|md|lg|xl|2xl):/;
 const TAG_RE = /<(?:Alert)?DialogContent[^>]*>/g;
 
-function walkDir(dir: string, ext: string): string[] {
-  const results: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === ".next") continue;
-      results.push(...walkDir(full, ext));
-    } else if (entry.name.endsWith(ext)) {
-      results.push(full);
-    }
-  }
-  return results;
-}
-
-function findViolations() {
+function findViolations(): FileViolation[] {
   const root = path.resolve(__dirname, "../..");
-  const violations: { file: string; className: string }[] = [];
+  const violations: FileViolation[] = [];
 
   for (const fullPath of walkDir(root, ".tsx")) {
     const file = path.relative(root, fullPath);
@@ -46,7 +33,7 @@ function findViolations() {
       const classes = tag.split(/[\s"'`{}()<>]+/).filter(Boolean);
       for (const cls of classes) {
         if (/^(?:\w+:)*(max-w-|max-h-)/.test(cls) && !RESPONSIVE.test(cls)) {
-          violations.push({ file, className: cls });
+          violations.push({ file, line: 0, detail: cls });
         }
       }
     }
@@ -61,7 +48,7 @@ describe("Dialog mobile safety", () => {
 
     if (violations.length > 0) {
       const msg = violations
-        .map((v) => `  ${v.file} — "${v.className}"`)
+        .map((v) => `  ${v.file} — "${v.detail}"`)
         .join("\n");
       expect.fail(
         `Unprefixed max-w/max-h overrides found:\n${msg}\n\n` +

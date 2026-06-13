@@ -201,7 +201,7 @@ export default function SessionForm({
         </Select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 min-w-0 [&>*]:min-w-0">
         <div className="space-y-2">
           <Label htmlFor="title">
             Title <span className="font-normal text-muted-foreground">(optional)</span>
@@ -298,7 +298,7 @@ export default function SessionForm({
           )}
         </div>
 
-        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2 min-w-0 [&>*]:min-w-0">
           <div className="space-y-2">
             <Label htmlFor="signup_open">Sign-ups Open</Label>
             <Input
