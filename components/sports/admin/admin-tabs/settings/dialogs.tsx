@@ -85,7 +85,7 @@ export function SessionTabDialog({
                 </DialogHeader>
 
                 <div className="space-y-4">
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2 min-w-0 [&>*]:min-w-0">
                         <div className="space-y-2">
                             <Label htmlFor="tab-label">Session Type Name</Label>
                             <Input

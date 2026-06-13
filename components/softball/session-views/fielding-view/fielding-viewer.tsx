@@ -62,7 +62,7 @@ export default function SoftballFieldingView({
         <div className="overflow-hidden rounded-lg border bg-card">
             <div className="p-4">
                 <Tabs value={mode} onValueChange={(v) => setMode(v as "player" | "inning")}>
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-2 min-w-0">
                         <TabsTrigger value="player">By Player</TabsTrigger>
                         <TabsTrigger value="inning">By Inning</TabsTrigger>
                     </TabsList>

@@ -70,7 +70,7 @@ export function GeneralSettingsSection({
                 <Label htmlFor="auth-enabled">Enable Google Login</Label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 pt-4">
+            <div className="grid gap-4 sm:grid-cols-2 pt-4 min-w-0 [&>*]:min-w-0">
                 <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
                     <Input
