@@ -193,10 +193,7 @@ export default function EditViewsDialog({
           className={cn(
             "transition-[max-width] duration-200",
             step.kind === "edit"
-              ? cn(
-                  "max-w-[95vw] sm:max-w-lg overflow-x-auto",
-                  activeEntry?.EditorComponent.dialogClassName,
-                )
+              ? cn("sm:max-w-lg overflow-x-auto", activeEntry?.EditorComponent.dialogClassName)
               : "sm:max-w-md",
           )}
         >
