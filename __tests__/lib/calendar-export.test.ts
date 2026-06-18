@@ -42,5 +42,4 @@ describe("sessionsToIcal", () => {
     expect(ical).toContain("UID:session-active@ntcbc-sports");
     expect(ical).not.toContain("UID:session-cancelled@ntcbc-sports");
   });
-
 });
