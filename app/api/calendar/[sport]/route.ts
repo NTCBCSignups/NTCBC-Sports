@@ -98,7 +98,7 @@ export async function GET(
 
   const ical = sessionsToIcal(filtered, {
     calendarName,
-    includeCancelled: !isDownload,
+    includeCancelled: true,
     buildSessionUrl: (session) => getSessionUrl(origin, sport, session.id),
   });
 

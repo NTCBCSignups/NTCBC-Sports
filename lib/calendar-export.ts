@@ -41,6 +41,7 @@ function buildVEvent(session: SportSession, options: CalendarExportOptions): str
   const dtStart = toIcalDateTime(session.date, session.time_start);
   const dtEnd = toIcalDateTime(session.date, session.time_end);
   const uid = `${session.id}@ntcbc-sports`;
+  const cancelled = session.status === SESSION_STATUS.cancelled;
   const summary = session.title || `${session.session_type} session`;
   const location = [session.location_name, session.location_address].filter(Boolean).join(", ");
   const sessionLink = options.buildSessionUrl?.(session) ?? null;
@@ -54,6 +55,7 @@ function buildVEvent(session: SportSession, options: CalendarExportOptions): str
     "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${formatUtcNow()}`,
+    `SEQUENCE:${cancelled ? 1 : 0}`,
     `DTSTART;TZID=${SPORT_TIMEZONE}:${dtStart}`,
     `DTEND;TZID=${SPORT_TIMEZONE}:${dtEnd}`,
     `SUMMARY:${escapeText(summary)}`,
@@ -62,7 +64,7 @@ function buildVEvent(session: SportSession, options: CalendarExportOptions): str
   if (location) lines.push(`LOCATION:${escapeText(location)}`);
   if (description) lines.push(`DESCRIPTION:${escapeText(description)}`);
   if (sessionLink) lines.push(`URL:${sessionLink}`);
-  if (session.status === SESSION_STATUS.cancelled) lines.push("STATUS:CANCELLED");
+  if (cancelled) lines.push("STATUS:CANCELLED");
 
   lines.push("END:VEVENT");
   return lines;
