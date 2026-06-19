@@ -27,3 +27,27 @@ export const SPORT_TIMEZONE = "America/Toronto";
 export function getTodayInSportTimezone(): string {
   return formatInTimeZone(new Date(), SPORT_TIMEZONE, "yyyy-MM-dd");
 }
+
+/** Formats any Date as `YYYY-MM-DD` in {@link SPORT_TIMEZONE}. */
+export function getDateInSportTimezone(date: Date): string {
+  return formatInTimeZone(date, SPORT_TIMEZONE, "yyyy-MM-dd");
+}
+
+/**
+ * Parses a subscription anchor timestamp (epoch ms or ISO string) into a
+ * `YYYY-MM-DD` sport-timezone date. Returns `undefined` when the input is
+ * missing, invalid, or history mode makes the anchor irrelevant.
+ */
+export function resolveAnchoredFromDate(
+  subscribedAt: string | null,
+  includeHistory: boolean,
+): string | undefined {
+  if (includeHistory || !subscribedAt) return undefined;
+
+  const parsedMs = Number(subscribedAt);
+  const anchorDate = Number.isFinite(parsedMs) ? new Date(parsedMs) : new Date(subscribedAt);
+
+  if (Number.isNaN(anchorDate.getTime())) return undefined;
+
+  return getDateInSportTimezone(anchorDate);
+}

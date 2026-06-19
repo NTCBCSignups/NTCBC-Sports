@@ -59,6 +59,9 @@ export default function CalendarExportButton({ sport, userId, tabs }: CalendarEx
     const params = new URLSearchParams();
     params.set("userId", userId);
     params.set("mode", mode);
+    if (mode === "subscribe") {
+      params.set("subscribedAt", String(Date.now()));
+    }
     if (!allSelected) {
       for (const tab of selectedTabs) {
         params.append("tab", tab);

@@ -47,12 +47,12 @@ export async function getAllSessions(sport: string) {
 export async function getSessionsWithClient(
   supabase: SupabaseClient,
   sport: string,
-  options?: { includeHistory?: boolean },
+  options?: { includeHistory?: boolean; fromDate?: string },
 ): Promise<SportSession[]> {
   let query = supabase.from("sessions").select("*").eq("sport", sport);
 
   if (!options?.includeHistory) {
-    query = query.gte("date", getTodayInSportTimezone());
+    query = query.gte("date", options?.fromDate ?? getTodayInSportTimezone());
   }
 
   const { data } = await query.order("date", { ascending: true }).returns<SportSession[]>();

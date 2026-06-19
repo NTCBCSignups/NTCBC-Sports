@@ -6,6 +6,7 @@ import { getSessionsWithClient } from "@/lib/get-data";
 import { sessionsToIcal } from "@/lib/calendar-export";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { getSessionUrl } from "@/lib/session-route";
+import { resolveAnchoredFromDate } from "@/lib/timezone";
 import { AccessLevel } from "@/config/config-resolver";
 
 export async function GET(
@@ -20,6 +21,7 @@ export async function GET(
   const tabFilters = searchParams.getAll("tab");
   const includeHistory = searchParams.get("history") === "true";
   const includeDeclined = searchParams.get("includeDeclined") === "true";
+  const subscribedAt = searchParams.get("subscribedAt");
 
   // ── Validate sport ───────────────────────────────────────────
   const config = await getResolvedSportConfig(sport);
@@ -60,9 +62,11 @@ export async function GET(
 
   // ── Fetch sessions ───────────────────────────────────────────
   const isDownload = mode === "download";
+  const anchoredFromDate = resolveAnchoredFromDate(subscribedAt, includeHistory);
 
   const sessions = await getSessionsWithClient(supabase, sport, {
     includeHistory,
+    fromDate: anchoredFromDate,
   });
 
   // ── Filter by access + tab ───────────────────────────────────
@@ -98,7 +102,7 @@ export async function GET(
 
   const ical = sessionsToIcal(filtered, {
     calendarName,
-    includeCancelled: !isDownload,
+    includeCancelled: true,
     buildSessionUrl: (session) => getSessionUrl(origin, sport, session.id),
   });
 
