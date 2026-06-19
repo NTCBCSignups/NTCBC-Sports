@@ -4,15 +4,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
+import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/user";
+import CreateSportDialog from "@/components/sports/admin/create-sport-dialog";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import AuthButton from "@/components/sports/auth-button";
-import { getUser } from "@/lib/supabase/user";
 
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
   const sports = Object.values(dbSportsBySlug);
   const user = await getUser();
+
+  let isAdmin = false;
+  if (user) {
+    const supabase = await createClient();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.role === "admin";
+  }
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-8 pt-4">
@@ -20,6 +33,11 @@ export default async function Home() {
         <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
           <Image src="/favicon.ico" alt="NTCBC" width={36} height={36} className="rounded-sm" />
           NTCBC Signups
+          {isAdmin && (
+            <span className="ml-auto">
+              <CreateSportDialog />
+            </span>
+          )}
         </h1>
         <div className="flex items-center gap-2">
           <ThemeToggle />
