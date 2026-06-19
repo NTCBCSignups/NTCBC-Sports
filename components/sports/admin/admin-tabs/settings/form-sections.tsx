@@ -1,8 +1,11 @@
+"use client";
+
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { CalendarDays, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,12 +44,7 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
   const [showPreview, setShowPreview] = useState(false);
 
   return (
-    <div className="rounded-lg border bg-card p-6 space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold text-foreground">General</h3>
-        <p className="text-sm text-muted-foreground">Basic info and logistics for this sport.</p>
-      </div>
-
+    <CollapsibleSection title="General" description="Basic info and logistics for this sport.">
       <div className="flex items-center gap-2 pt-4">
         <input
           id="auth-enabled"
@@ -58,7 +56,7 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
         <Label htmlFor="auth-enabled">Enable Google Login</Label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 pt-4 min-w-0 [&>*]:min-w-0">
+      <div className="grid gap-4 sm:grid-cols-2 pt-4 min-w-0">
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
           <Input
@@ -177,7 +175,7 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
           </div>
         </div>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -205,14 +203,10 @@ export function SessionTabsSection({
   const [showPreview, setShowPreview] = useState(false);
 
   return (
-    <div className="rounded-lg border bg-card p-6 space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold text-foreground">Sports Page</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure the public-facing page content and session tabs.
-        </p>
-      </div>
-
+    <CollapsibleSection
+      title="Sports Page"
+      description="Configure the public-facing page content and session tabs."
+    >
       <div className="space-y-2 pt-4">
         <Label htmlFor="notes">Notes (one per line)</Label>
         <Textarea
@@ -402,7 +396,7 @@ export function SessionTabsSection({
           </div>
         </div>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -428,14 +422,10 @@ export function AdminTabsSection({
   const SettingsTabIcon = getAdminTabIcon(SETTINGS_TAB_ICON_NAME);
 
   return (
-    <div className="rounded-lg border bg-card p-6 space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold text-foreground">Admin Page</h3>
-        <p className="text-sm text-muted-foreground">
-          Choose which admin pages appear in the sidebar, then drag to reorder them.
-        </p>
-      </div>
-
+    <CollapsibleSection
+      title="Admin Page"
+      description="Choose which admin pages appear in the sidebar, then drag to reorder them."
+    >
       <div className="space-y-2 pt-4">
         <Label htmlFor="default-admin-tab">Default admin tab</Label>
         <Select
@@ -536,7 +526,7 @@ export function AdminTabsSection({
         <Plus className="h-3.5 w-3.5 mr-1" />
         Add Admin Tab
       </Button>
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -549,16 +539,30 @@ interface FormActionsRowProps {
 
 export function FormActionsRow({ isDirty, isPending, onReset, onSave }: FormActionsRowProps) {
   return (
-    <div className="flex items-center gap-2">
-      <Button type="button" variant="outline" disabled={!isDirty} onClick={onReset}>
-        Reset
-      </Button>
-      <Button type="button" disabled={!isDirty || isPending} onClick={onSave}>
-        {isPending ? "Saving..." : "Save"}
-      </Button>
-      <span className="text-xs text-muted-foreground">
-        {isDirty ? "Unsaved local changes" : "No local changes"}
-      </span>
-    </div>
+    <>
+      {/* Spacer to prevent content from being hidden behind sticky bar */}
+      {isDirty && <div className="h-16" />}
+
+      {/* Sticky bottom bar when dirty */}
+      <div
+        className={cn(
+          isDirty
+            ? "fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm p-3 shadow-lg"
+            : "",
+        )}
+      >
+        <div className={cn("flex items-center gap-2", isDirty && "max-w-6xl mx-auto")}>
+          <Button type="button" variant="outline" disabled={!isDirty} onClick={onReset}>
+            Reset
+          </Button>
+          <Button type="button" disabled={!isDirty || isPending} onClick={onSave}>
+            {isPending ? "Saving..." : "Save"}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {isDirty ? "Unsaved local changes" : "No local changes"}
+          </span>
+        </div>
+      </div>
+    </>
   );
 }

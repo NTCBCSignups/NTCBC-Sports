@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { XCircle } from "lucide-react";
 import { cancelSession } from "@/lib/actions/sessions";
@@ -24,12 +25,15 @@ interface CancelSessionButtonProps {
   sessionId: string;
   /** Render a full-width button instead of an icon-only button. */
   variant?: "icon" | "full";
+  /** Render as a dropdown menu item instead of a button. */
+  asMenuItem?: boolean;
 }
 
 export default function CancelSessionButton({
   sport,
   sessionId,
   variant = "icon",
+  asMenuItem,
 }: CancelSessionButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -55,7 +59,12 @@ export default function CancelSessionButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        {variant === "icon" ? (
+        {asMenuItem ? (
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <XCircle className="h-4 w-4 mr-2" />
+            Cancel Session
+          </DropdownMenuItem>
+        ) : variant === "icon" ? (
           <Button variant="ghost" size="sm" className={colors.warningHover} title="Cancel session">
             <XCircle className="h-4 w-4" />
           </Button>

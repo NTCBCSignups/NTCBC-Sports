@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { RotateCcw } from "lucide-react";
 import { restoreSession } from "@/lib/actions/sessions";
 import { colors } from "@/lib/styles";
@@ -13,12 +14,15 @@ interface RestoreSessionButtonProps {
   sessionId: string;
   /** Render an icon-only button or a full labeled button. */
   variant?: "icon" | "full";
+  /** Render as a dropdown menu item instead of a button. */
+  asMenuItem?: boolean;
 }
 
 export default function RestoreSessionButton({
   sport,
   sessionId,
   variant = "icon",
+  asMenuItem,
 }: RestoreSessionButtonProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -36,6 +40,15 @@ export default function RestoreSessionButton({
     toast("Session restored.");
     router.refresh();
   };
+
+  if (asMenuItem) {
+    return (
+      <DropdownMenuItem onClick={handleRestore} disabled={pending}>
+        <RotateCcw className="h-4 w-4 mr-2" />
+        Restore
+      </DropdownMenuItem>
+    );
+  }
 
   if (variant === "icon") {
     return (

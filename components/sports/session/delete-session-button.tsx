@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Trash2 } from "lucide-react";
 import { deleteSession } from "@/lib/actions/sessions";
 import {
@@ -21,9 +22,15 @@ import { colors, toastClasses } from "@/lib/styles";
 interface DeleteSessionButtonProps {
   sport: string;
   sessionId: string;
+  /** Render as a dropdown menu item instead of an icon button. */
+  asMenuItem?: boolean;
 }
 
-export default function DeleteSessionButton({ sport, sessionId }: DeleteSessionButtonProps) {
+export default function DeleteSessionButton({
+  sport,
+  sessionId,
+  asMenuItem,
+}: DeleteSessionButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -46,14 +53,24 @@ export default function DeleteSessionButton({ sport, sessionId }: DeleteSessionB
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={colors.destructiveHover}
-          title="Delete session"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {asMenuItem ? (
+          <DropdownMenuItem
+            onSelect={(e) => e.preventDefault()}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={colors.destructiveHover}
+            title="Delete session"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

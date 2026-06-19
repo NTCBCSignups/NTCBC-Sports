@@ -98,32 +98,36 @@ export default function AdminLayout({
         ))}
       </nav>
 
-      {/* Mobile horizontal tabs */}
-      <nav className="md:hidden flex gap-1 overflow-x-auto pb-2 -mx-1 px-1">
-        {allTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => navigate(tab.id)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-              activeTab === tab.id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground bg-muted hover:bg-accent",
-            )}
-          >
-            <tab.icon className="h-3.5 w-3.5 shrink-0" />
-            {tab.label}
-            {tab.id === "requests" && pendingRequestCount > 0 && (
-              <Badge
-                variant={activeTab === tab.id ? "secondary" : "destructive"}
-                className="h-4 min-w-4 flex items-center justify-center px-1 text-[10px]"
-              >
-                {pendingRequestCount}
-              </Badge>
-            )}
-          </button>
-        ))}
-      </nav>
+      {/* Mobile horizontal tabs with scroll fade */}
+      <div className="md:hidden relative">
+        <nav className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {allTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => navigate(tab.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[40px]",
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground bg-muted hover:bg-accent",
+              )}
+            >
+              <tab.icon className="h-4 w-4 shrink-0" />
+              {tab.label}
+              {tab.id === "requests" && pendingRequestCount > 0 && (
+                <Badge
+                  variant={activeTab === tab.id ? "secondary" : "destructive"}
+                  className="h-5 min-w-5 flex items-center justify-center px-1.5 text-xs"
+                >
+                  {pendingRequestCount}
+                </Badge>
+              )}
+            </button>
+          ))}
+        </nav>
+        {/* Scroll fade hint */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent" />
+      </div>
 
       {/* Content area — show loading instantly on tab switch */}
       <div className="flex-1 min-w-0">

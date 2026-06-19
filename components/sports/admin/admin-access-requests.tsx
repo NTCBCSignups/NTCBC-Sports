@@ -45,58 +45,105 @@ export default function AdminAccessRequests({ sport, requests }: AdminAccessRequ
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Requested</TableHead>
-            <TableHead className="text-center">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {requests.map((request) => (
-            <TableRow key={request.id}>
-              <TableCell>{displayName(request.profiles)}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {request.profiles?.email ?? "—"}
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={request.status} />
-              </TableCell>
-              <TableCell className="text-xs text-muted-foreground">
+    <>
+      {/* Mobile card layout */}
+      <div className="md:hidden space-y-3">
+        {requests.map((request) => (
+          <div key={request.id} className="rounded-lg border bg-card p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{displayName(request.profiles)}</p>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  {request.profiles?.email ?? "—"}
+                </p>
+              </div>
+              <StatusBadge status={request.status} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
                 {formatDate(request.created_at.split("T")[0]!)}
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleReview(request.id, "approved")}
-                    disabled={pending === request.id || request.status === "approved"}
-                    className={`${colors.successHover} disabled:opacity-20`}
-                    title="Approve"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleReview(request.id, "rejected")}
-                    disabled={pending === request.id || request.status === "rejected"}
-                    className={`${colors.destructiveHover} disabled:opacity-20`}
-                    title="Reject"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReview(request.id, "approved")}
+                  disabled={pending === request.id || request.status === "approved"}
+                  className={`${colors.successHover} disabled:opacity-20 h-9 px-3`}
+                >
+                  <Check className="h-4 w-4 mr-1.5" />
+                  Approve
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReview(request.id, "rejected")}
+                  disabled={pending === request.id || request.status === "rejected"}
+                  className={`${colors.destructiveHover} disabled:opacity-20 h-9 px-3`}
+                >
+                  <X className="h-4 w-4 mr-1.5" />
+                  Reject
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table layout */}
+      <div className="hidden md:block overflow-hidden rounded-lg border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Requested</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell>{displayName(request.profiles)}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {request.profiles?.email ?? "—"}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={request.status} />
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {formatDate(request.created_at.split("T")[0]!)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReview(request.id, "approved")}
+                      disabled={pending === request.id || request.status === "approved"}
+                      className={`${colors.successHover} disabled:opacity-20 h-8 px-2.5`}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReview(request.id, "rejected")}
+                      disabled={pending === request.id || request.status === "rejected"}
+                      className={`${colors.destructiveHover} disabled:opacity-20 h-8 px-2.5`}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }

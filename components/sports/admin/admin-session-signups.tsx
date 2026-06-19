@@ -44,7 +44,7 @@ export default function AdminSessionSignups({
       teamMemberIds={teamMemberIds ?? new Set()}
       playerCap={playerCap}
       renderActions={(signup) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex justify-end gap-1.5">
           {signup.status === "waitlisted" && (
             <Button
               variant="ghost"
@@ -52,6 +52,7 @@ export default function AdminSessionSignups({
               onClick={() => handlePromote(signup.id)}
               disabled={pending === signup.id}
               title="Promote to confirmed"
+              className="h-9 w-9"
             >
               <ArrowUp className="h-4 w-4" />
             </Button>
@@ -62,7 +63,7 @@ export default function AdminSessionSignups({
             onClick={() => handleCancel(signup.id)}
             disabled={pending === signup.id}
             title="Remove signup"
-            className={colors.destructiveHover}
+            className={`${colors.destructiveHover} h-9 w-9`}
           >
             <X className="h-4 w-4" />
           </Button>
