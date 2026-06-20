@@ -19,6 +19,17 @@ import { Label } from "@/components/ui/label";
 import { createSportConfig } from "@/lib/actions/create-sport-config";
 import { toastClasses } from "@/lib/styles";
 
+const PLACEHOLDERS = {
+  id: "badminton",
+  emoji: "🏸",
+  name: "Badminton",
+  type: "Drop-in Sessions",
+  day: "Friday nights",
+  organizers: "Daniel, Josh",
+  locationName: "NTCBC Gym",
+  locationAddress: "88 Finch Ave W, North York, ON M2N 1Y9",
+};
+
 export default function CreateSportDialog() {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -93,20 +104,20 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-id">Sport ID</Label>
               <Input
                 id="create-sport-id"
-                placeholder="e.g. badminton"
+                placeholder={`e.g. ${PLACEHOLDERS.id}`}
                 value={id}
                 onChange={(e) => setId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                 required
               />{" "}
               <p className="text-xs text-muted-foreground">
-                Used in the URL (e.g. /badminton). Cannot be changed after creation.
+                Used in the URL (e.g. /{PLACEHOLDERS.id}). Cannot be changed after creation.
               </p>{" "}
             </div>
             <div className="space-y-2">
               <Label htmlFor="create-sport-emoji">Emoji</Label>
               <Input
                 id="create-sport-emoji"
-                placeholder="e.g. 🏸"
+                placeholder={`e.g. ${PLACEHOLDERS.emoji}`}
                 value={emoji}
                 onChange={(e) => setEmoji(e.target.value)}
                 required
@@ -116,7 +127,7 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-name">Name</Label>
               <Input
                 id="create-sport-name"
-                placeholder="e.g. Badminton"
+                placeholder={`e.g. ${PLACEHOLDERS.name}`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -126,7 +137,7 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-type">Type</Label>
               <Input
                 id="create-sport-type"
-                placeholder="e.g. Drop-in Sessions"
+                placeholder={`e.g. ${PLACEHOLDERS.type}`}
                 value={type}
                 onChange={(e) => setType(e.target.value)}
                 required
@@ -136,7 +147,7 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-day">Schedule</Label>
               <Input
                 id="create-sport-day"
-                placeholder="e.g. Friday nights"
+                placeholder={`e.g. ${PLACEHOLDERS.day}`}
                 value={day}
                 onChange={(e) => setDay(e.target.value)}
                 required
@@ -146,7 +157,7 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-organizers">Organisers</Label>
               <Input
                 id="create-sport-organizers"
-                placeholder="e.g. John, Jane"
+                placeholder={`e.g. ${PLACEHOLDERS.organizers}`}
                 value={organizers}
                 onChange={(e) => setOrganizers(e.target.value)}
                 required
@@ -156,7 +167,7 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-location">Location</Label>
               <Input
                 id="create-sport-location"
-                placeholder="e.g. Community Centre Gym"
+                placeholder={`e.g. ${PLACEHOLDERS.locationName}`}
                 value={locationName}
                 onChange={(e) => setLocationName(e.target.value)}
                 required
@@ -166,7 +177,7 @@ export default function CreateSportDialog() {
               <Label htmlFor="create-sport-address">Address</Label>
               <Input
                 id="create-sport-address"
-                placeholder="e.g. 123 Main St"
+                placeholder={`e.g. ${PLACEHOLDERS.locationAddress}`}
                 value={locationAddress}
                 onChange={(e) => setLocationAddress(e.target.value)}
                 required
@@ -177,17 +188,15 @@ export default function CreateSportDialog() {
             <Card className="max-w-sm overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-2xl">
-                  {emoji || "🏅"} {name || "Sport Name"}
+                  {emoji || PLACEHOLDERS.emoji} {name || PLACEHOLDERS.name}
                 </CardTitle>
-                <CardDescription>{type || "Type"}</CardDescription>
+                <CardDescription>{type || PLACEHOLDERS.type}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">
-                {day && (
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4" />
-                    <span>{day}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span>{day || PLACEHOLDERS.day}</span>
+                </div>
               </CardContent>
             </Card>
           </div>
