@@ -23,6 +23,7 @@ export async function getUpcomingSessions(sport: string) {
     .neq("signups.status", "declined")
     .gte("date", getTodayInSportTimezone())
     .order("date", { ascending: true })
+    .order("time_start", { ascending: true })
     .returns<(SportSession & { signups: [{ count: number }] })[]>();
 
   return (data ?? []).map((s) => ({
@@ -38,7 +39,8 @@ export async function getAllSessions(sport: string) {
     .from("sessions")
     .select("*")
     .eq("sport", sport)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .order("time_start", { ascending: true });
 
   return data ?? [];
 }
@@ -55,7 +57,10 @@ export async function getSessionsWithClient(
     query = query.gte("date", options?.fromDate ?? getTodayInSportTimezone());
   }
 
-  const { data } = await query.order("date", { ascending: true }).returns<SportSession[]>();
+  const { data } = await query
+    .order("date", { ascending: true })
+    .order("time_start", { ascending: true })
+    .returns<SportSession[]>();
 
   return data ?? [];
 }
