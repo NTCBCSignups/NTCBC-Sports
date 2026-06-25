@@ -14,7 +14,7 @@ import {
 import { ADMIN_TAB_ICON_NAMES, SETTINGS_TAB_ID } from "@/config/admin-tab-metadata";
 import { validateImmutableSessionTabValues } from "@/config/session-tab-rules";
 
-const roleSchema = z.nativeEnum(Role);
+const roleSchema = z.enum(Role);
 
 const signupDialogSchema = z.object({
   maxRole: roleSchema,
@@ -27,7 +27,7 @@ const tabSchema = z.object({
   value: z.string().min(1),
   label: z.string().min(1),
   defaultTitlePrefix: z.string().optional(),
-  sessionPillColor: z.nativeEnum(PillColor),
+  sessionPillColor: z.enum(PillColor),
   permissions: z.object({
     [AccessLevel.overview]: roleSchema,
     [AccessLevel.view]: roleSchema,
