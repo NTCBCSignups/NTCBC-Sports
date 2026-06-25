@@ -13,17 +13,17 @@ const optionalString = z
 
 export const createSessionInputSchema = z
   .object({
-    session_type: z.string().trim().min(1, "Session type is required."),
+    session_type: z.string().trim().min(1, { error: "Session type is required." }),
     title: optionalString,
-    date: z.string().min(1, "Date is required."),
-    time_start: z.string().min(1, "Start time is required."),
-    time_end: z.string().min(1, "End time is required."),
-    location_name: z.string().min(1, "Location name is required."),
-    location_address: z.string().min(1, "Location address is required."),
+    date: z.string().min(1, { error: "Date is required." }),
+    time_start: z.string().min(1, { error: "Start time is required." }),
+    time_end: z.string().min(1, { error: "End time is required." }),
+    location_name: z.string().min(1, { error: "Location name is required." }),
+    location_address: z.string().min(1, { error: "Location address is required." }),
     location_maps_link: optionalString,
     player_cap: z.number().int().positive().nullable().optional(),
-    signup_open: z.string().min(1, "Sign-up open time is required."),
-    signup_close: z.string().min(1, "Sign-up close time is required."),
+    signup_open: z.string().min(1, { error: "Sign-up open time is required." }),
+    signup_close: z.string().min(1, { error: "Sign-up close time is required." }),
     notes: optionalString,
   })
   .superRefine((value, ctx) => {
