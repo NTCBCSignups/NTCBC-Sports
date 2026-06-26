@@ -53,6 +53,8 @@ export default function EditViewsDialog({
 }: EditViewsDialogProps) {
   const [open, setOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  // Suppress main dialog close triggered by focus-loss when confirm dialog closes
+  const suppressCloseRef = useRef(false);
   // Ref to pull data from the active editor imperatively
   const editorRef = useRef<SessionViewEditorHandle>(null);
   const [step, setStep] = useState<DialogStep>({ kind: "list" });
@@ -104,6 +106,8 @@ export default function EditViewsDialog({
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
+      // Ignore close attempts caused by focus-loss after confirm dialog dismissal
+      if (suppressCloseRef.current) return;
       // Capture editor data before checking dirty
       const current = captureEditorData();
       const dirty = JSON.stringify(current) !== JSON.stringify(viewData);
@@ -402,7 +406,19 @@ export default function EditViewsDialog({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+      <Dialog
+        open={showConfirm}
+        onOpenChange={(next) => {
+          setShowConfirm(next);
+          if (!next) {
+            // Suppress the main dialog's close handler for one tick (focus-loss artifact)
+            suppressCloseRef.current = true;
+            setTimeout(() => {
+              suppressCloseRef.current = false;
+            }, 0);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Unsaved changes</DialogTitle>
