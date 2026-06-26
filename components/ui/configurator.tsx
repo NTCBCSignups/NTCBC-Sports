@@ -164,22 +164,24 @@ export function Configurator<T, M = unknown>({
     if (stored.meta !== undefined) setMeta(stored.meta);
     setRestoredAt(stored.savedAt);
     setIsStale(stored.stale);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally run only on mount
 
   // Internal baseline — starts from serverState, updated by save()
   const [baseline, setBaseline] = useState<T>(serverState);
 
   const isDirty = JSON.stringify(draft) !== JSON.stringify(baseline);
 
-  // Refs to avoid stale closures
+  // Refs to avoid stale closures in callbacks/effects
   const draftRef = useRef(draft);
-  draftRef.current = draft;
   const baselineRef = useRef(baseline);
-  baselineRef.current = baseline;
   const metaRef = useRef(meta);
-  metaRef.current = meta;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevDirtyRef = useRef(isDirty);
+  useEffect(() => {
+    draftRef.current = draft;
+    baselineRef.current = baseline;
+    metaRef.current = meta;
+  });
 
   // ── Setters ────────────────────────────────────────────────────
   const setDraft = useCallback((next: T) => {
@@ -231,7 +233,9 @@ export function Configurator<T, M = unknown>({
 
   // ── captureRef interval ────────────────────────────────────────
   const captureMergeRef = useRef(captureMerge);
-  captureMergeRef.current = captureMerge;
+  useEffect(() => {
+    captureMergeRef.current = captureMerge;
+  });
 
   useEffect(() => {
     if (!captureRef || !captureMerge) return;
@@ -255,7 +259,7 @@ export function Configurator<T, M = unknown>({
     }, 2000);
 
     return () => clearInterval(id);
-  }, [captureRef, !!captureMerge]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [captureRef, !!captureMerge]); // eslint-disable-line react-hooks/exhaustive-deps -- boolean toggle is intentional
 
   // ── onDirtyChange callback ─────────────────────────────────────
   useEffect(() => {

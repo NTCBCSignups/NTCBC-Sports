@@ -57,7 +57,9 @@ export default function EditViewsDialog({
   // captureMerge needs access to `step` but must be stable for Configurator's interval.
   // Configurator uses a ref internally for captureMerge, so reference changes are safe.
   const stepRef = useRef(step);
-  stepRef.current = step;
+  useEffect(() => {
+    stepRef.current = step;
+  });
 
   const captureMerge = (captured: unknown, draft: StoredViewInstance[]): StoredViewInstance[] => {
     const currentStep = stepRef.current;
@@ -420,7 +422,7 @@ function EditViewsDialogContent({
                   size="sm"
                   className="mb-3 text-xs sticky -left-6 pl-8 w-fit"
                   onClick={() => {
-                    captureEditorData();
+                    captureEditorData(); // eslint-disable-line react-hooks/refs -- called from event handler, not render
                     setStep({ kind: "list" });
                   }}
                 >

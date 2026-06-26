@@ -115,22 +115,24 @@ function TestHarness({
 }) {
   const [open, setOpen] = useState(false);
 
-  return createElement(
-    "div",
-    null,
-    createElement("button", { "data-testid": "open-btn", onClick: () => setOpen(true) }, "Open"),
-    createElement(
-      FormDialog as React.ComponentType<FormDialogProps<{ name: string }>>,
-      {
-        draftKey,
-        serverState,
-        open,
-        onOpenChange: setOpen,
-        onSave,
-        onDiscard,
-        children: children ?? createElement(FormContent),
-      } as FormDialogProps<{ name: string }>,
-    ),
+  const FormDialogTyped = FormDialog as React.ComponentType<FormDialogProps<{ name: string }>>;
+
+  return (
+    <div>
+      <button data-testid="open-btn" onClick={() => setOpen(true)}>
+        Open
+      </button>
+      <FormDialogTyped
+        draftKey={draftKey}
+        serverState={serverState}
+        open={open}
+        onOpenChange={setOpen}
+        onSave={onSave}
+        onDiscard={onDiscard}
+      >
+        {children ?? createElement(FormContent)}
+      </FormDialogTyped>
+    </div>
   );
 }
 
@@ -287,15 +289,15 @@ describe("FormDialog", () => {
 
   it("supports render prop children with state access", () => {
     render(
-      createElement(TestHarness, {
-        serverState: { name: "hello" },
-        children: (state: { draft: { name: string }; isDirty: boolean }) =>
+      <TestHarness serverState={{ name: "hello" }}>
+        {(state: { draft: { name: string }; isDirty: boolean }) =>
           createElement(
             "span",
             { "data-testid": "render-prop" },
             `${state.draft.name}:${state.isDirty}`,
-          ),
-      }),
+          )
+        }
+      </TestHarness>,
     );
     act(() => screen.getByTestId("open-btn").click());
     expect(screen.getByTestId("render-prop").textContent).toBe("hello:false");

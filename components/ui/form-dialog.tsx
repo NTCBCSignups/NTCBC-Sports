@@ -18,7 +18,6 @@ import {
   type CaptureHandle,
   type ConfiguratorState,
 } from "@/components/ui/configurator";
-import { cn } from "@/lib/utils";
 
 // ── FormDialog props ─────────────────────────────────────────────
 
@@ -79,7 +78,7 @@ function InnerDialog<T, M>({
   children,
 }: InnerDialogProps<T, M>) {
   const state = useConfigurator<T, M>();
-  const { draft, serverState: baseline, isDirty, restoredAt, discard, clearStorage } = state;
+  const { draft, serverState: baseline, restoredAt, discard, clearStorage } = state;
   const [showConfirm, setShowConfirm] = useState(false);
   const suppressCloseRef = useRef(false);
   const hasAutoOpenedRef = useRef(false);

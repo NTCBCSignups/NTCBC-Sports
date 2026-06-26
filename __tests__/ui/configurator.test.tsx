@@ -1,8 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, cleanup } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { createElement, useState } from "react";
+import { createElement } from "react";
 import {
   Configurator,
   useConfigurator,
@@ -406,26 +405,22 @@ describe("flush on unmount", () => {
 // ── RestoreBanner ────────────────────────────────────────────────
 
 describe("RestoreBanner", () => {
-  it("renders nothing when no draft has been restored", () => {
-    const { container } = render(
-      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
-        draftKey: "banner-test",
-        serverState: { value: "server" },
-        children: createElement(RestoreBanner),
-      }),
+  function renderBanner(key: string, serverState: { value: string }) {
+    return render(
+      <Configurator draftKey={key} serverState={serverState}>
+        <RestoreBanner />
+      </Configurator>,
     );
+  }
+
+  it("renders nothing when no draft has been restored", () => {
+    const { container } = renderBanner("banner-test", { value: "server" });
     expect(container.textContent).toBe("");
   });
 
   it("renders restore message when draft is restored", async () => {
     seedStorage("banner-test", { value: "saved" }, { value: "server" });
-    render(
-      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
-        draftKey: "banner-test",
-        serverState: { value: "server" },
-        children: createElement(RestoreBanner),
-      }),
-    );
+    renderBanner("banner-test", { value: "server" });
     await act(async () => {});
     expect(screen.getByText(/Restored unsaved changes from/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Dismiss" })).toBeTruthy();
@@ -433,26 +428,14 @@ describe("RestoreBanner", () => {
 
   it("shows stale message when server data changed", async () => {
     seedStorage("banner-stale", { value: "draft" }, { value: "old-server" });
-    render(
-      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
-        draftKey: "banner-stale",
-        serverState: { value: "new-server" },
-        children: createElement(RestoreBanner),
-      }),
-    );
+    renderBanner("banner-stale", { value: "new-server" });
     await act(async () => {});
     expect(screen.getByText(/data may have changed/)).toBeTruthy();
   });
 
   it("disappears after clicking Dismiss", async () => {
     seedStorage("banner-dismiss", { value: "saved" }, { value: "server" });
-    render(
-      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
-        draftKey: "banner-dismiss",
-        serverState: { value: "server" },
-        children: createElement(RestoreBanner),
-      }),
-    );
+    renderBanner("banner-dismiss", { value: "server" });
     await act(async () => {});
     expect(screen.getByText(/Restored unsaved changes/)).toBeTruthy();
 
