@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -34,7 +34,10 @@ export default function SessionDialog({
   const [open, setOpen] = useState(false);
   const isEdit = !!session;
   const defaultSessionType = session?.session_type ?? defaultTab ?? sessionTabs[0]?.value ?? "";
-  const serverState = sessionToFormState(session, defaultSessionType);
+  const serverState = useMemo(
+    () => sessionToFormState(session, defaultSessionType),
+    [session, defaultSessionType],
+  );
 
   return (
     <FormDialog<SessionFormState>

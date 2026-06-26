@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useMemo, useState, useTransition } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Configurator, useConfigurator, RestoreBanner } from "@/components/ui/configurator";
 import {
@@ -59,13 +59,16 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     save,
     discard,
   } = useConfigurator<SportConfigFormState>();
-  const setState: Dispatch<SetStateAction<SportConfigFormState>> = (action) => {
-    if (typeof action === "function") {
-      updateDraft(action);
-    } else {
-      setDraft(action);
-    }
-  };
+  const setState: Dispatch<SetStateAction<SportConfigFormState>> = useCallback(
+    (action) => {
+      if (typeof action === "function") {
+        updateDraft(action);
+      } else {
+        setDraft(action);
+      }
+    },
+    [updateDraft, setDraft],
+  );
   const [isPending, startTransition] = useTransition();
 
   const [tabDialogOpen, setTabDialogOpen] = useState(false);
@@ -549,7 +552,7 @@ function SportConfigFormInner({ sport }: { sport: string }) {
           adminTabs: [
             ...prev.adminTabs,
             {
-              key: createKey("admin-tab"),
+              key: createKey("admin-tab", nextId),
               id: nextId,
               label: nextLabel,
               iconName: nextIconName,

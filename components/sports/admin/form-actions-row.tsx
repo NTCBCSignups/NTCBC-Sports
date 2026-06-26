@@ -22,11 +22,11 @@ export function FormActionsRow({
   return (
     <>
       {/* Spacer to prevent content from being hidden behind sticky bar */}
-      <div className="h-16" />
+      <div className="h-14" aria-hidden />
 
       {/* Sticky bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm p-3 shadow-lg">
-        <div className="flex items-center gap-2 max-w-6xl mx-auto">
+      <div className="sticky bottom-0 z-40 -mx-1 border-t bg-background/95 backdrop-blur-sm p-3 shadow-lg">
+        <div className="flex items-center gap-2">
           <Button type="button" variant="outline" onClick={onReset}>
             Reset
           </Button>

@@ -11,6 +11,9 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { statusColors } from "@/lib/styles";
 
 // ── localStorage helpers ─────────────────────────────────────────
 
@@ -218,9 +221,13 @@ export function Configurator<T, M = unknown>({
     }, 500);
 
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        // Flush on unmount so the last edit is never lost
+        persistDraft(draftKey, draftRef.current, baselineRef.current, metaRef.current);
+      }
     };
-  }, [isDirty, draft, draftKey, serverState]);
+  }, [isDirty, draft, draftKey]);
 
   // ── captureRef interval ────────────────────────────────────────
   const captureMergeRef = useRef(captureMerge);
@@ -284,12 +291,12 @@ export function Configurator<T, M = unknown>({
   );
 
   const discard = useCallback(() => {
-    setDraftRaw(baseline);
+    setDraftRaw(baselineRef.current);
     setMeta(initialMeta);
     setRestoredAt(null);
     setIsStale(false);
     removeDraft(draftKey);
-  }, [baseline, initialMeta, draftKey]);
+  }, [initialMeta, draftKey]);
 
   const clearStorage = useCallback(() => {
     removeDraft(draftKey);
@@ -337,10 +344,6 @@ export function Configurator<T, M = unknown>({
 }
 
 // ── Restore banner ───────────────────────────────────────────────
-
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { statusColors } from "@/lib/styles";
 
 /**
  * Renders a banner when a draft has been restored from localStorage.

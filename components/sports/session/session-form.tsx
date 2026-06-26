@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useRef, useState, type ReactNode, type RefObject } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -109,10 +109,13 @@ export default function SessionForm({
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef ?? internalFormRef;
   const [pending, setPendingRaw] = useState(false);
-  const setPending = (v: boolean) => {
-    setPendingRaw(v);
-    onPendingChange?.(v);
-  };
+  const setPending = useCallback(
+    (v: boolean) => {
+      setPendingRaw(v);
+      onPendingChange?.(v);
+    },
+    [onPendingChange],
+  );
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
 

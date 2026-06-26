@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { useConfigurator, type CaptureHandle } from "@/components/ui/configurator";
@@ -71,6 +71,17 @@ export default function EditViewsDialog({
     saveRef.current?.();
   };
 
+  // Compute editor dialog className outside JSX
+  const editorDialogClassName =
+    step.kind === "edit"
+      ? (() => {
+          const inst = viewData.find((v) => v.id === step.viewId);
+          if (!inst) return undefined;
+          const entry = getSessionView(inst.type);
+          return entry?.EditorComponent.dialogClassName;
+        })()
+      : undefined;
+
   return (
     <FormDialog<StoredViewInstance[]>
       draftKey={`views:${sport}:${sessionId}`}
@@ -90,17 +101,7 @@ export default function EditViewsDialog({
       className={cn(
         "transition-[max-width] duration-200",
         step.kind === "edit"
-          ? cn(
-              "sm:max-w-lg overflow-x-auto",
-              (() => {
-                const inst = viewData.find((v) =>
-                  step.kind === "edit" ? v.id === step.viewId : false,
-                );
-                if (!inst) return undefined;
-                const entry = getSessionView(inst.type);
-                return entry?.EditorComponent.dialogClassName;
-              })(),
-            )
+          ? cn("sm:max-w-lg overflow-x-auto", editorDialogClassName)
           : "sm:max-w-md",
       )}
       trigger={
@@ -160,12 +161,16 @@ function EditViewsDialogContent({
 
   // Always show attendance row — synthesize if not in items
   const hasAttendance = items.some((v) => v.type === DEFAULT_VIEW_TYPE);
-  const instances: StoredViewInstance[] = hasAttendance
-    ? items
-    : [
-        { id: 0, type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true },
-        ...items,
-      ];
+  const instances = useMemo<StoredViewInstance[]>(
+    () =>
+      hasAttendance
+        ? items
+        : [
+            { id: 0, type: DEFAULT_VIEW_TYPE, label: "Attendance", data: null, enabled: true },
+            ...items,
+          ],
+    [items, hasAttendance],
+  );
 
   const captureEditorData = (): StoredViewInstance[] => {
     if (step.kind === "edit" && editorRef.current) {
@@ -218,17 +223,17 @@ function EditViewsDialogContent({
   };
 
   // Expose save to parent so FormDialog's confirm "Save" button works
-  saveRef.current = handleSave;
+  useEffect(() => {
+    saveRef.current = handleSave;
+  });
 
   const isAttendanceView = (instance: StoredViewInstance) => instance.type === DEFAULT_VIEW_TYPE;
 
-  const activeEntry =
-    step.kind === "edit"
-      ? (() => {
-          const inst = instances.find((v) => v.id === step.viewId);
-          return inst ? getSessionView(inst.type) : undefined;
-        })()
-      : undefined;
+  const activeEntry = useMemo(() => {
+    if (step.kind !== "edit") return undefined;
+    const inst = instances.find((v) => v.id === step.viewId);
+    return inst ? getSessionView(inst.type) : undefined;
+  }, [step, instances]);
 
   return (
     <>

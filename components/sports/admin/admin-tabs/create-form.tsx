@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Configurator, useConfigurator, RestoreBanner } from "@/components/ui/configurator";
 import { FormActionsRow } from "@/components/sports/admin/form-actions-row";
 import SessionForm, {
@@ -21,7 +21,10 @@ interface CreateFormProps {
 
 export default function CreateForm({ sport, sessionTabs, defaultTab }: CreateFormProps) {
   const defaultSessionType = defaultTab ?? sessionTabs[0]?.value ?? "";
-  const serverState = sessionToFormState(undefined, defaultSessionType);
+  const serverState = useMemo(
+    () => sessionToFormState(undefined, defaultSessionType),
+    [defaultSessionType],
+  );
 
   return (
     <Configurator<SessionFormState> draftKey={`session-create:${sport}`} serverState={serverState}>
