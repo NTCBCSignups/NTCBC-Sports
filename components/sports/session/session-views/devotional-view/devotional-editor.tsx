@@ -249,28 +249,35 @@ function SectionEditor({
     editorRef.current = editor;
   }, [editor]);
 
-  /** Toggle facilitatorOnly on the current line (paragraph at cursor). */
+  /** Toggle facilitatorOnly on all paragraphs in the current selection. */
   const toggleCurrentLine = useCallback(() => {
     if (!editor) return;
-    const { $from } = editor.state.selection;
-    for (let depth = $from.depth; depth >= 1; depth--) {
-      const node = $from.node(depth);
-      if (node.type.name === "paragraph") {
-        const pos = $from.before(depth);
-        editor
-          .chain()
-          .focus()
-          .command(({ tr }: { tr: Transaction }) => {
+    const { from, to } = editor.state.selection;
+
+    // Determine new value: if ALL selected paragraphs are already hidden, show them; otherwise hide them
+    let allHidden = true;
+    editor.state.doc.nodesBetween(from, to, (node) => {
+      if (node.type.name === "paragraph" && !node.attrs.facilitatorOnly) {
+        allHidden = false;
+      }
+    });
+    const newValue = !allHidden;
+
+    editor
+      .chain()
+      .focus()
+      .command(({ tr }: { tr: Transaction }) => {
+        tr.doc.nodesBetween(from, to, (node, pos) => {
+          if (node.type.name === "paragraph") {
             tr.setNodeMarkup(pos, undefined, {
               ...node.attrs,
-              facilitatorOnly: !node.attrs.facilitatorOnly,
+              facilitatorOnly: newValue,
             });
-            return true;
-          })
-          .run();
-        return;
-      }
-    }
+          }
+        });
+        return true;
+      })
+      .run();
   }, [editor]);
 
   /** Toggle all lines in this section. */
@@ -391,7 +398,7 @@ function SectionEditor({
           onClick={toggleCurrentLine}
         >
           <EyeOff className="h-3 w-3" />
-          Hide current line from players
+          Hide selected lines from players
         </Button>
       </div>
     </div>
