@@ -568,7 +568,8 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
     }));
   };
 
-  const loadTemplate = () => setData(createTemplateDevotionalData());
+  const loadTemplate = () =>
+    setData((prev) => ({ ...createTemplateDevotionalData(), title: prev.title }));
 
   // ── Render ───────────────────────────────────────────────────
 
