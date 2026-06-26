@@ -7,7 +7,7 @@ import { useConfigurator, type CaptureHandle } from "@/components/ui/configurato
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/ui/draggable-list";
-import { Pencil, Trash2, Plus, Loader2, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSessionView,
@@ -99,7 +99,7 @@ export default function EditViewsDialog({
       onDiscard={() => setStep({ kind: "list" })}
       captureRef={captureRef}
       captureMerge={captureMerge}
-      showCloseButton={step.kind !== "edit"}
+      showCloseButton
       className={cn(
         "transition-[max-width] duration-200",
         step.kind === "edit"
@@ -239,15 +239,6 @@ function EditViewsDialogContent({
 
   return (
     <>
-      {step.kind === "edit" && (
-        <button
-          className="sticky right-0 top-0 ml-auto w-fit opacity-70 hover:opacity-100 cursor-pointer z-20"
-          onClick={() => setOpen(false)}
-        >
-          <X className="size-4" />
-          <span className="sr-only">Close</span>
-        </button>
-      )}
       <DialogHeader className={step.kind === "edit" ? "sticky -left-6 -mx-6 pl-8 w-fit" : ""}>
         <DialogTitle>
           {step.kind === "list" && "Session Views"}
