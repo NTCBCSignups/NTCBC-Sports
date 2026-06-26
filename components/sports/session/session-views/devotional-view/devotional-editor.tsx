@@ -5,6 +5,7 @@ import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Paragraph from "@tiptap/extension-paragraph";
+import { InputRule } from "@tiptap/core";
 import { GripVertical, Plus, Eye, EyeOff, MoreVertical, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,33 @@ const IndentParagraph = Paragraph.extend({
         },
       },
     };
+  },
+
+  addInputRules() {
+    return [
+      // Typing "- " at the start of a line converts to indent 1 (bullet)
+      new InputRule({
+        find: /^-\s$/,
+        handler: ({ state, range, chain }) => {
+          const $from = state.doc.resolve(range.from);
+          // Only trigger on paragraphs at indent 0
+          const node = $from.parent;
+          if (node.type.name !== "paragraph" || (node.attrs.indent as number) > 0) return null;
+
+          const paragraphPos = $from.before($from.depth);
+          chain()
+            .deleteRange({ from: range.from, to: range.to })
+            .command(({ tr }: { tr: Transaction }) => {
+              tr.setNodeMarkup(paragraphPos, undefined, {
+                ...node.attrs,
+                indent: 1,
+              });
+              return true;
+            })
+            .run();
+        },
+      }),
+    ];
   },
 });
 
@@ -182,7 +210,7 @@ function SectionEditor({
       }),
       IndentParagraph,
       Placeholder.configure({
-        placeholder: "Type here... (Tab to indent, Shift+Tab to outdent)",
+        placeholder: "Type here... (`- ` to indent, `hide lines` to indicate facilitator notes)",
       }),
     ],
     content: itemsToHtml(section.items),
@@ -198,6 +226,8 @@ function SectionEditor({
         const { $from, $to } = ed.state.selection;
 
         // Apply indent/outdent to all paragraphs in selection
+        // Tab only increases indent on lines already at indent >= 1 (use "- " to create bullets)
+        // Shift+Tab always works (can outdent from 1 → 0)
         ed.chain()
           .focus()
           .command(({ tr }: { tr: Transaction }) => {
@@ -206,7 +236,9 @@ function SectionEditor({
                 const currentIndent = (node.attrs.indent as number) ?? 0;
                 const newIndent = event.shiftKey
                   ? Math.max(0, currentIndent - 1)
-                  : Math.min(MAX_INDENT, currentIndent + 1);
+                  : currentIndent >= 1
+                    ? Math.min(MAX_INDENT, currentIndent + 1)
+                    : currentIndent; // don't indent from 0
                 if (newIndent !== currentIndent) {
                   tr.setNodeMarkup(pos, undefined, {
                     ...node.attrs,
