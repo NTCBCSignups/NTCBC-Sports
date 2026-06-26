@@ -9,7 +9,9 @@ export default defineConfig({
     },
   },
   test: {
+    setupFiles: ["./__tests__/mocks/setup-dom.ts"],
     restoreMocks: true,
+    execArgv: ["--disable-warning=ExperimentalWarning"],
     env: {
       NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-key",
