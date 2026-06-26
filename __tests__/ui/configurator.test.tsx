@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, cleanup } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createElement, useState } from "react";
 import {
   Configurator,
   useConfigurator,
+  RestoreBanner,
   relativeTime,
   type ConfiguratorProps,
 } from "@/components/ui/configurator";
@@ -374,5 +376,89 @@ describe("edit scenarios (dirty ↔ clean × populate/clear)", () => {
     expect(getState2().draft).toEqual({ value: "" });
     expect(getState2().isDirty).toBe(false);
     expect(getState2().restoredAt).toBeNull();
+  });
+});
+
+// ── Flush on unmount ─────────────────────────────────────────────
+
+describe("flush on unmount", () => {
+  it("persists pending draft to localStorage when component unmounts before debounce", () => {
+    const { getState, unmount } = renderConfigurator({ value: "server" });
+    act(() => getState().setDraft({ value: "unsaved" }));
+    // Do NOT advance timers — debounce has not fired
+    expect(getStored("test")).toBeNull();
+
+    unmount();
+
+    // After unmount, the flush should have persisted
+    const stored = getStored<{ value: string }>("test");
+    expect(stored).not.toBeNull();
+    expect(stored!.draft).toEqual({ value: "unsaved" });
+  });
+
+  it("does not persist on unmount when draft is clean", () => {
+    const { unmount } = renderConfigurator({ value: "server" });
+    unmount();
+    expect(getStored("test")).toBeNull();
+  });
+});
+
+// ── RestoreBanner ────────────────────────────────────────────────
+
+describe("RestoreBanner", () => {
+  it("renders nothing when no draft has been restored", () => {
+    const { container } = render(
+      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
+        draftKey: "banner-test",
+        serverState: { value: "server" },
+        children: createElement(RestoreBanner),
+      }),
+    );
+    expect(container.textContent).toBe("");
+  });
+
+  it("renders restore message when draft is restored", async () => {
+    seedStorage("banner-test", { value: "saved" }, { value: "server" });
+    render(
+      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
+        draftKey: "banner-test",
+        serverState: { value: "server" },
+        children: createElement(RestoreBanner),
+      }),
+    );
+    await act(async () => {});
+    expect(screen.getByText(/Restored unsaved changes from/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeTruthy();
+  });
+
+  it("shows stale message when server data changed", async () => {
+    seedStorage("banner-stale", { value: "draft" }, { value: "old-server" });
+    render(
+      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
+        draftKey: "banner-stale",
+        serverState: { value: "new-server" },
+        children: createElement(RestoreBanner),
+      }),
+    );
+    await act(async () => {});
+    expect(screen.getByText(/data may have changed/)).toBeTruthy();
+  });
+
+  it("disappears after clicking Dismiss", async () => {
+    seedStorage("banner-dismiss", { value: "saved" }, { value: "server" });
+    render(
+      createElement(Configurator as React.ComponentType<ConfiguratorProps<{ value: string }>>, {
+        draftKey: "banner-dismiss",
+        serverState: { value: "server" },
+        children: createElement(RestoreBanner),
+      }),
+    );
+    await act(async () => {});
+    expect(screen.getByText(/Restored unsaved changes/)).toBeTruthy();
+
+    await act(async () => {
+      screen.getByRole("button", { name: "Dismiss" }).click();
+    });
+    expect(screen.queryByText(/Restored unsaved changes/)).toBeNull();
   });
 });
