@@ -20,7 +20,7 @@ import AdminSessionSignups from "@/components/sports/admin/admin-session-signups
 import DeleteSessionButton from "@/components/sports/session/delete-session-button";
 import CancelSessionButton from "@/components/sports/session/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/session/restore-session-button";
-import SessionDialog from "@/components/sports/session/session-dialog";
+import { SessionFormDialog as SessionDialog } from "@/components/sports/session/session-form";
 import { formatDate, formatTime } from "@/lib/format";
 import { sessionTypePillClass } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";

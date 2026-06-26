@@ -9,6 +9,7 @@ export default defineConfig({
     },
   },
   test: {
+    setupFiles: ["./__tests__/mocks/setup-dom.ts"],
     restoreMocks: true,
     env: {
       NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",

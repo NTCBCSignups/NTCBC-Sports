@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { type Dispatch, type SetStateAction, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  clearUnsavedSettingsChanges,
-  confirmLeaveWithUnsavedSettings,
-  setUnsavedSettingsChanges,
-} from "@/components/sports/admin/settings-unsaved-guard";
+import { Configurator, useConfigurator, RestoreBanner } from "@/components/ui/configurator";
 import {
   isAdminTabIconName,
   SETTINGS_TAB_ID,
@@ -14,16 +10,12 @@ import {
 } from "@/config/admin-tab-metadata";
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
 import { updateSportConfig, type UpdateSportConfigInput } from "@/lib/actions/sport-config";
-import { statusColors, toastClasses } from "@/lib/styles";
+import { toastClasses } from "@/lib/styles";
 import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constants";
 import { ADMIN_TAB_DEFINITIONS, ADMIN_TAB_ICON_OPTIONS } from "./admin-tab-ui-metadata";
 import { AdminTabDialog, DeleteTargetDialog, PermissionsDialog, SessionTabDialog } from "./dialogs";
-import {
-  AdminTabsSection,
-  FormActionsRow,
-  GeneralSettingsSection,
-  SessionTabsSection,
-} from "./form-sections";
+import { AdminTabsSection, GeneralSettingsSection, SessionTabsSection } from "./form-sections";
+import { FormActionsRow } from "@/components/sports/admin/form-actions-row";
 import {
   buildInitialState,
   createAdminTabDraft,
@@ -41,6 +33,7 @@ import type {
   EditableTabPermissions,
   PendingDeleteTarget,
   SportConfigFormProps,
+  SportConfigFormState,
   TabDialogMode,
 } from "./types";
 
@@ -50,8 +43,29 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
     [sport, initialConfig],
   );
 
-  const [state, setState] = useState(initialState);
-  const [savedState, setSavedState] = useState(initialState);
+  return (
+    <Configurator draftKey={`settings:${sport}`} serverState={initialState}>
+      <SportConfigFormInner sport={sport} />
+    </Configurator>
+  );
+}
+
+function SportConfigFormInner({ sport }: { sport: string }) {
+  const {
+    draft: state,
+    setDraft,
+    updateDraft,
+    isDirty,
+    save,
+    discard,
+  } = useConfigurator<SportConfigFormState>();
+  const setState: Dispatch<SetStateAction<SportConfigFormState>> = (action) => {
+    if (typeof action === "function") {
+      updateDraft(action);
+    } else {
+      setDraft(action);
+    }
+  };
   const [isPending, startTransition] = useTransition();
 
   const [tabDialogOpen, setTabDialogOpen] = useState(false);
@@ -70,103 +84,6 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
   const [editingAdminTabKey, setEditingAdminTabKey] = useState<string | null>(null);
   const [adminTabDraft, setAdminTabDraft] = useState<AdminTabDraft>(() => createAdminTabDraft());
   const [pendingDeleteTarget, setPendingDeleteTarget] = useState<PendingDeleteTarget | null>(null);
-
-  useEffect(() => {
-    setState(initialState);
-    setSavedState(initialState);
-
-    setTabDialogOpen(false);
-    setPermissionsDialogOpen(false);
-    setAdminTabDialogOpen(false);
-
-    setEditingTabKey(null);
-    setPermissionsTabKey(null);
-    setEditingAdminTabKey(null);
-    setPendingDeleteTarget(null);
-
-    setTabDraft(createBlankTabDraft());
-    setPermissionsDraft(createDefaultPermissions());
-    setAdminTabDraft(createAdminTabDraft());
-  }, [initialState]);
-
-  const isDirty = JSON.stringify(state) !== JSON.stringify(savedState);
-
-  useEffect(() => {
-    setUnsavedSettingsChanges(isDirty);
-
-    return () => {
-      clearUnsavedSettingsChanges();
-    };
-  }, [isDirty]);
-
-  useEffect(() => {
-    if (!isDirty) {
-      return;
-    }
-
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [isDirty]);
-
-  useEffect(() => {
-    if (!isDirty) {
-      return;
-    }
-
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) {
-        return;
-      }
-
-      const anchor = target.closest("a[href]");
-      if (!(anchor instanceof HTMLAnchorElement)) {
-        return;
-      }
-
-      if (anchor.target && anchor.target !== "_self") {
-        return;
-      }
-
-      if (anchor.hasAttribute("download")) {
-        return;
-      }
-
-      const nextUrl = new URL(anchor.href, window.location.href);
-      const currentUrl = new URL(window.location.href);
-      const isSameLocation =
-        nextUrl.origin === currentUrl.origin &&
-        nextUrl.pathname === currentUrl.pathname &&
-        nextUrl.search === currentUrl.search &&
-        nextUrl.hash === currentUrl.hash;
-
-      if (isSameLocation) {
-        return;
-      }
-
-      if (!confirmLeaveWithUnsavedSettings()) {
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
-
-      clearUnsavedSettingsChanges();
-    };
-
-    document.addEventListener("click", handleDocumentClick, true);
-
-    return () => {
-      document.removeEventListener("click", handleDocumentClick, true);
-    };
-  }, [isDirty]);
 
   const addableAdminTabDefinitions = useMemo(() => {
     const selected = new Set(state.adminTabs.map((tab) => tab.id));
@@ -398,7 +315,7 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
     startTransition(async () => {
       const result = await updateSportConfig(sport, payload);
       if (result.success) {
-        setSavedState(structuredClone(state));
+        save();
         toast.success("Sport config saved.", { className: toastClasses.green });
         return;
       }
@@ -704,7 +621,7 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
   };
 
   const handleReset = () => {
-    setState(structuredClone(savedState));
+    discard();
     setTabDialogOpen(false);
     setPermissionsDialogOpen(false);
     setAdminTabDialogOpen(false);
@@ -713,15 +630,7 @@ export default function SportConfigForm({ sport, initialConfig }: SportConfigFor
 
   return (
     <section className="space-y-4">
-      {isDirty && (
-        <div className="sticky top-0 z-40 -mx-1 px-1">
-          <div
-            className={`rounded-lg border px-3 py-2 text-xs font-medium ${statusColors.amber.border} ${statusColors.amber.bg} ${statusColors.amber.text}`}
-          >
-            You have unsaved changes
-          </div>
-        </div>
-      )}
+      <RestoreBanner />
 
       <GeneralSettingsSection state={state} setState={setState} />
 

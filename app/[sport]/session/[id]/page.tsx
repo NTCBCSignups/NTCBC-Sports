@@ -10,7 +10,7 @@ import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-banner";
 import CancelSessionButton from "@/components/sports/session/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/session/restore-session-button";
-import SessionDialog from "@/components/sports/session/session-dialog";
+import { SessionFormDialog as SessionDialog } from "@/components/sports/session/session-form";
 import StatusBanner from "@/components/sports/status-banner";
 import AdminButton from "@/components/sports/admin/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";

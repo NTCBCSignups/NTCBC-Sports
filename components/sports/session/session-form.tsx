@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink } from "lucide-react";
+import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ExternalLink, Pencil } from "lucide-react";
+import { FormDialog } from "@/components/ui/form-dialog";
 import { createSession, updateSession } from "@/lib/actions/sessions";
 import { parseSessionInput } from "@/lib/actions/session-validation";
 import { getSessionPath } from "@/lib/session-route";
+import { useConfigurator } from "@/components/ui/configurator";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionTypeOption {
@@ -29,9 +32,25 @@ interface SessionTypeOption {
 interface SessionFormProps {
   sport: string;
   sessionTabs: SessionTypeOption[];
-  defaultTab?: string;
   session?: SportSession;
   onSuccess?: () => void;
+  formRef?: RefObject<HTMLFormElement | null>;
+  onPendingChange?: (pending: boolean) => void;
+}
+
+export interface SessionFormState {
+  session_type: string;
+  title: string;
+  date: string;
+  time_start: string;
+  time_end: string;
+  location_name: string;
+  location_address: string;
+  location_maps_link: string;
+  player_cap: string;
+  signup_open: string;
+  signup_close: string;
+  notes: string;
 }
 
 /** Convert an ISO datetime string to a datetime-local input value (YYYY-MM-DDTHH:mm). */
@@ -57,56 +76,66 @@ function QuickFillButton({ label, onClick }: { label: string; onClick: () => voi
   );
 }
 
+export function sessionToFormState(
+  session: SportSession | undefined,
+  defaultSessionType: string,
+): SessionFormState {
+  return {
+    session_type: session?.session_type ?? defaultSessionType,
+    title: session?.title ?? "",
+    date: session?.date ?? "",
+    time_start: session?.time_start ?? "",
+    time_end: session?.time_end ?? "",
+    location_name: session?.location_name ?? "",
+    location_address: session?.location_address ?? "",
+    location_maps_link: session?.location_maps_link ?? "",
+    player_cap: session?.player_cap != null ? String(session.player_cap) : "",
+    signup_open: session?.signup_open ? toDatetimeLocal(session.signup_open) : "",
+    signup_close: session?.signup_close ? toDatetimeLocal(session.signup_close) : "",
+    notes: session?.notes ?? "",
+  };
+}
+
 export default function SessionForm({
   sport,
   sessionTabs,
-  defaultTab,
   session,
   onSuccess,
+  formRef: externalFormRef,
+  onPendingChange,
 }: SessionFormProps) {
   const isEdit = !!session;
-  const [pending, setPending] = useState(false);
+  const { draft, updateDraft, save, discard } = useConfigurator<SessionFormState>();
+  const internalFormRef = useRef<HTMLFormElement>(null);
+  const formRef = externalFormRef ?? internalFormRef;
+  const [pending, setPendingRaw] = useState(false);
+  const setPending = (v: boolean) => {
+    setPendingRaw(v);
+    onPendingChange?.(v);
+  };
   const [error, setError] = useState<string | null>(null);
   const [createdSessionId, setCreatedSessionId] = useState<string | null>(null);
-  const defaultSessionType = session?.session_type ?? defaultTab ?? sessionTabs[0]?.value ?? "";
-  const [sessionType, setSessionType] = useState(defaultSessionType);
-  const [mapsLink, setMapsLink] = useState(session?.location_maps_link ?? "");
 
-  const autoFillSignupClose = (form: HTMLFormElement) => {
-    const date = (form.elements.namedItem("date") as HTMLInputElement)?.value;
-    const timeEnd = (form.elements.namedItem("time_end") as HTMLInputElement)?.value;
-    const signupCloseInput = form.elements.namedItem("signup_close") as HTMLInputElement;
-    const signupOpenInput = form.elements.namedItem("signup_open") as HTMLInputElement;
-
-    // Auto-fill signup_close if it's empty and we have both date and time_end
-    if (date && timeEnd && signupCloseInput && !signupCloseInput.value) {
-      const signupCloseValue = `${date}T${timeEnd}`;
-      signupCloseInput.value = signupCloseValue;
-
-      // Also auto-fill signup_open to one week before signup_close if it's empty
-      if (signupOpenInput && !signupOpenInput.value) {
-        const signupCloseDate = new Date(signupCloseValue);
-        const signupOpenDate = new Date(signupCloseDate);
-        signupOpenDate.setDate(signupOpenDate.getDate() - 7); // One week before
-
-        // Format as datetime-local: YYYY-MM-DDTHH:mm
-        const year = signupOpenDate.getFullYear();
-        const month = String(signupOpenDate.getMonth() + 1).padStart(2, "0");
-        const day = String(signupOpenDate.getDate()).padStart(2, "0");
-        const hours = String(signupOpenDate.getHours()).padStart(2, "0");
-        const minutes = String(signupOpenDate.getMinutes()).padStart(2, "0");
-
-        signupOpenInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-      }
-    }
-  };
-
-  const handleDateOrTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const form = e.currentTarget.form;
-    if (form) {
-      autoFillSignupClose(form);
-    }
-  };
+  const handleField =
+    (field: keyof SessionFormState) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      updateDraft((prev) => {
+        const next = { ...prev, [field]: value };
+        // Auto-fill signup times when date or time_end changes
+        if ((field === "date" || field === "time_end") && next.date && next.time_end) {
+          if (!prev.signup_close) {
+            next.signup_close = `${next.date}T${next.time_end}`;
+          }
+          if (!prev.signup_open && next.signup_close) {
+            const close = new Date(next.signup_close);
+            close.setDate(close.getDate() - 7);
+            next.signup_open = toDatetimeLocal(close.toISOString());
+          }
+        }
+        return next;
+      });
+    };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -114,28 +143,19 @@ export default function SessionForm({
     setError(null);
     setCreatedSessionId(null);
 
-    const form = new FormData(e.currentTarget);
-    const date = form.get("date") as string;
-    const timeStart = form.get("time_start") as string;
-    const timeEnd = form.get("time_end") as string;
-    const signupOpen = new Date(form.get("signup_open") as string);
-    const signupClose = new Date(form.get("signup_close") as string);
-
     const input = {
-      session_type: sessionType,
-      title: form.get("title") as string,
-      date: date,
-      time_start: timeStart,
-      time_end: timeEnd,
-      location_name: form.get("location_name") as string,
-      location_address: form.get("location_address") as string,
-      location_maps_link: form.get("location_maps_link") as string,
-      player_cap: (form.get("player_cap") as string)
-        ? parseInt(form.get("player_cap") as string)
-        : null,
-      signup_open: signupOpen.toISOString(),
-      signup_close: signupClose.toISOString(),
-      notes: form.get("notes") as string,
+      session_type: draft.session_type,
+      title: draft.title,
+      date: draft.date,
+      time_start: draft.time_start,
+      time_end: draft.time_end,
+      location_name: draft.location_name,
+      location_address: draft.location_address,
+      location_maps_link: draft.location_maps_link,
+      player_cap: draft.player_cap ? parseInt(draft.player_cap) : null,
+      signup_open: new Date(draft.signup_open).toISOString(),
+      signup_close: new Date(draft.signup_close).toISOString(),
+      notes: draft.notes,
     };
 
     const parsed = parseSessionInput(input);
@@ -152,6 +172,7 @@ export default function SessionForm({
         toast.error(result.error, { className: toastClasses.red });
       } else {
         toast.success("Session updated.", { className: toastClasses.green });
+        save();
         onSuccess?.();
       }
     } else {
@@ -164,8 +185,7 @@ export default function SessionForm({
         toast.success("Session created successfully.", {
           className: toastClasses.green,
         });
-        (e.target as HTMLFormElement).reset();
-        setSessionType(defaultSessionType);
+        discard();
       }
     }
     setPending(false);
@@ -174,10 +194,13 @@ export default function SessionForm({
   const createdSessionHref = createdSessionId ? getSessionPath(sport, createdSessionId) : "#";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 min-w-0">
       <div className="space-y-2">
         <Label htmlFor="session_type">Session Type</Label>
-        <Select value={sessionType} onValueChange={(v) => setSessionType(v)}>
+        <Select
+          value={draft.session_type}
+          onValueChange={(v) => updateDraft((prev) => ({ ...prev, session_type: v }))}
+        >
           <SelectTrigger id="session_type">
             <SelectValue placeholder="Select a session type" />
           </SelectTrigger>
@@ -200,7 +223,8 @@ export default function SessionForm({
             id="title"
             name="title"
             placeholder="e.g. Week 5 vs Team B"
-            defaultValue={session?.title ?? ""}
+            value={draft.title}
+            onChange={handleField("title")}
           />
         </div>
 
@@ -211,8 +235,8 @@ export default function SessionForm({
             name="date"
             type="date"
             required
-            defaultValue={session?.date}
-            onChange={handleDateOrTimeChange}
+            value={draft.date}
+            onChange={handleField("date")}
           />
         </div>
 
@@ -226,7 +250,8 @@ export default function SessionForm({
             type="number"
             min={1}
             placeholder="No limit"
-            defaultValue={session?.player_cap ?? ""}
+            value={draft.player_cap}
+            onChange={handleField("player_cap")}
           />
         </div>
 
@@ -237,7 +262,8 @@ export default function SessionForm({
             name="time_start"
             type="time"
             required
-            defaultValue={session?.time_start}
+            value={draft.time_start}
+            onChange={handleField("time_start")}
           />
         </div>
 
@@ -248,8 +274,8 @@ export default function SessionForm({
             name="time_end"
             type="time"
             required
-            defaultValue={session?.time_end}
-            onChange={handleDateOrTimeChange}
+            value={draft.time_end}
+            onChange={handleField("time_end")}
           />
         </div>
 
@@ -260,7 +286,8 @@ export default function SessionForm({
             name="location_name"
             placeholder="e.g. Christie Pits Diamond 1"
             required
-            defaultValue={session?.location_name}
+            value={draft.location_name}
+            onChange={handleField("location_name")}
           />
         </div>
 
@@ -271,7 +298,8 @@ export default function SessionForm({
             name="location_address"
             placeholder="e.g. 750 Bloor St W, Toronto"
             required
-            defaultValue={session?.location_address}
+            value={draft.location_address}
+            onChange={handleField("location_address")}
           />
         </div>
 
@@ -284,12 +312,12 @@ export default function SessionForm({
             name="location_maps_link"
             type="url"
             placeholder="https://maps.app.goo.gl/..."
-            defaultValue={session?.location_maps_link ?? ""}
-            onChange={(e) => setMapsLink(e.target.value)}
+            value={draft.location_maps_link}
+            onChange={handleField("location_maps_link")}
           />
-          {mapsLink && /^https?:\/\/.+/.test(mapsLink) && (
+          {draft.location_maps_link && /^https?:\/\/.+/.test(draft.location_maps_link) && (
             <a
-              href={mapsLink}
+              href={draft.location_maps_link}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
@@ -308,7 +336,8 @@ export default function SessionForm({
               name="signup_open"
               type="datetime-local"
               required
-              defaultValue={session ? toDatetimeLocal(session.signup_open) : undefined}
+              value={draft.signup_open}
+              onChange={handleField("signup_open")}
             />
           </div>
 
@@ -318,13 +347,8 @@ export default function SessionForm({
               <QuickFillButton
                 label="End of day"
                 onClick={() => {
-                  const form = document.getElementById("signup_close")?.closest("form");
-                  const dateInput = form?.elements.namedItem("date") as HTMLInputElement | null;
-                  if (dateInput?.value) {
-                    const signupCloseInput = form?.elements.namedItem(
-                      "signup_close",
-                    ) as HTMLInputElement;
-                    signupCloseInput.value = `${dateInput.value}T23:59`;
+                  if (draft.date) {
+                    updateDraft((prev) => ({ ...prev, signup_close: `${prev.date}T23:59` }));
                   }
                 }}
               />
@@ -334,7 +358,8 @@ export default function SessionForm({
               name="signup_close"
               type="datetime-local"
               required
-              defaultValue={session ? toDatetimeLocal(session.signup_close) : undefined}
+              value={draft.signup_close}
+              onChange={handleField("signup_close")}
             />
           </div>
         </div>
@@ -349,7 +374,8 @@ export default function SessionForm({
           name="notes"
           placeholder="Additional details about this session..."
           rows={3}
-          defaultValue={session?.notes ?? ""}
+          value={draft.notes}
+          onChange={handleField("notes")}
         />
       </div>
 
@@ -364,15 +390,99 @@ export default function SessionForm({
         </p>
       )}
 
-      <Button type="submit" disabled={pending}>
-        {pending
-          ? isEdit
-            ? "Saving..."
-            : "Creating..."
-          : isEdit
-            ? "Save Changes"
-            : "Create Session"}
-      </Button>
+      {/* Hide inline submit when parent controls submission via formRef */}
+      {!externalFormRef && (
+        <Button type="submit" disabled={pending}>
+          {pending
+            ? isEdit
+              ? "Saving..."
+              : "Creating..."
+            : isEdit
+              ? "Save Changes"
+              : "Create Session"}
+        </Button>
+      )}
     </form>
+  );
+}
+
+// ── Dialog wrapper ───────────────────────────────────────────────
+
+interface SessionFormDialogProps {
+  sport: string;
+  sessionTabs: SessionTypeOption[];
+  defaultTab?: string;
+  session?: SportSession;
+  trigger?: ReactNode;
+}
+
+export function SessionFormDialog({
+  sport,
+  sessionTabs,
+  defaultTab,
+  session,
+  trigger,
+}: SessionFormDialogProps) {
+  const [open, setOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const isEdit = !!session;
+  const defaultSessionType = session?.session_type ?? defaultTab ?? sessionTabs[0]?.value ?? "";
+  const serverState = sessionToFormState(session, defaultSessionType);
+
+  return (
+    <FormDialog<SessionFormState>
+      draftKey={isEdit ? `session-edit:${sport}:${session.id}` : `session-create:${sport}`}
+      serverState={serverState}
+      open={open}
+      onOpenChange={setOpen}
+      onSave={() => formRef.current?.requestSubmit()}
+      showCloseButton
+      className="sm:max-w-lg [&_form]:min-w-0 [&_input]:min-w-0"
+      trigger={
+        trigger ?? (
+          <Button variant="outline" size="sm">
+            <Pencil className="h-4 w-4 mr-1.5" />
+            {isEdit ? "Edit" : "Create"}
+          </Button>
+        )
+      }
+    >
+      {(state) => (
+        <>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? "Update the session details below."
+                : "Fill in the details to create a new session."}
+            </DialogDescription>
+          </DialogHeader>
+          <SessionForm
+            sport={sport}
+            sessionTabs={sessionTabs}
+            session={session}
+            onSuccess={() => setOpen(false)}
+            formRef={formRef}
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!state.isDirty}
+              onClick={() => state.discard()}
+            >
+              Reset
+            </Button>
+            <Button
+              type="button"
+              disabled={!state.isDirty}
+              onClick={() => formRef.current?.requestSubmit()}
+            >
+              {isEdit ? "Save Changes" : "Create Session"}
+            </Button>
+          </DialogFooter>
+        </>
+      )}
+    </FormDialog>
   );
 }

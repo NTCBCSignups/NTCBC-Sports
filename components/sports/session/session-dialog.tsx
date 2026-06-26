@@ -1,17 +1,14 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
-import SessionForm from "@/components/sports/session/session-form";
+import { FormDialog } from "@/components/ui/form-dialog";
+import SessionForm, {
+  sessionToFormState,
+  type SessionFormState,
+} from "@/components/sports/session/session-form";
 import type { SportSession } from "@/lib/supabase/types";
 
 interface SessionTypeOption {
@@ -36,34 +33,40 @@ export default function SessionDialog({
 }: SessionDialogProps) {
   const [open, setOpen] = useState(false);
   const isEdit = !!session;
+  const defaultSessionType = session?.session_type ?? defaultTab ?? sessionTabs[0]?.value ?? "";
+  const serverState = sessionToFormState(session, defaultSessionType);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <FormDialog<SessionFormState>
+      draftKey={isEdit ? `session-edit:${sport}:${session.id}` : `session-create:${sport}`}
+      serverState={serverState}
+      open={open}
+      onOpenChange={setOpen}
+      showCloseButton
+      className="sm:max-w-lg [&_form]:min-w-0 [&_input]:min-w-0"
+      trigger={
+        trigger ?? (
           <Button variant="outline" size="sm">
             <Pencil className="h-4 w-4 mr-1.5" />
             {isEdit ? "Edit" : "Create"}
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg [&_form]:min-w-0 [&_input]:min-w-0">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Update the session details below."
-              : "Fill in the details to create a new session."}
-          </DialogDescription>
-        </DialogHeader>
-        <SessionForm
-          sport={sport}
-          sessionTabs={sessionTabs}
-          defaultTab={defaultTab}
-          session={session}
-          onSuccess={() => setOpen(false)}
-        />
-      </DialogContent>
-    </Dialog>
+        )
+      }
+    >
+      <DialogHeader>
+        <DialogTitle>{isEdit ? "Edit Session" : "Create Session"}</DialogTitle>
+        <DialogDescription>
+          {isEdit
+            ? "Update the session details below."
+            : "Fill in the details to create a new session."}
+        </DialogDescription>
+      </DialogHeader>
+      <SessionForm
+        sport={sport}
+        sessionTabs={sessionTabs}
+        session={session}
+        onSuccess={() => setOpen(false)}
+      />
+    </FormDialog>
   );
 }
