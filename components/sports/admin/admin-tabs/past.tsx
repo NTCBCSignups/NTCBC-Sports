@@ -2,7 +2,7 @@ import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import SessionAccordion, {
   type SessionSignupEntry,
 } from "@/components/sports/admin/admin-session-accordion";
-import { getAllSessions, getSessionSignups, getTeamMembers } from "@/lib/get-data";
+import { getAllSessions, getSessionSignups, getSportUsers, getTeamMembers } from "@/lib/get-data";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import type { SignupStatus } from "@/lib/supabase/types";
 
@@ -12,9 +12,10 @@ export default async function AdminTabPast({ sport }: { sport: string }) {
     return <p className="text-sm text-muted-foreground py-4">Sport config not found.</p>;
   }
 
-  const [sessions, teamMemberIds] = await Promise.all([
+  const [sessions, teamMemberIds, sportUsers] = await Promise.all([
     getAllSessions(sport),
     getTeamMembers(sport),
+    getSportUsers(sport),
   ]);
 
   const today = getTodayInSportTimezone();
@@ -47,6 +48,7 @@ export default async function AdminTabPast({ sport }: { sport: string }) {
         sessions={pastSessions}
         signupsBySession={signupsBySession}
         teamMemberIds={teamMemberIds}
+        sportUsers={sportUsers}
         muted
       />
     </section>

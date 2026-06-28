@@ -3,13 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
-import { Ban, CalendarDays, Clock, MapPin, UserStar } from "lucide-react";
+import { Ban, CalendarDays, Clock, MapPin, ShieldCheck, UserStar } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
 import SignupButton from "@/components/sports/signup/signup-button";
 import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-banner";
 import CancelSessionButton from "@/components/sports/session/cancel-session-button";
 import RestoreSessionButton from "@/components/sports/session/restore-session-button";
+import FacilitatorPicker from "@/components/sports/session/facilitator-picker";
 import { SessionFormDialog as SessionDialog } from "@/components/sports/session/session-form";
 import StatusBanner from "@/components/sports/status-banner";
 import AdminButton from "@/components/sports/admin/admin-button";
@@ -32,6 +33,7 @@ import { LoadingContent } from "@/components/sports/loading-content";
 import {
   getSession,
   getSessionSignups,
+  getSportUsers,
   getTeamMembers,
   getUserSignupStatus,
   getUserAccessRequestStatus,
@@ -160,6 +162,11 @@ export default async function SessionDetailPage({
   }
 
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
+  const isFacilitator = !!user && session.facilitator_id === user.id;
+  const isSessionAdmin = isAdmin || isFacilitator;
+
+  // Fetch sport users for facilitator dropdown (only needed for admins editing sessions)
+  const sportUsers = isAdmin ? await getSportUsers(sport) : undefined;
 
   const isOpen = session.status !== SESSION_STATUS.cancelled && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
@@ -198,19 +205,37 @@ export default async function SessionDetailPage({
             >
               {session.title || formatDate(session.date, "long", true)}
             </h1>
-            {isAdmin && session.status !== SESSION_STATUS.cancelled && (
+            {isSessionAdmin && session.status !== SESSION_STATUS.cancelled && (
               <div className="flex items-center gap-2">
                 <SessionDialog
                   sport={sport}
                   sessionTabs={sessionTabs}
                   defaultTab={config.defaultTab}
                   session={session}
+                  sportUsers={sportUsers}
                 />
                 <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
+                {isAdmin && sportUsers && (
+                  <FacilitatorPicker
+                    sport={sport}
+                    sessionId={session.id}
+                    currentFacilitatorId={session.facilitator_id}
+                    sportUsers={sportUsers}
+                  />
+                )}
               </div>
             )}
           </div>
         </div>
+
+        {isFacilitator && !isAdmin && (
+          <StatusBanner
+            variant="info"
+            icon={<ShieldCheck className="h-5 w-5 shrink-0 mt-0.5" />}
+            title="You are a facilitator for this session"
+            message="You can edit session details, cancel, and manage views."
+          />
+        )}
 
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           <div className="space-y-2">
@@ -326,7 +351,7 @@ export default async function SessionDetailPage({
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
           viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
-          isAdmin={isAdmin}
+          isAdmin={isSessionAdmin}
           tabLabel={tab.label}
           signupConfirmationDialog={tab.signupConfirmationDialog}
         />

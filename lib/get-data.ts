@@ -117,6 +117,23 @@ export async function getTeamMembers(sport: string) {
   return new Set((data ?? []).map((m) => m.user_id));
 }
 
+/** Users with a sport_role for a sport (for facilitator dropdown). */
+export async function getSportUsers(sport: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sport_roles")
+    .select("user_id, profiles!sport_roles_user_id_fkey(id, full_name, email)")
+    .eq("sport", sport);
+
+  return (data ?? [])
+    .map((r) => {
+      const p = r.profiles as unknown as Profile | null;
+      return p ? { id: p.id, name: p.full_name ?? p.email } : null;
+    })
+    .filter((u): u is { id: string; name: string } => u !== null)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** Current user's access request status for a sport. */
 export async function getUserAccessRequestStatus(
   userId: string,

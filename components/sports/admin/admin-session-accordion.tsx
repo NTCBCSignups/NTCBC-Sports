@@ -41,6 +41,7 @@ interface SessionAccordionProps {
   sessions: SportSession[];
   signupsBySession: Map<string, SessionSignupEntry[]>;
   teamMemberIds: Set<string>;
+  sportUsers?: { id: string; name: string }[];
   muted?: boolean;
 }
 
@@ -50,6 +51,7 @@ export default function SessionAccordion({
   sessions,
   signupsBySession,
   teamMemberIds,
+  sportUsers,
   muted,
 }: SessionAccordionProps) {
   const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
@@ -137,6 +139,7 @@ export default function SessionAccordion({
                       sessionTabs={sessionTabs}
                       defaultTab={config.defaultTab}
                       session={session}
+                      sportUsers={sportUsers}
                       trigger={
                         <Button variant="ghost" size="icon" className="h-9 w-9">
                           <Pencil className="h-4 w-4" />
@@ -168,6 +171,7 @@ export default function SessionAccordion({
                           sessionTabs={sessionTabs}
                           defaultTab={config.defaultTab}
                           session={session}
+                          sportUsers={sportUsers}
                           trigger={
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                               <Pencil className="h-4 w-4 mr-2" />

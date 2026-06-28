@@ -17,9 +17,15 @@ interface CreateFormProps {
   sport: string;
   sessionTabs: SessionTypeOption[];
   defaultTab?: string;
+  sportUsers?: { id: string; name: string }[];
 }
 
-export default function CreateForm({ sport, sessionTabs, defaultTab }: CreateFormProps) {
+export default function CreateForm({
+  sport,
+  sessionTabs,
+  defaultTab,
+  sportUsers,
+}: CreateFormProps) {
   const defaultSessionType = defaultTab ?? sessionTabs[0]?.value ?? "";
   const serverState = useMemo(
     () => sessionToFormState(undefined, defaultSessionType),
@@ -28,7 +34,7 @@ export default function CreateForm({ sport, sessionTabs, defaultTab }: CreateFor
 
   return (
     <Configurator<SessionFormState> draftKey={`session-create:${sport}`} serverState={serverState}>
-      <CreateFormInner sport={sport} sessionTabs={sessionTabs} />
+      <CreateFormInner sport={sport} sessionTabs={sessionTabs} sportUsers={sportUsers} />
     </Configurator>
   );
 }
@@ -36,9 +42,11 @@ export default function CreateForm({ sport, sessionTabs, defaultTab }: CreateFor
 function CreateFormInner({
   sport,
   sessionTabs,
+  sportUsers,
 }: {
   sport: string;
   sessionTabs: SessionTypeOption[];
+  sportUsers?: { id: string; name: string }[];
 }) {
   const { isDirty, discard } = useConfigurator<SessionFormState>();
   const formRef = useRef<HTMLFormElement>(null);
@@ -50,6 +58,7 @@ function CreateFormInner({
       <SessionForm
         sport={sport}
         sessionTabs={sessionTabs}
+        sportUsers={sportUsers}
         formRef={formRef}
         onPendingChange={setPending}
       />

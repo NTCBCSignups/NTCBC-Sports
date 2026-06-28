@@ -60,6 +60,7 @@ export interface SportSession {
   status: SessionStatus;
   status_notes: string | null;
   alt_session_views: StoredViewInstance[];
+  facilitator_id: string | null;
   created_by: string | null;
   created_at: string;
 }

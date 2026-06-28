@@ -370,6 +370,7 @@ export function SessionTabsSection({
                     status: SESSION_STATUS.active,
                     status_notes: null,
                     alt_session_views: [],
+                    facilitator_id: null,
                     created_by: null,
                     created_at: new Date().toISOString(),
                     signup_count: 8,

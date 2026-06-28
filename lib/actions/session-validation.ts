@@ -25,6 +25,7 @@ export const createSessionInputSchema = z
     signup_open: z.string().min(1, { error: "Sign-up open time is required." }),
     signup_close: z.string().min(1, { error: "Sign-up close time is required." }),
     notes: optionalString,
+    facilitator_id: z.string().uuid().nullable().optional().default(null),
   })
   .superRefine((value, ctx) => {
     if (value.time_start >= value.time_end) {
@@ -55,12 +56,16 @@ export const createSessionInputSchema = z
       });
     }
 
-    const endOfSessionDay = new Date(`${value.date}T23:59`);
-    if (signupClose > endOfSessionDay) {
+    // Timezone-safe check: signup close must be within 24h after session end.
+    // The client additionally enforces same-day in local time; this looser
+    // server check avoids false positives from UTC date-boundary shifts.
+    const sessionEnd = new Date(`${value.date}T${value.time_end}`);
+    const deadline = new Date(sessionEnd.getTime() + 24 * 60 * 60 * 1000);
+    if (signupClose > deadline) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["signup_close"],
-        message: "Sign-up close time must be on the session date (by 11:59 PM)",
+        message: "Sign-up close time must be on the session date",
       });
     }
   });

@@ -109,10 +109,11 @@ describe("createSessionInputSchema - time logic", () => {
   });
 
   it("fails when signup_close is after end of session day", () => {
+    // signup_close more than 24h after session end (2025-03-15T20:00)
     const errors = getErrors({
       date: "2025-03-15",
       signup_open: "2025-03-14T09:00",
-      signup_close: "2025-03-16T01:00",
+      signup_close: "2025-03-17T01:00",
     });
     expect(errors).toContainEqual(
       expect.objectContaining({
