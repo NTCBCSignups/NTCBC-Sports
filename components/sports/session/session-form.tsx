@@ -166,6 +166,15 @@ export default function SessionForm({
       facilitator_id: draft.facilitator_id || null,
     };
 
+    // Client-side local-time check: signup close date must match session date.
+    // The raw datetime-local value has the true local date (before ISO conversion).
+    const closeLocalDate = draft.signup_close.slice(0, 10);
+    if (closeLocalDate && draft.date && closeLocalDate > draft.date) {
+      setError("Sign-up close time must be on the session date (by 11:59 PM)");
+      setPending(false);
+      return;
+    }
+
     const parsed = parseSessionInput(input);
     if (!parsed.success) {
       setError(parsed.error);
