@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
-import { Ban, CalendarDays, Clock, MapPin, UserStar } from "lucide-react";
+import { Ban, CalendarDays, Clock, MapPin, ShieldCheck, UserStar } from "lucide-react";
 import PageHeader from "@/components/sports/page-header";
 import SignupButton from "@/components/sports/signup/signup-button";
 import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
@@ -218,6 +218,15 @@ export default async function SessionDetailPage({
             )}
           </div>
         </div>
+
+        {isFacilitator && !isAdmin && (
+          <StatusBanner
+            variant="info"
+            icon={<ShieldCheck className="h-5 w-5 shrink-0 mt-0.5" />}
+            title="You are a facilitator for this session"
+            message="You can edit session details, cancel, and manage views."
+          />
+        )}
 
         <div className="flex flex-col sm:flex-row sm:gap-12 text-sm">
           <div className="space-y-2">
