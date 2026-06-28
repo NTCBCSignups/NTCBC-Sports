@@ -21,8 +21,8 @@ import type {
   SportConfigFormState,
 } from "./types";
 
-export function createKey(prefix: string): string {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+export function createKey(prefix: string, id?: string): string {
+  return id ? `${prefix}-${id}` : `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export function createDefaultPermissions(): EditableTabPermissions {
@@ -49,7 +49,7 @@ export function createBlankTabDraft(): EditableTab {
 
 export function createEditableAdminTab(tab: AdminTabMeta): EditableAdminTab {
   return {
-    key: createKey("admin-tab"),
+    key: createKey("admin-tab", tab.id),
     id: tab.id,
     label: tab.label,
     iconName: tab.iconName,
@@ -106,21 +106,24 @@ export function buildInitialState(
     notesText: (config.notes ?? []).join("\n"),
     defaultTab: config.defaultTab ?? "",
     defaultAdminTab: config.defaultAdminTab ?? "",
-    tabs: (config.tabs ?? []).map((tab) => ({
-      key: createKey("tab"),
-      id: tab.id ?? createSessionTabId(),
-      value: tab.value,
-      label: tab.label,
-      defaultTitlePrefix: tab.defaultTitlePrefix ?? "",
-      sessionPillColor: tab.sessionPillColor,
-      signupConfirmationDialog: tab.signupConfirmationDialog,
-      permissions: {
-        [AccessLevel.overview]: tab.permissions[AccessLevel.overview],
-        [AccessLevel.view]: tab.permissions[AccessLevel.view],
-        [AccessLevel.signup]: tab.permissions[AccessLevel.signup],
-        [AccessLevel.admin]: tab.permissions[AccessLevel.admin],
-      },
-    })),
+    tabs: (config.tabs ?? []).map((tab) => {
+      const id = tab.id ?? createSessionTabId();
+      return {
+        key: createKey("tab", id),
+        id,
+        value: tab.value,
+        label: tab.label,
+        defaultTitlePrefix: tab.defaultTitlePrefix ?? "",
+        sessionPillColor: tab.sessionPillColor,
+        signupConfirmationDialog: tab.signupConfirmationDialog,
+        permissions: {
+          [AccessLevel.overview]: tab.permissions[AccessLevel.overview],
+          [AccessLevel.view]: tab.permissions[AccessLevel.view],
+          [AccessLevel.signup]: tab.permissions[AccessLevel.signup],
+          [AccessLevel.admin]: tab.permissions[AccessLevel.admin],
+        },
+      };
+    }),
     adminTabs: (config.adminTabs ?? [])
       .filter((tab) => tab.id !== SETTINGS_TAB_ID)
       .map((tab) => createEditableAdminTab(tab)),

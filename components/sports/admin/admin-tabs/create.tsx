@@ -1,4 +1,4 @@
-import SessionForm from "@/components/sports/session/session-form";
+import CreateForm from "@/components/sports/admin/admin-tabs/create-form";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 
 export default async function AdminTabCreate({ sport }: { sport: string }) {
@@ -13,7 +13,7 @@ export default async function AdminTabCreate({ sport }: { sport: string }) {
     <section className="space-y-3">
       <h2 className="text-lg font-semibold text-foreground">Create Session</h2>
       <div className="rounded-lg border bg-card p-4 sm:p-6">
-        <SessionForm sport={sport} sessionTabs={sessionTabs} defaultTab={config.defaultTab} />
+        <CreateForm sport={sport} sessionTabs={sessionTabs} defaultTab={config.defaultTab} />
       </div>
     </section>
   );
