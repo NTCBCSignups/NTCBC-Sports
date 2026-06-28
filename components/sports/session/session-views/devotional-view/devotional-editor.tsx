@@ -5,7 +5,9 @@ import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Paragraph from "@tiptap/extension-paragraph";
-import { InputRule } from "@tiptap/core";
+import { Extension, InputRule } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { GripVertical, Plus, Eye, EyeOff, MoreVertical, Sparkles } from "lucide-react";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { Button } from "@/components/ui/button";
@@ -93,6 +95,37 @@ const IndentParagraph = Paragraph.extend({
               return true;
             })
             .run();
+        },
+      }),
+    ];
+  },
+});
+
+/**
+ * ProseMirror plugin that adds a gray background decoration to paragraphs
+ * with facilitatorOnly=true. Decorations update automatically on doc changes.
+ */
+const FacilitatorHighlight = Extension.create({
+  name: "facilitatorHighlight",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("facilitatorHighlight"),
+        props: {
+          decorations(state) {
+            const decorations: Decoration[] = [];
+            state.doc.descendants((node, pos) => {
+              if (node.type.name === "paragraph" && node.attrs.facilitatorOnly) {
+                decorations.push(
+                  Decoration.node(pos, pos + node.nodeSize, {
+                    style:
+                      "background-color: rgba(0, 0, 0, 0.07); border-radius: 2px; border-left: 3px solid rgba(0, 0, 0, 0.15);",
+                  }),
+                );
+              }
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
         },
       }),
     ];
@@ -208,6 +241,7 @@ function SectionEditor({
         horizontalRule: false,
       }),
       IndentParagraph,
+      FacilitatorHighlight,
       Placeholder.configure({
         placeholder: "...",
       }),
@@ -279,6 +313,16 @@ function SectionEditor({
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
+
+  /** Whether all items in this section are facilitator-only (derived from props, updates on each edit). */
+  const allHiddenFromPlayers =
+    section.items.length > 0 && section.items.every((i) => i.facilitatorOnly);
+  const [localAllHidden, setLocalAllHidden] = useState(allHiddenFromPlayers);
+
+  // Sync from props when they change (parent re-renders after onItemsChange)
+  useEffect(() => {
+    setLocalAllHidden(allHiddenFromPlayers);
+  }, [allHiddenFromPlayers]);
 
   /** Toggle facilitatorOnly on all paragraphs in the current selection. */
   const toggleCurrentLine = useCallback(() => {
@@ -409,21 +453,31 @@ function SectionEditor({
 
       {/* Tiptap Editor */}
       <div className="relative">
+        <div className="sticky top-0 z-10 flex items-center gap-1 px-3 py-1.5 bg-card/95 backdrop-blur-sm border-b">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 text-xs gap-1.5 text-muted-foreground"
+            onClick={() => {
+              toggleCurrentLine();
+              setLocalAllHidden((prev) => !prev);
+            }}
+          >
+            {localAllHidden ? (
+              <>
+                <Eye className="h-3 w-3" />
+                Show line(s) in player view
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-3 w-3" />
+                Show line(s) for facilitators only
+              </>
+            )}
+          </Button>
+        </div>
         <EditorContent editor={editor} />
-      </div>
-
-      {/* Per-line hide button */}
-      <div className="px-3 pb-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-6 text-xs text-muted-foreground gap-1.5"
-          onClick={toggleCurrentLine}
-        >
-          <EyeOff className="h-3 w-3" />
-          Hide selected lines from players
-        </Button>
       </div>
     </div>
   );
@@ -597,10 +651,6 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
                 .devotional-tiptap p[data-indent="2"]::before { left: 2rem; }
                 .devotional-tiptap p[data-indent="3"]::before { left: 3.5rem; }
                 .devotional-tiptap p[data-indent="4"]::before { left: 5rem; }
-                .devotional-tiptap p[data-facilitator-only="true"] {
-                    border-left: 2px solid hsl(var(--primary) / 0.5);
-                    opacity: 0.7;
-                }
                 .devotional-tiptap p.is-editor-empty:first-child::before {
                     content: attr(data-placeholder) !important;
                     float: left;
