@@ -286,14 +286,16 @@ function EditViewsDialogContent({
                       {isAttendanceView(instance) ? (
                         <span className="text-sm font-medium truncate">{instance.label}</span>
                       ) : (
-                        <input
-                          type="text"
-                          value={instance.label}
-                          onChange={(e) => handleRename(instance.id, e.target.value)}
-                          onFocus={() => setEditingId(instance.id)}
-                          onBlur={() => setEditingId(null)}
-                          className="text-sm font-medium truncate bg-transparent border-none outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full"
-                        />
+                        <div className="relative flex items-center min-w-0 flex-1">
+                          <input
+                            type="text"
+                            value={instance.label}
+                            onChange={(e) => handleRename(instance.id, e.target.value)}
+                            onFocus={() => setEditingId(instance.id)}
+                            onBlur={() => setEditingId(null)}
+                            className="text-sm font-medium truncate bg-transparent outline-none border-b border-dashed border-muted-foreground/30 focus:border-solid focus:border-ring focus:ring-0 rounded-none px-1 -ml-1 w-full"
+                          />
+                        </div>
                       )}
                       {isDefault && (
                         <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
