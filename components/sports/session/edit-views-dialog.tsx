@@ -191,12 +191,22 @@ function EditViewsDialogContent({
   };
 
   const handleCreate = (type: string) => {
-    if (!newName.trim()) return;
+    const label = newName.trim() || allTypes.find((t) => t.id === type)?.defaultName || type;
     const maxId = instances.length > 0 ? Math.max(...instances.map((v) => v.id)) : -1;
-    const newView: StoredViewInstance = { id: maxId + 1, type, label: newName.trim(), data: null };
+    const newView: StoredViewInstance = { id: maxId + 1, type, label, data: null };
     setItems(hasAttendance ? [...items, newView] : [...instances, newView]);
     setNewName("");
     setStep({ kind: "edit", viewId: newView.id });
+  };
+
+  /** Skip the name step if this is the first view of that type. */
+  const handlePickType = (type: string) => {
+    const existsAlready = instances.some((v) => v.type === type);
+    if (existsAlready) {
+      setStep({ kind: "name", type });
+    } else {
+      handleCreate(type);
+    }
   };
 
   const handleDelete = (viewId: number) => {
@@ -356,7 +366,7 @@ function EditViewsDialogContent({
             .map((type) => (
               <button
                 key={type.id}
-                onClick={() => setStep({ kind: "name", type: type.id })}
+                onClick={() => handlePickType(type.id)}
                 className="w-full flex items-center rounded-md border px-4 py-3 text-left hover:bg-muted transition-colors"
               >
                 <span className="text-sm font-medium">{type.label}</span>
