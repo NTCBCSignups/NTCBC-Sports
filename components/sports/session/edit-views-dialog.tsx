@@ -294,7 +294,7 @@ function EditViewsDialogContent({
                             onChange={(e) => handleRename(instance.id, e.target.value)}
                             onFocus={() => setEditingId(instance.id)}
                             onBlur={() => setEditingId(null)}
-                            className="text-sm font-medium truncate bg-transparent outline-none border-b border-dashed border-muted-foreground/30 focus:border-solid focus:border-ring focus:ring-0 rounded-none px-1 -ml-1 w-full"
+                            className="text-base md:text-sm font-medium truncate bg-transparent outline-none border-b border-dashed border-muted-foreground/30 focus:border-solid focus:border-ring focus:ring-0 rounded-none px-1 -ml-1 w-full"
                           />
                         </div>
                       )}

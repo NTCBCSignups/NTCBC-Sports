@@ -250,7 +250,7 @@ function SectionEditor({
     content: itemsToHtml(section.items),
     editorProps: {
       attributes: {
-        class: "devotional-tiptap outline-none min-h-[60px] px-3 py-2 text-sm leading-relaxed",
+        class: "devotional-tiptap outline-none min-h-[60px] px-3 py-2 text-base md:text-sm leading-relaxed",
       },
       handleKeyDown: (_view: unknown, event: KeyboardEvent) => {
         if (event.key !== "Tab") return false;
@@ -397,7 +397,7 @@ function SectionEditor({
           value={section.customTitle ?? SECTION_META[section.type].defaultTitle}
           onChange={(e) => onMetaChange({ customTitle: e.target.value })}
           placeholder="Section title"
-          className="h-7 text-sm font-medium border-0 shadow-none bg-transparent px-1 focus-visible:ring-1 flex-1"
+            className="h-7 text-base md:text-sm font-medium border-0 shadow-none bg-transparent px-1 focus-visible:ring-1 flex-1"
         />
 
         {/* Section menu */}
