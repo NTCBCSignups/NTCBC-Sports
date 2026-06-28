@@ -145,3 +145,25 @@ export async function saveSessionViews(
   revalidatePath(getSessionPath(sport, sessionId));
   return { success: true };
 }
+
+export async function assignFacilitator(
+  sport: string,
+  sessionId: string,
+  facilitatorId: string | null,
+): Promise<SessionActionResult> {
+  const supabase = await createClient();
+  const result = await requireSportAdmin(supabase, sport);
+  if (!result.success) return { error: result.error };
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ facilitator_id: facilitatorId })
+    .eq("id", sessionId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}`);
+  revalidatePath(getSessionPath(sport, sessionId));
+  revalidatePath(`/${sport}/admin`);
+  return { success: true };
+}
