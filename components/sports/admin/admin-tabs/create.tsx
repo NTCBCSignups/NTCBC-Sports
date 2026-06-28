@@ -1,5 +1,6 @@
 import CreateForm from "@/components/sports/admin/admin-tabs/create-form";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
+import { getSportUsers } from "@/lib/get-data";
 
 export default async function AdminTabCreate({ sport }: { sport: string }) {
   const config = await getResolvedSportConfig(sport);
@@ -8,12 +9,18 @@ export default async function AdminTabCreate({ sport }: { sport: string }) {
   }
 
   const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
+  const sportUsers = await getSportUsers(sport);
 
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold text-foreground">Create Session</h2>
       <div className="rounded-lg border bg-card p-4 sm:p-6">
-        <CreateForm sport={sport} sessionTabs={sessionTabs} defaultTab={config.defaultTab} />
+        <CreateForm
+          sport={sport}
+          sessionTabs={sessionTabs}
+          defaultTab={config.defaultTab}
+          sportUsers={sportUsers}
+        />
       </div>
     </section>
   );

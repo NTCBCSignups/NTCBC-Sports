@@ -96,3 +96,30 @@ export async function requireSportAdmin(
 
   return { success: true, user };
 }
+
+/**
+ * Asserts the current user is either a sport admin or the facilitator
+ * for the given session. Returns the authenticated user on success.
+ */
+export async function requireSessionAdminOrFacilitator(
+  supabase: SupabaseClient,
+  sport: string,
+  sessionId: string,
+): Promise<{ success: true; user: User; isAdmin: boolean } | { success: false; error: string }> {
+  const user = await getUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { role } = await getUserSportRole(supabase, user.id, sport);
+  if (role >= Role.admin) return { success: true, user, isAdmin: true };
+
+  // Check if user is the session facilitator
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("facilitator_id")
+    .eq("id", sessionId)
+    .single();
+
+  if (session?.facilitator_id === user.id) return { success: true, user, isAdmin: false };
+
+  return { success: false, error: "Not authorized" };
+}

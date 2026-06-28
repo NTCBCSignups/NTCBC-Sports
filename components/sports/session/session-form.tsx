@@ -33,6 +33,7 @@ interface SessionFormProps {
   sport: string;
   sessionTabs: SessionTypeOption[];
   session?: SportSession;
+  sportUsers?: { id: string; name: string }[];
   onSuccess?: () => void;
   formRef?: RefObject<HTMLFormElement | null>;
   onPendingChange?: (pending: boolean) => void;
@@ -51,6 +52,7 @@ export interface SessionFormState {
   signup_open: string;
   signup_close: string;
   notes: string;
+  facilitator_id: string;
 }
 
 /** Convert an ISO datetime string to a datetime-local input value (YYYY-MM-DDTHH:mm). */
@@ -93,6 +95,7 @@ export function sessionToFormState(
     signup_open: session?.signup_open ? toDatetimeLocal(session.signup_open) : "",
     signup_close: session?.signup_close ? toDatetimeLocal(session.signup_close) : "",
     notes: session?.notes ?? "",
+    facilitator_id: session?.facilitator_id ?? "",
   };
 }
 
@@ -100,6 +103,7 @@ export default function SessionForm({
   sport,
   sessionTabs,
   session,
+  sportUsers,
   onSuccess,
   formRef: externalFormRef,
   onPendingChange,
@@ -159,6 +163,7 @@ export default function SessionForm({
       signup_open: new Date(draft.signup_open).toISOString(),
       signup_close: new Date(draft.signup_close).toISOString(),
       notes: draft.notes,
+      facilitator_id: draft.facilitator_id || null,
     };
 
     const parsed = parseSessionInput(input);
@@ -382,6 +387,32 @@ export default function SessionForm({
         />
       </div>
 
+      {sportUsers && sportUsers.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="facilitator_id">
+            Facilitator <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Select
+            value={draft.facilitator_id}
+            onValueChange={(v) =>
+              updateDraft((prev) => ({ ...prev, facilitator_id: v === "none" ? "" : v }))
+            }
+          >
+            <SelectTrigger id="facilitator_id">
+              <SelectValue placeholder="No facilitator" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No facilitator</SelectItem>
+              {sportUsers.map((u) => (
+                <SelectItem key={u.id} value={u.id}>
+                  {u.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {error && <p className={feedback.error}>{error}</p>}
       {!isEdit && createdSessionId && (
         <p className={feedback.success}>
@@ -416,6 +447,7 @@ interface SessionFormDialogProps {
   sessionTabs: SessionTypeOption[];
   defaultTab?: string;
   session?: SportSession;
+  sportUsers?: { id: string; name: string }[];
   trigger?: ReactNode;
 }
 
@@ -424,6 +456,7 @@ export function SessionFormDialog({
   sessionTabs,
   defaultTab,
   session,
+  sportUsers,
   trigger,
 }: SessionFormDialogProps) {
   const [open, setOpen] = useState(false);
@@ -464,6 +497,7 @@ export function SessionFormDialog({
             sport={sport}
             sessionTabs={sessionTabs}
             session={session}
+            sportUsers={sportUsers}
             onSuccess={() => setOpen(false)}
             formRef={formRef}
           />

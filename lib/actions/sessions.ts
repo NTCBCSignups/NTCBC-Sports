@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireSportAdmin } from "@/lib/supabase/user";
+import { requireSportAdmin, requireSessionAdminOrFacilitator } from "@/lib/supabase/user";
 import { getSessionPath } from "@/lib/session-route";
 import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
 import { parseSessionInput, type CreateSessionInput } from "@/lib/actions/session-validation";
@@ -50,10 +50,13 @@ export async function updateSession(
   if (!parsed.success) return { error: parsed.error };
 
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, sport);
+  const result = await requireSessionAdminOrFacilitator(supabase, sport, sessionId);
   if (!result.success) return { error: result.error };
 
-  const { error } = await supabase.from("sessions").update(parsed.data).eq("id", sessionId);
+  // Only admins can change facilitator_id
+  const updateData = result.isAdmin ? parsed.data : { ...parsed.data, facilitator_id: undefined };
+
+  const { error } = await supabase.from("sessions").update(updateData).eq("id", sessionId);
 
   if (error) return { error: error.message };
 
@@ -86,7 +89,7 @@ export async function cancelSession(
   reason?: string,
 ): Promise<SessionActionResult> {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, sport);
+  const result = await requireSessionAdminOrFacilitator(supabase, sport, sessionId);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase
@@ -129,7 +132,7 @@ export async function saveSessionViews(
   views: StoredViewInstance[],
 ): Promise<SessionActionResult> {
   const supabase = await createClient();
-  const result = await requireSportAdmin(supabase, sport);
+  const result = await requireSessionAdminOrFacilitator(supabase, sport, sessionId);
   if (!result.success) return { error: result.error };
 
   const { error } = await supabase

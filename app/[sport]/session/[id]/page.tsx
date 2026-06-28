@@ -32,6 +32,7 @@ import { LoadingContent } from "@/components/sports/loading-content";
 import {
   getSession,
   getSessionSignups,
+  getSportUsers,
   getTeamMembers,
   getUserSignupStatus,
   getUserAccessRequestStatus,
@@ -160,6 +161,11 @@ export default async function SessionDetailPage({
   }
 
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
+  const isFacilitator = !!user && session.facilitator_id === user.id;
+  const isSessionAdmin = isAdmin || isFacilitator;
+
+  // Fetch sport users for facilitator dropdown (only needed for admins editing sessions)
+  const sportUsers = isAdmin ? await getSportUsers(sport) : undefined;
 
   const isOpen = session.status !== SESSION_STATUS.cancelled && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
@@ -198,13 +204,14 @@ export default async function SessionDetailPage({
             >
               {session.title || formatDate(session.date, "long", true)}
             </h1>
-            {isAdmin && session.status !== SESSION_STATUS.cancelled && (
+            {isSessionAdmin && session.status !== SESSION_STATUS.cancelled && (
               <div className="flex items-center gap-2">
                 <SessionDialog
                   sport={sport}
                   sessionTabs={sessionTabs}
                   defaultTab={config.defaultTab}
                   session={session}
+                  sportUsers={sportUsers}
                 />
                 <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
               </div>
@@ -326,7 +333,7 @@ export default async function SessionDetailPage({
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
           viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
-          isAdmin={isAdmin}
+          isAdmin={isSessionAdmin}
           tabLabel={tab.label}
           signupConfirmationDialog={tab.signupConfirmationDialog}
         />

@@ -18,6 +18,7 @@ export const BASE_CALENDAR_SESSION: SportSession = {
   status: SESSION_STATUS.active,
   status_notes: null,
   alt_session_views: [],
+  facilitator_id: null,
   created_by: null,
   created_at: "2026-06-01T12:00:00Z",
 };

@@ -25,6 +25,7 @@ export const createSessionInputSchema = z
     signup_open: z.string().min(1, { error: "Sign-up open time is required." }),
     signup_close: z.string().min(1, { error: "Sign-up close time is required." }),
     notes: optionalString,
+    facilitator_id: z.string().uuid().nullable().optional().default(null),
   })
   .superRefine((value, ctx) => {
     if (value.time_start >= value.time_end) {
