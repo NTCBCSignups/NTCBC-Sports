@@ -20,10 +20,11 @@ const ALLOWED_FILES = ["components/ui/draggable-list.tsx"];
  * Patterns that indicate custom drag-and-drop implementation:
  * - `draggable` as a JSX prop (not inside an import or type)
  * - `onDragStart={` as a JSX event handler
- * - `onTouchStart={` combined with drag-related state (to avoid flagging non-drag touch handlers)
+ * - Direct usage of dnd-kit hooks (useSortable, useDraggable) outside the shared component
  */
 const DRAGGABLE_PROP_RE = /(?:^|\s)draggable(?:\s|=|$)/;
 const ON_DRAG_START_RE = /onDragStart\s*[=({]/;
+const DND_KIT_DIRECT_RE = /from\s+["']@dnd-kit\//;
 const DRAG_STATE_RE = /drag(?:Index|Idx|Section|ging)/i;
 
 function findViolations(): FileViolation[] {
@@ -39,12 +40,25 @@ function findViolations(): FileViolation[] {
 
     // Skip files that import DraggableList (they're using it correctly via naked mode
     // which may spread dragHandleProps containing `draggable`)
-    if (content.includes("from \"@/components/ui/draggable-list\"")) continue;
+    if (content.includes('from "@/components/ui/draggable-list"')) continue;
     if (content.includes("from '@/components/ui/draggable-list'")) continue;
 
     // Check for inline drag implementations
     const hasDragState = DRAG_STATE_RE.test(content);
-    if (!hasDragState) continue; // No drag state = not implementing custom drag
+    const hasDndKitDirect = DND_KIT_DIRECT_RE.test(content);
+
+    if (!hasDragState && !hasDndKitDirect) continue;
+
+    // Direct @dnd-kit import = always a violation (should go through DraggableList)
+    if (hasDndKitDirect) {
+      const lineIdx = lines.findIndex((l) => DND_KIT_DIRECT_RE.test(l));
+      violations.push({
+        file,
+        line: lineIdx + 1,
+        detail: `Direct @dnd-kit import — use DraggableList instead: ${lines[lineIdx]!.trim().slice(0, 80)}`,
+      });
+      continue;
+    }
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]!;
@@ -68,9 +82,7 @@ describe("Draggable consistency", () => {
     const violations = findViolations();
 
     if (violations.length > 0) {
-      const msg = violations
-        .map((v) => `  ${v.file}:${v.line} — ${v.detail}`)
-        .join("\n");
+      const msg = violations.map((v) => `  ${v.file}:${v.line} — ${v.detail}`).join("\n");
       expect.fail(
         `Found ${violations.length} file(s) with custom drag implementations.\n` +
           `All drag-and-drop must use <DraggableList> from components/ui/draggable-list.tsx:\n\n${msg}`,

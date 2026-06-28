@@ -7,7 +7,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Paragraph from "@tiptap/extension-paragraph";
 import { InputRule } from "@tiptap/core";
 import { GripVertical, Plus, Eye, EyeOff, MoreVertical, Sparkles } from "lucide-react";
-import { DraggableList, type NakedItemContext } from "@/components/ui/draggable-list";
+import { DraggableList } from "@/components/ui/draggable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -175,7 +175,9 @@ function SectionEditor({
   onMoveDown,
   isFirst,
   isLast,
-  dragCtx,
+  isDragging,
+  handleRef,
+  handleListeners,
 }: {
   section: DevotionalSection;
   onItemsChange: (items: DevotionalItem[]) => void;
@@ -185,7 +187,9 @@ function SectionEditor({
   onMoveDown: () => void;
   isFirst: boolean;
   isLast: boolean;
-  dragCtx: NakedItemContext;
+  isDragging: boolean;
+  handleRef: (node: HTMLElement | null) => void;
+  handleListeners: Record<string, unknown>;
 }) {
   const editorRef = useRef<Editor | null>(null);
 
@@ -336,19 +340,13 @@ function SectionEditor({
     section.items.length > 0 && section.items.every((i) => i.facilitatorOnly);
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border bg-card transition-opacity",
-        dragCtx.isDragging && "opacity-50",
-        dragCtx.touchActive && dragCtx.isDragging && "touch-none",
-      )}
-      {...dragCtx.dragItemProps}
-    >
+    <div className={cn("rounded-lg border bg-card transition-opacity", isDragging && "opacity-50")}>
       {/* Section header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
         <div
-          className="shrink-0 cursor-grab active:cursor-grabbing"
-          {...dragCtx.dragHandleProps}
+          className="shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          ref={handleRef}
+          {...handleListeners}
         >
           <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
@@ -649,19 +647,26 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
           keyExtractor={(s) => s.id}
           onReorder={(sections) => setData((prev) => ({ ...prev, sections }))}
           className="space-y-3"
-          renderItem={(section, idx, nakedCtx) => (
-            <SectionEditor
-              section={section}
-              onItemsChange={(items) => updateSection(section.id, { items })}
-              onMetaChange={(updates) => updateSection(section.id, updates)}
-              onDelete={() => deleteSection(section.id)}
-              onMoveUp={() => moveSection(idx, -1)}
-              onMoveDown={() => moveSection(idx, 1)}
-              isFirst={idx === 0}
-              isLast={idx === data.sections.length - 1}
-              dragCtx={nakedCtx!}
-            />
-          )}
+          renderItem={(section, idx, nakedCtx) => {
+            const { dragItemProps, dragHandleProps, isDragging } = nakedCtx!;
+            return (
+              <div ref={dragItemProps.ref} style={dragItemProps.style}>
+                <SectionEditor
+                  section={section}
+                  onItemsChange={(items) => updateSection(section.id, { items })}
+                  onMetaChange={(updates) => updateSection(section.id, updates)}
+                  onDelete={() => deleteSection(section.id)}
+                  onMoveUp={() => moveSection(idx, -1)}
+                  onMoveDown={() => moveSection(idx, 1)}
+                  isFirst={idx === 0}
+                  isLast={idx === data.sections.length - 1}
+                  isDragging={isDragging}
+                  handleRef={dragHandleProps.ref}
+                  handleListeners={dragHandleProps.listeners}
+                />
+              </div>
+            );
+          }}
         />
       )}
 
