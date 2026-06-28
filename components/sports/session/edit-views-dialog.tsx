@@ -277,6 +277,7 @@ function EditViewsDialogContent({
                 <>
                   <input
                     type="checkbox"
+                    aria-label={`Toggle ${instance.label}`}
                     checked={isEnabled}
                     onChange={(e) => handleToggle(instance.id, e.target.checked)}
                     className="h-4 w-4 rounded border-input shrink-0"

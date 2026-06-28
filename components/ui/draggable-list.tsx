@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactNode, useState } from "react";
+import { Fragment, type ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
@@ -10,7 +10,6 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -26,14 +25,17 @@ import { cn } from "@/lib/utils";
 
 export interface DragHandleProps {
   ref: (node: HTMLElement | null) => void;
-  listeners: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- dnd-kit exports listeners as Record<string, Function>
+  listeners: Record<string, Function> | undefined;
   "aria-grabbed"?: boolean;
 }
 
 export interface DragItemProps {
   ref: (node: HTMLElement | null) => void;
   style: React.CSSProperties;
-  [key: string]: unknown;
+  role?: string;
+  tabIndex?: number;
+  "aria-roledescription"?: string;
 }
 
 export interface NakedItemContext {
@@ -85,8 +87,6 @@ export function DraggableList<T>({
   onShow,
   dividerLabel = "hidden below",
 }: DraggableListProps<T>) {
-  const [_activeId, setActiveId] = useState<string | number | null>(null);
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: TOUCH_CONSTRAINT }),
@@ -97,10 +97,7 @@ export function DraggableList<T>({
   const visibleIds = items.map(keyExtractor).map(String);
   const hiddenIds = hasSplit ? hiddenItems!.map(keyExtractor).map(String) : [];
 
-  const handleDragStart = (e: DragStartEvent) => setActiveId(e.active.id);
-
   const handleDragEnd = (e: DragEndEvent) => {
-    setActiveId(null);
     const { active, over } = e;
     if (!over || active.id === over.id) return;
 
@@ -141,12 +138,7 @@ export function DraggableList<T>({
   // ── Render ───────────────────────────────────────────────────
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={visibleIds} strategy={verticalListSortingStrategy}>
         <div className={cn("space-y-1", className)}>
           {items.map((item, index) =>
@@ -256,7 +248,12 @@ function StandardItem<T>({
       )}
       {...attributes}
     >
-      <div ref={setActivatorNodeRef} {...listeners} className="shrink-0 touch-none">
+      <div
+        ref={setActivatorNodeRef}
+        {...listeners}
+        className="shrink-0 touch-none"
+        aria-label="Drag to reorder"
+      >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       {renderItem(item, index)}

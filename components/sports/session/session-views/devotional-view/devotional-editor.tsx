@@ -222,7 +222,8 @@ function SectionEditor({
   isLast: boolean;
   isDragging: boolean;
   handleRef: (node: HTMLElement | null) => void;
-  handleListeners: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- dnd-kit listener map
+  handleListeners: Record<string, Function> | undefined;
 }) {
   const editorRef = useRef<Editor | null>(null);
 
@@ -314,15 +315,9 @@ function SectionEditor({
     editorRef.current = editor;
   }, [editor]);
 
-  /** Whether all items in this section are facilitator-only (derived from props, updates on each edit). */
+  /** Whether all items in this section are facilitator-only. */
   const allHiddenFromPlayers =
     section.items.length > 0 && section.items.every((i) => i.facilitatorOnly);
-  const [localAllHidden, setLocalAllHidden] = useState(allHiddenFromPlayers);
-
-  // Sync from props when they change (parent re-renders after onItemsChange)
-  useEffect(() => {
-    setLocalAllHidden(allHiddenFromPlayers);
-  }, [allHiddenFromPlayers]);
 
   /** Toggle facilitatorOnly on all paragraphs in the current selection. */
   const toggleCurrentLine = useCallback(() => {
@@ -391,6 +386,7 @@ function SectionEditor({
           className="shrink-0 cursor-grab active:cursor-grabbing touch-none"
           ref={handleRef}
           {...handleListeners}
+          aria-label="Drag to reorder section"
         >
           <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
@@ -459,12 +455,9 @@ function SectionEditor({
             variant="ghost"
             size="sm"
             className="h-6 text-xs gap-1.5 text-muted-foreground"
-            onClick={() => {
-              toggleCurrentLine();
-              setLocalAllHidden((prev) => !prev);
-            }}
+            onClick={toggleCurrentLine}
           >
-            {localAllHidden ? (
+            {allHiddenFromPlayers ? (
               <>
                 <Eye className="h-3 w-3" />
                 Show line(s) in player view
