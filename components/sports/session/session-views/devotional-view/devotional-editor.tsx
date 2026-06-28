@@ -442,7 +442,7 @@ function SectionEditor({
             placeholder="Passage reference (e.g., Romans 12:1-2)"
             value={section.passageReference ?? ""}
             onChange={(e) => onMetaChange({ passageReference: e.target.value })}
-            className="h-8 text-sm"
+            className="h-8 text-base md:text-sm"
           />
         </div>
       )}
