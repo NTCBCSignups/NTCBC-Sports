@@ -240,7 +240,7 @@ export async function getSportConfigRows(): Promise<SportConfigDbRow[]> {
     .select(
       "id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at",
     )
-    .order("id", { ascending: true });
+    .order("created_at", { ascending: true });
 
   if (error || !data) return [];
   return data.map((row) => mapSportConfigRow(row));
