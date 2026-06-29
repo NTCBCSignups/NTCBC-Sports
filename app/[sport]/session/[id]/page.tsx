@@ -13,6 +13,7 @@ import RestoreSessionButton from "@/components/sports/session/restore-session-bu
 import FacilitatorPicker from "@/components/sports/session/facilitator-picker";
 import { SessionFormDialog as SessionDialog } from "@/components/sports/session/session-form";
 import StatusBanner from "@/components/sports/status-banner";
+import { LinkifyText } from "@/components/ui/linkify-text";
 import AdminButton from "@/components/sports/admin/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionViewSection from "@/components/sports/session/session-view-section";
@@ -315,8 +316,10 @@ export default async function SessionDetailPage({
       </div>
 
       {session.notes && (
-        <div className="text-sm text-muted-foreground whitespace-pre-line">
-          <p>{session.notes}</p>
+        <div className="text-sm text-muted-foreground whitespace-pre-line break-words overflow-hidden">
+          <p>
+            <LinkifyText>{session.notes}</LinkifyText>
+          </p>
         </div>
       )}
 
