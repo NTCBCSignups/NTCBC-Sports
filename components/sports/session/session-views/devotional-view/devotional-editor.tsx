@@ -250,7 +250,8 @@ function SectionEditor({
     content: itemsToHtml(section.items),
     editorProps: {
       attributes: {
-        class: "devotional-tiptap outline-none min-h-[60px] px-3 py-2 text-base md:text-sm leading-relaxed",
+        class:
+          "devotional-tiptap outline-none min-h-[60px] px-3 py-2 text-base md:text-sm leading-relaxed",
       },
       handleKeyDown: (_view: unknown, event: KeyboardEvent) => {
         if (event.key !== "Tab") return false;
@@ -397,7 +398,7 @@ function SectionEditor({
           value={section.customTitle ?? SECTION_META[section.type].defaultTitle}
           onChange={(e) => onMetaChange({ customTitle: e.target.value })}
           placeholder="Section title"
-            className="h-7 text-base md:text-sm font-medium border-0 shadow-none bg-transparent px-1 focus-visible:ring-1 flex-1"
+          className="h-7 text-base md:text-sm font-medium border-0 shadow-none bg-transparent px-1 focus-visible:ring-1 flex-1"
         />
 
         {/* Section menu */}
@@ -726,7 +727,7 @@ DevotionalEditor.dialogClassName = "sm:max-w-3xl max-h-[90vh] overflow-y-auto";
 function AddSectionPicker({ onAdd }: { onAdd: (type: DevotionalSectionType) => void }) {
   return (
     <Select value="" onValueChange={(val) => onAdd(val as DevotionalSectionType)}>
-      <SelectTrigger size="sm" className="text-xs w-auto">
+      <SelectTrigger size="sm" className="text-base md:text-xs w-auto">
         <Plus className="h-3.5 w-3.5 mr-1" />
         <SelectValue placeholder="Add section" />
       </SelectTrigger>
