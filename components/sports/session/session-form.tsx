@@ -212,23 +212,51 @@ export default function SessionForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 min-w-0">
-      <div className="space-y-2">
-        <Label htmlFor="session_type">Session Type</Label>
-        <Select
-          value={draft.session_type}
-          onValueChange={(v) => updateDraft((prev) => ({ ...prev, session_type: v }))}
-        >
-          <SelectTrigger id="session_type">
-            <SelectValue placeholder="Select a session type" />
-          </SelectTrigger>
-          <SelectContent>
-            {sessionTabs.map((tab) => (
-              <SelectItem key={tab.value} value={tab.value}>
-                {tab.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid gap-4 grid-cols-2 min-w-0 [&>*]:min-w-0">
+        <div className="space-y-2">
+          <Label htmlFor="session_type">Session Type</Label>
+          <Select
+            value={draft.session_type}
+            onValueChange={(v) => updateDraft((prev) => ({ ...prev, session_type: v }))}
+          >
+            <SelectTrigger id="session_type">
+              <SelectValue placeholder="Select a session type" />
+            </SelectTrigger>
+            <SelectContent>
+              {sessionTabs.map((tab) => (
+                <SelectItem key={tab.value} value={tab.value}>
+                  {tab.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {sportUsers && sportUsers.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="facilitator_id">
+              Facilitator <span className="font-normal text-muted-foreground">(optional)</span>
+            </Label>
+            <Select
+              value={draft.facilitator_id}
+              onValueChange={(v) =>
+                updateDraft((prev) => ({ ...prev, facilitator_id: v === "none" ? "" : v }))
+              }
+            >
+              <SelectTrigger id="facilitator_id">
+                <SelectValue placeholder="No facilitator" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No facilitator</SelectItem>
+                {sportUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 min-w-0 overflow-hidden [&>*]:min-w-0">
@@ -395,32 +423,6 @@ export default function SessionForm({
           onChange={handleField("notes")}
         />
       </div>
-
-      {sportUsers && sportUsers.length > 0 && (
-        <div className="space-y-2">
-          <Label htmlFor="facilitator_id">
-            Facilitator <span className="font-normal text-muted-foreground">(optional)</span>
-          </Label>
-          <Select
-            value={draft.facilitator_id}
-            onValueChange={(v) =>
-              updateDraft((prev) => ({ ...prev, facilitator_id: v === "none" ? "" : v }))
-            }
-          >
-            <SelectTrigger id="facilitator_id">
-              <SelectValue placeholder="No facilitator" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No facilitator</SelectItem>
-              {sportUsers.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       {error && <p className={feedback.error}>{error}</p>}
       {!isEdit && createdSessionId && (
