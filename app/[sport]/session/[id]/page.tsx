@@ -41,6 +41,36 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
 
+// ── Helpers ──────────────────────────────────────────────────────
+
+const URL_RE = /https?:\/\/[^\s<]+/g;
+
+/** Replaces URLs in text with clickable links. */
+function linkifyText(text: string) {
+  const parts = text.split(URL_RE);
+  const urls = text.match(URL_RE);
+  if (!urls) return text;
+
+  const result: (string | React.ReactElement)[] = [];
+  parts.forEach((part, i) => {
+    result.push(part);
+    if (urls[i]) {
+      result.push(
+        <a
+          key={i}
+          href={urls[i]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2 hover:text-primary/80"
+        >
+          {urls[i]}
+        </a>,
+      );
+    }
+  });
+  return result;
+}
+
 async function SessionSignupsContent({
   sessionId,
   sport,
@@ -315,8 +345,8 @@ export default async function SessionDetailPage({
       </div>
 
       {session.notes && (
-        <div className="text-sm text-muted-foreground whitespace-pre-line">
-          <p>{session.notes}</p>
+        <div className="text-sm text-muted-foreground whitespace-pre-line break-words overflow-hidden">
+          <p>{linkifyText(session.notes)}</p>
         </div>
       )}
 
