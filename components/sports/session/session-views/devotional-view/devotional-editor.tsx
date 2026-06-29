@@ -720,7 +720,7 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
   );
 }
 
-DevotionalEditor.dialogClassName = "sm:max-w-3xl max-h-[90vh] overflow-y-auto";
+DevotionalEditor.dialogClassName = "sm:max-w-3xl sm:max-h-[90vh] overflow-y-auto";
 
 // ── Add Section Picker ───────────────────────────────────────────
 
