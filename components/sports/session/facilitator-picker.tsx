@@ -80,31 +80,47 @@ export default function FacilitatorPicker({
           <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[220px] p-0" align="start" side="bottom" avoidCollisions={false}>
+      <PopoverContent
+        className="w-[220px] p-0"
+        align="start"
+        side="bottom"
+        avoidCollisions={false}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <Command>
           <CommandInput placeholder="Search users..." />
           <CommandList>
             <CommandEmpty>No users found.</CommandEmpty>
             <CommandGroup>
+              {selectedId && (() => {
+                const current = sportUsers.find((u) => u.id === selectedId);
+                return current ? (
+                  <CommandItem
+                    key={current.id}
+                    value={`${current.name} ${current.id}`}
+                    onSelect={() => handleSelect(current.id)}
+                  >
+                    <Check className="h-4 w-4 mr-2 opacity-100" />
+                    {current.name}
+                  </CommandItem>
+                ) : null;
+              })()}
               <CommandItem value="No facilitator" onSelect={() => handleSelect(null)}>
                 <Check className={cn("h-4 w-4 mr-2", !selectedId ? "opacity-100" : "opacity-0")} />
                 No facilitator
               </CommandItem>
-              {sportUsers.map((user) => (
-                <CommandItem
-                  key={user.id}
-                  value={`${user.name} ${user.id}`}
-                  onSelect={() => handleSelect(user.id)}
-                >
-                  <Check
-                    className={cn(
-                      "h-4 w-4 mr-2",
-                      selectedId === user.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  {user.name}
-                </CommandItem>
-              ))}
+              {sportUsers
+                .filter((u) => u.id !== selectedId)
+                .map((user) => (
+                  <CommandItem
+                    key={user.id}
+                    value={`${user.name} ${user.id}`}
+                    onSelect={() => handleSelect(user.id)}
+                  >
+                    <Check className="h-4 w-4 mr-2 opacity-0" />
+                    {user.name}
+                  </CommandItem>
+                ))}
             </CommandGroup>
           </CommandList>
         </Command>
