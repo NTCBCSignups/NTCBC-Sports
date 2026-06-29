@@ -613,7 +613,7 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
   // ── Render ───────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 -mx-6 px-6">
+    <div className="space-y-4">
       {/* Scoped styles for indent levels and facilitator-only */}
       <style>{`
                 .devotional-tiptap p {
