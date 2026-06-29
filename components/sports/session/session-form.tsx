@@ -231,7 +231,7 @@ export default function SessionForm({
         </Select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 min-w-0 [&>*]:min-w-0">
+      <div className="grid gap-4 sm:grid-cols-2 min-w-0 overflow-hidden [&>*]:min-w-0">
         <div className="space-y-2">
           <Label htmlFor="title">
             Title <span className="font-normal text-muted-foreground">(optional)</span>
@@ -482,7 +482,7 @@ export function SessionFormDialog({
       onOpenChange={setOpen}
       onSave={() => formRef.current?.requestSubmit()}
       showCloseButton
-      className="sm:max-w-lg [&_form]:min-w-0 [&_input]:min-w-0"
+      className="sm:max-w-lg [&_form]:min-w-0 [&_form]:overflow-x-hidden [&_input]:min-w-0"
       trigger={
         trigger ?? (
           <Button variant="outline" size="sm">
