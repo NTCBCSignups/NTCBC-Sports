@@ -119,7 +119,7 @@ const FacilitatorHighlight = Extension.create({
                 decorations.push(
                   Decoration.node(pos, pos + node.nodeSize, {
                     style:
-                      "background-color: rgba(0, 0, 0, 0.07); border-radius: 2px; border-left: 3px solid rgba(0, 0, 0, 0.15);",
+                      "background-color: color-mix(in srgb, currentColor 10%, transparent); border-radius: 2px; border-left: 3px solid color-mix(in srgb, currentColor 25%, transparent);",
                   }),
                 );
               }
@@ -384,7 +384,7 @@ function SectionEditor({
       {/* Section header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
         <div
-          className="shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          className="shrink-0 cursor-grab active:cursor-grabbing touch-none p-2 -m-2"
           ref={handleRef}
           {...handleListeners}
           aria-label="Drag to reorder section"

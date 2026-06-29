@@ -251,7 +251,7 @@ function StandardItem<T>({
       <div
         ref={setActivatorNodeRef}
         {...listeners}
-        className="shrink-0 touch-none"
+        className="shrink-0 touch-none p-2 -m-2"
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
