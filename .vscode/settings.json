@@ -7,6 +7,7 @@
   "eslint.useFlatConfig": true,
   "chat.tools.terminal.autoApprove": {
     "git add": true,
-    "git commit": true
+    "git commit": true,
+    "npx prettier": true
   }
 }

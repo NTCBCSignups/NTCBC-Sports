@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ExternalLink, Pencil } from "lucide-react";
 import { FormDialog } from "@/components/ui/form-dialog";
+import { FacilitatorSelect } from "./facilitator-select";
 import { createSession, updateSession } from "@/lib/actions/sessions";
 import { parseSessionInput } from "@/lib/actions/session-validation";
 import { getSessionPath } from "@/lib/session-route";
@@ -234,27 +235,15 @@ export default function SessionForm({
 
         {sportUsers && sportUsers.length > 0 && (
           <div className="space-y-2">
-            <Label htmlFor="facilitator_id">
+            <Label>
               Facilitator <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
-            <Select
-              value={draft.facilitator_id}
-              onValueChange={(v) =>
-                updateDraft((prev) => ({ ...prev, facilitator_id: v === "none" ? "" : v }))
-              }
-            >
-              <SelectTrigger id="facilitator_id">
-                <SelectValue placeholder="No facilitator" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No facilitator</SelectItem>
-                {sportUsers.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FacilitatorSelect
+              value={draft.facilitator_id || null}
+              onChange={(v) => updateDraft((prev) => ({ ...prev, facilitator_id: v ?? "" }))}
+              users={sportUsers}
+              fullWidth
+            />
           </div>
         )}
       </div>
