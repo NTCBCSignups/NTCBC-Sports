@@ -17,6 +17,13 @@ import { cn } from "@/lib/utils";
 import { toastClasses } from "@/lib/styles";
 import { assignFacilitator } from "@/lib/actions/sessions";
 
+/** "John Smith" → "John S." */
+function shortenName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  return `${parts[0]} ${parts[parts.length - 1]![0]}.`;
+}
+
 interface FacilitatorPickerProps {
   sport: string;
   sessionId: string;
@@ -64,13 +71,16 @@ export default function FacilitatorPicker({
           className="gap-1.5"
         >
           <UserRoundPlus className="h-4 w-4 shrink-0" />
+          <span className="sm:hidden truncate max-w-[100px]">
+            {selectedUser ? shortenName(selectedUser.name) : "Facilitator"}
+          </span>
           <span className="hidden sm:inline truncate max-w-[120px]">
             {selectedUser?.name ?? "Facilitator"}
           </span>
           <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[220px] p-0" align="start">
+      <PopoverContent className="w-[220px] p-0" align="start" side="bottom" avoidCollisions={false}>
         <Command>
           <CommandInput placeholder="Search users..." />
           <CommandList>

@@ -1,44 +1,84 @@
 "use client";
 
-import { type ReactNode, useRef, useState } from "react";
+import { Fragment, type ReactNode } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ── Types ────────────────────────────────────────────────────────
+// ── Exported types ───────────────────────────────────────────────
+
+export interface DragHandleProps {
+  ref: (node: HTMLElement | null) => void;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- dnd-kit exports listeners as Record<string, Function>
+  listeners: Record<string, Function> | undefined;
+  "aria-grabbed"?: boolean;
+}
+
+export interface DragItemProps {
+  ref: (node: HTMLElement | null) => void;
+  style: React.CSSProperties;
+  role?: string;
+  tabIndex?: number;
+  "aria-roledescription"?: string;
+}
+
+export interface NakedItemContext {
+  isDragging: boolean;
+  dragItemProps: DragItemProps;
+  dragHandleProps: DragHandleProps;
+}
+
+// ── Props ────────────────────────────────────────────────────────
 
 interface DraggableListProps<T> {
   items: T[];
   onReorder: (items: T[]) => void;
-  renderItem: (item: T, index: number) => ReactNode;
+  renderItem: (item: T, index: number, nakedCtx?: NakedItemContext) => ReactNode;
   keyExtractor: (item: T) => string | number;
-  /** Additional classes per item. Receives whether the item is currently being dragged. */
   itemClassName?: (item: T, index: number, isDragging: boolean) => string;
-  /** Whether a specific item is draggable (default: all are). */
   isDraggable?: (item: T, index: number) => boolean;
-  /** Container className. */
   className?: string;
-  /** Optional hidden section below a divider. */
+  /** Delegate all rendering (including grip) to renderItem. */
+  naked?: boolean;
   hiddenItems?: T[];
   onHiddenReorder?: (items: T[]) => void;
-  renderHiddenItem?: (item: T, index: number) => ReactNode;
+  renderHiddenItem?: (item: T, index: number, nakedCtx?: NakedItemContext) => ReactNode;
   hiddenItemClassName?: (item: T, index: number, isDragging: boolean) => string;
   onHide?: (index: number) => void;
   onShow?: (index: number) => void;
   dividerLabel?: string;
 }
 
-/**
- * A reorderable list with mouse drag + touch support.
- * Optionally supports a second "hidden" section separated by a divider.
- */
+// Touch: 100ms hold + 5px tolerance so scrolling isn't hijacked.
+const TOUCH_CONSTRAINT = { delay: 100, tolerance: 5 };
+
+// ── Main component ───────────────────────────────────────────────
+
 export function DraggableList<T>({
   items,
   onReorder,
   renderItem,
   keyExtractor,
   itemClassName,
-  isDraggable,
+  isDraggable: isDraggableFn,
   className,
+  naked,
   hiddenItems,
   onHiddenReorder,
   renderHiddenItem,
@@ -47,184 +87,211 @@ export function DraggableList<T>({
   onShow,
   dividerLabel = "hidden below",
 }: DraggableListProps<T>) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragSection, setDragSection] = useState<"visible" | "hidden" | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: TOUCH_CONSTRAINT }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const hasSplit = hiddenItems !== undefined;
+  const visibleIds = items.map(keyExtractor).map(String);
+  const hiddenIds = hasSplit ? hiddenItems!.map(keyExtractor).map(String) : [];
 
-  // ── Reorder logic ────────────────────────────────────────────
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
 
-  const moveItem = (section: "visible" | "hidden", from: number, to: number) => {
-    if (section === "visible") {
+    const aStr = String(active.id);
+    const oStr = String(over.id);
+    const aVis = visibleIds.indexOf(aStr);
+    const oVis = visibleIds.indexOf(oStr);
+
+    if (aVis !== -1 && oVis !== -1) {
       const next = [...items];
-      const [moved] = next.splice(from, 1);
-      if (moved) next.splice(to, 0, moved);
+      const [moved] = next.splice(aVis, 1);
+      if (moved) next.splice(oVis, 0, moved);
       onReorder(next);
-    } else if (hiddenItems && onHiddenReorder) {
-      const next = [...hiddenItems];
-      const [moved] = next.splice(from, 1);
-      if (moved) next.splice(to, 0, moved);
-      onHiddenReorder(next);
+      return;
     }
-  };
 
-  // ── Mouse drag handlers ──────────────────────────────────────
-
-  const handleDragStart = (section: "visible" | "hidden", index: number) => {
-    setDragIndex(index);
-    setDragSection(section);
-  };
-
-  const handleDragOver = (e: React.DragEvent, section: "visible" | "hidden", index: number) => {
-    e.preventDefault();
-    if (dragIndex === null || dragSection === null) return;
-    if (dragSection === section && dragIndex !== index) {
-      moveItem(section, dragIndex, index);
-      setDragIndex(index);
-    }
-  };
-
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setDragSection(null);
-  };
-
-  // ── Touch handlers ───────────────────────────────────────────
-
-  const handleTouchStart = (section: "visible" | "hidden", index: number) => {
-    setDragIndex(index);
-    setDragSection(section);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (dragIndex === null || dragSection === null || !containerRef.current) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-    const elements = containerRef.current.querySelectorAll<HTMLElement>(
-      `[data-section="${dragSection}"]`,
-    );
-    for (let i = 0; i < elements.length; i++) {
-      const el = elements[i];
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom && i !== dragIndex) {
-        moveItem(dragSection, dragIndex, i);
-        setDragIndex(i);
-        break;
+    if (hasSplit && hiddenItems && onHiddenReorder) {
+      const aHid = hiddenIds.indexOf(aStr);
+      const oHid = hiddenIds.indexOf(oStr);
+      if (aHid !== -1 && oHid !== -1) {
+        const next = [...hiddenItems];
+        const [moved] = next.splice(aHid, 1);
+        if (moved) next.splice(oHid, 0, moved);
+        onHiddenReorder(next);
+        return;
+      }
+      if (aVis !== -1 && oHid !== -1 && onHide) {
+        onHide(aVis);
+        return;
+      }
+      if (aHid !== -1 && oVis !== -1 && onShow) {
+        onShow(aHid);
+        return;
       }
     }
-    // Cross-section: check divider
-    if (hasSplit) {
-      const divider = containerRef.current.querySelector<HTMLElement>("[data-divider]");
-      if (divider) {
-        const rect = divider.getBoundingClientRect();
-        if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-          if (dragSection === "visible" && onHide) {
-            onHide(dragIndex);
-          } else if (dragSection === "hidden" && onShow) {
-            onShow(dragIndex);
-          }
-          setDragIndex(null);
-          setDragSection(null);
-        }
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setDragIndex(null);
-    setDragSection(null);
-  };
-
-  // ── Cross-section divider drop ───────────────────────────────
-
-  const handleDividerDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDividerDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (dragIndex === null || dragSection === null) return;
-    if (dragSection === "visible" && onHide) {
-      onHide(dragIndex);
-    } else if (dragSection === "hidden" && onShow) {
-      onShow(dragIndex);
-    }
-    setDragIndex(null);
-    setDragSection(null);
   };
 
   // ── Render ───────────────────────────────────────────────────
 
   return (
-    <div ref={containerRef} className={cn("space-y-1", className)}>
-      {items.map((item, index) => {
-        const draggable = isDraggable ? isDraggable(item, index) : true;
-        const isDragging = dragIndex === index && dragSection === "visible";
-        return (
-          <div
-            key={keyExtractor(item)}
-            data-section="visible"
-            draggable={draggable}
-            onDragStart={() => handleDragStart("visible", index)}
-            onDragOver={(e) => handleDragOver(e, "visible", index)}
-            onDragEnd={handleDragEnd}
-            onTouchStart={() => handleTouchStart("visible", index)}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            className={cn(
-              "flex items-center gap-2 rounded-md border px-3 py-2 transition-colors",
-              draggable && "cursor-grab active:cursor-grabbing touch-none",
-              isDragging ? "bg-muted border-primary" : "bg-card",
-              itemClassName?.(item, index, isDragging),
-            )}
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-            {renderItem(item, index)}
-          </div>
-        );
-      })}
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={visibleIds} strategy={verticalListSortingStrategy}>
+        <div className={cn("space-y-1", className)}>
+          {items.map((item, index) =>
+            naked ? (
+              <NakedItem
+                key={keyExtractor(item)}
+                id={String(keyExtractor(item))}
+                item={item}
+                index={index}
+                renderItem={renderItem}
+              />
+            ) : (
+              <StandardItem
+                key={keyExtractor(item)}
+                id={String(keyExtractor(item))}
+                item={item}
+                index={index}
+                renderItem={renderItem}
+                isDraggableFn={isDraggableFn}
+                itemClassName={itemClassName}
+              />
+            ),
+          )}
+        </div>
+      </SortableContext>
 
-      {hasSplit && (
+      {hasSplit && hiddenItems && (
         <>
-          <div
-            data-divider
-            onDragOver={handleDividerDragOver}
-            onDrop={handleDividerDrop}
-            className="flex items-center gap-2 py-2 my-1"
-          >
+          <div className="flex items-center gap-2 py-2 my-1">
             <div className="flex-1 border-t border-dashed border-muted-foreground/50" />
             <span className="text-xs text-muted-foreground px-2">{dividerLabel}</span>
             <div className="flex-1 border-t border-dashed border-muted-foreground/50" />
           </div>
-
-          {hiddenItems!.map((item, index) => {
-            const isDragging = dragIndex === index && dragSection === "hidden";
-            return (
-              <div
-                key={keyExtractor(item)}
-                data-section="hidden"
-                draggable
-                onDragStart={() => handleDragStart("hidden", index)}
-                onDragOver={(e) => handleDragOver(e, "hidden", index)}
-                onDragEnd={handleDragEnd}
-                onTouchStart={() => handleTouchStart("hidden", index)}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                className={cn(
-                  "flex items-center gap-2 rounded-md border px-3 py-2 cursor-grab active:cursor-grabbing touch-none transition-colors opacity-50",
-                  isDragging ? "bg-muted border-primary" : "bg-card",
-                  hiddenItemClassName?.(item, index, isDragging),
-                )}
-              >
-                <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                {renderHiddenItem ? renderHiddenItem(item, index) : renderItem(item, index)}
-              </div>
-            );
-          })}
+          <SortableContext items={hiddenIds} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1">
+              {hiddenItems.map((item, index) => {
+                const render = renderHiddenItem ?? renderItem;
+                return naked ? (
+                  <NakedItem
+                    key={keyExtractor(item)}
+                    id={String(keyExtractor(item))}
+                    item={item}
+                    index={index}
+                    renderItem={render}
+                  />
+                ) : (
+                  <StandardItem
+                    key={keyExtractor(item)}
+                    id={String(keyExtractor(item))}
+                    item={item}
+                    index={index}
+                    renderItem={render}
+                    itemClassName={hiddenItemClassName}
+                    isHidden
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
         </>
       )}
+    </DndContext>
+  );
+}
+
+// ── Item components ──────────────────────────────────────────────
+
+function StandardItem<T>({
+  id,
+  item,
+  index,
+  renderItem,
+  isDraggableFn,
+  itemClassName,
+  isHidden,
+}: {
+  id: string;
+  item: T;
+  index: number;
+  renderItem: (item: T, index: number) => ReactNode;
+  isDraggableFn?: (item: T, index: number) => boolean;
+  itemClassName?: (item: T, index: number, isDragging: boolean) => string;
+  isHidden?: boolean;
+}) {
+  const draggable = isDraggableFn ? isDraggableFn(item, index) : true;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: !draggable });
+  const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 rounded-md border px-3 py-2 transition-colors",
+        draggable && "cursor-grab active:cursor-grabbing",
+        isDragging ? "bg-muted border-primary opacity-75 z-10" : "bg-card",
+        isHidden && "opacity-50",
+        itemClassName?.(item, index, isDragging),
+      )}
+      {...attributes}
+    >
+      <div
+        ref={setActivatorNodeRef}
+        {...listeners}
+        className="shrink-0 touch-none p-2 -m-2"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      {renderItem(item, index)}
     </div>
   );
+}
+
+function NakedItem<T>({
+  id,
+  item,
+  index,
+  renderItem,
+}: {
+  id: string;
+  item: T;
+  index: number;
+  renderItem: (item: T, index: number, nakedCtx?: NakedItemContext) => ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
+
+  const ctx: NakedItemContext = {
+    isDragging,
+    dragItemProps: { ref: setNodeRef, style, ...attributes },
+    dragHandleProps: {
+      ref: setActivatorNodeRef,
+      listeners: listeners ?? {},
+      "aria-grabbed": isDragging,
+    },
+  };
+
+  return <Fragment>{renderItem(item, index, ctx)}</Fragment>;
 }

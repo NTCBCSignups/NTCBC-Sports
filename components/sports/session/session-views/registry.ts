@@ -12,13 +12,19 @@ import { SessionView } from "./interfaces";
  * Admins can create any of these for any session.
  */
 const sessionViewRegistry: Record<string, SessionView> = {
-  attendanceView: new SessionView("Attendance", AttendanceView, AttendanceEditor),
-  customOrderedView: new SessionView("Custom Ordered View", CustomOrderedView, CustomOrderedEditor),
-  devotionalView: new SessionView("Devotional", DevotionalView, DevotionalEditor),
+  attendanceView: new SessionView("Attendance", AttendanceView, AttendanceEditor, "Attendance"),
+  customOrderedView: new SessionView(
+    "Custom Ordered View",
+    CustomOrderedView,
+    CustomOrderedEditor,
+    "Lineup",
+  ),
+  devotionalView: new SessionView("Devotional", DevotionalView, DevotionalEditor, "Devotional"),
   softballFieldingView: new SessionView(
     "CCSA Softball - Fielding View",
     SoftballFieldingView,
     SoftballFieldingEditor,
+    "Fielding",
   ),
 };
 
@@ -29,10 +35,11 @@ export function getSessionView(viewId: string): SessionView | undefined {
   return sessionViewRegistry[viewId];
 }
 
-/** Returns all registered view types (id + label) for admin UI. */
-export function getAllSessionViews(): { id: string; label: string }[] {
+/** Returns all registered view types (id + label + defaultName) for admin UI. */
+export function getAllSessionViews(): { id: string; label: string; defaultName: string }[] {
   return Object.entries(sessionViewRegistry).map(([id, entry]) => ({
     id,
     label: entry.label,
+    defaultName: entry.defaultName,
   }));
 }

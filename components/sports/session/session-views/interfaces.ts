@@ -54,5 +54,7 @@ export class SessionView {
     public readonly label: string,
     public readonly ViewComponent: ComponentType<SessionViewProps>,
     public readonly EditorComponent: EditorComponentType,
+    /** Default name used when creating the first instance of this view type. */
+    public readonly defaultName: string = label,
   ) {}
 }

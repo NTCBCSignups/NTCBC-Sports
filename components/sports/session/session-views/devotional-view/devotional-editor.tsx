@@ -5,8 +5,11 @@ import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Paragraph from "@tiptap/extension-paragraph";
-import { InputRule } from "@tiptap/core";
+import { Extension, InputRule } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { GripVertical, Plus, Eye, EyeOff, MoreVertical, Sparkles } from "lucide-react";
+import { DraggableList } from "@/components/ui/draggable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -98,6 +101,37 @@ const IndentParagraph = Paragraph.extend({
   },
 });
 
+/**
+ * ProseMirror plugin that adds a gray background decoration to paragraphs
+ * with facilitatorOnly=true. Decorations update automatically on doc changes.
+ */
+const FacilitatorHighlight = Extension.create({
+  name: "facilitatorHighlight",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("facilitatorHighlight"),
+        props: {
+          decorations(state) {
+            const decorations: Decoration[] = [];
+            state.doc.descendants((node, pos) => {
+              if (node.type.name === "paragraph" && node.attrs.facilitatorOnly) {
+                decorations.push(
+                  Decoration.node(pos, pos + node.nodeSize, {
+                    style:
+                      "background-color: color-mix(in srgb, currentColor 10%, transparent); border-radius: 2px; border-left: 3px solid color-mix(in srgb, currentColor 25%, transparent);",
+                  }),
+                );
+              }
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});
+
 // ── Data conversion: DevotionalItem[] ↔ Tiptap ──────────────────
 
 function itemsToHtml(items: DevotionalItem[]): string {
@@ -175,9 +209,8 @@ function SectionEditor({
   isFirst,
   isLast,
   isDragging,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
+  handleRef,
+  handleListeners,
 }: {
   section: DevotionalSection;
   onItemsChange: (items: DevotionalItem[]) => void;
@@ -188,9 +221,9 @@ function SectionEditor({
   isFirst: boolean;
   isLast: boolean;
   isDragging: boolean;
-  onDragStart: () => void;
-  onDragOver: () => void;
-  onDragEnd: () => void;
+  handleRef: (node: HTMLElement | null) => void;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- dnd-kit listener map
+  handleListeners: Record<string, Function> | undefined;
 }) {
   const editorRef = useRef<Editor | null>(null);
 
@@ -209,14 +242,16 @@ function SectionEditor({
         horizontalRule: false,
       }),
       IndentParagraph,
+      FacilitatorHighlight,
       Placeholder.configure({
-        placeholder: "Type here... (`- ` to indent, `hide lines` to indicate facilitator notes)",
+        placeholder: "...",
       }),
     ],
     content: itemsToHtml(section.items),
     editorProps: {
       attributes: {
-        class: "devotional-tiptap outline-none min-h-[60px] px-3 py-2 text-sm leading-relaxed",
+        class:
+          "devotional-tiptap outline-none min-h-[60px] px-3 py-2 text-base md:text-sm leading-relaxed",
       },
       handleKeyDown: (_view: unknown, event: KeyboardEvent) => {
         if (event.key !== "Tab") return false;
@@ -281,6 +316,10 @@ function SectionEditor({
     editorRef.current = editor;
   }, [editor]);
 
+  /** Whether all items in this section are facilitator-only. */
+  const allHiddenFromPlayers =
+    section.items.length > 0 && section.items.every((i) => i.facilitatorOnly);
+
   /** Toggle facilitatorOnly on all paragraphs in the current selection. */
   const toggleCurrentLine = useCallback(() => {
     if (!editor) return;
@@ -341,20 +380,14 @@ function SectionEditor({
     section.items.length > 0 && section.items.every((i) => i.facilitatorOnly);
 
   return (
-    <div
-      className={cn("rounded-lg border bg-card transition-opacity", isDragging && "opacity-50")}
-      onDragOver={(e) => {
-        e.preventDefault();
-        onDragOver();
-      }}
-      onDragEnd={onDragEnd}
-    >
+    <div className={cn("rounded-lg border bg-card transition-opacity", isDragging && "opacity-50")}>
       {/* Section header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
         <div
-          className="shrink-0 cursor-grab active:cursor-grabbing touch-none"
-          draggable
-          onDragStart={onDragStart}
+          className="shrink-0 cursor-grab active:cursor-grabbing touch-none p-2 -m-2"
+          ref={handleRef}
+          {...handleListeners}
+          aria-label="Drag to reorder section"
         >
           <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
@@ -365,7 +398,7 @@ function SectionEditor({
           value={section.customTitle ?? SECTION_META[section.type].defaultTitle}
           onChange={(e) => onMetaChange({ customTitle: e.target.value })}
           placeholder="Section title"
-          className="h-7 text-sm font-medium border-0 shadow-none bg-transparent px-1 focus-visible:ring-1 flex-1"
+          className="h-7 text-base md:text-sm font-medium border-0 shadow-none bg-transparent px-1 focus-visible:ring-1 flex-1"
         />
 
         {/* Section menu */}
@@ -410,28 +443,35 @@ function SectionEditor({
             placeholder="Passage reference (e.g., Romans 12:1-2)"
             value={section.passageReference ?? ""}
             onChange={(e) => onMetaChange({ passageReference: e.target.value })}
-            className="h-8 text-sm"
+            className="h-8 text-base md:text-sm"
           />
         </div>
       )}
 
       {/* Tiptap Editor */}
       <div className="relative">
+        <div className="sticky top-0 z-10 flex items-center gap-1 px-3 py-1.5 bg-card/95 backdrop-blur-sm border-b">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 text-xs gap-1.5 text-muted-foreground"
+            onClick={toggleCurrentLine}
+          >
+            {allHiddenFromPlayers ? (
+              <>
+                <Eye className="h-3 w-3" />
+                Show line(s) in player view
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-3 w-3" />
+                Show line(s) for facilitators only
+              </>
+            )}
+          </Button>
+        </div>
         <EditorContent editor={editor} />
-      </div>
-
-      {/* Per-line hide button */}
-      <div className="px-3 pb-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-6 text-xs text-muted-foreground gap-1.5"
-          onClick={toggleCurrentLine}
-        >
-          <EyeOff className="h-3 w-3" />
-          Hide selected lines from players
-        </Button>
       </div>
     </div>
   );
@@ -521,7 +561,6 @@ function getDirectText(el: HTMLElement): string {
 export default function DevotionalEditor({ viewData, ref }: SessionViewEditorProps) {
   const initialData = (viewData as DevotionalViewData | null) ?? createDefaultDevotionalData();
   const [data, setData] = useState<DevotionalViewData>(initialData);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
 
   useImperativeHandle(ref, () => ({
     getCurrentData: () => data,
@@ -574,7 +613,7 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
   // ── Render ───────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 -mx-6 px-6">
+    <div className="space-y-4">
       {/* Scoped styles for indent levels and facilitator-only */}
       <style>{`
                 .devotional-tiptap p {
@@ -606,10 +645,6 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
                 .devotional-tiptap p[data-indent="2"]::before { left: 2rem; }
                 .devotional-tiptap p[data-indent="3"]::before { left: 3.5rem; }
                 .devotional-tiptap p[data-indent="4"]::before { left: 5rem; }
-                .devotional-tiptap p[data-facilitator-only="true"] {
-                    border-left: 2px solid hsl(var(--primary) / 0.5);
-                    opacity: 0.7;
-                }
                 .devotional-tiptap p.is-editor-empty:first-child::before {
                     content: attr(data-placeholder) !important;
                     float: left;
@@ -633,9 +668,9 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
 
       {/* Sections */}
       {data.sections.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-8 border rounded-lg border-dashed">
+        <div className="flex flex-col items-center gap-3 py-8 border rounded-lg border-dashed overflow-hidden">
           <p className="text-sm text-muted-foreground">No sections yet</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-2 px-4">
             <Button
               type="button"
               variant="outline"
@@ -650,35 +685,33 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {data.sections.map((section, idx) => (
-            <SectionEditor
-              key={section.id}
-              section={section}
-              onItemsChange={(items) => updateSection(section.id, { items })}
-              onMetaChange={(updates) => updateSection(section.id, updates)}
-              onDelete={() => deleteSection(section.id)}
-              onMoveUp={() => moveSection(idx, -1)}
-              onMoveDown={() => moveSection(idx, 1)}
-              isFirst={idx === 0}
-              isLast={idx === data.sections.length - 1}
-              isDragging={dragIdx === idx}
-              onDragStart={() => setDragIdx(idx)}
-              onDragOver={() => {
-                if (dragIdx !== null && dragIdx !== idx) {
-                  setData((prev) => {
-                    const next = [...prev.sections];
-                    const [moved] = next.splice(dragIdx, 1);
-                    if (moved) next.splice(idx, 0, moved);
-                    return { ...prev, sections: next };
-                  });
-                  setDragIdx(idx);
-                }
-              }}
-              onDragEnd={() => setDragIdx(null)}
-            />
-          ))}
-        </div>
+        <DraggableList
+          naked
+          items={data.sections}
+          keyExtractor={(s) => s.id}
+          onReorder={(sections) => setData((prev) => ({ ...prev, sections }))}
+          className="space-y-3"
+          renderItem={(section, idx, nakedCtx) => {
+            const { dragItemProps, dragHandleProps, isDragging } = nakedCtx!;
+            return (
+              <div ref={dragItemProps.ref} style={dragItemProps.style}>
+                <SectionEditor
+                  section={section}
+                  onItemsChange={(items) => updateSection(section.id, { items })}
+                  onMetaChange={(updates) => updateSection(section.id, updates)}
+                  onDelete={() => deleteSection(section.id)}
+                  onMoveUp={() => moveSection(idx, -1)}
+                  onMoveDown={() => moveSection(idx, 1)}
+                  isFirst={idx === 0}
+                  isLast={idx === data.sections.length - 1}
+                  isDragging={isDragging}
+                  handleRef={dragHandleProps.ref}
+                  handleListeners={dragHandleProps.listeners}
+                />
+              </div>
+            );
+          }}
+        />
       )}
 
       {/* Add section picker (when sections exist) */}
@@ -687,14 +720,14 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
   );
 }
 
-DevotionalEditor.dialogClassName = "sm:max-w-3xl max-h-[90vh] overflow-y-auto";
+DevotionalEditor.dialogClassName = "sm:max-w-3xl sm:max-h-[90vh] overflow-y-auto";
 
 // ── Add Section Picker ───────────────────────────────────────────
 
 function AddSectionPicker({ onAdd }: { onAdd: (type: DevotionalSectionType) => void }) {
   return (
     <Select value="" onValueChange={(val) => onAdd(val as DevotionalSectionType)}>
-      <SelectTrigger size="sm" className="text-xs w-auto">
+      <SelectTrigger size="sm" className="text-base md:text-xs w-auto">
         <Plus className="h-3.5 w-3.5 mr-1" />
         <SelectValue placeholder="Add section" />
       </SelectTrigger>

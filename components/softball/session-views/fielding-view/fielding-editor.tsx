@@ -117,7 +117,7 @@ const FieldingCell = memo(function FieldingCell({
           ref={inputRef}
           type="text"
           className={cn(
-            "h-7 text-xs w-[120px] rounded-md border border-input bg-background px-2 py-1 outline-none focus:ring-1 focus:ring-ring truncate",
+            "h-7 text-base md:text-xs w-[120px] rounded-md border border-input bg-background px-2 py-1 outline-none focus:ring-1 focus:ring-ring truncate",
             !cellValue && !open && "text-destructive/70",
           )}
           placeholder="Unassigned"
