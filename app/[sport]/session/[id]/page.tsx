@@ -13,6 +13,7 @@ import RestoreSessionButton from "@/components/sports/session/restore-session-bu
 import FacilitatorPicker from "@/components/sports/session/facilitator-picker";
 import { SessionFormDialog as SessionDialog } from "@/components/sports/session/session-form";
 import StatusBanner from "@/components/sports/status-banner";
+import { LinkifyText } from "@/components/ui/linkify-text";
 import AdminButton from "@/components/sports/admin/admin-button";
 import { isSignupOpen } from "@/lib/signup-capacity";
 import SessionViewSection from "@/components/sports/session/session-view-section";
@@ -40,36 +41,6 @@ import {
 } from "@/lib/get-data";
 import type { User } from "@supabase/supabase-js";
 import { SESSION_STATUS, type StoredViewInstance } from "@/lib/supabase/types";
-
-// ── Helpers ──────────────────────────────────────────────────────
-
-const URL_RE = /https?:\/\/[^\s<]+/g;
-
-/** Replaces URLs in text with clickable links. */
-function linkifyText(text: string) {
-  const parts = text.split(URL_RE);
-  const urls = text.match(URL_RE);
-  if (!urls) return text;
-
-  const result: (string | React.ReactElement)[] = [];
-  parts.forEach((part, i) => {
-    result.push(part);
-    if (urls[i]) {
-      result.push(
-        <a
-          key={i}
-          href={urls[i]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary underline underline-offset-2 hover:text-primary/80"
-        >
-          {urls[i]}
-        </a>,
-      );
-    }
-  });
-  return result;
-}
 
 async function SessionSignupsContent({
   sessionId,
@@ -346,7 +317,9 @@ export default async function SessionDetailPage({
 
       {session.notes && (
         <div className="text-sm text-muted-foreground whitespace-pre-line break-words overflow-hidden">
-          <p>{linkifyText(session.notes)}</p>
+          <p>
+            <LinkifyText>{session.notes}</LinkifyText>
+          </p>
         </div>
       )}
 
