@@ -668,9 +668,9 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
 
       {/* Sections */}
       {data.sections.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-8 border rounded-lg border-dashed">
+        <div className="flex flex-col items-center gap-3 py-8 border rounded-lg border-dashed overflow-hidden">
           <p className="text-sm text-muted-foreground">No sections yet</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-2 px-4">
             <Button
               type="button"
               variant="outline"
