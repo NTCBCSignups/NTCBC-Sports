@@ -7,7 +7,7 @@ import { useConfigurator, type CaptureHandle } from "@/components/ui/configurato
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/ui/draggable-list";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getSessionView,
@@ -258,6 +258,13 @@ function EditViewsDialogContent({
         </DialogTitle>
         <DialogDescription className="sr-only">Manage session views</DialogDescription>
       </DialogHeader>
+
+      <div className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2 flex items-start gap-2">
+        <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <span>
+          Your edits are auto-saved as a <u>draft</u> if you leave
+        </span>
+      </div>
 
       {step.kind === "list" && (
         <div className="space-y-2">
