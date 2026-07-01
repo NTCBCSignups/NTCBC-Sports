@@ -16,19 +16,34 @@ export async function updateMemberRole(
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const updatePayload: Record<string, unknown> = {};
-  if (updates.role !== undefined) updatePayload.role = updates.role;
-  if (updates.isTeamMember !== undefined) updatePayload.is_team_member = updates.isTeamMember;
-
-  if (Object.keys(updatePayload).length === 0) {
-    return { error: "No updates provided" };
+  // Prevent admin from demoting themselves
+  if (userId === result.user.id) {
+    return { error: "Cannot change your own role" };
   }
 
+  // If setting to "no role" (member + not team member), delete the row entirely
+  const effectiveRole = updates.role ?? "member";
+  const effectiveTeam = updates.isTeamMember ?? false;
+  if (effectiveRole === "member" && !effectiveTeam) {
+    const { error } = await supabase
+      .from("sport_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("sport", sport);
+
+    if (error) return { error: error.message };
+
+    revalidatePath(`/${sport}/admin`);
+    return { success: true };
+  }
+
+  // Otherwise upsert the role
   const { error } = await supabase
     .from("sport_roles")
-    .update(updatePayload)
-    .eq("user_id", userId)
-    .eq("sport", sport);
+    .upsert(
+      { user_id: userId, sport, role: effectiveRole, is_team_member: effectiveTeam },
+      { onConflict: "user_id,sport" },
+    );
 
   if (error) return { error: error.message };
 
@@ -45,16 +60,22 @@ export async function addMember(
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const { error } = await supabase.from("sport_roles").insert({
-    user_id: userId,
-    sport,
-    role: options.role ?? "member",
-    is_team_member: options.isTeamMember ?? false,
-  });
+  const effectiveRole = options.role ?? "member";
+  const effectiveTeam = options.isTeamMember ?? false;
 
-  if (error) {
-    if (error.code === "23505") return { error: "User is already a member of this sport" };
-    return { error: error.message };
+  // Only create a sport_roles row if granting elevated access
+  if (effectiveRole !== "member" || effectiveTeam) {
+    const { error } = await supabase.from("sport_roles").insert({
+      user_id: userId,
+      sport,
+      role: effectiveRole,
+      is_team_member: effectiveTeam,
+    });
+
+    if (error) {
+      if (error.code === "23505") return { error: "User already has a role in this sport" };
+      return { error: error.message };
+    }
   }
 
   // Clean up any pending access request for this user
@@ -102,21 +123,38 @@ export async function bulkUpdateMembers(
 
   if (userIds.length === 0) return { error: "No users selected" };
 
-  const updatePayload: Record<string, unknown> = {};
-  if (updates.role !== undefined) updatePayload.role = updates.role;
-  if (updates.isTeamMember !== undefined) updatePayload.is_team_member = updates.isTeamMember;
-
-  if (Object.keys(updatePayload).length === 0) {
-    return { error: "No updates provided" };
+  // Prevent admin from demoting themselves
+  if (userIds.includes(result.user.id)) {
+    return { error: "Cannot change your own role" };
   }
 
-  const { error } = await supabase
-    .from("sport_roles")
-    .update(updatePayload)
-    .in("user_id", userIds)
-    .eq("sport", sport);
+  const effectiveRole = updates.role ?? "member";
+  const effectiveTeam = updates.isTeamMember ?? false;
 
-  if (error) return { error: error.message };
+  // If setting to "no role", delete the rows
+  if (effectiveRole === "member" && !effectiveTeam) {
+    const { error } = await supabase
+      .from("sport_roles")
+      .delete()
+      .in("user_id", userIds)
+      .eq("sport", sport);
+
+    if (error) return { error: error.message };
+  } else {
+    // Upsert each user's role (supabase doesn't support bulk upsert with .in())
+    const rows = userIds.map((uid) => ({
+      user_id: uid,
+      sport,
+      role: effectiveRole,
+      is_team_member: effectiveTeam,
+    }));
+
+    const { error } = await supabase
+      .from("sport_roles")
+      .upsert(rows, { onConflict: "user_id,sport" });
+
+    if (error) return { error: error.message };
+  }
 
   revalidatePath(`/${sport}/admin`);
   return { success: true };
@@ -165,11 +203,16 @@ export async function searchUsersAction(sport: string, query: string) {
     .eq("sport", sport);
   const existingIds = new Set((existingRoles ?? []).map((r) => r.user_id));
 
-  // Search profiles by name or email (parameterized via ilike)
+  // Sanitize for PostgREST .or() filter:
+  // 1. Escape LIKE wildcards so user input is treated literally
+  // 2. Escape double quotes (PostgREST uses "" to escape within quoted values)
+  // 3. Wrap in double quotes to prevent commas/dots from breaking filter parsing
+  const escaped = query.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&").replace(/"/g, '""');
+
   const { data } = await supabase
     .from("profiles")
     .select("id, email, full_name, avatar_url")
-    .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+    .or(`full_name.ilike."%${escaped}%",email.ilike."%${escaped}%"`)
     .limit(20);
 
   const results = (data ?? [])

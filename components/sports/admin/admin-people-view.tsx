@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,10 +49,11 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TeamMemberBadge } from "@/components/sports/badges";
 import AdminAccessRequests from "@/components/sports/admin/admin-access-requests";
+import { StickyActionBar } from "@/components/sports/admin/sticky-action-bar";
 import { formatDate } from "@/lib/format";
 import { colors } from "@/lib/styles";
 import { cn } from "@/lib/utils";
-import { Search, UserPlus, MoreVertical, ShieldCheck, UserMinus, Crown } from "lucide-react";
+import { Search, UserPlus, MoreVertical, UserMinus, Crown } from "lucide-react";
 import { toast } from "sonner";
 import {
   updateMemberRole,
@@ -86,7 +87,50 @@ interface AdminPeopleViewProps {
 }
 
 type RoleFilter = "all" | "admin" | "team" | "member";
+type RoleLevel = "member" | "team" | "admin";
 type SortKey = "name" | "role" | "joined" | "active" | "signups";
+
+function roleLevelToUpdates(level: RoleLevel): { role: SportRoleType; isTeamMember: boolean } {
+  switch (level) {
+    case "admin":
+      return { role: "admin", isTeamMember: true };
+    case "team":
+      return { role: "member", isTeamMember: true };
+    case "member":
+      return { role: "member", isTeamMember: false };
+  }
+}
+
+function memberToRoleLevel(m: SportMember): RoleLevel {
+  if (m.isSportAdmin) return "admin";
+  if (m.isTeamMember) return "team";
+  return "member";
+}
+
+// ── Role Select (shared between filter and dialog) ───────────────
+
+function RoleLevelSelect({
+  value,
+  onValueChange,
+  className,
+}: {
+  value: RoleLevel;
+  onValueChange: (v: RoleLevel) => void;
+  className?: string;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onValueChange(v as RoleLevel)}>
+      <SelectTrigger className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="member">No Role</SelectItem>
+        <SelectItem value="team">Team Member</SelectItem>
+        <SelectItem value="admin">Admin</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
 
 // ── Component ────────────────────────────────────────────────────
 
@@ -94,13 +138,14 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortAsc, setSortAsc] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState(false);
 
   // Dialogs
   const [roleDialogUser, setRoleDialogUser] = useState<SportMember | null>(null);
   const [removeDialogUser, setRemoveDialogUser] = useState<SportMember | null>(null);
-  const [bulkAction, setBulkAction] = useState<"role" | "team" | "remove" | null>(null);
+  const [bulkAction, setBulkAction] = useState<"role" | "remove" | null>(null);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   // ── Filtering & Sorting ──────────────────────────────────────
@@ -119,33 +164,50 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
     // Role filter
     if (roleFilter !== "all") {
       result = result.filter((m) => {
-        if (roleFilter === "admin") return m.isAdmin;
+        if (roleFilter === "admin") return m.isSportAdmin;
         if (roleFilter === "team") return m.isTeamMember;
-        if (roleFilter === "member") return !m.isAdmin && !m.isTeamMember;
+        if (roleFilter === "member") return !m.isSportAdmin && !m.isTeamMember;
         return true;
       });
     }
 
     // Sort
     result = [...result].sort((a, b) => {
+      let cmp = 0;
       switch (sortKey) {
         case "name":
-          return (a.fullName ?? a.email).localeCompare(b.fullName ?? b.email);
+          cmp = (a.fullName ?? a.email).localeCompare(b.fullName ?? b.email);
+          break;
         case "role":
-          return (b.sportRole ?? "").localeCompare(a.sportRole ?? "");
+          cmp = (a.sportRole ?? "").localeCompare(b.sportRole ?? "");
+          break;
         case "joined":
-          return (b.joinedAt ?? "").localeCompare(a.joinedAt ?? "");
+          cmp = (a.joinedAt ?? "").localeCompare(b.joinedAt ?? "");
+          break;
         case "active":
-          return (b.lastActiveDate ?? "").localeCompare(a.lastActiveDate ?? "");
+          cmp = (a.lastActiveDate ?? "").localeCompare(b.lastActiveDate ?? "");
+          break;
         case "signups":
-          return b.totalSignups - a.totalSignups;
-        default:
-          return 0;
+          cmp = a.totalSignups - b.totalSignups;
+          break;
       }
+      return sortAsc ? cmp : -cmp;
     });
 
     return result;
-  }, [members, search, roleFilter, sortKey]);
+  }, [members, search, roleFilter, sortKey, sortAsc]);
+
+  const handleSort = useCallback(
+    (field: SortKey) => {
+      if (field === sortKey) {
+        setSortAsc((prev) => !prev);
+      } else {
+        setSortKey(field);
+        setSortAsc(true);
+      }
+    },
+    [sortKey],
+  );
 
   // ── Selection ──────────────────────────────────────────────────
 
@@ -255,56 +317,17 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
           />
         </div>
         <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="admin">Admins</SelectItem>
+            <SelectItem value="member">No Role</SelectItem>
             <SelectItem value="team">Team Members</SelectItem>
-            <SelectItem value="member">Regular</SelectItem>
+            <SelectItem value="admin">Admins</SelectItem>
           </SelectContent>
         </Select>
       </div>
-
-      {/* Bulk Action Bar */}
-      {selected.size > 0 && (
-        <div className="flex items-center gap-2 p-2 rounded-lg border bg-muted/50">
-          <span className="text-sm font-medium text-muted-foreground">
-            {selected.size} selected
-          </span>
-          <div className="flex gap-1.5 ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setBulkAction("role")}
-              disabled={pending}
-            >
-              <Crown className="h-3.5 w-3.5 mr-1" />
-              Change Role
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setBulkAction("team")}
-              disabled={pending}
-            >
-              <ShieldCheck className="h-3.5 w-3.5 mr-1" />
-              Toggle Team
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setBulkAction("remove")}
-              disabled={pending}
-              className={colors.destructiveHover}
-            >
-              <UserMinus className="h-3.5 w-3.5 mr-1" />
-              Remove
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Members List */}
       {filtered.length === 0 ? (
@@ -337,28 +360,30 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
                     <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
                   </TableHead>
                   <TableHead>
-                    <SortButton current={sortKey} field="name" onSort={setSortKey}>
+                    <SortButton current={sortKey} asc={sortAsc} field="name" onSort={handleSort}>
                       Name
                     </SortButton>
                   </TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>
-                    <SortButton current={sortKey} field="role" onSort={setSortKey}>
+                    <span className="text-xs font-medium text-muted-foreground">Email</span>
+                  </TableHead>
+                  <TableHead>
+                    <SortButton current={sortKey} asc={sortAsc} field="role" onSort={handleSort}>
                       Role
                     </SortButton>
                   </TableHead>
                   <TableHead>
-                    <SortButton current={sortKey} field="joined" onSort={setSortKey}>
+                    <SortButton current={sortKey} asc={sortAsc} field="joined" onSort={handleSort}>
                       Joined
                     </SortButton>
                   </TableHead>
                   <TableHead>
-                    <SortButton current={sortKey} field="active" onSort={setSortKey}>
+                    <SortButton current={sortKey} asc={sortAsc} field="active" onSort={handleSort}>
                       Last Active
                     </SortButton>
                   </TableHead>
                   <TableHead className="text-right">
-                    <SortButton current={sortKey} field="signups" onSort={setSortKey}>
+                    <SortButton current={sortKey} asc={sortAsc} field="signups" onSort={handleSort}>
                       Signups
                     </SortButton>
                   </TableHead>
@@ -393,13 +418,18 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
                     <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        {member.isAdmin && (
+                        {member.isGlobalAdmin && (
+                          <Badge variant="outline" className="text-xs">
+                            Global Admin
+                          </Badge>
+                        )}
+                        {member.isSportAdmin && (
                           <Badge variant="default" className="text-xs">
                             Admin
                           </Badge>
                         )}
                         {member.isTeamMember && <TeamMemberBadge />}
-                        {!member.sportRole && (
+                        {!member.isSportAdmin && !member.isTeamMember && !member.isGlobalAdmin && (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </div>
@@ -429,6 +459,36 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
           </div>
         </>
       )}
+
+      {/* Bulk Action Bar */}
+      <StickyActionBar visible={selected.size > 0}>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            {selected.size} selected
+          </span>
+          <div className="flex gap-1.5 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBulkAction("role")}
+              disabled={pending}
+            >
+              <Crown className="h-3.5 w-3.5 mr-1" />
+              Change Role
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBulkAction("remove")}
+              disabled={pending}
+              className={colors.destructiveHover}
+            >
+              <UserMinus className="h-3.5 w-3.5 mr-1" />
+              Remove
+            </Button>
+          </div>
+        </div>
+      </StickyActionBar>
 
       {/* Dialogs */}
       <RoleDialog
@@ -488,7 +548,12 @@ function MobileCard({
             {member.fullName ?? member.email.split("@")[0]}
           </p>
           {member.isTeamMember && <TeamMemberBadge />}
-          {member.isAdmin && (
+          {member.isGlobalAdmin && (
+            <Badge variant="outline" className="text-xs h-5">
+              Global
+            </Badge>
+          )}
+          {member.isSportAdmin && (
             <Badge variant="default" className="text-xs h-5">
               Admin
             </Badge>
@@ -538,23 +603,27 @@ function RowActions({
 function SortButton({
   children,
   current,
+  asc,
   field,
   onSort,
 }: {
   children: React.ReactNode;
   current: SortKey;
+  asc: boolean;
   field: SortKey;
   onSort: (key: SortKey) => void;
 }) {
+  const active = current === field;
   return (
     <button
       onClick={() => onSort(field)}
       className={cn(
         "text-xs font-medium hover:text-foreground transition-colors",
-        current === field ? "text-foreground" : "text-muted-foreground",
+        active ? "text-foreground" : "text-muted-foreground",
       )}
     >
       {children}
+      <span className={cn("ml-0.5", !active && "invisible")}>{asc ? "↑" : "↓"}</span>
     </button>
   );
 }
@@ -572,15 +641,16 @@ function RoleDialog({
   onSave: (userId: string, updates: { role?: SportRoleType; isTeamMember?: boolean }) => void;
   pending: boolean;
 }) {
-  const [role, setRole] = useState<SportRoleType>("member");
-  const [isTeam, setIsTeam] = useState(false);
+  const [level, setLevel] = useState<RoleLevel>("member");
 
-  // Sync when dialog opens
+  // Sync state when dialog opens for a different member
+  useEffect(() => {
+    if (member) {
+      setLevel(memberToRoleLevel(member));
+    }
+  }, [member]);
+
   const open = !!member;
-  if (member && role !== (member.sportRole ?? "member")) {
-    setRole(member.sportRole ?? "member");
-    setIsTeam(member.isTeamMember);
-  }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -589,32 +659,15 @@ function RoleDialog({
           <DialogTitle>Change Role</DialogTitle>
           <DialogDescription>Update role for {member?.fullName ?? member?.email}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Role</label>
-            <Select value={role} onValueChange={(v) => setRole(v as SportRoleType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox id="team-member" checked={isTeam} onCheckedChange={(c) => setIsTeam(!!c)} />
-            <label htmlFor="team-member" className="text-sm">
-              Team member (grants access to restricted sessions)
-            </label>
-          </div>
+        <div className="py-2">
+          <RoleLevelSelect value={level} onValueChange={setLevel} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
-            onClick={() => member && onSave(member.id, { role, isTeamMember: isTeam })}
+            onClick={() => member && onSave(member.id, roleLevelToUpdates(level))}
             disabled={pending}
           >
             Save
@@ -669,14 +722,14 @@ function BulkActionDialog({
   onConfirmRemove,
   pending,
 }: {
-  action: "role" | "team" | "remove" | null;
+  action: "role" | "remove" | null;
   count: number;
   onClose: () => void;
   onConfirmRole: (updates: { role?: SportRoleType; isTeamMember?: boolean }) => void;
   onConfirmRemove: () => void;
   pending: boolean;
 }) {
-  const [bulkRole, setBulkRole] = useState<SportRoleType>("member");
+  const [bulkLevel, setBulkLevel] = useState<RoleLevel>("member");
 
   if (action === "remove") {
     return (
@@ -704,31 +757,6 @@ function BulkActionDialog({
     );
   }
 
-  if (action === "team") {
-    return (
-      <AlertDialog open onOpenChange={(o) => !o && onClose()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Toggle Team Membership</AlertDialogTitle>
-            <AlertDialogDescription>
-              Grant team membership to {count} selected members? This gives access to restricted
-              sessions.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => onConfirmRole({ isTeamMember: true })}
-              disabled={pending}
-            >
-              Grant Team Access
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    );
-  }
-
   if (action === "role") {
     return (
       <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -737,20 +765,12 @@ function BulkActionDialog({
             <DialogTitle>Change Role for {count} Members</DialogTitle>
             <DialogDescription>Select the new role for all selected members.</DialogDescription>
           </DialogHeader>
-          <Select value={bulkRole} onValueChange={(v) => setBulkRole(v as SportRoleType)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="member">Member</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
+          <RoleLevelSelect value={bulkLevel} onValueChange={setBulkLevel} />
           <DialogFooter>
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={() => onConfirmRole({ role: bulkRole })} disabled={pending}>
+            <Button onClick={() => onConfirmRole(roleLevelToUpdates(bulkLevel))} disabled={pending}>
               Apply to {count} Members
             </Button>
           </DialogFooter>
@@ -777,33 +797,56 @@ function AddMemberDialog({
   >([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<SportRoleType>("member");
-  const [isTeam, setIsTeam] = useState(false);
+  const [addLevel, setAddLevel] = useState<RoleLevel>("team");
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    email: string;
+    fullName: string | null;
+    avatarUrl: string | null;
+  } | null>(null);
+
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>(null);
+  const searchSeq = useRef(0);
 
   const handleSearch = useCallback(
-    async (q: string) => {
+    (q: string) => {
       setQuery(q);
+      setSelectedUser(null);
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
       if (q.length < 2) {
         setResults([]);
+        setSearching(false);
         return;
       }
       setSearching(true);
-      const res = await searchUsersAction(sport, q);
-      setResults(res.data ?? []);
-      setSearching(false);
+      searchTimeout.current = setTimeout(async () => {
+        const seq = ++searchSeq.current;
+        const res = await searchUsersAction(sport, q);
+        // Only apply results if this is still the latest search
+        if (seq === searchSeq.current) {
+          setResults(res.data ?? []);
+          setSearching(false);
+        }
+      }, 300);
     },
     [sport],
   );
 
-  const handleAdd = async (userId: string) => {
+  const handleAdd = async () => {
+    if (!selectedUser) return;
     setAdding(true);
-    const result = await addMember(sport, userId, { role: selectedRole, isTeamMember: isTeam });
+    const updates = roleLevelToUpdates(addLevel);
+    const result = await addMember(sport, selectedUser.id, {
+      role: updates.role,
+      isTeamMember: updates.isTeamMember,
+    });
     if (result.error) toast.error(result.error);
     else {
       toast.success("Member added");
       onClose();
       setQuery("");
       setResults([]);
+      setSelectedUser(null);
     }
     setAdding(false);
   };
@@ -816,6 +859,7 @@ function AddMemberDialog({
           onClose();
           setQuery("");
           setResults([]);
+          setSelectedUser(null);
         }
       }}
     >
@@ -835,23 +879,15 @@ function AddMemberDialog({
             />
           </div>
 
-          <div className="flex gap-3">
-            <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as SportRoleType)}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2">
-              <Checkbox id="add-team" checked={isTeam} onCheckedChange={(c) => setIsTeam(!!c)} />
-              <label htmlFor="add-team" className="text-sm">
-                Team member
-              </label>
-            </div>
-          </div>
+          <Select value={addLevel} onValueChange={(v) => setAddLevel(v as RoleLevel)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="team">Team Member</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Results */}
           <div className="max-h-48 overflow-y-auto space-y-1">
@@ -862,9 +898,11 @@ function AddMemberDialog({
             {results.map((user) => (
               <button
                 key={user.id}
-                onClick={() => handleAdd(user.id)}
-                disabled={adding}
-                className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors text-left"
+                onClick={() => setSelectedUser(user)}
+                className={cn(
+                  "w-full flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors text-left",
+                  selectedUser?.id === user.id && "bg-muted ring-1 ring-primary",
+                )}
               >
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={user.avatarUrl ?? undefined} />
@@ -878,11 +916,29 @@ function AddMemberDialog({
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
-                <UserPlus className="h-4 w-4 text-muted-foreground shrink-0" />
+                {selectedUser?.id === user.id && (
+                  <UserPlus className="h-4 w-4 text-primary shrink-0" />
+                )}
               </button>
             ))}
           </div>
         </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              onClose();
+              setQuery("");
+              setResults([]);
+              setSelectedUser(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleAdd} disabled={!selectedUser || adding}>
+            {adding ? "Adding..." : "Add Member"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

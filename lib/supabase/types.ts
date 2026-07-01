@@ -89,7 +89,7 @@ export interface TeamAccessRequest {
   profiles?: Profile;
 }
 
-/** Aggregated member data for the Members admin tab. */
+/** Aggregated member data for the People admin tab. */
 export interface SportMember {
   id: string;
   email: string;
@@ -97,8 +97,10 @@ export interface SportMember {
   avatarUrl: string | null;
   /** Sport-specific role: "member" | "admin". Null if user only has signups (no sport_role). */
   sportRole: SportRoleType | null;
-  /** True if user is a global admin OR sport-level admin. */
-  isAdmin: boolean;
+  /** True if sport_roles.role = 'admin' for this sport. */
+  isSportAdmin: boolean;
+  /** True if profiles.role = 'admin' (platform-wide, informational only). */
+  isGlobalAdmin: boolean;
   isTeamMember: boolean;
   joinedAt: string | null;
   totalSignups: number;

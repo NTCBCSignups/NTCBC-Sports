@@ -218,7 +218,8 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
       fullName: p.full_name,
       avatarUrl: p.avatar_url,
       sportRole: r.role as SportRoleType,
-      isAdmin: p.role === "admin" || r.role === "admin",
+      isSportAdmin: r.role === "admin",
+      isGlobalAdmin: p.role === "admin",
       isTeamMember: r.is_team_member,
       joinedAt: r.created_at,
       totalSignups: stats?.count ?? 0,
@@ -235,7 +236,8 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
       fullName: p.full_name,
       avatarUrl: p.avatar_url,
       sportRole: null,
-      isAdmin: p.role === "admin",
+      isSportAdmin: false,
+      isGlobalAdmin: p.role === "admin",
       isTeamMember: false,
       joinedAt: null,
       totalSignups: stats?.count ?? 0,
@@ -248,28 +250,6 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
     const nameB = b.fullName ?? b.email;
     return nameA.localeCompare(nameB);
   });
-}
-
-/** Search profiles by name/email for Add Member dialog. Excludes users already in the sport. */
-export async function searchProfiles(sport: string, query: string): Promise<Profile[]> {
-  if (!query || query.length < 2) return [];
-  const supabase = await createClient();
-
-  // Get existing sport_role user IDs to exclude
-  const { data: existingRoles } = await supabase
-    .from("sport_roles")
-    .select("user_id")
-    .eq("sport", sport);
-  const existingIds = new Set((existingRoles ?? []).map((r) => r.user_id));
-
-  // Search profiles by name or email
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, email, full_name, avatar_url, role, created_at, updated_at")
-    .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
-    .limit(20);
-
-  return ((data ?? []) as Profile[]).filter((p) => !existingIds.has(p.id));
 }
 
 /** Current user's access request status for a sport. */
