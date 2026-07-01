@@ -7,6 +7,7 @@ export const ADMIN_TAB_ICON_NAMES = [
   "History",
   "RefreshCw",
   "SlidersHorizontal",
+  "Users",
 ] as const;
 
 export type AdminTabIconName = (typeof ADMIN_TAB_ICON_NAMES)[number];
@@ -29,9 +30,9 @@ export const SETTINGS_ADMIN_TAB: AdminTabMeta = {
 
 export const DEFAULT_ADMIN_TABS: AdminTabMeta[] = [
   {
-    id: "requests",
-    label: "Access Requests",
-    iconName: "ClipboardList",
+    id: "members",
+    label: "Members",
+    iconName: "Users",
   },
   {
     id: "create",

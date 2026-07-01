@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, XCircle } from "lucide-react";
-import { requestTeamAccess } from "@/lib/actions/team-access";
+import { requestTeamAccess, acknowledgeRejection, reRequestAccess } from "@/lib/actions/team-access";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 import { colors } from "@/lib/styles";
 import StatusBanner from "@/components/sports/status-banner";
@@ -36,6 +36,24 @@ export default function TeamAccessBanner({
     setPending(false);
   };
 
+  const handleAcknowledge = async () => {
+    setPending(true);
+    const result = await acknowledgeRejection(sport);
+    if (result.success) {
+      setLocalStatus(null);
+    }
+    setPending(false);
+  };
+
+  const handleReRequest = async () => {
+    setPending(true);
+    const result = await reRequestAccess(sport);
+    if (result.success) {
+      setLocalStatus("pending");
+    }
+    setPending(false);
+  };
+
   if (localStatus === "approved") {
     return null;
   }
@@ -48,8 +66,8 @@ export default function TeamAccessBanner({
         title="Request pending"
         message={
           <>
-            Your request to join the team is awaiting leader approval. You&apos;ll be able to sign
-            up for {restrictedLabels} once approved.
+            Your membership request is awaiting leader approval. You&apos;ll be able to sign up
+            for {restrictedLabels} once approved.
           </>
         }
       />
@@ -62,8 +80,17 @@ export default function TeamAccessBanner({
         variant="destructive"
         icon={<XCircle className={`h-5 w-5 ${colors.destructive} shrink-0 mt-0.5`} />}
         title="Request denied"
-        message="Your request to join the team was not approved. Please contact a leader if you believe this is an error."
-      />
+        message="Your membership request was not approved. You can dismiss this or try again."
+      >
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleAcknowledge} disabled={pending}>
+            Dismiss
+          </Button>
+          <Button size="sm" onClick={handleReRequest} disabled={pending}>
+            {pending ? "Requesting..." : "Request Again"}
+          </Button>
+        </div>
+      </StatusBanner>
     );
   }
 
@@ -71,20 +98,20 @@ export default function TeamAccessBanner({
     <StatusBanner
       variant="info"
       icon={<Shield className="h-5 w-5 text-info shrink-0 mt-0.5" />}
-      title="Team members only"
+      title="Membership required"
       message={
         <>
           {bannerMessage || (
             <>
               {restrictedLabels.charAt(0).toUpperCase() + restrictedLabels.slice(1)} are reserved
-              for approved team members. Request access to sign up for those sessions.
+              for approved members. Request membership to sign up for those sessions.
             </>
           )}
         </>
       }
     >
       <Button size="sm" onClick={handleRequest} disabled={pending}>
-        {pending ? "Requesting..." : "Request to join"}
+        {pending ? "Requesting..." : "Request Membership"}
       </Button>
     </StatusBanner>
   );

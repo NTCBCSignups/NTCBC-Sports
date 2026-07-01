@@ -5,6 +5,7 @@ import {
   Plus,
   RefreshCw,
   SlidersHorizontal,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { isAdminTabIconName, type AdminTabIconName } from "@/config/admin-tab-metadata";
@@ -16,6 +17,7 @@ export const adminTabIconMap: Record<AdminTabIconName, LucideIcon> = {
   History,
   RefreshCw,
   SlidersHorizontal,
+  Users,
 };
 
 export function getAdminTabIcon(iconName: string): LucideIcon {

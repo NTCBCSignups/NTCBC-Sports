@@ -20,6 +20,7 @@ const ADMIN_TAB_ICON_OPTION_LABELS: Record<AdminTabIconName, string> = {
   History: "History",
   RefreshCw: "Refresh",
   SlidersHorizontal: "Sliders",
+  Users: "Users",
 };
 
 export const ADMIN_TAB_ICON_OPTIONS: Array<{ value: AdminTabIconName; label: string }> =
@@ -30,10 +31,10 @@ export const ADMIN_TAB_ICON_OPTIONS: Array<{ value: AdminTabIconName; label: str
 
 export const ADMIN_TAB_DEFINITIONS: AdminTabDefinition[] = [
   {
-    id: "requests",
-    label: "Access Requests",
-    description: "Review and approve access requests.",
-    iconName: "ClipboardList",
+    id: "members",
+    label: "Members",
+    description: "View and manage sport members.",
+    iconName: "Users",
   },
   {
     id: "create",
