@@ -30,14 +30,14 @@ export default function AdminSessionSignups({
   const handlePromote = async (signupId: string) => {
     setPending(signupId);
     const result = await adminUpdateSignupStatus(sport, signupId, "confirmed", sessionId);
-    if (result.error) toast.error(result.error);
+    if ("error" in result) toast.error(result.error);
     setPending(null);
   };
 
   const handleCancel = async (signupId: string) => {
     setPending(signupId);
     const result = await adminUpdateSignupStatus(sport, signupId, "cancelled", sessionId);
-    if (result.error) toast.error(result.error);
+    if ("error" in result) toast.error(result.error);
     setPending(null);
   };
 
