@@ -20,22 +20,23 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Refresh the session — this is the critical call that keeps tokens alive
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Validate the JWT and refresh the session.
+  // getClaims() verifies the token signature locally via WebCrypto (no network call
+  // to the Auth server) and triggers a refresh if the token is expired.
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = error ? null : (data?.claims ?? null);
 
   // Forward only the fields actually consumed downstream (id, email, user_metadata)
   // to keep the header small. Always set (empty when unauthenticated) to prevent spoofing.
   request.headers.set(
     "x-supabase-user",
-    user
+    claims
       ? JSON.stringify({
-          id: user.id,
-          email: user.email,
+          id: claims.sub,
+          email: claims.email,
           user_metadata: {
-            full_name: user.user_metadata?.full_name,
-            avatar_url: user.user_metadata?.avatar_url,
+            full_name: (claims.user_metadata as Record<string, unknown>)?.full_name,
+            avatar_url: (claims.user_metadata as Record<string, unknown>)?.avatar_url,
           },
         })
       : "",

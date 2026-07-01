@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { promoteOneFromWaitlist, resolveSignupStatus } from "@/lib/signup-capacity";
+import { promoteOneFromWaitlist, atomicSignup } from "@/lib/signup-capacity";
 import { getResolvedTab } from "@/config/config-resolver";
 import { canSignup } from "@/lib/tab-access";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
@@ -63,11 +63,12 @@ export async function signUpForSession(sessionId: string): Promise<SignupActionR
 
   const { data: session } = await supabase
     .from("sessions")
-    .select("session_type, sport")
+    .select("session_type, sport, status")
     .eq("id", sessionId)
     .single();
 
   if (!session) return { error: "Session not found" };
+  if (session.status === "cancelled") return { error: "Session is cancelled" };
 
   const sport = session.sport;
   const sportConfig = await getResolvedSportConfig(sport);
@@ -96,32 +97,11 @@ export async function signUpForSession(sessionId: string): Promise<SignupActionR
 
   let status: "confirmed" | "waitlisted";
   try {
-    status = await resolveSignupStatus(supabase, sessionId);
+    status = await atomicSignup(supabase, sessionId, user.id, existingSignup?.id);
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "Could not resolve signup status",
-    };
-  }
-
-  if (existingSignup) {
-    // Override whatever inactive status they had
-    const { error: updateError } = await supabase
-      .from("signups")
-      .update({ status, created_at: new Date().toISOString() })
-      .eq("id", existingSignup.id);
-
-    if (updateError) return { error: updateError.message };
-  } else {
-    const { error } = await supabase.from("signups").insert({
-      session_id: sessionId,
-      user_id: user.id,
-      status,
-    });
-
-    if (error) {
-      if (error.code === "23505") return { error: "Already signed up" };
-      return { error: error.message };
-    }
+    const msg = e instanceof Error ? e.message : "Could not complete signup";
+    if (msg.includes("duplicate") || msg.includes("23505")) return { error: "Already signed up" };
+    return { error: msg };
   }
 
   revalidatePath(getSessionPath(sport, sessionId));

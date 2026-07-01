@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { Role } from "@/config/config-resolver";
@@ -78,6 +79,13 @@ export async function getUserSportRole(
     isTeamMember,
   };
 }
+
+/**
+ * Request-scoped cached version of getUserSportRole.
+ * Deduplicates multiple calls with the same (supabase, userId, sport) within
+ * a single React render pass (e.g., AdminButtonGate + CalendarExportGate).
+ */
+export const getCachedUserSportRole = cache(getUserSportRole);
 
 /**
  * Asserts the current user is an admin for the given sport.

@@ -15,7 +15,7 @@ import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resol
 /** Upcoming sessions with signup counts for a sport page. */
 export async function getUpcomingSessions(sport: string) {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("sessions")
     .select("*, signups(count)")
     .eq("sport", sport)
@@ -26,6 +26,8 @@ export async function getUpcomingSessions(sport: string) {
     .order("time_start", { ascending: true })
     .returns<(SportSession & { signups: [{ count: number }] })[]>();
 
+  if (error) console.error("[getUpcomingSessions]", error.message);
+
   return (data ?? []).map((s) => ({
     ...s,
     signup_count: s.signups[0]?.count ?? 0,
@@ -35,12 +37,14 @@ export async function getUpcomingSessions(sport: string) {
 /** All sessions for admin view (upcoming + past). */
 export async function getAllSessions(sport: string) {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("sessions")
     .select("*")
     .eq("sport", sport)
     .order("date", { ascending: false })
     .order("time_start", { ascending: true });
+
+  if (error) console.error("[getAllSessions]", error.message);
 
   return data ?? [];
 }
@@ -68,7 +72,9 @@ export async function getSessionsWithClient(
 /** Single session by ID. */
 export async function getSession(sessionId: string) {
   const supabase = await createClient();
-  const { data } = await supabase.from("sessions").select("*").eq("id", sessionId).single();
+  const { data, error } = await supabase.from("sessions").select("*").eq("id", sessionId).single();
+
+  if (error) console.error("[getSession]", error.message);
 
   return data;
 }

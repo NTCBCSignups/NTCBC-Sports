@@ -10,34 +10,30 @@ export function isSignupOpen(session: { signup_open: string; signup_close: strin
 }
 
 /**
- * Decides confirmed vs waitlisted for a new or reactivated signup (same rules as the old DB trigger).
- * Caller must use a client that can read `sessions` and `signups` for this session.
+ * Atomically resolves status AND inserts/reactivates a signup row in a single
+ * Postgres transaction. Uses FOR UPDATE on the session row to serialize
+ * concurrent signups, preventing the TOCTOU race where two users both read
+ * count < cap and both get "confirmed".
+ *
+ * @param existingSignupId - Pass the row ID to reactivate an existing cancelled/declined signup.
  */
-export async function resolveSignupStatus(
+export async function atomicSignup(
   supabase: SupabaseClient,
   sessionId: string,
+  userId: string,
+  existingSignupId?: string,
 ): Promise<"confirmed" | "waitlisted"> {
-  const [{ data: session, error: sessionError }, { count, error: countError }] = await Promise.all([
-    supabase.from("sessions").select("player_cap").eq("id", sessionId).single(),
-    supabase
-      .from("signups")
-      .select("*", { count: "exact", head: true })
-      .eq("session_id", sessionId)
-      .eq("status", "confirmed"),
-  ]);
+  const { data, error } = await supabase.rpc("atomic_signup", {
+    p_session_id: sessionId,
+    p_user_id: userId,
+    p_existing_signup_id: existingSignupId ?? null,
+  });
 
-  if (sessionError || !session) {
-    throw new Error(sessionError?.message ?? "Session not found");
-  }
-  if (countError) {
-    throw new Error(countError.message);
+  if (error) {
+    throw new Error(error.message);
   }
 
-  if (session.player_cap == null) {
-    return "confirmed";
-  }
-
-  return (count ?? 0) >= session.player_cap ? "waitlisted" : "confirmed";
+  return data as "confirmed" | "waitlisted";
 }
 
 /**
