@@ -24,7 +24,7 @@ export async function updateSession(request: NextRequest) {
   // getClaims() verifies the token signature locally via WebCrypto (no network call
   // to the Auth server) and triggers a refresh if the token is expired.
   const { data, error } = await supabase.auth.getClaims();
-  const claims = error ? null : data?.claims ?? null;
+  const claims = error ? null : (data?.claims ?? null);
 
   // Forward only the fields actually consumed downstream (id, email, user_metadata)
   // to keep the header small. Always set (empty when unauthenticated) to prevent spoofing.

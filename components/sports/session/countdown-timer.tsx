@@ -23,32 +23,35 @@ export default function CountdownTimer({ openTime, closeTime, isFormOpen }: Coun
   const alreadyPast = targetMs <= now;
   const isClosed = closeMs <= now;
 
-  const calculateCountdown = useCallback((target: string) => {
-    const nowMs = Date.now();
-    const targetTimeMs = new Date(target).getTime();
-    const difference = targetTimeMs - nowMs;
+  const calculateCountdown = useCallback(
+    (target: string) => {
+      const nowMs = Date.now();
+      const targetTimeMs = new Date(target).getTime();
+      const difference = targetTimeMs - nowMs;
 
-    if (difference <= 0) {
-      setExpired(true);
-      router.refresh();
-      return "Refreshing...";
-    }
+      if (difference <= 0) {
+        setExpired(true);
+        router.refresh();
+        return "Refreshing...";
+      }
 
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
-    }
-  }, []);
+      if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      } else if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+      } else if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+      } else {
+        return `${seconds}s`;
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     if (alreadyPast) return;

@@ -10,16 +10,23 @@ export function isSignupOpen(session: { signup_open: string; signup_close: strin
 }
 
 /**
- * Decides confirmed vs waitlisted for a new or reactivated signup.
- * Uses a Postgres function with FOR UPDATE to atomically serialize concurrent signups,
- * preventing the TOCTOU race where two users both read count < cap.
+ * Atomically resolves status AND inserts/reactivates a signup row in a single
+ * Postgres transaction. Uses FOR UPDATE on the session row to serialize
+ * concurrent signups, preventing the TOCTOU race where two users both read
+ * count < cap and both get "confirmed".
+ *
+ * @param existingSignupId - Pass the row ID to reactivate an existing cancelled/declined signup.
  */
-export async function resolveSignupStatus(
+export async function atomicSignup(
   supabase: SupabaseClient,
   sessionId: string,
+  userId: string,
+  existingSignupId?: string,
 ): Promise<"confirmed" | "waitlisted"> {
-  const { data, error } = await supabase.rpc("resolve_signup_status", {
+  const { data, error } = await supabase.rpc("atomic_signup", {
     p_session_id: sessionId,
+    p_user_id: userId,
+    p_existing_signup_id: existingSignupId ?? null,
   });
 
   if (error) {
