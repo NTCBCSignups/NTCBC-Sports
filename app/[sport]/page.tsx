@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUser, getUserSportRole } from "@/lib/supabase/user";
+import { getUser, getUserSportRole, getCachedUserSportRole } from "@/lib/supabase/user";
 import SessionCard from "@/components/sports/session/session-card";
 import SessionFilter from "@/components/sports/session/session-filter";
 import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
@@ -303,7 +303,7 @@ async function SportSessionsContent({
 
 async function AdminButtonGate({ sport, userId }: { sport: string; userId: string }) {
   const supabase = await createClient();
-  const { role } = await getUserSportRole(supabase, userId, sport);
+  const { role } = await getCachedUserSportRole(supabase, userId, sport);
   if (role < Role.admin) return null;
   return <AdminButton sport={sport} />;
 }
@@ -318,7 +318,7 @@ async function CalendarExportGate({
   config: ResolvedSportConfig;
 }) {
   const supabase = await createClient();
-  const { role } = await getUserSportRole(supabase, userId, sport);
+  const { role } = await getCachedUserSportRole(supabase, userId, sport);
   const visibleTabs = config.tabs
     .filter((t) => getFirstUnmetLevel(t, role) !== AccessLevel.overview)
     .map((t) => ({ value: t.value, label: t.label }));
