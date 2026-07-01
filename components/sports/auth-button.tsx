@@ -45,7 +45,12 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2 px-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 px-2"
+          aria-label={user.user_metadata?.full_name ?? user.email ?? "User menu"}
+        >
           {user.user_metadata?.avatar_url && (
             // eslint-disable-next-line @next/next/no-img-element -- external OAuth avatar, domains vary
             <img
