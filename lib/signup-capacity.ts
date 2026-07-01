@@ -10,34 +10,23 @@ export function isSignupOpen(session: { signup_open: string; signup_close: strin
 }
 
 /**
- * Decides confirmed vs waitlisted for a new or reactivated signup (same rules as the old DB trigger).
- * Caller must use a client that can read `sessions` and `signups` for this session.
+ * Decides confirmed vs waitlisted for a new or reactivated signup.
+ * Uses a Postgres function with FOR UPDATE to atomically serialize concurrent signups,
+ * preventing the TOCTOU race where two users both read count < cap.
  */
 export async function resolveSignupStatus(
   supabase: SupabaseClient,
   sessionId: string,
 ): Promise<"confirmed" | "waitlisted"> {
-  const [{ data: session, error: sessionError }, { count, error: countError }] = await Promise.all([
-    supabase.from("sessions").select("player_cap").eq("id", sessionId).single(),
-    supabase
-      .from("signups")
-      .select("*", { count: "exact", head: true })
-      .eq("session_id", sessionId)
-      .eq("status", "confirmed"),
-  ]);
+  const { data, error } = await supabase.rpc("resolve_signup_status", {
+    p_session_id: sessionId,
+  });
 
-  if (sessionError || !session) {
-    throw new Error(sessionError?.message ?? "Session not found");
-  }
-  if (countError) {
-    throw new Error(countError.message);
+  if (error) {
+    throw new Error(error.message);
   }
 
-  if (session.player_cap == null) {
-    return "confirmed";
-  }
-
-  return (count ?? 0) >= session.player_cap ? "waitlisted" : "confirmed";
+  return data as "confirmed" | "waitlisted";
 }
 
 /**
