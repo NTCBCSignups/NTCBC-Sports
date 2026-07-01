@@ -34,7 +34,7 @@ interface SessionFormProps {
   sport: string;
   sessionTabs: SessionTypeOption[];
   session?: SportSession;
-  sportUsers?: { id: string; name: string }[];
+  sportUsers?: { id: string; name: string; isTeamMember: boolean }[];
   onSuccess?: () => void;
   formRef?: RefObject<HTMLFormElement | null>;
   onPendingChange?: (pending: boolean) => void;
@@ -447,7 +447,7 @@ interface SessionFormDialogProps {
   sessionTabs: SessionTypeOption[];
   defaultTab?: string;
   session?: SportSession;
-  sportUsers?: { id: string; name: string }[];
+  sportUsers?: { id: string; name: string; isTeamMember: boolean }[];
   trigger?: ReactNode;
 }
 

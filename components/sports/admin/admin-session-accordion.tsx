@@ -41,7 +41,7 @@ interface SessionAccordionProps {
   sessions: SportSession[];
   signupsBySession: Map<string, SessionSignupEntry[]>;
   teamMemberIds: Set<string>;
-  sportUsers?: { id: string; name: string }[];
+  sportUsers?: { id: string; name: string; isTeamMember: boolean }[];
   muted?: boolean;
 }
 
