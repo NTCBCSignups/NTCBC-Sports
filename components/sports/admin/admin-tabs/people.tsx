@@ -1,8 +1,8 @@
 import { getAccessRequests, getSportMembers } from "@/lib/get-data";
-import AdminMembersView from "@/components/sports/admin/admin-members-view";
+import AdminPeopleView from "@/components/sports/admin/admin-people-view";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 
-export default async function AdminTabMembers({ sport }: { sport: string }) {
+export default async function AdminTabPeople({ sport }: { sport: string }) {
   const [members, accessRequests] = await Promise.all([
     getSportMembers(sport),
     getAccessRequests(sport),
@@ -18,5 +18,5 @@ export default async function AdminTabMembers({ sport }: { sport: string }) {
       profiles: r.profiles,
     }));
 
-  return <AdminMembersView sport={sport} members={members} pendingRequests={pendingRequests} />;
+  return <AdminPeopleView sport={sport} members={members} pendingRequests={pendingRequests} />;
 }

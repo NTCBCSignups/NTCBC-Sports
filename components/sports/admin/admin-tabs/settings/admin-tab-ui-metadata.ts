@@ -31,9 +31,9 @@ export const ADMIN_TAB_ICON_OPTIONS: Array<{ value: AdminTabIconName; label: str
 
 export const ADMIN_TAB_DEFINITIONS: AdminTabDefinition[] = [
   {
-    id: "members",
-    label: "Members",
-    description: "View and manage sport members.",
+    id: "people",
+    label: "People",
+    description: "View and manage people in this sport.",
     iconName: "Users",
   },
   {

@@ -30,8 +30,8 @@ export const SETTINGS_ADMIN_TAB: AdminTabMeta = {
 
 export const DEFAULT_ADMIN_TABS: AdminTabMeta[] = [
   {
-    id: "members",
-    label: "Members",
+    id: "people",
+    label: "People",
     iconName: "Users",
   },
   {

@@ -79,7 +79,7 @@ interface AccessRequestRow {
   profiles: Profile | null;
 }
 
-interface AdminMembersViewProps {
+interface AdminPeopleViewProps {
   sport: string;
   members: SportMember[];
   pendingRequests: AccessRequestRow[];
@@ -90,11 +90,7 @@ type SortKey = "name" | "role" | "joined" | "active" | "signups";
 
 // ── Component ────────────────────────────────────────────────────
 
-export default function AdminMembersView({
-  sport,
-  members,
-  pendingRequests,
-}: AdminMembersViewProps) {
+export default function AdminPeopleView({ sport, members, pendingRequests }: AdminPeopleViewProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -227,7 +223,7 @@ export default function AdminMembersView({
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Members</h2>
+          <h2 className="text-lg font-semibold text-foreground">People</h2>
           <Badge variant="secondary">{members.length}</Badge>
         </div>
         <Button size="sm" onClick={() => setAddMemberOpen(true)}>

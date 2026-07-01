@@ -1,6 +1,6 @@
--- Migrate sport_configs: rename "requests" admin tab to "members" in JSONB config.
+-- Migrate sport_configs: rename "requests" admin tab to "people" in JSONB config.
 -- Any sport config that has an adminTabs array with an entry having id="requests"
--- needs to be updated to id="members" with the new label and icon.
+-- needs to be updated to id="people" with the new label and icon.
 
 UPDATE public.sport_configs
 SET config = jsonb_set(
@@ -11,8 +11,8 @@ SET config = jsonb_set(
       CASE
         WHEN elem->>'id' = 'requests'
         THEN jsonb_build_object(
-          'id', 'members',
-          'label', 'Members',
+          'id', 'people',
+          'label', 'People',
           'iconName', 'Users'
         )
         ELSE elem

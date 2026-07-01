@@ -76,7 +76,7 @@ export default function AdminLayout({
           >
             <tab.icon className="h-4 w-4 shrink-0" />
             <span className="flex-1">{tab.label}</span>
-            {tab.id === "members" && pendingRequestCount > 0 && (
+            {tab.id === "people" && pendingRequestCount > 0 && (
               <Badge
                 variant={activeTab === tab.id ? "secondary" : "destructive"}
                 className="h-5 min-w-5 flex items-center justify-center px-1.5 text-xs"
@@ -104,7 +104,7 @@ export default function AdminLayout({
             >
               <tab.icon className="h-4 w-4 shrink-0" />
               {tab.label}
-              {tab.id === "members" && pendingRequestCount > 0 && (
+              {tab.id === "people" && pendingRequestCount > 0 && (
                 <Badge
                   variant={activeTab === tab.id ? "secondary" : "destructive"}
                   className="h-5 min-w-5 flex items-center justify-center px-1.5 text-xs"
