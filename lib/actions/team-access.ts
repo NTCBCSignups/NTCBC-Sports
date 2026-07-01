@@ -108,23 +108,26 @@ export async function acknowledgeRejection(sport: string) {
   return { success: true };
 }
 
-/** User re-requests access after a rejection (resets status to pending). */
+/** User re-requests access after a rejection (deletes rejected row and inserts fresh). */
 export async function reRequestAccess(sport: string) {
   const supabase = await createClient();
   const user = await getUser();
 
   if (!user) return { error: "Not authenticated" };
 
-  const { error } = await supabase
+  // Delete the rejected request (RLS allows users to delete own rejected)
+  await supabase
     .from("team_access_requests")
-    .update({
-      status: "pending",
-      reviewed_by: null,
-      reviewed_at: null,
-    })
+    .delete()
     .eq("user_id", user.id)
     .eq("sport", sport)
     .eq("status", "rejected");
+
+  // Insert a fresh pending request
+  const { error } = await supabase.from("team_access_requests").insert({
+    user_id: user.id,
+    sport,
+  });
 
   if (error) return { error: error.message };
 
