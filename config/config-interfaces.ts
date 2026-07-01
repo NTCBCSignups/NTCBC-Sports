@@ -1,5 +1,3 @@
-import type { Sport, FormResponseColumn } from "@/lib/schedule-utils";
-
 // ── Enums ────────────────────────────────────────────────────────
 
 /** Ordered user roles — higher numeric value = more privilege. */
@@ -45,7 +43,12 @@ export interface SignupConfirmationDialog {
   rejectedMessage: string;
 }
 
-// ── Raw config interfaces (authored in sports-config) ────────────
+// ── Raw config interfaces ─────────────────────────────────────────
+
+export interface FormResponseColumn {
+  index: number;
+  header: string;
+}
 
 export interface ResponseTableEntry {
   time: string;
@@ -84,7 +87,7 @@ export interface AdminTabMeta {
 }
 
 export interface SportConfig {
-  id: Sport;
+  id: string;
   emoji: string;
   name: string;
   type: string;
