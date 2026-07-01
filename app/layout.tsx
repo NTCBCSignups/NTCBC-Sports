@@ -39,8 +39,8 @@ export default function RootLayout({
           </div>
           <Toaster />
         </ThemeProvider>
+        <Analytics />
       </body>
-      <Analytics />
     </html>
   );
 }
