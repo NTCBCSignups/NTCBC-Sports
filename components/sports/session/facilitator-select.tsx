@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronsUpDown, UserRoundPlus } from "lucide-react";
+import { Check, ChevronsUpDown, Shield, UserRoundPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export interface FacilitatorSelectProps {
   value: string | null;
   onChange: (userId: string | null) => void;
-  users: { id: string; name: string }[];
+  users: { id: string; name: string; isTeamMember: boolean }[];
   disabled?: boolean;
   /** Render as full-width trigger (for forms) vs compact button (for inline). */
   fullWidth?: boolean;
@@ -97,6 +97,12 @@ export function FacilitatorSelect({
                       onSelect={() => handleSelect(current.id)}
                     >
                       <Check className="h-4 w-4 mr-2 opacity-100" />
+                      <Shield
+                        className={cn(
+                          "h-3.5 w-3.5 mr-1.5 shrink-0",
+                          current.isTeamMember ? "text-muted-foreground" : "invisible",
+                        )}
+                      />
                       {current.name}
                     </CommandItem>
                   ) : null;
@@ -114,6 +120,12 @@ export function FacilitatorSelect({
                     onSelect={() => handleSelect(user.id)}
                   >
                     <Check className="h-4 w-4 mr-2 opacity-0" />
+                    <Shield
+                      className={cn(
+                        "h-3.5 w-3.5 mr-1.5 shrink-0",
+                        user.isTeamMember ? "text-muted-foreground" : "invisible",
+                      )}
+                    />
                     {user.name}
                   </CommandItem>
                 ))}

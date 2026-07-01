@@ -123,21 +123,39 @@ export async function getTeamMembers(sport: string) {
   return new Set((data ?? []).map((m) => m.user_id));
 }
 
-/** Users with a sport_role for a sport (for facilitator dropdown). */
+/** Users with a sport_role OR signup for a sport (for facilitator dropdown). */
 export async function getSportUsers(sport: string) {
   const supabase = await createClient();
-  const { data } = await supabase
+
+  // Users with an explicit sport_role
+  const { data: roleData } = await supabase
     .from("sport_roles")
-    .select("user_id, profiles!sport_roles_user_id_fkey(id, full_name, email)")
+    .select("user_id, is_team_member, profiles!sport_roles_user_id_fkey(id, full_name, email)")
     .eq("sport", sport);
 
-  return (data ?? [])
-    .map((r) => {
-      const p = r.profiles as unknown as Profile | null;
-      return p ? { id: p.id, name: p.full_name ?? p.email } : null;
-    })
-    .filter((u): u is { id: string; name: string } => u !== null)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Users who signed up for any session in this sport (may not have a sport_role)
+  const { data: signupData } = await supabase
+    .from("signups")
+    .select("user_id, profiles(id, full_name, email), sessions!inner(sport)")
+    .eq("sessions.sport", sport);
+
+  const userMap = new Map<string, { id: string; name: string; isTeamMember: boolean }>();
+
+  for (const r of roleData ?? []) {
+    const p = r.profiles as unknown as Profile | null;
+    if (p) {
+      userMap.set(p.id, { id: p.id, name: p.full_name ?? p.email, isTeamMember: r.is_team_member });
+    }
+  }
+
+  for (const s of signupData ?? []) {
+    const p = s.profiles as unknown as Profile | null;
+    if (p && !userMap.has(p.id)) {
+      userMap.set(p.id, { id: p.id, name: p.full_name ?? p.email, isTeamMember: false });
+    }
+  }
+
+  return [...userMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Current user's access request status for a sport. */

@@ -10,7 +10,7 @@ interface FacilitatorPickerProps {
   sport: string;
   sessionId: string;
   currentFacilitatorId: string | null;
-  sportUsers: { id: string; name: string }[];
+  sportUsers: { id: string; name: string; isTeamMember: boolean }[];
 }
 
 /**

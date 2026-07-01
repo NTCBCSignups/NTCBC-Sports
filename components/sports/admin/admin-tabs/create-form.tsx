@@ -17,7 +17,7 @@ interface CreateFormProps {
   sport: string;
   sessionTabs: SessionTypeOption[];
   defaultTab?: string;
-  sportUsers?: { id: string; name: string }[];
+  sportUsers?: { id: string; name: string; isTeamMember: boolean }[];
 }
 
 export default function CreateForm({
@@ -46,7 +46,7 @@ function CreateFormInner({
 }: {
   sport: string;
   sessionTabs: SessionTypeOption[];
-  sportUsers?: { id: string; name: string }[];
+  sportUsers?: { id: string; name: string; isTeamMember: boolean }[];
 }) {
   const { isDirty, discard } = useConfigurator<SessionFormState>();
   const formRef = useRef<HTMLFormElement>(null);
