@@ -89,6 +89,20 @@ export interface TeamAccessRequest {
   profiles?: Profile;
 }
 
+/** Aggregated member data for the Members admin tab. */
+export interface SportMember {
+  id: string;
+  email: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+  /** Sport-specific role: "member" | "admin". Null if user only has signups (no sport_role). */
+  sportRole: SportRoleType | null;
+  isTeamMember: boolean;
+  joinedAt: string | null;
+  totalSignups: number;
+  lastActiveDate: string | null;
+}
+
 export type WaiverStatus = "valid" | "needs_paper" | "needs_online";
 
 export interface CcsaPlayer {
