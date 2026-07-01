@@ -27,26 +27,3 @@ export const SETTINGS_ADMIN_TAB: AdminTabMeta = {
   label: SETTINGS_TAB_LABEL,
   iconName: SETTINGS_TAB_ICON_NAME,
 };
-
-export const DEFAULT_ADMIN_TABS: AdminTabMeta[] = [
-  {
-    id: "people",
-    label: "People",
-    iconName: "Users",
-  },
-  {
-    id: "create",
-    label: "Create Session",
-    iconName: "Plus",
-  },
-  {
-    id: "upcoming",
-    label: "Upcoming Sessions",
-    iconName: "Calendar",
-  },
-  {
-    id: "past",
-    label: "Past Sessions",
-    iconName: "History",
-  },
-];
