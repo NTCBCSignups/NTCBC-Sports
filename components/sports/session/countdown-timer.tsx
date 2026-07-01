@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowBigRight } from "lucide-react";
 import { accent } from "@/lib/styles";
 
@@ -11,6 +12,7 @@ interface CountdownTimerProps {
 }
 
 export default function CountdownTimer({ openTime, closeTime, isFormOpen }: CountdownTimerProps) {
+  const router = useRouter();
   const [countdown, setCountdown] = useState<string>("");
   const [expired, setExpired] = useState(false);
 
@@ -28,7 +30,7 @@ export default function CountdownTimer({ openTime, closeTime, isFormOpen }: Coun
 
     if (difference <= 0) {
       setExpired(true);
-      window.location.reload();
+      router.refresh();
       return "Refreshing...";
     }
 
@@ -69,7 +71,7 @@ export default function CountdownTimer({ openTime, closeTime, isFormOpen }: Coun
   }
 
   return (
-    <div className="flex items-start gap-2 text-sm">
+    <div className="flex items-start gap-2 text-sm" role="timer" aria-live="off" aria-atomic="true">
       <ArrowBigRight className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
       <div className="flex flex-col">
         <span className="font-medium text-foreground">
