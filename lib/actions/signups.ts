@@ -63,11 +63,12 @@ export async function signUpForSession(sessionId: string): Promise<SignupActionR
 
   const { data: session } = await supabase
     .from("sessions")
-    .select("session_type, sport")
+    .select("session_type, sport, status")
     .eq("id", sessionId)
     .single();
 
   if (!session) return { error: "Session not found" };
+  if (session.status === "cancelled") return { error: "Session is cancelled" };
 
   const sport = session.sport;
   const sportConfig = await getResolvedSportConfig(sport);
