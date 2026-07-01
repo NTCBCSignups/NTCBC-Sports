@@ -3,15 +3,12 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
-import { sportsConfig as legacySportsConfig } from "@/config/sports-config";
 import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
 import { cn } from "@/lib/utils";
 
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
-  const legacySports = Object.values(legacySportsConfig);
-  const dynamicSports = Object.values(dbSportsBySlug).filter((s) => !(s.id in legacySportsConfig));
-  const sports = [...legacySports, ...dynamicSports];
+  const sports = Object.values(dbSportsBySlug);
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">

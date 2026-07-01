@@ -62,7 +62,7 @@ export function sportConfigFromDbRow(row: SportConfigDbRow): SportConfig | null 
   if (!isLocation(payload.location)) return null;
 
   return {
-    id: row.id as SportConfig["id"],
+    id: row.id,
     authEnabled: row.auth_enabled,
     emoji: row.emoji,
     name: row.name,

@@ -35,7 +35,7 @@ const ADMIN_TAB: AdminTabMeta = {
 };
 
 const CONFIG: ResolvedSportConfig = {
-  id: "basketball" as ResolvedSportConfig["id"],
+  id: "basketball",
   emoji: "🏀",
   name: "Basketball",
   type: "sport",
