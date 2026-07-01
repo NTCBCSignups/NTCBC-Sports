@@ -168,7 +168,7 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
   const { data: roleData } = await supabase
     .from("sport_roles")
     .select(
-      "user_id, role, is_team_member, created_at, profiles!sport_roles_user_id_fkey(id, full_name, email, avatar_url)",
+      "user_id, role, is_team_member, created_at, profiles!sport_roles_user_id_fkey(id, full_name, email, avatar_url, role)",
     )
     .eq("sport", sport);
 
@@ -218,6 +218,7 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
       fullName: p.full_name,
       avatarUrl: p.avatar_url,
       sportRole: r.role as SportRoleType,
+      isAdmin: p.role === "admin" || r.role === "admin",
       isTeamMember: r.is_team_member,
       joinedAt: r.created_at,
       totalSignups: stats?.count ?? 0,
@@ -234,6 +235,7 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
       fullName: p.full_name,
       avatarUrl: p.avatar_url,
       sportRole: null,
+      isAdmin: p.role === "admin",
       isTeamMember: false,
       joinedAt: null,
       totalSignups: stats?.count ?? 0,

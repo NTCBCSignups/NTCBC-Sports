@@ -119,9 +119,9 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
     // Role filter
     if (roleFilter !== "all") {
       result = result.filter((m) => {
-        if (roleFilter === "admin") return m.sportRole === "admin";
+        if (roleFilter === "admin") return m.isAdmin;
         if (roleFilter === "team") return m.isTeamMember;
-        if (roleFilter === "member") return m.sportRole === "member" && !m.isTeamMember;
+        if (roleFilter === "member") return !m.isAdmin && !m.isTeamMember;
         return true;
       });
     }
@@ -393,7 +393,7 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
                     <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        {member.sportRole === "admin" && (
+                        {member.isAdmin && (
                           <Badge variant="default" className="text-xs">
                             Admin
                           </Badge>
@@ -488,7 +488,7 @@ function MobileCard({
             {member.fullName ?? member.email.split("@")[0]}
           </p>
           {member.isTeamMember && <TeamMemberBadge />}
-          {member.sportRole === "admin" && (
+          {member.isAdmin && (
             <Badge variant="default" className="text-xs h-5">
               Admin
             </Badge>

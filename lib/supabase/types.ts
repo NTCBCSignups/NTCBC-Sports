@@ -97,6 +97,8 @@ export interface SportMember {
   avatarUrl: string | null;
   /** Sport-specific role: "member" | "admin". Null if user only has signups (no sport_role). */
   sportRole: SportRoleType | null;
+  /** True if user is a global admin OR sport-level admin. */
+  isAdmin: boolean;
   isTeamMember: boolean;
   joinedAt: string | null;
   totalSignups: number;
