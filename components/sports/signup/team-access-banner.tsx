@@ -8,6 +8,7 @@ import {
   acknowledgeRejection,
   reRequestAccess,
 } from "@/lib/actions/team-access";
+import { toast } from "sonner";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 import { colors } from "@/lib/styles";
 import StatusBanner from "@/components/sports/status-banner";
@@ -36,6 +37,8 @@ export default function TeamAccessBanner({
     const result = await requestTeamAccess(sport);
     if (result.success) {
       setLocalStatus("pending");
+    } else if (result.error) {
+      toast.error(result.error);
     }
     setPending(false);
   };
@@ -45,6 +48,8 @@ export default function TeamAccessBanner({
     const result = await acknowledgeRejection(sport);
     if (result.success) {
       setLocalStatus(null);
+    } else if (result.error) {
+      toast.error(result.error);
     }
     setPending(false);
   };
@@ -54,6 +59,8 @@ export default function TeamAccessBanner({
     const result = await reRequestAccess(sport);
     if (result.success) {
       setLocalStatus("pending");
+    } else if (result.error) {
+      toast.error(result.error);
     }
     setPending(false);
   };

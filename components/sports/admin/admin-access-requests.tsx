@@ -16,6 +16,7 @@ import { reviewTeamAccessRequest } from "@/lib/actions/team-access";
 import { StatusBadge } from "@/components/sports/badges";
 import { formatDate } from "@/lib/format";
 import { displayName } from "@/lib/format";
+import { toast } from "sonner";
 import type { Profile, AccessRequestStatus } from "@/lib/supabase/types";
 
 interface AccessRequestRow {
@@ -36,7 +37,8 @@ export default function AdminAccessRequests({ sport, requests }: AdminAccessRequ
 
   const handleReview = async (requestId: string, status: "approved" | "rejected") => {
     setPending(requestId);
-    await reviewTeamAccessRequest(sport, requestId, status);
+    const result = await reviewTeamAccessRequest(sport, requestId, status);
+    if (result.error) toast.error(result.error);
     setPending(null);
   };
 

@@ -8,6 +8,7 @@ import SessionSignupsTable, {
   type SignupRow,
 } from "@/components/sports/session/session-signups-table";
 import { colors } from "@/lib/styles";
+import { toast } from "sonner";
 
 interface AdminSessionSignupsProps {
   sport: string;
@@ -28,13 +29,15 @@ export default function AdminSessionSignups({
 
   const handlePromote = async (signupId: string) => {
     setPending(signupId);
-    await adminUpdateSignupStatus(sport, signupId, "confirmed", sessionId);
+    const result = await adminUpdateSignupStatus(sport, signupId, "confirmed", sessionId);
+    if (result.error) toast.error(result.error);
     setPending(null);
   };
 
   const handleCancel = async (signupId: string) => {
     setPending(signupId);
-    await adminUpdateSignupStatus(sport, signupId, "cancelled", sessionId);
+    const result = await adminUpdateSignupStatus(sport, signupId, "cancelled", sessionId);
+    if (result.error) toast.error(result.error);
     setPending(null);
   };
 
