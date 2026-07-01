@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, XCircle } from "lucide-react";
-import { requestTeamAccess, acknowledgeRejection, reRequestAccess } from "@/lib/actions/team-access";
+import {
+  requestTeamAccess,
+  acknowledgeRejection,
+  reRequestAccess,
+} from "@/lib/actions/team-access";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 import { colors } from "@/lib/styles";
 import StatusBanner from "@/components/sports/status-banner";
@@ -66,8 +70,8 @@ export default function TeamAccessBanner({
         title="Request pending"
         message={
           <>
-            Your membership request is awaiting leader approval. You&apos;ll be able to sign up
-            for {restrictedLabels} once approved.
+            Your membership request is awaiting leader approval. You&apos;ll be able to sign up for{" "}
+            {restrictedLabels} once approved.
           </>
         }
       />

@@ -58,11 +58,7 @@ export async function addMember(
   }
 
   // Clean up any pending access request for this user
-  await supabase
-    .from("team_access_requests")
-    .delete()
-    .eq("user_id", userId)
-    .eq("sport", sport);
+  await supabase.from("team_access_requests").delete().eq("user_id", userId).eq("sport", sport);
 
   revalidatePath(`/${sport}/admin`);
   revalidatePath(`/${sport}`);
@@ -88,11 +84,7 @@ export async function removeMember(sport: string, userId: string) {
   if (error) return { error: error.message };
 
   // Also remove any pending access request
-  await supabase
-    .from("team_access_requests")
-    .delete()
-    .eq("user_id", userId)
-    .eq("sport", sport);
+  await supabase.from("team_access_requests").delete().eq("user_id", userId).eq("sport", sport);
 
   revalidatePath(`/${sport}/admin`);
   revalidatePath(`/${sport}`);
@@ -151,11 +143,7 @@ export async function bulkRemoveMembers(sport: string, userIds: string[]) {
   if (error) return { error: error.message };
 
   // Also remove any pending access requests
-  await supabase
-    .from("team_access_requests")
-    .delete()
-    .in("user_id", userIds)
-    .eq("sport", sport);
+  await supabase.from("team_access_requests").delete().in("user_id", userIds).eq("sport", sport);
 
   revalidatePath(`/${sport}/admin`);
   revalidatePath(`/${sport}`);

@@ -52,14 +52,7 @@ import AdminAccessRequests from "@/components/sports/admin/admin-access-requests
 import { formatDate } from "@/lib/format";
 import { colors } from "@/lib/styles";
 import { cn } from "@/lib/utils";
-import {
-  Search,
-  UserPlus,
-  MoreVertical,
-  ShieldCheck,
-  UserMinus,
-  Crown,
-} from "lucide-react";
+import { Search, UserPlus, MoreVertical, ShieldCheck, UserMinus, Crown } from "lucide-react";
 import { toast } from "sonner";
 import {
   updateMemberRole,
@@ -69,7 +62,12 @@ import {
   addMember,
   searchUsersAction,
 } from "@/lib/actions/members";
-import type { SportMember, Profile, AccessRequestStatus, SportRoleType } from "@/lib/supabase/types";
+import type {
+  SportMember,
+  Profile,
+  AccessRequestStatus,
+  SportRoleType,
+} from "@/lib/supabase/types";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -118,9 +116,7 @@ export default function AdminMembersView({
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (m) =>
-          (m.fullName?.toLowerCase().includes(q)) ||
-          m.email.toLowerCase().includes(q),
+        (m) => m.fullName?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
       );
     }
 
@@ -178,7 +174,10 @@ export default function AdminMembersView({
 
   // ── Actions ────────────────────────────────────────────────────
 
-  const handleUpdateRole = async (userId: string, updates: { role?: SportRoleType; isTeamMember?: boolean }) => {
+  const handleUpdateRole = async (
+    userId: string,
+    updates: { role?: SportRoleType; isTeamMember?: boolean },
+  ) => {
     setPending(true);
     const result = await updateMemberRole(sport, userId, updates);
     if (result.error) toast.error(result.error);
@@ -372,7 +371,10 @@ export default function AdminMembersView({
               </TableHeader>
               <TableBody>
                 {filtered.map((member) => (
-                  <TableRow key={member.id} data-state={selected.has(member.id) ? "selected" : undefined}>
+                  <TableRow
+                    key={member.id}
+                    data-state={selected.has(member.id) ? "selected" : undefined}
+                  >
                     <TableCell>
                       <Checkbox
                         checked={selected.has(member.id)}
@@ -392,13 +394,13 @@ export default function AdminMembersView({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {member.email}
-                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {member.sportRole === "admin" && (
-                          <Badge variant="default" className="text-xs">Admin</Badge>
+                          <Badge variant="default" className="text-xs">
+                            Admin
+                          </Badge>
                         )}
                         {member.isTeamMember && <TeamMemberBadge />}
                         {!member.sportRole && (
@@ -453,11 +455,7 @@ export default function AdminMembersView({
         onConfirmRemove={handleBulkRemove}
         pending={pending}
       />
-      <AddMemberDialog
-        sport={sport}
-        open={addMemberOpen}
-        onClose={() => setAddMemberOpen(false)}
-      />
+      <AddMemberDialog sport={sport} open={addMemberOpen} onClose={() => setAddMemberOpen(false)} />
     </section>
   );
 }
@@ -495,7 +493,9 @@ function MobileCard({
           </p>
           {member.isTeamMember && <TeamMemberBadge />}
           {member.sportRole === "admin" && (
-            <Badge variant="default" className="text-xs h-5">Admin</Badge>
+            <Badge variant="default" className="text-xs h-5">
+              Admin
+            </Badge>
           )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{member.email}</p>
@@ -591,9 +591,7 @@ function RoleDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Change Role</DialogTitle>
-          <DialogDescription>
-            Update role for {member?.fullName ?? member?.email}
-          </DialogDescription>
+          <DialogDescription>Update role for {member?.fullName ?? member?.email}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
@@ -609,11 +607,7 @@ function RoleDialog({
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox
-              id="team-member"
-              checked={isTeam}
-              onCheckedChange={(c) => setIsTeam(!!c)}
-            />
+            <Checkbox id="team-member" checked={isTeam} onCheckedChange={(c) => setIsTeam(!!c)} />
             <label htmlFor="team-member" className="text-sm">
               Team member (grants access to restricted sessions)
             </label>
@@ -782,7 +776,9 @@ function AddMemberDialog({
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ id: string; email: string; fullName: string | null; avatarUrl: string | null }[]>([]);
+  const [results, setResults] = useState<
+    { id: string; email: string; fullName: string | null; avatarUrl: string | null }[]
+  >([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
   const [selectedRole, setSelectedRole] = useState<SportRoleType>("member");
@@ -817,7 +813,16 @@ function AddMemberDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) { onClose(); setQuery(""); setResults([]); } }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) {
+          onClose();
+          setQuery("");
+          setResults([]);
+        }
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Member</DialogTitle>
@@ -845,12 +850,10 @@ function AddMemberDialog({
               </SelectContent>
             </Select>
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="add-team"
-                checked={isTeam}
-                onCheckedChange={(c) => setIsTeam(!!c)}
-              />
-              <label htmlFor="add-team" className="text-sm">Team member</label>
+              <Checkbox id="add-team" checked={isTeam} onCheckedChange={(c) => setIsTeam(!!c)} />
+              <label htmlFor="add-team" className="text-sm">
+                Team member
+              </label>
             </div>
           </div>
 
