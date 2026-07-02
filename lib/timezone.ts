@@ -29,7 +29,7 @@ export function getTodayInSportTimezone(): string {
 }
 
 /** Formats any Date as `YYYY-MM-DD` in {@link SPORT_TIMEZONE}. */
-export function getDateInSportTimezone(date: Date): string {
+function getDateInSportTimezone(date: Date): string {
   return formatInTimeZone(date, SPORT_TIMEZONE, "yyyy-MM-dd");
 }
 

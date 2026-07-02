@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import AdminTabRequests from "@/components/sports/admin/admin-tabs/requests";
+import AdminTabPeople from "@/components/sports/admin/admin-tabs/people";
 import AdminTabCreate from "@/components/sports/admin/admin-tabs/create";
 import AdminTabUpcoming from "@/components/sports/admin/admin-tabs/upcoming";
 import AdminTabPast from "@/components/sports/admin/admin-tabs/past";
@@ -12,7 +12,7 @@ import CcsaAdminTab from "@/components/softball/admin-tabs/ccsa-sync";
  * implementations and the generic admin page.
  */
 const adminTabComponents: Record<string, ComponentType<{ sport: string }>> = {
-  requests: AdminTabRequests,
+  people: AdminTabPeople,
   create: AdminTabCreate,
   upcoming: AdminTabUpcoming,
   past: AdminTabPast,

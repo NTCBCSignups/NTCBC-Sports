@@ -21,11 +21,6 @@ export function getFirstUnmetLevel(
   return null;
 }
 
-/** Whether the tab is completely gated (user can't even see it). */
-export function isTabGated(tab: SessionTab, userRole: Role): boolean {
-  return getFirstUnmetLevel(tab, userRole) === AccessLevel.overview;
-}
-
 /** Whether the user meets the view permission for this tab. */
 export function canView(tab: SessionTab, userRole: Role): boolean {
   const unmet = getFirstUnmetLevel(tab, userRole);

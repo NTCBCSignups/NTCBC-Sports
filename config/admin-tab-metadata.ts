@@ -7,6 +7,7 @@ export const ADMIN_TAB_ICON_NAMES = [
   "History",
   "RefreshCw",
   "SlidersHorizontal",
+  "Users",
 ] as const;
 
 export type AdminTabIconName = (typeof ADMIN_TAB_ICON_NAMES)[number];
@@ -26,26 +27,3 @@ export const SETTINGS_ADMIN_TAB: AdminTabMeta = {
   label: SETTINGS_TAB_LABEL,
   iconName: SETTINGS_TAB_ICON_NAME,
 };
-
-export const DEFAULT_ADMIN_TABS: AdminTabMeta[] = [
-  {
-    id: "requests",
-    label: "Access Requests",
-    iconName: "ClipboardList",
-  },
-  {
-    id: "create",
-    label: "Create Session",
-    iconName: "Plus",
-  },
-  {
-    id: "upcoming",
-    label: "Upcoming Sessions",
-    iconName: "Calendar",
-  },
-  {
-    id: "past",
-    label: "Past Sessions",
-    iconName: "History",
-  },
-];

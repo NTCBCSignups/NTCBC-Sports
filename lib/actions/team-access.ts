@@ -43,20 +43,8 @@ export async function reviewTeamAccessRequest(
     return { error: fetchError?.message ?? "Request not found" };
   }
 
-  const previousStatus = request.status;
-
-  const { error } = await supabase
-    .from("team_access_requests")
-    .update({
-      status,
-      reviewed_by: result.user.id,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq("id", requestId);
-
-  if (error) return { error: error.message };
-
-  if (status === "approved" && previousStatus !== "approved") {
+  if (status === "approved") {
+    // Create/update sport_role with team membership
     const { data: existingRole } = await supabase
       .from("sport_roles")
       .select("id")
@@ -78,18 +66,71 @@ export async function reviewTeamAccessRequest(
       });
       if (insError) return { error: insError.message };
     }
-  }
 
-  if (status === "rejected" && previousStatus === "approved") {
-    const { error: roleError } = await supabase
-      .from("sport_roles")
-      .update({ is_team_member: false })
-      .eq("user_id", request.user_id)
-      .eq("sport", request.sport);
-    if (roleError) return { error: roleError.message };
+    // Delete the request row — sport_role is now the source of truth
+    await supabase.from("team_access_requests").delete().eq("id", requestId);
+  } else {
+    // Rejected: update status (stays in table for user to see)
+    const { error } = await supabase
+      .from("team_access_requests")
+      .update({
+        status: "rejected",
+        reviewed_by: result.user.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", requestId);
+
+    if (error) return { error: error.message };
   }
 
   revalidatePath(`/${sport}/admin`);
+  revalidatePath(`/${sport}`);
+  return { success: true };
+}
+
+/** User acknowledges their rejected request (deletes it, allowing re-request). */
+export async function acknowledgeRejection(sport: string) {
+  const supabase = await createClient();
+  const user = await getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("team_access_requests")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("sport", sport)
+    .eq("status", "rejected");
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${sport}`);
+  return { success: true };
+}
+
+/** User re-requests access after a rejection (deletes rejected row and inserts fresh). */
+export async function reRequestAccess(sport: string) {
+  const supabase = await createClient();
+  const user = await getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Delete the rejected request (RLS allows users to delete own rejected)
+  await supabase
+    .from("team_access_requests")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("sport", sport)
+    .eq("status", "rejected");
+
+  // Insert a fresh pending request
+  const { error } = await supabase.from("team_access_requests").insert({
+    user_id: user.id,
+    sport,
+  });
+
+  if (error) return { error: error.message };
+
   revalidatePath(`/${sport}`);
   return { success: true };
 }

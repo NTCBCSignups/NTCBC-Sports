@@ -5,6 +5,8 @@ import type {
   AccessRequestStatus,
   Profile,
   SignupStatus,
+  SportMember,
+  SportRoleType,
   SportSession,
 } from "@/lib/supabase/types";
 import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resolver";
@@ -156,6 +158,98 @@ export async function getSportUsers(sport: string) {
   }
 
   return [...userMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** All members for a sport with activity stats (for Members admin tab). */
+export async function getSportMembers(sport: string): Promise<SportMember[]> {
+  const supabase = await createClient();
+
+  // 1 & 2: Fetch sport_roles and signup stats in parallel (independent queries)
+  const [{ data: roleData }, { data: signupStats }] = await Promise.all([
+    supabase
+      .from("sport_roles")
+      .select(
+        "user_id, role, is_team_member, created_at, profiles!sport_roles_user_id_fkey(id, full_name, email, avatar_url, role)",
+      )
+      .eq("sport", sport),
+    supabase
+      .from("signups")
+      .select("user_id, created_at, sessions!inner(sport)")
+      .eq("sessions.sport", sport)
+      .neq("status", "cancelled"),
+  ]);
+
+  // 3. Users who only have signups (no sport_role) — get their profiles
+  const signupUserIds = new Set((signupStats ?? []).map((s) => s.user_id));
+  const roleUserIds = new Set((roleData ?? []).map((r) => r.user_id));
+  const signupOnlyIds = [...signupUserIds].filter((id) => !roleUserIds.has(id));
+
+  let signupOnlyProfiles: Profile[] = [];
+  if (signupOnlyIds.length > 0) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, email, full_name, avatar_url, role, created_at, updated_at")
+      .in("id", signupOnlyIds);
+    signupOnlyProfiles = (data ?? []) as Profile[];
+  }
+
+  // Aggregate signup stats per user
+  const statsMap = new Map<string, { count: number; lastDate: string }>();
+  for (const s of signupStats ?? []) {
+    const existing = statsMap.get(s.user_id);
+    if (existing) {
+      existing.count++;
+      if (s.created_at > existing.lastDate) existing.lastDate = s.created_at;
+    } else {
+      statsMap.set(s.user_id, { count: 1, lastDate: s.created_at });
+    }
+  }
+
+  const members: SportMember[] = [];
+
+  // From sport_roles
+  for (const r of roleData ?? []) {
+    const p = r.profiles as unknown as Profile | null;
+    if (!p) continue;
+    const stats = statsMap.get(r.user_id);
+    members.push({
+      id: p.id,
+      email: p.email,
+      fullName: p.full_name,
+      avatarUrl: p.avatar_url,
+      sportRole: r.role as SportRoleType,
+      isSportAdmin: r.role === "admin",
+      isGlobalAdmin: p.role === "admin",
+      isTeamMember: r.is_team_member,
+      joinedAt: r.created_at,
+      totalSignups: stats?.count ?? 0,
+      lastActiveDate: stats?.lastDate ?? null,
+    });
+  }
+
+  // From signups only (no sport_role)
+  for (const p of signupOnlyProfiles) {
+    const stats = statsMap.get(p.id);
+    members.push({
+      id: p.id,
+      email: p.email,
+      fullName: p.full_name,
+      avatarUrl: p.avatar_url,
+      sportRole: null,
+      isSportAdmin: false,
+      isGlobalAdmin: p.role === "admin",
+      isTeamMember: false,
+      joinedAt: null,
+      totalSignups: stats?.count ?? 0,
+      lastActiveDate: stats?.lastDate ?? null,
+    });
+  }
+
+  return members.sort((a, b) => {
+    const nameA = a.fullName ?? a.email;
+    const nameB = b.fullName ?? b.email;
+    return nameA.localeCompare(nameB);
+  });
 }
 
 /** Current user's access request status for a sport. */
