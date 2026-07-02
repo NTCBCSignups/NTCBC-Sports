@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PillColor, Role } from "@/config/config-resolver";
+import { AccessLevel, PillColor, Role } from "@/config/config-resolver";
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
@@ -347,7 +347,11 @@ export function PermissionsDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLE_OPTIONS.map((roleOption) => (
+                  {ROLE_OPTIONS.filter(
+                    (roleOption) =>
+                      // Signup requires at least signed-in users (no anonymous signups)
+                      accessLevel.value !== AccessLevel.signup || roleOption.value >= Role.user,
+                  ).map((roleOption) => (
                     <SelectItem
                       key={`${accessLevel.value}-${roleOption.value}`}
                       value={String(roleOption.value)}

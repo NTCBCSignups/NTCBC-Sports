@@ -295,7 +295,7 @@ function SportConfigFormInner({ sport }: { sport: string }) {
 
     const payload: UpdateSportConfigInput = {
       id: state.id,
-      authEnabled: state.authEnabled,
+      authEnabled: true,
       emoji: state.emoji.trim(),
       name: state.name.trim(),
       type: state.type.trim(),

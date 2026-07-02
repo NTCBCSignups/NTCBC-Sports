@@ -50,10 +50,12 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
           id="auth-enabled"
           type="checkbox"
           checked={state.authEnabled}
-          onChange={(event) => setState((prev) => ({ ...prev, authEnabled: event.target.checked }))}
+          disabled
           className="h-4 w-4 rounded border-input"
         />
-        <Label htmlFor="auth-enabled">Enable Google Login</Label>
+        <Label htmlFor="auth-enabled" className="text-muted-foreground">
+          Google Login (required)
+        </Label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 pt-4 min-w-0">

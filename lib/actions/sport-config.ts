@@ -28,12 +28,17 @@ const tabSchema = z.object({
   label: z.string().min(1),
   defaultTitlePrefix: z.string().optional(),
   sessionPillColor: z.enum(PillColor),
-  permissions: z.object({
-    [AccessLevel.overview]: roleSchema,
-    [AccessLevel.view]: roleSchema,
-    [AccessLevel.signup]: roleSchema,
-    [AccessLevel.admin]: roleSchema,
-  }),
+  permissions: z
+    .object({
+      [AccessLevel.overview]: roleSchema,
+      [AccessLevel.view]: roleSchema,
+      [AccessLevel.signup]: roleSchema,
+      [AccessLevel.admin]: roleSchema,
+    })
+    .refine((p) => p[AccessLevel.signup] >= Role.user, {
+      path: [AccessLevel.signup],
+      message: "Signup requires at least signed-in users",
+    }),
   signupConfirmationDialog: signupDialogSchema.optional(),
 });
 
@@ -46,7 +51,7 @@ const adminTabSchema = z.object({
 const updateSportConfigInputSchema = z
   .object({
     id: z.string().min(1),
-    authEnabled: z.boolean(),
+    authEnabled: z.literal(true, { message: "Authentication must be enabled" }),
     emoji: z.string().min(1),
     name: z.string().min(1),
     type: z.string().min(1),
