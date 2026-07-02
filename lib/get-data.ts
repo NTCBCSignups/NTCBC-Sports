@@ -176,7 +176,8 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
       .from("signups")
       .select("user_id, created_at, sessions!inner(sport)")
       .eq("sessions.sport", sport)
-      .neq("status", "cancelled"),
+      .neq("status", "cancelled")
+      .neq("status", "declined"),
   ]);
 
   // 3. Users who only have signups (no sport_role) — get their profiles
