@@ -164,20 +164,20 @@ export async function getSportUsers(sport: string) {
 export async function getSportMembers(sport: string): Promise<SportMember[]> {
   const supabase = await createClient();
 
-  // 1. Users with an explicit sport_role
-  const { data: roleData } = await supabase
-    .from("sport_roles")
-    .select(
-      "user_id, role, is_team_member, created_at, profiles!sport_roles_user_id_fkey(id, full_name, email, avatar_url, role)",
-    )
-    .eq("sport", sport);
-
-  // 2. Signup counts & last active per user for this sport
-  const { data: signupStats } = await supabase
-    .from("signups")
-    .select("user_id, created_at, sessions!inner(sport)")
-    .eq("sessions.sport", sport)
-    .neq("status", "cancelled");
+  // 1 & 2: Fetch sport_roles and signup stats in parallel (independent queries)
+  const [{ data: roleData }, { data: signupStats }] = await Promise.all([
+    supabase
+      .from("sport_roles")
+      .select(
+        "user_id, role, is_team_member, created_at, profiles!sport_roles_user_id_fkey(id, full_name, email, avatar_url, role)",
+      )
+      .eq("sport", sport),
+    supabase
+      .from("signups")
+      .select("user_id, created_at, sessions!inner(sport)")
+      .eq("sessions.sport", sport)
+      .neq("status", "cancelled"),
+  ]);
 
   // 3. Users who only have signups (no sport_role) — get their profiles
   const signupUserIds = new Set((signupStats ?? []).map((s) => s.user_id));

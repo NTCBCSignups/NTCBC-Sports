@@ -196,24 +196,22 @@ export async function searchUsersAction(sport: string, query: string) {
 
   if (!query || query.length < 2) return { data: [] };
 
-  // Get existing sport_role user IDs to exclude
-  const { data: existingRoles } = await supabase
-    .from("sport_roles")
-    .select("user_id")
-    .eq("sport", sport);
-  const existingIds = new Set((existingRoles ?? []).map((r) => r.user_id));
-
   // Sanitize for PostgREST .or() filter:
   // 1. Escape LIKE wildcards so user input is treated literally
   // 2. Escape double quotes (PostgREST uses "" to escape within quoted values)
   // 3. Wrap in double quotes to prevent commas/dots from breaking filter parsing
   const escaped = query.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&").replace(/"/g, '""');
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, email, full_name, avatar_url")
-    .or(`full_name.ilike."%${escaped}%",email.ilike."%${escaped}%"`)
-    .limit(20);
+  // Fetch existing roles and search profiles in parallel
+  const [{ data: existingRoles }, { data }] = await Promise.all([
+    supabase.from("sport_roles").select("user_id").eq("sport", sport),
+    supabase
+      .from("profiles")
+      .select("id, email, full_name, avatar_url")
+      .or(`full_name.ilike."%${escaped}%",email.ilike."%${escaped}%"`)
+      .limit(20),
+  ]);
+  const existingIds = new Set((existingRoles ?? []).map((r) => r.user_id));
 
   const results = (data ?? [])
     .filter((p) => !existingIds.has(p.id))
