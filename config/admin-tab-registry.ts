@@ -3,6 +3,7 @@ import AdminTabPeople from "@/components/sports/admin/admin-tabs/people";
 import AdminTabCreate from "@/components/sports/admin/admin-tabs/create";
 import AdminTabUpcoming from "@/components/sports/admin/admin-tabs/upcoming";
 import AdminTabPast from "@/components/sports/admin/admin-tabs/past";
+import AdminTabStatistics from "@/components/sports/admin/admin-tabs/statistics";
 import AdminTabSettings from "@/components/sports/admin/admin-tabs/settings";
 import CcsaAdminTab from "@/components/softball/admin-tabs/ccsa-sync";
 
@@ -16,6 +17,7 @@ const adminTabComponents: Record<string, ComponentType<{ sport: string }>> = {
   create: AdminTabCreate,
   upcoming: AdminTabUpcoming,
   past: AdminTabPast,
+  statistics: AdminTabStatistics,
   settings: AdminTabSettings,
   ccsa: CcsaAdminTab,
 };

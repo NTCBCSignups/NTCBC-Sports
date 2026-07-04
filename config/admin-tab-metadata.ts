@@ -1,6 +1,7 @@
 import type { AdminTabMeta } from "./config-interfaces";
 
 export const ADMIN_TAB_ICON_NAMES = [
+  "BarChart3",
   "ClipboardList",
   "Plus",
   "Calendar",
