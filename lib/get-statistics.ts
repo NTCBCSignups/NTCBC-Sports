@@ -194,3 +194,110 @@ export async function getStatistics(sport: string): Promise<SportStatistics> {
     growth,
   };
 }
+
+// ── Per-player stats ─────────────────────────────────────────────
+
+export interface PlayerStatistics {
+  totalSignups: number;
+  firstSession: string | null;
+  lastSession: string | null;
+  /** Days since last signup (null if never signed up) */
+  daysSinceLastSession: number | null;
+  /** Longest gap between consecutive sessions (days) */
+  longestGap: number | null;
+  /** Average days between sessions */
+  avgFrequency: number | null;
+  /** Signup count by session type */
+  typeBreakdown: Array<{ type: string; count: number }>;
+  /** Monthly attendance history (last 6 months) */
+  monthlyAttendance: Array<{ month: string; count: number }>;
+}
+
+export async function getPlayerStatistics(sport: string, userId: string): Promise<PlayerStatistics> {
+  const supabase = await createClient();
+
+  const { data: signups } = await supabase
+    .from("signups")
+    .select("created_at, status, sessions!inner(sport, date, session_type)")
+    .eq("sessions.sport", sport)
+    .eq("user_id", userId)
+    .in("status", ["confirmed", "waitlisted"]);
+
+  const rows = (signups ?? []).map((s) => ({
+    date: (s.sessions as unknown as { date: string; session_type: string }).date,
+    type: (s.sessions as unknown as { date: string; session_type: string }).session_type,
+  }));
+
+  // Sort by date ascending
+  rows.sort((a, b) => a.date.localeCompare(b.date));
+
+  const totalSignups = rows.length;
+  const firstSession = rows[0]?.date ?? null;
+  const lastSession = rows[rows.length - 1]?.date ?? null;
+
+  // Days since last session
+  let daysSinceLastSession: number | null = null;
+  if (lastSession) {
+    const last = new Date(lastSession);
+    const now = new Date();
+    daysSinceLastSession = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  // Gaps between consecutive sessions
+  let longestGap: number | null = null;
+  let totalGapDays = 0;
+  if (rows.length >= 2) {
+    longestGap = 0;
+    for (let i = 1; i < rows.length; i++) {
+      const prev = new Date(rows[i - 1]!.date);
+      const curr = new Date(rows[i]!.date);
+      const gap = Math.floor((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+      totalGapDays += gap;
+      if (gap > longestGap) longestGap = gap;
+    }
+  }
+
+  const avgFrequency = rows.length >= 2 ? totalGapDays / (rows.length - 1) : null;
+
+  // Type breakdown
+  const typeCounts = new Map<string, number>();
+  for (const r of rows) {
+    typeCounts.set(r.type, (typeCounts.get(r.type) ?? 0) + 1);
+  }
+  const typeBreakdown = [...typeCounts.entries()]
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Monthly attendance (last 6 months)
+  const now = new Date();
+  const sixMonthsAgo = new Date(now);
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const monthMap = new Map<string, number>();
+  for (let i = 0; i < 6; i++) {
+    const m = new Date(sixMonthsAgo);
+    m.setMonth(m.getMonth() + i);
+    const key = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`;
+    monthMap.set(key, 0);
+  }
+
+  for (const r of rows) {
+    const key = r.date.slice(0, 7);
+    if (monthMap.has(key)) {
+      monthMap.set(key, monthMap.get(key)! + 1);
+    }
+  }
+
+  const monthlyAttendance = [...monthMap.entries()].map(([month, count]) => ({ month, count }));
+
+  return {
+    totalSignups,
+    firstSession,
+    lastSession,
+    daysSinceLastSession,
+    longestGap,
+    avgFrequency,
+    typeBreakdown,
+    monthlyAttendance,
+  };
+}
