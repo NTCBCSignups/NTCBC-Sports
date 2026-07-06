@@ -9,6 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import type { StatsData } from "@/lib/get-statistics";
 import {
   TIME_RANGES,
@@ -34,18 +36,27 @@ export type StatsMode = "all" | "personal";
 
 interface StatsViewProps {
   data: StatsData;
-  /** "all" = admin view (all widgets), "personal" = user view (personal widgets only) */
-  mode?: StatsMode;
-  /** In personal mode, the userId whose data is shown */
+  /** Initial mode: "all" = admin view, "personal" = user view. Defaults to "all". */
+  defaultMode?: StatsMode;
+  /** The userId for personal mode filtering */
   userId?: string;
   /** Title override (defaults to "Statistics" for all, "My Stats" for personal) */
   title?: string;
+  /** When true, shows a toggle to switch between personal and admin mode */
+  canToggleMode?: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────
 
-export default function StatsView({ data, mode = "all", userId, title }: StatsViewProps) {
-  const isPersonal = mode === "personal";
+export default function StatsView({
+  data,
+  defaultMode = "all",
+  userId,
+  title,
+  canToggleMode,
+}: StatsViewProps) {
+  const [activeMode, setActiveMode] = useState<StatsMode>(defaultMode);
+  const isPersonal = activeMode === "personal";
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [timeRange, setTimeRange] = useState<TimeRangeWeeks>(12);
   const [selectedUserId, setSelectedUserId] = useState<string>(userId ?? "");
@@ -74,11 +85,16 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
 
   // ── Derived data (all computation happens here) ──────────────
 
+  // In personal mode with full data (admin toggle), scope signups to this user
+  const signupRows = useMemo(
+    () =>
+      isPersonal && userId ? data.signupRows.filter((r) => r.userId === userId) : data.signupRows,
+    [data.signupRows, isPersonal, userId],
+  );
+
   const filtered = useMemo(() => {
     const rows =
-      typeFilter === "all"
-        ? data.signupRows
-        : data.signupRows.filter((r) => r.sessionType === typeFilter);
+      typeFilter === "all" ? signupRows : signupRows.filter((r) => r.sessionType === typeFilter);
     const sessionCount =
       typeFilter === "all"
         ? data.sessions.length
@@ -89,27 +105,24 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
       totalSessionsByType.set(s.sessionType, (totalSessionsByType.get(s.sessionType) ?? 0) + 1);
     }
 
+    // In personal mode, synthesize a single-user list from signup data
+    const users = isPersonal
+      ? signupRows.length > 0
+        ? [{ id: signupRows[0]!.userId, name: signupRows[0]!.userName }]
+        : []
+      : data.users;
+
     return {
       summary: computeSummary(rows, sessionCount),
-      trend: computeAttendanceTrend(rows, data.sessions, timeRange),
-      typeStats: computeTypeStats(rows),
-      engagement: computeEngagement(
-        rows,
-        sessionCount,
-        totalSessionsByType,
-        isPersonal
-          ? data.signupRows.length > 0
-            ? [{ id: data.signupRows[0]!.userId, name: data.signupRows[0]!.userName }]
-            : []
-          : data.users,
-      ),
+      trend: !isPersonal ? computeAttendanceTrend(rows, data.sessions, timeRange) : null,
+      typeStats: !isPersonal ? computeTypeStats(rows) : null,
+      engagement: computeEngagement(rows, sessionCount, totalSessionsByType, users),
       growth: !isPersonal ? computeGrowth(rows) : null,
     };
-  }, [data, typeFilter, timeRange, isPersonal]);
+  }, [data, signupRows, typeFilter, timeRange, isPersonal]);
 
-  // In personal mode, compute player stats from all signupRows (already user-scoped from server)
-  // In trend mode, compute for the selected user from the picker
-  const personalUserId = isPersonal ? (userId ?? data.signupRows[0]?.userId ?? "") : selectedUserId;
+  // In personal mode, the userId is known; in trend mode, it's the selected user from the picker
+  const personalUserId = isPersonal ? (userId ?? signupRows[0]?.userId ?? "") : selectedUserId;
 
   const playerStats = useMemo(
     () =>
@@ -142,9 +155,23 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
     <section className="space-y-6">
       {/* Header: Title + Time Range + Type Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-foreground">
-          {title ?? (isPersonal ? "My Stats" : "Statistics")}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-foreground">
+            {title ?? (isPersonal ? "My Stats" : "Statistics")}
+          </h2>
+          {canToggleMode && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id="stats-mode-toggle"
+                checked={activeMode === "all"}
+                onCheckedChange={(checked) => setActiveMode(checked ? "all" : "personal")}
+              />
+              <Label htmlFor="stats-mode-toggle" className="text-xs text-muted-foreground">
+                Admin
+              </Label>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border overflow-hidden shrink-0">
             {TIME_RANGES.map((r) => (
@@ -182,14 +209,14 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
       {/* Summary Cards — each declares its own scope */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {summaryCards
-          .filter((c) => c.scope === "both" || c.scope === mode)
+          .filter((c) => c.scope === "both" || c.scope === activeMode)
           .map((c) => (
             <StatCard key={c.label} label={c.label} value={c.value} />
           ))}
       </div>
 
       {/* Attendance Trend (trend scope — raw signup counts) */}
-      {!isPersonal && (
+      {!isPersonal && filtered.trend && (
         <CollapsibleSection title="Attendance Trend" description="Signups per week" defaultOpen>
           <div className="pt-3">
             <TrendChart
@@ -206,28 +233,31 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
       )}
 
       {/* Session Types */}
-      {typeFilter === "all" && !isPersonal && filtered.typeStats.length > 1 && (
-        <CollapsibleSection
-          title="Session Types"
-          description="Average attendance by type"
-          defaultOpen
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
-            {filtered.typeStats.map((s, i) => (
-              <div key={s.type} className="rounded-lg border bg-card p-3">
-                <p className="text-xs text-muted-foreground truncate">{typeLabel(s.type)}</p>
-                <p
-                  className="text-xl font-bold mt-0.5"
-                  style={{ color: CHART_COLORS[i % CHART_COLORS.length] }}
-                >
-                  {Math.round(s.avgAttendance)}
-                </p>
-                <p className="text-[11px] text-muted-foreground">{s.sessionCount} sessions</p>
-              </div>
-            ))}
-          </div>
-        </CollapsibleSection>
-      )}
+      {typeFilter === "all" &&
+        !isPersonal &&
+        filtered.typeStats &&
+        filtered.typeStats.length > 1 && (
+          <CollapsibleSection
+            title="Session Types"
+            description="Average attendance by type"
+            defaultOpen
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
+              {filtered.typeStats.map((s, i) => (
+                <div key={s.type} className="rounded-lg border bg-card p-3">
+                  <p className="text-xs text-muted-foreground truncate">{typeLabel(s.type)}</p>
+                  <p
+                    className="text-xl font-bold mt-0.5"
+                    style={{ color: CHART_COLORS[i % CHART_COLORS.length] }}
+                  >
+                    {Math.round(s.avgAttendance)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{s.sessionCount} sessions</p>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
 
       {/* Personal: Player stats (in personal mode, shown directly; in trend mode, via PlayerLookup) */}
       {isPersonal && playerStats && (
@@ -257,22 +287,19 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
       )}
 
       {/* Engagement */}
-      {filtered.engagement && (
-        <CollapsibleSection
-          title="Engagement"
-          description="Active vs inactive (last 30 days)"
-          defaultOpen
-        >
-          <div className="pt-4">
-            <EngagementTable
-              data={filtered.engagement}
-              types={filtered.trend.types}
-              typeLabel={typeLabel}
-            />
-          </div>
-        </CollapsibleSection>
-      )}
-
+      <CollapsibleSection
+        title="Engagement"
+        description={isPersonal ? "Your session attendance" : "Active vs inactive (last 30 days)"}
+        defaultOpen
+      >
+        <div className="pt-4">
+          <EngagementTable
+            data={filtered.engagement}
+            types={Object.keys(filtered.engagement.totalSessionsPerType)}
+            typeLabel={typeLabel}
+          />
+        </div>
+      </CollapsibleSection>
       {/* Trend: Growth */}
       {!isPersonal && filtered.growth && (
         <CollapsibleSection

@@ -7,7 +7,9 @@ import {
   getTeamMembersWithProfiles,
 } from "@/lib/softball/get-data";
 
-export default async function CcsaAdminTab({ sport }: { sport: string }) {
+import type { AdminTabProps } from "@/config/admin-tab-registry";
+
+export default async function CcsaAdminTab({ sport }: AdminTabProps) {
   const [lastSyncedAt, ccsaPlayers, sessionResult, allProfiles, teamMembers] = await Promise.all([
     getCcsaLastSyncedAt(),
     getCcsaPlayers(),

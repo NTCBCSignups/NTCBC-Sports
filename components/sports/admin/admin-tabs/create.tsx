@@ -2,7 +2,9 @@ import CreateForm from "@/components/sports/admin/admin-tabs/create-form";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { getSportUsers } from "@/lib/get-data";
 
-export default async function AdminTabCreate({ sport }: { sport: string }) {
+import type { AdminTabProps } from "@/config/admin-tab-registry";
+
+export default async function AdminTabCreate({ sport }: AdminTabProps) {
   const config = await getResolvedSportConfig(sport);
   if (!config) {
     return <p className="text-sm text-muted-foreground py-4">Sport config not found.</p>;

@@ -31,10 +31,12 @@ function resolveDefaultAdminTab(tabs: AdminTabMeta[], configuredDefaultTab?: str
 
 async function AdminShell({
   sport,
+  userId,
   requestedTab,
   config,
 }: {
   sport: string;
+  userId: string;
   requestedTab?: string;
   config: ResolvedSportConfig;
 }) {
@@ -51,7 +53,7 @@ async function AdminShell({
   return (
     <AdminLayout pendingRequestCount={pendingRequestCount} tabs={adminTabs} defaultTab={activeTab}>
       {TabComponent ? (
-        <TabComponent sport={sport} />
+        <TabComponent sport={sport} userId={userId} />
       ) : (
         <p className="text-sm text-muted-foreground py-4">Unknown tab.</p>
       )}
@@ -87,7 +89,7 @@ export default async function AdminPage({
 
       <div className="flex flex-col md:flex-row gap-8">
         <Suspense fallback={<LoadingAdminContent />}>
-          <AdminShell sport={sport} requestedTab={tab} config={config} />
+          <AdminShell sport={sport} userId={user.id} requestedTab={tab} config={config} />
         </Suspense>
       </div>
     </div>

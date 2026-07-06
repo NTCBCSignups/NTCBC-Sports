@@ -73,7 +73,7 @@ export const LINE_COLOR_ALL = "var(--foreground)";
 
 // ── Trend data computation ───────────────────────────────────────
 
-export interface TrendPoint {
+interface TrendPoint {
   week: string;
   [key: string]: number | string | null;
 }
@@ -196,7 +196,7 @@ export function computeTypeStats(rows: SignupRow[]): TypeStat[] {
 
 // ── Engagement ───────────────────────────────────────────────────
 
-export interface Attendee {
+interface Attendee {
   userId: string;
   name: string;
   count: number;
