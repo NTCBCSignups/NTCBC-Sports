@@ -18,6 +18,8 @@ interface PlayerLookupProps {
   visibleLines: Set<string>;
   onToggleLine: (key: string) => void;
   typeLabel: (type: string) => string;
+  /** When true, hides the search bar (used in personal mode where user is pre-set) */
+  hideSearch?: boolean;
 }
 
 export default function PlayerLookup({
@@ -28,6 +30,7 @@ export default function PlayerLookup({
   visibleLines,
   onToggleLine,
   typeLabel,
+  hideSearch,
 }: PlayerLookupProps) {
   const [search, setSearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -57,44 +60,46 @@ export default function PlayerLookup({
 
   return (
     <CollapsibleSection
-      title="Player Lookup"
-      description="View individual attendance patterns"
+      title={hideSearch ? "Attendance" : "Player Lookup"}
+      description={hideSearch ? "Your attendance patterns" : "View individual attendance patterns"}
       defaultOpen
     >
       <div className="pt-4 space-y-3">
-        {/* Search with inline dropdown */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setDropdownOpen(true);
-              // Only clear selection when input is fully emptied
-              if (!e.target.value) onSelectUser("");
-            }}
-            onFocus={() => setDropdownOpen(true)}
-            className="pl-9"
-          />
-          {dropdownOpen && search.length >= 1 && filteredUsers.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
-              {filteredUsers.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => {
-                    onSelectUser(u.id);
-                    setSearch(u.name);
-                    setDropdownOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
-                >
-                  {u.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Search with inline dropdown (hidden in personal mode) */}
+        {!hideSearch && (
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setDropdownOpen(true);
+                // Only clear selection when input is fully emptied
+                if (!e.target.value) onSelectUser("");
+              }}
+              onFocus={() => setDropdownOpen(true)}
+              className="pl-9"
+            />
+            {dropdownOpen && search.length >= 1 && filteredUsers.length > 0 && (
+              <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
+                {filteredUsers.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => {
+                      onSelectUser(u.id);
+                      setSearch(u.name);
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    {u.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Inline stats */}
         {playerStats ? (

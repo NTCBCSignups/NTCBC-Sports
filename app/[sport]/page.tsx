@@ -9,6 +9,7 @@ import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-b
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin/admin-button";
 import CalendarExportButton from "@/components/sports/session/calendar-export-button";
+import MyStatsButton from "@/components/sports/session/my-stats-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
 import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
@@ -301,6 +302,13 @@ async function SportSessionsContent({
   );
 }
 
+async function MyStatsGate({ sport, userId }: { sport: string; userId: string }) {
+  const supabase = await createClient();
+  const { role } = await getCachedUserSportRole(supabase, userId, sport);
+  if (role < Role.user) return null;
+  return <MyStatsButton sport={sport} />;
+}
+
 async function AdminButtonGate({ sport, userId }: { sport: string; userId: string }) {
   const supabase = await createClient();
   const { role } = await getCachedUserSportRole(supabase, userId, sport);
@@ -350,6 +358,9 @@ export default async function SportAuthPage({
       actions={
         user ? (
           <>
+            <Suspense>
+              <MyStatsGate sport={sport} userId={user.id} />
+            </Suspense>
             <Suspense>
               <CalendarExportGate sport={sport} userId={user.id} config={config} />
             </Suspense>

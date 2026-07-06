@@ -28,12 +28,27 @@ import TrendChart from "./components/trend-chart";
 import EngagementTable from "./components/engagement-table";
 import PlayerLookup from "./components/player-lookup";
 
+// ── Types ────────────────────────────────────────────────────────
+
+export type StatsMode = "all" | "personal";
+
+interface StatsViewProps {
+  data: StatsData;
+  /** "all" = admin view (all widgets), "personal" = user view (personal widgets only) */
+  mode?: StatsMode;
+  /** In personal mode, the userId whose data is shown */
+  userId?: string;
+  /** Title override (defaults to "Statistics" for all, "My Stats" for personal) */
+  title?: string;
+}
+
 // ── Component ────────────────────────────────────────────────────
 
-export default function StatsView({ data }: { data: StatsData }) {
+export default function StatsView({ data, mode = "all", userId, title }: StatsViewProps) {
+  const isPersonal = mode === "personal";
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [timeRange, setTimeRange] = useState<TimeRangeWeeks>(12);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState<string>(userId ?? "");
   const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["all"]));
 
   const typeLabel = useCallback((type: string) => data.typeLabels[type] ?? type, [data.typeLabels]);
@@ -78,18 +93,48 @@ export default function StatsView({ data }: { data: StatsData }) {
       summary: computeSummary(rows, sessionCount),
       trend: computeAttendanceTrend(rows, data.sessions, timeRange),
       typeStats: computeTypeStats(rows),
-      engagement: computeEngagement(rows, sessionCount, totalSessionsByType, data.users),
-      growth: computeGrowth(rows),
+      engagement: computeEngagement(
+        rows,
+        sessionCount,
+        totalSessionsByType,
+        isPersonal
+          ? data.signupRows.length > 0
+            ? [{ id: data.signupRows[0]!.userId, name: data.signupRows[0]!.userName }]
+            : []
+          : data.users,
+      ),
+      growth: !isPersonal ? computeGrowth(rows) : null,
     };
-  }, [data, typeFilter, timeRange]);
+  }, [data, typeFilter, timeRange, isPersonal]);
+
+  // In personal mode, compute player stats from all signupRows (already user-scoped from server)
+  // In trend mode, compute for the selected user from the picker
+  const personalUserId = isPersonal ? (userId ?? data.signupRows[0]?.userId ?? "") : selectedUserId;
 
   const playerStats = useMemo(
     () =>
-      selectedUserId
-        ? computePlayerStats(data.signupRows, selectedUserId, data.sessions, timeRange)
+      personalUserId
+        ? computePlayerStats(data.signupRows, personalUserId, data.sessions, timeRange)
         : null,
-    [data.signupRows, data.sessions, selectedUserId, timeRange],
+    [data.signupRows, data.sessions, personalUserId, timeRange],
   );
+
+  // ── Summary cards — each declares its own scope ──────────────
+
+  const summaryCards: Array<{ label: string; value: string | number; scope: StatsMode | "both" }> =
+    useMemo(() => {
+      const { totalSessions, uniqueAttendees, avgAttendance, avgFillRate } = filtered.summary;
+      return [
+        { label: "Total Sessions", value: totalSessions, scope: "both" as const },
+        { label: "Unique Attendees", value: uniqueAttendees, scope: "all" as const },
+        { label: "Avg Attendance", value: Math.round(avgAttendance), scope: "all" as const },
+        {
+          label: "Avg Fill Rate",
+          value: avgFillRate != null ? `${Math.round(avgFillRate * 100)}%` : "—",
+          scope: "all" as const,
+        },
+      ];
+    }, [filtered.summary]);
 
   // ── Render ─────────────────────────────────────────────────────
 
@@ -97,7 +142,9 @@ export default function StatsView({ data }: { data: StatsData }) {
     <section className="space-y-6">
       {/* Header: Title + Time Range + Type Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-foreground">Statistics</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          {title ?? (isPersonal ? "My Stats" : "Statistics")}
+        </h2>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border overflow-hidden shrink-0">
             {TIME_RANGES.map((r) => (
@@ -132,38 +179,34 @@ export default function StatsView({ data }: { data: StatsData }) {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards — each declares its own scope */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total Sessions" value={filtered.summary.totalSessions} />
-        <StatCard label="Unique Attendees" value={filtered.summary.uniqueAttendees} />
-        <StatCard label="Avg Attendance" value={Math.round(filtered.summary.avgAttendance)} />
-        <StatCard
-          label="Avg Fill Rate"
-          value={
-            filtered.summary.avgFillRate != null
-              ? `${Math.round(filtered.summary.avgFillRate * 100)}%`
-              : "—"
-          }
-        />
+        {summaryCards
+          .filter((c) => c.scope === "both" || c.scope === mode)
+          .map((c) => (
+            <StatCard key={c.label} label={c.label} value={c.value} />
+          ))}
       </div>
 
-      {/* Attendance Trend */}
-      <CollapsibleSection title="Attendance Trend" description="Signups per week" defaultOpen>
-        <div className="pt-3">
-          <TrendChart
-            data={filtered.trend.data}
-            xKey="week"
-            types={filtered.trend.types}
-            visibleLines={visibleLines}
-            onToggleLine={toggleLine}
-            typeLabel={typeLabel}
-            xFormatter={formatWeek}
-          />
-        </div>
-      </CollapsibleSection>
+      {/* Attendance Trend (trend scope — raw signup counts) */}
+      {!isPersonal && (
+        <CollapsibleSection title="Attendance Trend" description="Signups per week" defaultOpen>
+          <div className="pt-3">
+            <TrendChart
+              data={filtered.trend.data}
+              xKey="week"
+              types={filtered.trend.types}
+              visibleLines={visibleLines}
+              onToggleLine={toggleLine}
+              typeLabel={typeLabel}
+              xFormatter={formatWeek}
+            />
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Session Types */}
-      {typeFilter === "all" && filtered.typeStats.length > 1 && (
+      {typeFilter === "all" && !isPersonal && filtered.typeStats.length > 1 && (
         <CollapsibleSection
           title="Session Types"
           description="Average attendance by type"
@@ -186,47 +229,67 @@ export default function StatsView({ data }: { data: StatsData }) {
         </CollapsibleSection>
       )}
 
-      {/* Player Lookup */}
-      <PlayerLookup
-        data={data}
-        playerStats={playerStats}
-        selectedUserId={selectedUserId}
-        onSelectUser={setSelectedUserId}
-        visibleLines={visibleLines}
-        onToggleLine={toggleLine}
-        typeLabel={typeLabel}
-      />
+      {/* Personal: Player stats (in personal mode, shown directly; in trend mode, via PlayerLookup) */}
+      {isPersonal && playerStats && (
+        <PlayerLookup
+          data={data}
+          playerStats={playerStats}
+          selectedUserId={personalUserId}
+          onSelectUser={() => {}}
+          visibleLines={visibleLines}
+          onToggleLine={toggleLine}
+          typeLabel={typeLabel}
+          hideSearch
+        />
+      )}
+
+      {/* Trend: Player Lookup (search any user) */}
+      {!isPersonal && (
+        <PlayerLookup
+          data={data}
+          playerStats={playerStats}
+          selectedUserId={selectedUserId}
+          onSelectUser={setSelectedUserId}
+          visibleLines={visibleLines}
+          onToggleLine={toggleLine}
+          typeLabel={typeLabel}
+        />
+      )}
 
       {/* Engagement */}
-      <CollapsibleSection
-        title="Engagement"
-        description="Active vs inactive (last 30 days)"
-        defaultOpen
-      >
-        <div className="pt-4">
-          <EngagementTable
-            data={filtered.engagement}
-            types={filtered.trend.types}
-            typeLabel={typeLabel}
-          />
-        </div>
-      </CollapsibleSection>
+      {filtered.engagement && (
+        <CollapsibleSection
+          title="Engagement"
+          description="Active vs inactive (last 30 days)"
+          defaultOpen
+        >
+          <div className="pt-4">
+            <EngagementTable
+              data={filtered.engagement}
+              types={filtered.trend.types}
+              typeLabel={typeLabel}
+            />
+          </div>
+        </CollapsibleSection>
+      )}
 
-      {/* Growth */}
-      <CollapsibleSection
-        title="Growth"
-        description="New members per month (last 6 months)"
-        defaultOpen
-      >
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 pt-4">
-          {filtered.growth.map((g) => (
-            <div key={g.month} className="rounded-lg border bg-card p-2.5 text-center">
-              <p className="text-xs text-muted-foreground">{formatMonth(g.month)}</p>
-              <p className="text-lg font-bold text-foreground">{g.newMembers}</p>
-            </div>
-          ))}
-        </div>
-      </CollapsibleSection>
+      {/* Trend: Growth */}
+      {!isPersonal && filtered.growth && (
+        <CollapsibleSection
+          title="Growth"
+          description="New members per month (last 6 months)"
+          defaultOpen
+        >
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 pt-4">
+            {filtered.growth.map((g) => (
+              <div key={g.month} className="rounded-lg border bg-card p-2.5 text-center">
+                <p className="text-xs text-muted-foreground">{formatMonth(g.month)}</p>
+                <p className="text-lg font-bold text-foreground">{g.newMembers}</p>
+              </div>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
     </section>
   );
 }
