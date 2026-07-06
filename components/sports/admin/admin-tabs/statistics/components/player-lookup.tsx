@@ -30,6 +30,7 @@ export default function PlayerLookup({
   typeLabel,
 }: PlayerLookupProps) {
   const [search, setSearch] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const filteredUsers = useMemo(() => {
     if (!search) return data.users.slice(0, 10);
@@ -69,11 +70,14 @@ export default function PlayerLookup({
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
+              setDropdownOpen(true);
+              // Only clear selection when input is fully emptied
               if (!e.target.value) onSelectUser("");
             }}
+            onFocus={() => setDropdownOpen(true)}
             className="pl-9"
           />
-          {search.length >= 1 && filteredUsers.length > 0 && !selectedUserId && (
+          {dropdownOpen && search.length >= 1 && filteredUsers.length > 0 && (
             <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
               {filteredUsers.map((u) => (
                 <button
@@ -81,6 +85,7 @@ export default function PlayerLookup({
                   onClick={() => {
                     onSelectUser(u.id);
                     setSearch(u.name);
+                    setDropdownOpen(false);
                   }}
                   className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
                 >

@@ -43,9 +43,9 @@ export default function StatsView({ data }: { data: StatsData }) {
     [data.sessions],
   );
 
-  // Initialize visible lines when types change
+  // Initialize visible lines — all types checked, "all" unchecked
   useEffect(() => {
-    setVisibleLines(new Set(["all", ...sessionTypes]));
+    setVisibleLines(new Set(sessionTypes));
   }, [sessionTypes]);
 
   const toggleLine = useCallback((key: string) => {
