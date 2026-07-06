@@ -8,11 +8,19 @@ import AdminTabSettings from "@/components/sports/admin/admin-tabs/settings";
 import CcsaAdminTab from "@/components/softball/admin-tabs/ccsa-sync";
 
 /**
+ * Props passed to every admin tab component.
+ */
+export interface AdminTabProps {
+  sport: string;
+  userId: string;
+}
+
+/**
  * Registry mapping admin tab IDs to their server components.
  * This is the single wiring point between sport-specific tab
  * implementations and the generic admin page.
  */
-const adminTabComponents: Record<string, ComponentType<{ sport: string }>> = {
+const adminTabComponents: Record<string, ComponentType<AdminTabProps>> = {
   people: AdminTabPeople,
   create: AdminTabCreate,
   upcoming: AdminTabUpcoming,

@@ -9,9 +9,16 @@ interface EngagementTableProps {
   data: EngagementData;
   types: string[];
   typeLabel: (type: string) => string;
+  /** In personal mode, hide the name column on mobile (it's just the user's own name) */
+  hideNameOnMobile?: boolean;
 }
 
-export default function EngagementTable({ data, types, typeLabel }: EngagementTableProps) {
+export default function EngagementTable({
+  data,
+  types,
+  typeLabel,
+  hideNameOnMobile,
+}: EngagementTableProps) {
   const [sortKey, setSortKey] = useState<string>("count");
   const [sortAsc, setSortAsc] = useState(false);
   const [hideInactive, setHideInactive] = useState(false);
@@ -61,10 +68,12 @@ export default function EngagementTable({ data, types, typeLabel }: EngagementTa
 
       {sorted.length > 0 && (
         <div className="overflow-auto max-h-80 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <table className="w-full text-xs min-w-[400px]">
+          <table className="w-full text-xs">
             <thead className="sticky top-0 bg-background z-10">
               <tr className="border-b">
-                <th className="text-left py-1.5 pr-3 font-medium text-muted-foreground">
+                <th
+                  className={`text-left py-1.5 pr-3 font-medium text-muted-foreground${hideNameOnMobile ? " hidden sm:table-cell" : ""}`}
+                >
                   <button onClick={() => handleSort("name")} className="hover:text-foreground">
                     Name{arrow("name")}
                   </button>
@@ -94,7 +103,9 @@ export default function EngagementTable({ data, types, typeLabel }: EngagementTa
                   key={a.userId}
                   className={`border-b border-border/50 ${!a.isActive ? "opacity-50" : ""}`}
                 >
-                  <td className="py-1.5 pr-3 truncate max-w-[140px]">
+                  <td
+                    className={`py-1.5 pr-3 truncate max-w-[140px]${hideNameOnMobile ? " hidden sm:table-cell" : ""}`}
+                  >
                     {a.name}
                     {!a.isActive && (
                       <span className="ml-1 text-[10px] text-muted-foreground">(inactive)</span>

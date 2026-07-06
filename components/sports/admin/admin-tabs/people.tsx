@@ -2,7 +2,9 @@ import { getAccessRequests, getSportMembers } from "@/lib/get-data";
 import AdminPeopleView from "@/components/sports/admin/admin-people-view";
 import type { AccessRequestStatus } from "@/lib/supabase/types";
 
-export default async function AdminTabPeople({ sport }: { sport: string }) {
+import type { AdminTabProps } from "@/config/admin-tab-registry";
+
+export default async function AdminTabPeople({ sport }: AdminTabProps) {
   const [members, accessRequests] = await Promise.all([
     getSportMembers(sport),
     getAccessRequests(sport),

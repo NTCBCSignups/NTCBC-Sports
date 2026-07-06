@@ -41,7 +41,10 @@ export default function PlayerLookup({
     return data.users.filter((u) => u.name.toLowerCase().includes(q)).slice(0, 20);
   }, [data.users, search]);
 
-  const selectedUserName = data.users.find((u) => u.id === selectedUserId)?.name ?? "";
+  const selectedUserName =
+    data.users.find((u) => u.id === selectedUserId)?.name ??
+    data.signupRows.find((r) => r.userId === selectedUserId)?.userName ??
+    "";
 
   const tooltipFormatter = useMemo(() => {
     if (!playerStats) return undefined;

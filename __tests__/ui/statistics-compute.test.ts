@@ -8,7 +8,7 @@ import {
   computeEngagement,
   computeGrowth,
   computePlayerStats,
-} from "@/components/sports/admin/admin-tabs/statistics/compute";
+} from "@/components/sports/statistics/compute";
 import type { SignupRow, SessionRow } from "@/lib/get-statistics";
 
 // ── Fixtures ─────────────────────────────────────────────────────

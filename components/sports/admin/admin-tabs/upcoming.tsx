@@ -6,7 +6,9 @@ import { getAllSessions, getSessionSignups, getSportUsers, getTeamMembers } from
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import type { SignupStatus } from "@/lib/supabase/types";
 
-export default async function AdminTabUpcoming({ sport }: { sport: string }) {
+import type { AdminTabProps } from "@/config/admin-tab-registry";
+
+export default async function AdminTabUpcoming({ sport }: AdminTabProps) {
   const config = await getResolvedSportConfig(sport);
   if (!config) {
     return <p className="text-sm text-muted-foreground py-4">Sport config not found.</p>;
