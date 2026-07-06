@@ -14,6 +14,7 @@ export interface AdminTabDefinition {
 }
 
 const ADMIN_TAB_ICON_OPTION_LABELS: Record<AdminTabIconName, string> = {
+  BarChart3: "Bar Chart",
   ClipboardList: "Clipboard List",
   Plus: "Plus",
   Calendar: "Calendar",
@@ -53,6 +54,12 @@ export const ADMIN_TAB_DEFINITIONS: AdminTabDefinition[] = [
     label: "Past Sessions",
     description: "Review and edit past sessions.",
     iconName: "History",
+  },
+  {
+    id: "statistics",
+    label: "Statistics",
+    description: "Attendance trends, engagement, and growth metrics.",
+    iconName: "BarChart3",
   },
   {
     id: "ccsa",

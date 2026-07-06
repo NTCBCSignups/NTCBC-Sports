@@ -174,8 +174,9 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
       .eq("sport", sport),
     supabase
       .from("signups")
-      .select("user_id, created_at, sessions!inner(sport)")
+      .select("user_id, created_at, sessions!inner(sport, date)")
       .eq("sessions.sport", sport)
+      .lte("sessions.date", getTodayInSportTimezone())
       .neq("status", "cancelled")
       .neq("status", "declined"),
   ]);

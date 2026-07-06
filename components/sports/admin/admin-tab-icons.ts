@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Calendar,
   ClipboardList,
   History,
@@ -11,6 +12,7 @@ import {
 import { isAdminTabIconName, type AdminTabIconName } from "@/config/admin-tab-metadata";
 
 const adminTabIconMap: Record<AdminTabIconName, LucideIcon> = {
+  BarChart3,
   ClipboardList,
   Plus,
   Calendar,
