@@ -76,7 +76,7 @@ export default function StatsView({ data }: { data: StatsData }) {
 
     return {
       summary: computeSummary(rows, sessionCount),
-      trend: computeAttendanceTrend(rows, timeRange),
+      trend: computeAttendanceTrend(rows, data.sessions, timeRange),
       typeStats: computeTypeStats(rows),
       engagement: computeEngagement(rows, sessionCount, totalSessionsByType, data.users),
       growth: computeGrowth(rows),
