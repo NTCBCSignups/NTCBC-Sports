@@ -302,6 +302,13 @@ async function SportSessionsContent({
   );
 }
 
+async function MyStatsGate({ sport, userId }: { sport: string; userId: string }) {
+  const supabase = await createClient();
+  const { role } = await getCachedUserSportRole(supabase, userId, sport);
+  if (role < Role.user) return null;
+  return <MyStatsButton sport={sport} />;
+}
+
 async function AdminButtonGate({ sport, userId }: { sport: string; userId: string }) {
   const supabase = await createClient();
   const { role } = await getCachedUserSportRole(supabase, userId, sport);
@@ -351,7 +358,9 @@ export default async function SportAuthPage({
       actions={
         user ? (
           <>
-            <MyStatsButton sport={sport} />
+            <Suspense>
+              <MyStatsGate sport={sport} userId={user.id} />
+            </Suspense>
             <Suspense>
               <CalendarExportGate sport={sport} userId={user.id} config={config} />
             </Suspense>

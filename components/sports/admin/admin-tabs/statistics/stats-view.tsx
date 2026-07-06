@@ -93,9 +93,16 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
       summary: computeSummary(rows, sessionCount),
       trend: computeAttendanceTrend(rows, data.sessions, timeRange),
       typeStats: computeTypeStats(rows),
-      engagement: !isPersonal
-        ? computeEngagement(rows, sessionCount, totalSessionsByType, data.users)
-        : null,
+      engagement: computeEngagement(
+        rows,
+        sessionCount,
+        totalSessionsByType,
+        isPersonal
+          ? data.signupRows.length > 0
+            ? [{ id: data.signupRows[0]!.userId, name: data.signupRows[0]!.userName }]
+            : []
+          : data.users,
+      ),
       growth: !isPersonal ? computeGrowth(rows) : null,
     };
   }, [data, typeFilter, timeRange, isPersonal]);
@@ -111,6 +118,23 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
         : null,
     [data.signupRows, data.sessions, personalUserId, timeRange],
   );
+
+  // ── Summary cards — each declares its own scope ──────────────
+
+  const summaryCards: Array<{ label: string; value: string | number; scope: StatsMode | "both" }> =
+    useMemo(() => {
+      const { totalSessions, uniqueAttendees, avgAttendance, avgFillRate } = filtered.summary;
+      return [
+        { label: "Total Sessions", value: totalSessions, scope: "both" as const },
+        { label: "Unique Attendees", value: uniqueAttendees, scope: "all" as const },
+        { label: "Avg Attendance", value: Math.round(avgAttendance), scope: "all" as const },
+        {
+          label: "Avg Fill Rate",
+          value: avgFillRate != null ? `${Math.round(avgFillRate * 100)}%` : "—",
+          scope: "all" as const,
+        },
+      ];
+    }, [filtered.summary]);
 
   // ── Render ─────────────────────────────────────────────────────
 
@@ -155,38 +179,34 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards — each declares its own scope */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total Sessions" value={filtered.summary.totalSessions} />
-        <StatCard label="Unique Attendees" value={filtered.summary.uniqueAttendees} />
-        <StatCard label="Avg Attendance" value={Math.round(filtered.summary.avgAttendance)} />
-        <StatCard
-          label="Avg Fill Rate"
-          value={
-            filtered.summary.avgFillRate != null
-              ? `${Math.round(filtered.summary.avgFillRate * 100)}%`
-              : "—"
-          }
-        />
+        {summaryCards
+          .filter((c) => c.scope === "both" || c.scope === mode)
+          .map((c) => (
+            <StatCard key={c.label} label={c.label} value={c.value} />
+          ))}
       </div>
 
-      {/* Attendance Trend */}
-      <CollapsibleSection title="Attendance Trend" description="Signups per week" defaultOpen>
-        <div className="pt-3">
-          <TrendChart
-            data={filtered.trend.data}
-            xKey="week"
-            types={filtered.trend.types}
-            visibleLines={visibleLines}
-            onToggleLine={toggleLine}
-            typeLabel={typeLabel}
-            xFormatter={formatWeek}
-          />
-        </div>
-      </CollapsibleSection>
+      {/* Attendance Trend (trend scope — raw signup counts) */}
+      {!isPersonal && (
+        <CollapsibleSection title="Attendance Trend" description="Signups per week" defaultOpen>
+          <div className="pt-3">
+            <TrendChart
+              data={filtered.trend.data}
+              xKey="week"
+              types={filtered.trend.types}
+              visibleLines={visibleLines}
+              onToggleLine={toggleLine}
+              typeLabel={typeLabel}
+              xFormatter={formatWeek}
+            />
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Session Types */}
-      {typeFilter === "all" && filtered.typeStats.length > 1 && (
+      {typeFilter === "all" && !isPersonal && filtered.typeStats.length > 1 && (
         <CollapsibleSection
           title="Session Types"
           description="Average attendance by type"
@@ -236,8 +256,8 @@ export default function StatsView({ data, mode = "all", userId, title }: StatsVi
         />
       )}
 
-      {/* Trend: Engagement */}
-      {!isPersonal && filtered.engagement && (
+      {/* Engagement */}
+      {filtered.engagement && (
         <CollapsibleSection
           title="Engagement"
           description="Active vs inactive (last 30 days)"
