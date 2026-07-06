@@ -217,12 +217,12 @@ describe("computeGrowth", () => {
 
 describe("computeAttendanceTrend", () => {
   it("returns correct number of weeks", () => {
-    const result = computeAttendanceTrend([], 12);
+    const result = computeAttendanceTrend([], [], 12);
     expect(result.data).toHaveLength(12);
   });
 
   it("returns 4 weeks when timeRange is 4", () => {
-    const result = computeAttendanceTrend([], 4);
+    const result = computeAttendanceTrend([], [], 4);
     expect(result.data).toHaveLength(4);
   });
 
@@ -231,7 +231,11 @@ describe("computeAttendanceTrend", () => {
       makeSignupRow({ sessionType: "practice", sessionDate: TODAY }),
       makeSignupRow({ sessionType: "game", sessionDate: TODAY }),
     ];
-    const result = computeAttendanceTrend(rows, 4);
+    const sessions = [
+      makeSessionRow({ date: TODAY, sessionType: "practice" }),
+      makeSessionRow({ id: "s2", date: TODAY, sessionType: "game" }),
+    ];
+    const result = computeAttendanceTrend(rows, sessions, 4);
     expect(result.types).toContain("practice");
     expect(result.types).toContain("game");
   });
@@ -241,9 +245,19 @@ describe("computeAttendanceTrend", () => {
       makeSignupRow({ sessionDate: TODAY }),
       makeSignupRow({ sessionDate: TODAY, userId: "u2" }),
     ];
-    const result = computeAttendanceTrend(rows, 4);
+    const sessions = [makeSessionRow({ date: TODAY })];
+    const result = computeAttendanceTrend(rows, sessions, 4);
     const lastWeek = result.data[result.data.length - 1]!;
     expect(lastWeek.all).toBe(2);
+  });
+
+  it("uses null for weeks with no sessions of a type", () => {
+    const rows = [makeSignupRow({ sessionDate: TODAY })];
+    const sessions = [makeSessionRow({ date: TODAY })];
+    const result = computeAttendanceTrend(rows, sessions, 4);
+    // Weeks without sessions should be null
+    const nullWeeks = result.data.filter((d) => d.all === null);
+    expect(nullWeeks.length).toBeGreaterThan(0);
   });
 });
 
@@ -336,5 +350,62 @@ describe("computePlayerStats", () => {
     const sessions = [makeSessionRow({ id: "s1", date: TODAY })];
     const result = computePlayerStats(rows, "u1", sessions, 4)!;
     expect(result.daysAgo).toBe(0);
+  });
+});
+
+// ── TrendChart data contract: 0/0 → null ─────────────────────────
+// Any data fed to TrendChart must use null (not 0) for time periods
+// with no sessions. This ensures the chart gaps the line instead of
+// plotting a misleading zero.
+
+describe("TrendChart data contract: no-sessions periods must be null", () => {
+  it("computeAttendanceTrend: null for weeks with no sessions, 0 only when sessions exist", () => {
+    const rows = [makeSignupRow({ sessionDate: TODAY, sessionType: "practice" })];
+    const sessions = [makeSessionRow({ date: TODAY, sessionType: "practice" })];
+    const result = computeAttendanceTrend(rows, sessions, 8);
+
+    for (const point of result.data) {
+      if (point.all === null) {
+        // No sessions this week → all type keys must also be null
+        for (const type of result.types) {
+          expect(point[type]).toBeNull();
+        }
+      } else {
+        // Sessions existed → value is a number (0 = nobody came, N = N signups)
+        expect(typeof point.all).toBe("number");
+      }
+    }
+  });
+
+  it("computePlayerStats: null for weeks with no sessions, 0% when sessions exist but unattended", () => {
+    // User signed up for one old session so we get a non-null result
+    const rows = [makeSignupRow({ userId: "u1", sessionDate: "2026-01-01" })];
+    const sessions = [
+      makeSessionRow({ id: "s-old", date: "2026-01-01" }),
+      makeSessionRow({ id: "s-today", date: TODAY }), // session exists but user didn't attend
+    ];
+    const result = computePlayerStats(rows, "u1", sessions, 8)!;
+
+    for (let i = 0; i < result.weeklyData.length; i++) {
+      const point = result.weeklyData[i]!;
+      const raw = result.weeklyRaw[i]!;
+
+      if (point.all === null) {
+        // No sessions this week → raw shows "—"
+        expect(raw.all).toBe("—");
+        for (const type of result.weeklyTypes) {
+          expect(point[type]).toBeNull();
+          expect(raw[type]).toBe("—");
+        }
+      } else {
+        // Sessions existed → percentage (0–100) and raw shows "X/Y"
+        expect(typeof point.all).toBe("number");
+        expect(raw.all).toMatch(/^\d+\/\d+$/);
+      }
+    }
+
+    // Verify we actually have both null and non-null weeks
+    expect(result.weeklyData.some((d) => d.all === null)).toBe(true);
+    expect(result.weeklyData.some((d) => d.all !== null)).toBe(true);
   });
 });

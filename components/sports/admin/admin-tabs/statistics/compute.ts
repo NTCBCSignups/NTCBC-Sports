@@ -75,7 +75,7 @@ export const LINE_COLOR_ALL = "var(--foreground)";
 
 export interface TrendPoint {
   week: string;
-  [key: string]: number | string;
+  [key: string]: number | string | null;
 }
 
 export interface TrendData {
@@ -83,7 +83,11 @@ export interface TrendData {
   types: string[];
 }
 
-export function computeAttendanceTrend(rows: SignupRow[], weeks: TimeRangeWeeks): TrendData {
+export function computeAttendanceTrend(
+  rows: SignupRow[],
+  sessions: SessionRow[],
+  weeks: TimeRangeWeeks,
+): TrendData {
   const allTypes = [...new Set(rows.map((r) => r.sessionType))].sort();
   const numWeeks =
     weeks ||
@@ -104,10 +108,23 @@ export function computeAttendanceTrend(rows: SignupRow[], weeks: TimeRangeWeeks)
     weekKeys.push(weekStart(localDateStr(d)));
   }
 
+  // Track which weeks have sessions per type
+  const sessionsPerWeekType = new Map<string, Set<string>>();
+  for (const wk of weekKeys) sessionsPerWeekType.set(wk, new Set());
+  for (const s of sessions) {
+    if (s.date >= cutoff) {
+      const wk = weekStart(s.date);
+      const weekSet = sessionsPerWeekType.get(wk);
+      if (weekSet) weekSet.add(s.sessionType);
+    }
+  }
+
   const weekIndexMap = new Map(weekKeys.map((k, i) => [k, i]));
   const data: TrendPoint[] = weekKeys.map((week) => {
-    const entry: TrendPoint = { week, all: 0 };
-    for (const type of allTypes) entry[type] = 0;
+    const weekSessions = sessionsPerWeekType.get(week)!;
+    const hasAnySessions = weekSessions.size > 0;
+    const entry: TrendPoint = { week, all: hasAnySessions ? 0 : null };
+    for (const type of allTypes) entry[type] = weekSessions.has(type) ? 0 : null;
     return entry;
   });
 
