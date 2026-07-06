@@ -297,6 +297,7 @@ export default function StatsView({
             data={filtered.engagement}
             types={Object.keys(filtered.engagement.totalSessionsPerType)}
             typeLabel={typeLabel}
+            hideNameOnMobile={isPersonal}
           />
         </div>
       </CollapsibleSection>
