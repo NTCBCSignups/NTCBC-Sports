@@ -9,6 +9,7 @@ import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-b
 import SportPageShell from "@/components/sports/sport-page-shell";
 import AdminButton from "@/components/sports/admin/admin-button";
 import CalendarExportButton from "@/components/sports/session/calendar-export-button";
+import MyStatsButton from "@/components/sports/session/my-stats-button";
 import { Role, AccessLevel, getResolvedTab } from "@/config/config-resolver";
 import type { SessionTab, AccessBannerText, ResolvedSportConfig } from "@/config/config-resolver";
 import { getFirstUnmetLevel, ACCESS_LEVELS } from "@/lib/tab-access";
@@ -350,6 +351,7 @@ export default async function SportAuthPage({
       actions={
         user ? (
           <>
+            <MyStatsButton sport={sport} />
             <Suspense>
               <CalendarExportGate sport={sport} userId={user.id} config={config} />
             </Suspense>
