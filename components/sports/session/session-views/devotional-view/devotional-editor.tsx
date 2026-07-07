@@ -39,7 +39,6 @@ import {
   SECTION_META,
   SECTION_TYPE_OPTIONS,
   generateId,
-  createDefaultDevotionalData,
   createTemplateDevotionalData,
 } from "./types";
 
@@ -559,7 +558,7 @@ function getDirectText(el: HTMLElement): string {
 // ── Main Editor ──────────────────────────────────────────────────
 
 export default function DevotionalEditor({ viewData, ref }: SessionViewEditorProps) {
-  const initialData = (viewData as DevotionalViewData | null) ?? createDefaultDevotionalData();
+  const initialData = (viewData as DevotionalViewData | null) ?? createTemplateDevotionalData();
   const [data, setData] = useState<DevotionalViewData>(initialData);
 
   useImperativeHandle(ref, () => ({
