@@ -7,7 +7,7 @@ import ViewToggle from "@/components/sports/session/view-toggle";
 import EditViewsDialog from "@/components/sports/session/edit-views-dialog";
 import type { EditViewsDialogHandle } from "@/components/sports/session/edit-views-dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { getSessionView } from "@/components/sports/session/session-views/registry";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session/session-signups-table";
@@ -59,6 +59,7 @@ export default function SessionViewSection({
   };
 
   // Shared admin action buttons — rendered in both branches
+  const hasDevo = viewData.some((v) => v.type === "devotionalView");
   const adminButtons = isAdmin ? (
     <div className="flex items-center gap-2">
       <Button
@@ -67,7 +68,7 @@ export default function SessionViewSection({
         className="text-xs h-7"
         onClick={() => editViewsRef.current?.openToType("devotionalView")}
       >
-        <Pencil className="h-3 w-3 mr-1" />
+        {hasDevo ? <Pencil className="h-3 w-3 mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
         {"Devo"}
       </Button>
       <EditViewsDialog
