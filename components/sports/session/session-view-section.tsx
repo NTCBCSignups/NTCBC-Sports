@@ -1,10 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import AttendanceView from "@/components/sports/session/session-views/attendance-view";
 import ViewToggle from "@/components/sports/session/view-toggle";
 import EditViewsDialog from "@/components/sports/session/edit-views-dialog";
+import type { EditViewsDialogHandle } from "@/components/sports/session/edit-views-dialog";
+import { Button } from "@/components/ui/button";
+import { Pencil, Plus } from "lucide-react";
 import { getSessionView } from "@/components/sports/session/session-views/registry";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session/session-signups-table";
@@ -41,6 +44,7 @@ export default function SessionViewSection({
 }: SessionViewSectionProps) {
   const searchParams = useSearchParams();
   const [activeView, setActiveView] = useState<string | null>(searchParams.get("view"));
+  const editViewsRef = useRef<EditViewsDialogHandle>(null);
 
   const handleViewChange = (viewId: string | null) => {
     setActiveView(viewId);
@@ -54,21 +58,37 @@ export default function SessionViewSection({
     window.history.replaceState(null, "", newUrl);
   };
 
+  // Shared admin action buttons — rendered in both branches
+  const hasDevo = viewData.some((v) => v.type === "devotionalView");
+  const adminButtons = isAdmin ? (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-xs h-7"
+        onClick={() => editViewsRef.current?.openToType("devotionalView")}
+      >
+        {hasDevo ? <Pencil className="h-3 w-3 mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+        {"Devo"}
+      </Button>
+      <EditViewsDialog
+        ref={editViewsRef}
+        sport={sport}
+        sessionId={sessionId}
+        signups={signups}
+        teamMemberIds={teamMemberIds}
+        viewData={viewData}
+      />
+    </div>
+  ) : null;
+
   // Empty viewData = no views configured yet → fall back to attendance view
   if (viewData.length === 0) {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Attendance</h2>
-          {isAdmin && (
-            <EditViewsDialog
-              sport={sport}
-              sessionId={sessionId}
-              signups={signups}
-              teamMemberIds={teamMemberIds}
-              viewData={viewData}
-            />
-          )}
+          {adminButtons}
         </div>
         <AttendanceView
           signups={signups}
@@ -113,15 +133,7 @@ export default function SessionViewSection({
             {configuredViews[0]?.label ?? "Attendance"}
           </h2>
         )}
-        {isAdmin && (
-          <EditViewsDialog
-            sport={sport}
-            sessionId={sessionId}
-            signups={signups}
-            teamMemberIds={teamMemberIds}
-            viewData={viewData}
-          />
-        )}
+        {adminButtons}
       </div>
 
       {resolvedView && entry ? (

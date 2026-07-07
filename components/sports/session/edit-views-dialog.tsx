@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, useTransition } from "react";
+import type { Ref } from "react";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { useConfigurator, type CaptureHandle } from "@/components/ui/configurator";
@@ -19,12 +20,17 @@ import type { SignupRow } from "@/components/sports/session/session-signups-tabl
 import type { StoredViewInstance } from "@/lib/supabase/types";
 import type { SessionViewEditorHandle } from "@/components/sports/session/session-views/interfaces";
 
+export interface EditViewsDialogHandle {
+  openToType: (type: string) => void;
+}
+
 interface EditViewsDialogProps {
   sport: string;
   sessionId: string;
   signups: SignupRow[];
   teamMemberIds: Set<string>;
   viewData: StoredViewInstance[];
+  ref?: Ref<EditViewsDialogHandle>;
 }
 
 type DialogStep =
@@ -43,10 +49,19 @@ export default function EditViewsDialog({
   signups,
   teamMemberIds,
   viewData,
+  ref,
 }: EditViewsDialogProps) {
   const [open, setOpen] = useState(false);
   const editorRef = useRef<SessionViewEditorHandle>(null);
   const [step, setStep] = useState<DialogStep>({ kind: "list" });
+  const [pendingType, setPendingType] = useState<string | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    openToType: (type: string) => {
+      setPendingType(type);
+      setOpen(true);
+    },
+  }));
 
   // Adapter: SessionViewEditorHandle → CaptureHandle.
   // Always non-null — captureMerge already no-ops when step !== "edit".
@@ -68,21 +83,11 @@ export default function EditViewsDialog({
   };
 
   const saveRef = useRef<(() => void) | null>(null);
+  const [editorDialogClassName, setEditorDialogClassName] = useState<string | undefined>(undefined);
 
   const handleSaveFromConfirm = () => {
     saveRef.current?.();
   };
-
-  // Compute editor dialog className outside JSX
-  const editorDialogClassName =
-    step.kind === "edit"
-      ? (() => {
-          const inst = viewData.find((v) => v.id === step.viewId);
-          if (!inst) return undefined;
-          const entry = getSessionView(inst.type);
-          return entry?.EditorComponent.dialogClassName;
-        })()
-      : undefined;
 
   return (
     <FormDialog<StoredViewInstance[]>
@@ -109,7 +114,7 @@ export default function EditViewsDialog({
       trigger={
         <Button variant="outline" size="sm" className="text-xs h-7">
           <Pencil className="h-3 w-3 mr-1" />
-          Edit Views
+          Views
         </Button>
       }
     >
@@ -123,6 +128,9 @@ export default function EditViewsDialog({
         editorRef={editorRef}
         setOpen={setOpen}
         saveRef={saveRef}
+        pendingType={pendingType}
+        clearPendingType={() => setPendingType(null)}
+        setEditorDialogClassName={setEditorDialogClassName}
       />
     </FormDialog>
   );
@@ -137,6 +145,9 @@ function EditViewsDialogContent({
   editorRef,
   setOpen,
   saveRef,
+  pendingType,
+  clearPendingType,
+  setEditorDialogClassName,
 }: {
   sport: string;
   sessionId: string;
@@ -147,6 +158,9 @@ function EditViewsDialogContent({
   editorRef: React.RefObject<SessionViewEditorHandle | null>;
   setOpen: (open: boolean) => void;
   saveRef: React.MutableRefObject<(() => void) | null>;
+  pendingType: string | null;
+  clearPendingType: () => void;
+  setEditorDialogClassName: (className: string | undefined) => void;
 }) {
   const {
     draft: items,
@@ -209,6 +223,18 @@ function EditViewsDialogContent({
     }
   };
 
+  // Auto-navigate to a specific view type when opened via ref
+  useEffect(() => {
+    if (!pendingType) return;
+    const existing = instances.find((v) => v.type === pendingType);
+    if (existing) {
+      setStep({ kind: "edit", viewId: existing.id });
+    } else {
+      handleCreate(pendingType);
+    }
+    clearPendingType();
+  }, [pendingType]); // eslint-disable-line react-hooks/exhaustive-deps -- only run when pendingType changes, handlers are stable
+
   const handleDelete = (viewId: number) => {
     updateDraft((prev) => prev.filter((v) => v.id !== viewId));
   };
@@ -246,6 +272,11 @@ function EditViewsDialogContent({
     const inst = instances.find((v) => v.id === step.viewId);
     return inst ? getSessionView(inst.type) : undefined;
   }, [step, instances]);
+
+  // Sync editor dialog className to parent for proper sizing
+  useEffect(() => {
+    setEditorDialogClassName(activeEntry?.EditorComponent.dialogClassName);
+  }, [activeEntry, setEditorDialogClassName]);
 
   return (
     <>
