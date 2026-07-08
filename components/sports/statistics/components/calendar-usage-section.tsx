@@ -60,8 +60,8 @@ export default function CalendarUsageSection({
   return (
     <div className="space-y-4 pt-4">
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border bg-card p-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-lg border bg-card p-2 sm:p-3">
           <div className="flex items-center gap-1.5">
             <Rss className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Active Subscribers</p>
@@ -69,14 +69,14 @@ export default function CalendarUsageSection({
           <p className="text-xl font-bold text-foreground mt-1">{stats.activeSubscribers}</p>
           <p className="text-[11px] text-muted-foreground">{stats.totalSubscribers} total</p>
         </div>
-        <div className="rounded-lg border bg-card p-3">
+        <div className="rounded-lg border bg-card p-2 sm:p-3">
           <div className="flex items-center gap-1.5">
             <Download className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Downloads</p>
           </div>
           <p className="text-xl font-bold text-foreground mt-1">{stats.totalDownloaders}</p>
         </div>
-        <div className="rounded-lg border bg-card p-3">
+        <div className="rounded-lg border bg-card p-2 sm:p-3">
           <div className="flex items-center gap-1.5">
             <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Total Users</p>
@@ -89,20 +89,20 @@ export default function CalendarUsageSection({
       {correlation && <CorrelationInsight correlation={correlation} />}
 
       {/* User list */}
-      <div className="rounded-lg border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-lg border overflow-auto -mx-4 px-0 sm:mx-0">
+        <table className="w-full text-xs min-w-[400px]">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">
+              <th className="text-left px-2 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground">
                 User
               </th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">
+              <th className="text-left px-2 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground">
                 Type
               </th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">
+              <th className="text-left px-2 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground">
                 First Used
               </th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">
+              <th className="text-left px-2 sm:px-3 py-1.5 text-xs font-medium text-muted-foreground">
                 Last Active
               </th>
             </tr>
@@ -113,17 +113,19 @@ export default function CalendarUsageSection({
                 <tr key={entry.mode}>
                   {entryIdx === 0 ? (
                     <td
-                      className="px-3 py-2 text-foreground align-top"
+                      className="pl-2 pr-1 sm:px-3 py-1.5 text-foreground align-top truncate max-w-[80px] sm:max-w-[140px]"
                       rowSpan={user.entries.length}
                     >
                       {user.userName}
                     </td>
                   ) : null}
-                  <td className="px-3 py-2">
+                  <td className="px-2 sm:px-3 py-1.5">
                     <ModeBadge entry={entry} />
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground">{formatDate(entry.createdAt)}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 sm:px-3 py-1.5 text-muted-foreground">
+                    {formatDate(entry.createdAt)}
+                  </td>
+                  <td className="px-2 sm:px-3 py-1.5">
                     <LastActive iso={entry.lastUsedAt} />
                   </td>
                 </tr>
@@ -203,7 +205,9 @@ function ModeBadge({ entry }: { entry: CalendarUserEntry }) {
       }`}
     >
       {entry.mode === "subscribe" ? <Rss className="h-3 w-3" /> : <Download className="h-3 w-3" />}
-      {entry.mode === "subscribe" ? "Subscription" : "Download"}
+      <span className="hidden sm:inline">
+        {entry.mode === "subscribe" ? "Subscription" : "Download"}
+      </span>
     </span>
   );
 }

@@ -16,9 +16,11 @@ import { loadEnvConfig } from "@next/env";
 loadEnvConfig(process.cwd());
 
 import { createClient } from "@supabase/supabase-js";
+import { fromZonedTime } from "date-fns-tz";
 import { ensureAuth } from "./ccsa-test-client";
 import { sched, team } from "../lib/softball/ccsa-api";
 import type { ScheduleGame } from "../lib/softball/ccsa-types";
+import { SPORT_TIMEZONE } from "../lib/timezone";
 
 const SPORT = "softball";
 const GAME_DURATION_HOURS = 2;
@@ -151,7 +153,7 @@ async function run(email: string) {
     // signup_close = game start time
     // game.time may be "HH:MM" or "HH:MM:SS" — normalize to HH:MM:SS
     const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
-    const signupClose = new Date(`${game.date}T${timeForParse}-04:00`);
+    const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
 
     const isHome = game.home === teamId;
     const opponent = isHome ? game.away_name : game.home_name;
