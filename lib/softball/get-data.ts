@@ -49,7 +49,7 @@ export async function getTeamMembersWithProfiles(sport: string) {
     .eq("is_team_member", true);
 
   return (data ?? []).map((m) => ({
-    email: (m.profiles as unknown as { email: string })?.email ?? "",
+    email: (m.profiles as unknown as { email: string | null })?.email ?? "",
     full_name: (m.profiles as unknown as { full_name: string })?.full_name ?? "",
   }));
 }

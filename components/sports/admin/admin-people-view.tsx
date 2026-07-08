@@ -157,7 +157,7 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (m) => m.fullName?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
+        (m) => m.fullName?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q),
       );
     }
 
@@ -176,7 +176,7 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
       let cmp = 0;
       switch (sortKey) {
         case "name":
-          cmp = (a.fullName ?? a.email).localeCompare(b.fullName ?? b.email);
+          cmp = (a.fullName ?? a.email ?? a.id).localeCompare(b.fullName ?? b.email ?? b.id);
           break;
         case "role":
           cmp = (a.sportRole ?? "").localeCompare(b.sportRole ?? "");
@@ -407,15 +407,17 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
                         <Avatar className="h-7 w-7">
                           <AvatarImage src={member.avatarUrl ?? undefined} />
                           <AvatarFallback className="text-xs">
-                            {initials(member.fullName ?? member.email)}
+                            {initials(member.fullName ?? member.email ?? "?")}
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-medium text-sm">
-                          {member.fullName ?? member.email.split("@")[0]}
+                          {member.fullName ?? member.email?.split("@")[0] ?? "No email"}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {member.email ?? "—"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {member.isGlobalAdmin && (
@@ -539,13 +541,13 @@ function MobileCard({
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarImage src={member.avatarUrl ?? undefined} />
         <AvatarFallback className="text-xs">
-          {initials(member.fullName ?? member.email)}
+          {initials(member.fullName ?? member.email ?? "?")}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="font-medium text-sm truncate">
-            {member.fullName ?? member.email.split("@")[0]}
+            {member.fullName ?? member.email?.split("@")[0] ?? "No email"}
           </p>
           {member.isTeamMember && <TeamMemberBadge />}
           {member.isGlobalAdmin && (
@@ -793,14 +795,14 @@ function AddMemberDialog({
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<
-    { id: string; email: string; fullName: string | null; avatarUrl: string | null }[]
+    { id: string; email: string | null; fullName: string | null; avatarUrl: string | null }[]
   >([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addLevel, setAddLevel] = useState<RoleLevel>("team");
   const [selectedUser, setSelectedUser] = useState<{
     id: string;
-    email: string;
+    email: string | null;
     fullName: string | null;
     avatarUrl: string | null;
   } | null>(null);
@@ -907,14 +909,14 @@ function AddMemberDialog({
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={user.avatarUrl ?? undefined} />
                   <AvatarFallback className="text-xs">
-                    {initials(user.fullName ?? user.email)}
+                    {initials(user.fullName ?? user.email ?? "?")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {user.fullName ?? user.email.split("@")[0]}
+                    {user.fullName ?? user.email?.split("@")[0] ?? "No email"}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email ?? "—"}</p>
                 </div>
                 {selectedUser?.id === user.id && (
                   <UserPlus className="h-4 w-4 text-primary shrink-0" />
