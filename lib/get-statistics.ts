@@ -21,6 +21,14 @@ export interface SessionRow {
   playerCap: number | null;
 }
 
+export interface CalendarUsageRow {
+  userId: string;
+  userName: string;
+  mode: "subscribe" | "download";
+  createdAt: string;
+  lastUsedAt: string;
+}
+
 export interface StatsData {
   sessions: SessionRow[];
   signupRows: SignupRow[];
@@ -28,6 +36,8 @@ export interface StatsData {
   users: Array<{ id: string; name: string }>;
   /** Maps session_type value → display label (from sport config tabs) */
   typeLabels: Record<string, string>;
+  /** Calendar usage rows — only populated in admin/trend mode. */
+  calendarUsage: CalendarUsageRow[];
 }
 
 // ── Query ────────────────────────────────────────────────────────
@@ -56,23 +66,32 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
     signupsQuery = signupsQuery.eq("user_id", userId);
   }
 
-  // Parallelize: sessions + signups + config always; user list only in trend mode
-  const [{ data: sessions }, { data: signups }, roleUsersResult, config] = await Promise.all([
-    supabase
-      .from("sessions")
-      .select("id, date, session_type, player_cap")
-      .eq("sport", sport)
-      .eq("status", "active")
-      .lte("date", today),
-    signupsQuery,
-    userId
-      ? Promise.resolve({ data: null })
-      : supabase
-          .from("sport_roles")
-          .select("user_id, profiles!sport_roles_user_id_fkey(id, full_name, email)")
-          .eq("sport", sport),
-    getResolvedSportConfig(sport),
-  ]);
+  // Parallelize: sessions + signups + config always; user list only in trend mode; calendar always
+  const [{ data: sessions }, { data: signups }, roleUsersResult, config, calendarResult] =
+    await Promise.all([
+      supabase
+        .from("sessions")
+        .select("id, date, session_type, player_cap")
+        .eq("sport", sport)
+        .eq("status", "active")
+        .lte("date", today),
+      signupsQuery,
+      userId
+        ? Promise.resolve({ data: null })
+        : supabase
+            .from("sport_roles")
+            .select("user_id, profiles!sport_roles_user_id_fkey(id, full_name, email)")
+            .eq("sport", sport),
+      getResolvedSportConfig(sport),
+      (() => {
+        let q = supabase
+          .from("calendar_tracking")
+          .select("user_id, mode, created_at, last_used_at, profiles!inner(full_name, email)")
+          .eq("sport", sport);
+        if (userId) q = q.eq("user_id", userId);
+        return q;
+      })(),
+    ]);
 
   const sessionRows: SessionRow[] = (sessions ?? []).map((s) => ({
     id: s.id,
@@ -130,5 +149,20 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
     }
   }
 
-  return { sessions: sessionRows, signupRows, users, typeLabels };
+  // Transform calendar tracking rows
+  const calendarUsage: CalendarUsageRow[] = (calendarResult.data ?? []).map((row) => {
+    const profile = row.profiles as unknown as {
+      full_name: string | null;
+      email: string | null;
+    };
+    return {
+      userId: row.user_id,
+      userName: profile.full_name ?? profile.email ?? "Unknown",
+      mode: row.mode as "subscribe" | "download",
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+    };
+  });
+
+  return { sessions: sessionRows, signupRows, users, typeLabels, calendarUsage };
 }

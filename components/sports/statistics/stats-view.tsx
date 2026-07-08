@@ -23,12 +23,15 @@ import {
   computeEngagement,
   computeGrowth,
   computePlayerStats,
+  computeCalendarStats,
+  computeCalendarCorrelation,
   CHART_COLORS,
 } from "./compute";
 import StatCard from "./components/stat-card";
 import TrendChart from "./components/trend-chart";
 import EngagementTable from "./components/engagement-table";
 import PlayerLookup from "./components/player-lookup";
+import CalendarUsageSection from "./components/calendar-usage-section";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -118,6 +121,10 @@ export default function StatsView({
       typeStats: !isPersonal ? computeTypeStats(rows) : null,
       engagement: computeEngagement(rows, sessionCount, totalSessionsByType, users),
       growth: !isPersonal ? computeGrowth(rows) : null,
+      calendarStats: computeCalendarStats(data.calendarUsage),
+      calendarCorrelation: !isPersonal
+        ? computeCalendarCorrelation(data.signupRows, data.calendarUsage, data.users)
+        : null,
     };
   }, [data, signupRows, typeFilter, timeRange, isPersonal]);
 
@@ -298,6 +305,7 @@ export default function StatsView({
             types={Object.keys(filtered.engagement.totalSessionsPerType)}
             typeLabel={typeLabel}
             hideNameOnMobile={isPersonal}
+            hideActiveInactive={isPersonal}
           />
         </div>
       </CollapsibleSection>
@@ -316,6 +324,23 @@ export default function StatsView({
               </div>
             ))}
           </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Calendar Usage — personal shows own status, admin shows full stats + correlation */}
+      {filtered.calendarStats && (
+        <CollapsibleSection
+          title="Calendar Usage"
+          description={
+            isPersonal ? "Your calendar sync status" : "Subscription and download activity"
+          }
+          defaultOpen
+        >
+          <CalendarUsageSection
+            stats={filtered.calendarStats}
+            isPersonal={isPersonal}
+            correlation={filtered.calendarCorrelation}
+          />
         </CollapsibleSection>
       )}
     </section>

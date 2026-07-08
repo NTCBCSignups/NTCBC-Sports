@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { CalendarDays, Copy, Download, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { trackCalendarDownload } from "@/lib/actions/calendar";
 
 type ExportMode = "subscribe" | "download";
 
@@ -92,6 +93,7 @@ export default function CalendarExportButton({ sport, userId, tabs }: CalendarEx
     a.click();
     document.body.removeChild(a);
     setOpen(false);
+    void trackCalendarDownload(sport);
   }
 
   const hasSelection = selectedTabs.size > 0;

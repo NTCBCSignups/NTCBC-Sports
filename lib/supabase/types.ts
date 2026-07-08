@@ -118,3 +118,13 @@ export interface CcsaPlayer {
   waiver_status: WaiverStatus;
   synced_at: string;
 }
+
+export type CalendarTrackingMode = "subscribe" | "download";
+
+export interface CalendarTracking {
+  user_id: string;
+  sport: string;
+  mode: CalendarTrackingMode;
+  created_at: string;
+  last_used_at: string;
+}
