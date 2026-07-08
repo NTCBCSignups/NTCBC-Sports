@@ -23,12 +23,14 @@ import {
   computeEngagement,
   computeGrowth,
   computePlayerStats,
+  computeCalendarStats,
   CHART_COLORS,
 } from "./compute";
 import StatCard from "./components/stat-card";
 import TrendChart from "./components/trend-chart";
 import EngagementTable from "./components/engagement-table";
 import PlayerLookup from "./components/player-lookup";
+import CalendarUsageSection from "./components/calendar-usage-section";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -118,6 +120,7 @@ export default function StatsView({
       typeStats: !isPersonal ? computeTypeStats(rows) : null,
       engagement: computeEngagement(rows, sessionCount, totalSessionsByType, users),
       growth: !isPersonal ? computeGrowth(rows) : null,
+      calendarStats: !isPersonal ? computeCalendarStats(data.calendarUsage) : null,
     };
   }, [data, signupRows, typeFilter, timeRange, isPersonal]);
 
@@ -316,6 +319,17 @@ export default function StatsView({
               </div>
             ))}
           </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Calendar Usage (admin only) */}
+      {!isPersonal && filtered.calendarStats && (
+        <CollapsibleSection
+          title="Calendar Usage"
+          description="Subscription and download activity"
+          defaultOpen
+        >
+          <CalendarUsageSection stats={filtered.calendarStats} />
         </CollapsibleSection>
       )}
     </section>

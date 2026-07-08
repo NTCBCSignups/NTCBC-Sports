@@ -1,4 +1,4 @@
-import type { SignupRow, SessionRow } from "@/lib/get-statistics";
+import type { SignupRow, SessionRow, CalendarUsageRow } from "@/lib/get-statistics";
 
 // ── Date helpers (browser local time) ────────────────────────────
 
@@ -412,5 +412,57 @@ export function computePlayerStats(
     weeklyData,
     weeklyRaw,
     weeklyTypes: playerTypes,
+  };
+}
+
+// ── Calendar usage stats ─────────────────────────────────────────
+
+export interface CalendarStats {
+  totalSubscribers: number;
+  activeSubscribers: number;
+  totalDownloaders: number;
+  rows: Array<{
+    userName: string;
+    mode: "subscribe" | "download";
+    createdAt: string;
+    lastUsedAt: string;
+  }>;
+}
+
+/**
+ * Computes calendar usage statistics from raw tracking rows.
+ * "Active" subscribers are those whose subscription was polled in the last 7 days.
+ */
+export function computeCalendarStats(rows: CalendarUsageRow[]): CalendarStats {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const cutoff = sevenDaysAgo.toISOString();
+
+  let totalSubscribers = 0;
+  let activeSubscribers = 0;
+  let totalDownloaders = 0;
+
+  for (const row of rows) {
+    if (row.mode === "subscribe") {
+      totalSubscribers++;
+      if (row.lastUsedAt >= cutoff) activeSubscribers++;
+    } else {
+      totalDownloaders++;
+    }
+  }
+
+  // Sort by most recent activity first
+  const sorted = [...rows].sort((a, b) => b.lastUsedAt.localeCompare(a.lastUsedAt));
+
+  return {
+    totalSubscribers,
+    activeSubscribers,
+    totalDownloaders,
+    rows: sorted.map((r) => ({
+      userName: r.userName,
+      mode: r.mode,
+      createdAt: r.createdAt,
+      lastUsedAt: r.lastUsedAt,
+    })),
   };
 }
