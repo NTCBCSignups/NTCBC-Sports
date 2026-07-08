@@ -217,7 +217,7 @@ export async function searchUsersAction(sport: string, query: string) {
     .filter((p) => !existingIds.has(p.id))
     .map((p) => ({
       id: p.id,
-      email: p.email as string,
+      email: p.email as string | null,
       fullName: p.full_name as string | null,
       avatarUrl: p.avatar_url as string | null,
     }));

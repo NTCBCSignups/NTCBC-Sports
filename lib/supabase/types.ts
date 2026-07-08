@@ -2,7 +2,7 @@ export type UserRole = "user" | "admin";
 
 export interface Profile {
   id: string;
-  email: string;
+  email: string | null;
   full_name: string | null;
   avatar_url: string | null;
   role: UserRole;
@@ -92,7 +92,7 @@ export interface TeamAccessRequest {
 /** Aggregated member data for the People admin tab. */
 export interface SportMember {
   id: string;
-  email: string;
+  email: string | null;
   fullName: string | null;
   avatarUrl: string | null;
   /** Sport-specific role: "member" | "admin". Null if user only has signups (no sport_role). */

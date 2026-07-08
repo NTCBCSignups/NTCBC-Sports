@@ -87,7 +87,10 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
       session_type: string;
       player_cap: number | null;
     };
-    const profile = s.profiles as unknown as { full_name: string | null; email: string } | null;
+    const profile = s.profiles as unknown as {
+      full_name: string | null;
+      email: string | null;
+    } | null;
     return {
       sessionId: s.session_id,
       sessionDate: sess.date,
@@ -106,9 +109,9 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
       const p = r.profiles as unknown as {
         id: string;
         full_name: string | null;
-        email: string;
+        email: string | null;
       } | null;
-      if (p) userMap.set(p.id, p.full_name ?? p.email);
+      if (p) userMap.set(p.id, p.full_name ?? p.email ?? "Unknown");
     }
     for (const s of signupRows) {
       if (!userMap.has(s.userId)) userMap.set(s.userId, s.userName);

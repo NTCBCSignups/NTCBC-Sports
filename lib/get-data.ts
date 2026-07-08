@@ -146,14 +146,22 @@ export async function getSportUsers(sport: string) {
   for (const r of roleData ?? []) {
     const p = r.profiles as unknown as Profile | null;
     if (p) {
-      userMap.set(p.id, { id: p.id, name: p.full_name ?? p.email, isTeamMember: r.is_team_member });
+      userMap.set(p.id, {
+        id: p.id,
+        name: p.full_name ?? p.email ?? "Unknown",
+        isTeamMember: r.is_team_member,
+      });
     }
   }
 
   for (const s of signupData ?? []) {
     const p = s.profiles as unknown as Profile | null;
     if (p && !userMap.has(p.id)) {
-      userMap.set(p.id, { id: p.id, name: p.full_name ?? p.email, isTeamMember: false });
+      userMap.set(p.id, {
+        id: p.id,
+        name: p.full_name ?? p.email ?? "Unknown",
+        isTeamMember: false,
+      });
     }
   }
 
@@ -248,8 +256,8 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
   }
 
   return members.sort((a, b) => {
-    const nameA = a.fullName ?? a.email;
-    const nameB = b.fullName ?? b.email;
+    const nameA = a.fullName ?? a.email ?? "";
+    const nameB = b.fullName ?? b.email ?? "";
     return nameA.localeCompare(nameB);
   });
 }
