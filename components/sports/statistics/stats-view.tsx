@@ -115,18 +115,24 @@ export default function StatsView({
         : []
       : data.users;
 
+    // Scope calendar usage to current user in personal mode
+    const calendarRows =
+      isPersonal && userId
+        ? data.calendarUsage.filter((r) => r.userId === userId)
+        : data.calendarUsage;
+
     return {
       summary: computeSummary(rows, sessionCount),
       trend: !isPersonal ? computeAttendanceTrend(rows, data.sessions, timeRange) : null,
       typeStats: !isPersonal ? computeTypeStats(rows) : null,
       engagement: computeEngagement(rows, sessionCount, totalSessionsByType, users),
       growth: !isPersonal ? computeGrowth(rows) : null,
-      calendarStats: computeCalendarStats(data.calendarUsage),
+      calendarStats: computeCalendarStats(calendarRows),
       calendarCorrelation: !isPersonal
         ? computeCalendarCorrelation(data.signupRows, data.calendarUsage, data.users)
         : null,
     };
-  }, [data, signupRows, typeFilter, timeRange, isPersonal]);
+  }, [data, signupRows, typeFilter, timeRange, isPersonal, userId]);
 
   // In personal mode, the userId is known; in trend mode, it's the selected user from the picker
   const personalUserId = isPersonal ? (userId ?? signupRows[0]?.userId ?? "") : selectedUserId;
