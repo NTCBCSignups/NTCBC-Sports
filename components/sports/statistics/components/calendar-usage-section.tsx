@@ -1,19 +1,60 @@
-import { CalendarDays, Rss, Download } from "lucide-react";
-import type { CalendarStats } from "../compute";
+import { CalendarDays, Rss, Download, TrendingUp, TrendingDown } from "lucide-react";
+import type { CalendarStats, CalendarCorrelation } from "../compute";
 
 interface CalendarUsageSectionProps {
   stats: CalendarStats;
+  isPersonal?: boolean;
+  correlation?: CalendarCorrelation | null;
 }
 
-export default function CalendarUsageSection({ stats }: CalendarUsageSectionProps) {
+export default function CalendarUsageSection({
+  stats,
+  isPersonal,
+  correlation,
+}: CalendarUsageSectionProps) {
   if (stats.totalSubscribers === 0 && stats.totalDownloaders === 0) {
     return (
       <p className="text-sm text-muted-foreground py-2">
-        No calendar usage recorded yet.
+        {isPersonal
+          ? "You haven't used the calendar feature yet. Try subscribing or downloading from the calendar button!"
+          : "No calendar usage recorded yet."}
       </p>
     );
   }
 
+  // Personal mode: compact view of user's own calendar status
+  if (isPersonal) {
+    return (
+      <div className="space-y-3 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {stats.rows.map((row, i) => (
+            <div key={i} className="rounded-lg border bg-card p-3">
+              <div className="flex items-center gap-2">
+                {row.mode === "subscribe" ? (
+                  <Rss className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                ) : (
+                  <Download className="h-4 w-4 text-green-600 dark:text-green-400" />
+                )}
+                <p className="text-sm font-medium text-foreground">
+                  {row.mode === "subscribe" ? "Calendar Subscription" : "Calendar Download"}
+                </p>
+              </div>
+              <div className="mt-2 space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  First used: <span className="text-foreground">{formatDate(row.createdAt)}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Last active: <span className="text-foreground">{formatRelative(row.lastUsedAt)}</span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Admin mode: full stats + correlation insight + user table
   return (
     <div className="space-y-4 pt-4">
       {/* Summary cards */}
@@ -39,10 +80,15 @@ export default function CalendarUsageSection({ stats }: CalendarUsageSectionProp
             <p className="text-xs text-muted-foreground">Total Users</p>
           </div>
           <p className="text-xl font-bold text-foreground mt-1">
-            {new Set(stats.rows.map((r) => r.userName)).size}
+            {stats.uniqueUsers}
           </p>
         </div>
       </div>
+
+      {/* Correlation insight */}
+      {correlation && (
+        <CorrelationInsight correlation={correlation} />
+      )}
 
       {/* User list */}
       <div className="rounded-lg border overflow-hidden">
@@ -97,6 +143,51 @@ export default function CalendarUsageSection({ stats }: CalendarUsageSectionProp
     </div>
   );
 }
+
+// ── Correlation insight card ─────────────────────────────────────
+
+function CorrelationInsight({ correlation }: { correlation: CalendarCorrelation }) {
+  const { calendarUsersAvg, nonCalendarUsersAvg, percentDiff, calendarUserCount, nonCalendarUserCount } =
+    correlation;
+
+  const isPositive = percentDiff !== null && percentDiff > 0;
+  const isSignificant = percentDiff !== null && Math.abs(percentDiff) >= 10;
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-4">
+      <div className="flex items-start gap-2">
+        {isPositive ? (
+          <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+        ) : (
+          <TrendingDown className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+        )}
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">
+            Calendar &amp; Attendance Correlation
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Calendar users average{" "}
+            <span className="font-medium text-foreground">{calendarUsersAvg}</span> signups
+            {" "}vs{" "}
+            <span className="font-medium text-foreground">{nonCalendarUsersAvg}</span> for
+            non-calendar users
+            {percentDiff !== null && (
+              <span className={isSignificant && isPositive ? "text-green-600 dark:text-green-400 font-medium" : ""}>
+                {" "}({isPositive ? "+" : ""}{percentDiff}%)
+              </span>
+            )}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Based on {calendarUserCount} calendar user{calendarUserCount !== 1 ? "s" : ""} and{" "}
+            {nonCalendarUserCount} non-calendar user{nonCalendarUserCount !== 1 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {

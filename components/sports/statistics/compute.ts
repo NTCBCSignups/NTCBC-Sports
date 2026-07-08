@@ -421,6 +421,8 @@ export interface CalendarStats {
   totalSubscribers: number;
   activeSubscribers: number;
   totalDownloaders: number;
+  /** Count of unique users who have used either subscribe or download. */
+  uniqueUsers: number;
   rows: Array<{
     userName: string;
     mode: "subscribe" | "download";
@@ -431,6 +433,7 @@ export interface CalendarStats {
 
 /**
  * Computes calendar usage statistics from raw tracking rows.
+ * A user may have both a subscribe and download row (independent entries).
  * "Active" subscribers are those whose subscription was polled in the last 7 days.
  */
 export function computeCalendarStats(rows: CalendarUsageRow[]): CalendarStats {
@@ -441,8 +444,10 @@ export function computeCalendarStats(rows: CalendarUsageRow[]): CalendarStats {
   let totalSubscribers = 0;
   let activeSubscribers = 0;
   let totalDownloaders = 0;
+  const userIds = new Set<string>();
 
   for (const row of rows) {
+    userIds.add(row.userId);
     if (row.mode === "subscribe") {
       totalSubscribers++;
       if (row.lastUsedAt >= cutoff) activeSubscribers++;
@@ -458,11 +463,76 @@ export function computeCalendarStats(rows: CalendarUsageRow[]): CalendarStats {
     totalSubscribers,
     activeSubscribers,
     totalDownloaders,
+    uniqueUsers: userIds.size,
     rows: sorted.map((r) => ({
       userName: r.userName,
       mode: r.mode,
       createdAt: r.createdAt,
       lastUsedAt: r.lastUsedAt,
     })),
+  };
+}
+
+// ── Calendar attendance correlation (admin) ──────────────────────
+
+export interface CalendarCorrelation {
+  /** Average signups per calendar user */
+  calendarUsersAvg: number;
+  /** Average signups per non-calendar user */
+  nonCalendarUsersAvg: number;
+  /** Percentage difference (positive = calendar users attend more) */
+  percentDiff: number | null;
+  calendarUserCount: number;
+  nonCalendarUserCount: number;
+}
+
+/**
+ * Compares average attendance of users who use the calendar feature
+ * vs those who don't. Helps admins assess whether the calendar drives engagement.
+ */
+export function computeCalendarCorrelation(
+  signupRows: SignupRow[],
+  calendarUsage: CalendarUsageRow[],
+  allUsers: Array<{ id: string }>,
+): CalendarCorrelation | null {
+  if (allUsers.length === 0 || calendarUsage.length === 0) return null;
+
+  const calendarUserIds = new Set(calendarUsage.map((r) => r.userId));
+
+  // Count signups per user
+  const signupsByUser = new Map<string, number>();
+  for (const r of signupRows) {
+    signupsByUser.set(r.userId, (signupsByUser.get(r.userId) ?? 0) + 1);
+  }
+
+  let calTotal = 0;
+  let calCount = 0;
+  let nonCalTotal = 0;
+  let nonCalCount = 0;
+
+  for (const user of allUsers) {
+    const count = signupsByUser.get(user.id) ?? 0;
+    if (calendarUserIds.has(user.id)) {
+      calTotal += count;
+      calCount++;
+    } else {
+      nonCalTotal += count;
+      nonCalCount++;
+    }
+  }
+
+  const calendarUsersAvg = calCount > 0 ? calTotal / calCount : 0;
+  const nonCalendarUsersAvg = nonCalCount > 0 ? nonCalTotal / nonCalCount : 0;
+  const percentDiff =
+    nonCalendarUsersAvg > 0
+      ? Math.round(((calendarUsersAvg - nonCalendarUsersAvg) / nonCalendarUsersAvg) * 100)
+      : null;
+
+  return {
+    calendarUsersAvg: Math.round(calendarUsersAvg * 10) / 10,
+    nonCalendarUsersAvg: Math.round(nonCalendarUsersAvg * 10) / 10,
+    percentDiff,
+    calendarUserCount: calCount,
+    nonCalendarUserCount: nonCalCount,
   };
 }

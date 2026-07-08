@@ -11,6 +11,8 @@ interface EngagementTableProps {
   typeLabel: (type: string) => string;
   /** In personal mode, hide the name column on mobile (it's just the user's own name) */
   hideNameOnMobile?: boolean;
+  /** Hide the active/inactive summary counts (e.g. in personal mode) */
+  hideActiveInactive?: boolean;
 }
 
 export default function EngagementTable({
@@ -18,6 +20,7 @@ export default function EngagementTable({
   types,
   typeLabel,
   hideNameOnMobile,
+  hideActiveInactive,
 }: EngagementTableProps) {
   const [sortKey, setSortKey] = useState<string>("count");
   const [sortAsc, setSortAsc] = useState(false);
@@ -49,22 +52,24 @@ export default function EngagementTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-foreground">{data.activeCount}</p>
-            <p className="text-xs text-muted-foreground">Active</p>
+      {!hideActiveInactive && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">{data.activeCount}</p>
+              <p className="text-xs text-muted-foreground">Active</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-muted-foreground">{data.inactiveCount}</p>
+              <p className="text-xs text-muted-foreground">Inactive</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-muted-foreground">{data.inactiveCount}</p>
-            <p className="text-xs text-muted-foreground">Inactive</p>
-          </div>
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+            <Checkbox checked={hideInactive} onCheckedChange={(c) => setHideInactive(!!c)} />
+            Hide inactive
+          </label>
         </div>
-        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-          <Checkbox checked={hideInactive} onCheckedChange={(c) => setHideInactive(!!c)} />
-          Hide inactive
-        </label>
-      </div>
+      )}
 
       {sorted.length > 0 && (
         <div className="overflow-auto max-h-80 -mx-4 px-4 sm:mx-0 sm:px-0">

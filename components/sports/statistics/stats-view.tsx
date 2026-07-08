@@ -24,6 +24,7 @@ import {
   computeGrowth,
   computePlayerStats,
   computeCalendarStats,
+  computeCalendarCorrelation,
   CHART_COLORS,
 } from "./compute";
 import StatCard from "./components/stat-card";
@@ -120,7 +121,10 @@ export default function StatsView({
       typeStats: !isPersonal ? computeTypeStats(rows) : null,
       engagement: computeEngagement(rows, sessionCount, totalSessionsByType, users),
       growth: !isPersonal ? computeGrowth(rows) : null,
-      calendarStats: !isPersonal ? computeCalendarStats(data.calendarUsage) : null,
+      calendarStats: computeCalendarStats(data.calendarUsage),
+      calendarCorrelation: !isPersonal
+        ? computeCalendarCorrelation(data.signupRows, data.calendarUsage, data.users)
+        : null,
     };
   }, [data, signupRows, typeFilter, timeRange, isPersonal]);
 
@@ -301,6 +305,7 @@ export default function StatsView({
             types={Object.keys(filtered.engagement.totalSessionsPerType)}
             typeLabel={typeLabel}
             hideNameOnMobile={isPersonal}
+            hideActiveInactive={isPersonal}
           />
         </div>
       </CollapsibleSection>
@@ -322,14 +327,18 @@ export default function StatsView({
         </CollapsibleSection>
       )}
 
-      {/* Calendar Usage (admin only) */}
-      {!isPersonal && filtered.calendarStats && (
+      {/* Calendar Usage — personal shows own status, admin shows full stats + correlation */}
+      {filtered.calendarStats && (
         <CollapsibleSection
           title="Calendar Usage"
-          description="Subscription and download activity"
+          description={isPersonal ? "Your calendar sync status" : "Subscription and download activity"}
           defaultOpen
         >
-          <CalendarUsageSection stats={filtered.calendarStats} />
+          <CalendarUsageSection
+            stats={filtered.calendarStats}
+            isPersonal={isPersonal}
+            correlation={filtered.calendarCorrelation}
+          />
         </CollapsibleSection>
       )}
     </section>
