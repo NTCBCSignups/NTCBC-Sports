@@ -56,9 +56,10 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
   let signupsQuery = supabase
     .from("signups")
     .select(
-      "user_id, session_id, sessions!inner(sport, date, session_type, player_cap), profiles(full_name, email)",
+      "user_id, session_id, sessions!inner(sport, date, session_type, player_cap, status), profiles(full_name, email)",
     )
     .eq("sessions.sport", sport)
+    .eq("sessions.status", "active")
     .lte("sessions.date", today)
     .in("status", ["confirmed", "waitlisted"]);
 

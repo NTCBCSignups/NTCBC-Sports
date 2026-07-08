@@ -89,8 +89,8 @@ export default function CalendarUsageSection({
       {correlation && <CorrelationInsight correlation={correlation} />}
 
       {/* User list */}
-      <div className="rounded-lg border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-lg border overflow-auto -mx-4 px-0 sm:mx-0">
+        <table className="w-full text-sm min-w-[480px]">
           <thead className="bg-muted/50">
             <tr>
               <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">
@@ -203,7 +203,9 @@ function ModeBadge({ entry }: { entry: CalendarUserEntry }) {
       }`}
     >
       {entry.mode === "subscribe" ? <Rss className="h-3 w-3" /> : <Download className="h-3 w-3" />}
-      {entry.mode === "subscribe" ? "Subscription" : "Download"}
+      <span className="hidden sm:inline">
+        {entry.mode === "subscribe" ? "Subscription" : "Download"}
+      </span>
     </span>
   );
 }
