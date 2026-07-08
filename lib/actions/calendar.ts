@@ -14,15 +14,13 @@ export async function trackCalendarDownload(sport: string): Promise<void> {
   if (!user) return;
 
   const supabase = await createClient();
-  await supabase
-    .from("calendar_tracking")
-    .upsert(
-      {
-        user_id: user.id,
-        sport,
-        mode: "download" as const,
-        last_used_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,sport,mode", ignoreDuplicates: false },
-    );
+  await supabase.from("calendar_tracking").upsert(
+    {
+      user_id: user.id,
+      sport,
+      mode: "download" as const,
+      last_used_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,sport,mode", ignoreDuplicates: false },
+  );
 }

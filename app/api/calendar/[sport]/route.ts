@@ -111,17 +111,15 @@ export async function GET(
   // created_at is intentionally excluded — DB default sets it on first INSERT,
   // and PostgREST only updates payload columns on conflict, preserving the original timestamp.
   if (!isDownload) {
-    void supabase
-      .from("calendar_tracking")
-      .upsert(
-        {
-          user_id: userId,
-          sport,
-          mode: "subscribe" as const,
-          last_used_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,sport,mode", ignoreDuplicates: false },
-      );
+    void supabase.from("calendar_tracking").upsert(
+      {
+        user_id: userId,
+        sport,
+        mode: "subscribe" as const,
+        last_used_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,sport,mode", ignoreDuplicates: false },
+    );
   }
 
   return new Response(ical, {
