@@ -106,6 +106,16 @@ export async function GET(
     buildSessionUrl: (session) => getSessionUrl(origin, sport, session.id),
   });
 
+  // Fire-and-forget: track subscription access (not downloads — those are tracked client-side)
+  if (!isDownload) {
+    void supabase
+      .from("calendar_tracking")
+      .upsert(
+        { user_id: userId, sport, mode: "subscribe" as const, last_used_at: new Date().toISOString() },
+        { onConflict: "user_id,sport,mode", ignoreDuplicates: false },
+      );
+  }
+
   return new Response(ical, {
     status: 200,
     headers: buildHeaders(sport, isDownload),
