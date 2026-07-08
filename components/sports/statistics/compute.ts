@@ -417,18 +417,28 @@ export function computePlayerStats(
 
 // ── Calendar usage stats ─────────────────────────────────────────
 
+export interface CalendarUserEntry {
+  mode: "subscribe" | "download";
+  createdAt: string;
+  lastUsedAt: string;
+}
+
+export interface CalendarUserRow {
+  userName: string;
+  /** All modes this user has used (1 or 2 entries). Sorted subscribe-first. */
+  entries: CalendarUserEntry[];
+  /** Most recent activity across all modes — used for sorting. */
+  latestActivity: string;
+}
+
 export interface CalendarStats {
   totalSubscribers: number;
   activeSubscribers: number;
   totalDownloaders: number;
   /** Count of unique users who have used either subscribe or download. */
   uniqueUsers: number;
-  rows: Array<{
-    userName: string;
-    mode: "subscribe" | "download";
-    createdAt: string;
-    lastUsedAt: string;
-  }>;
+  /** Grouped by user — each user appears once with all their mode entries. */
+  users: CalendarUserRow[];
 }
 
 /**
@@ -444,32 +454,57 @@ export function computeCalendarStats(rows: CalendarUsageRow[]): CalendarStats {
   let totalSubscribers = 0;
   let activeSubscribers = 0;
   let totalDownloaders = 0;
-  const userIds = new Set<string>();
+
+  // Group by userId
+  const userMap = new Map<
+    string,
+    { userName: string; entries: CalendarUserEntry[]; latestActivity: string }
+  >();
 
   for (const row of rows) {
-    userIds.add(row.userId);
     if (row.mode === "subscribe") {
       totalSubscribers++;
       if (row.lastUsedAt >= cutoff) activeSubscribers++;
     } else {
       totalDownloaders++;
     }
+
+    const existing = userMap.get(row.userId);
+    const entry: CalendarUserEntry = {
+      mode: row.mode,
+      createdAt: row.createdAt,
+      lastUsedAt: row.lastUsedAt,
+    };
+
+    if (existing) {
+      existing.entries.push(entry);
+      if (row.lastUsedAt > existing.latestActivity) {
+        existing.latestActivity = row.lastUsedAt;
+      }
+    } else {
+      userMap.set(row.userId, {
+        userName: row.userName,
+        entries: [entry],
+        latestActivity: row.lastUsedAt,
+      });
+    }
   }
 
-  // Sort by most recent activity first
-  const sorted = [...rows].sort((a, b) => b.lastUsedAt.localeCompare(a.lastUsedAt));
+  // Sort users by most recent activity first; within each user sort entries subscribe-first
+  const modeOrder = { subscribe: 0, download: 1 } as const;
+  const users = [...userMap.values()]
+    .sort((a, b) => b.latestActivity.localeCompare(a.latestActivity))
+    .map((u) => ({
+      ...u,
+      entries: u.entries.sort((a, b) => modeOrder[a.mode] - modeOrder[b.mode]),
+    }));
 
   return {
     totalSubscribers,
     activeSubscribers,
     totalDownloaders,
-    uniqueUsers: userIds.size,
-    rows: sorted.map((r) => ({
-      userName: r.userName,
-      mode: r.mode,
-      createdAt: r.createdAt,
-      lastUsedAt: r.lastUsedAt,
-    })),
+    uniqueUsers: userMap.size,
+    users,
   };
 }
 

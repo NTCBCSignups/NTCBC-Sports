@@ -1,5 +1,5 @@
 import { CalendarDays, Rss, Download, TrendingUp, TrendingDown } from "lucide-react";
-import type { CalendarStats, CalendarCorrelation } from "../compute";
+import type { CalendarStats, CalendarCorrelation, CalendarUserEntry } from "../compute";
 
 interface CalendarUsageSectionProps {
   stats: CalendarStats;
@@ -24,28 +24,29 @@ export default function CalendarUsageSection({
 
   // Personal mode: compact view of user's own calendar status
   if (isPersonal) {
+    const entries = stats.users.flatMap((u) => u.entries);
     return (
       <div className="space-y-3 pt-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {stats.rows.map((row, i) => (
+          {entries.map((entry, i) => (
             <div key={i} className="rounded-lg border bg-card p-3">
               <div className="flex items-center gap-2">
-                {row.mode === "subscribe" ? (
+                {entry.mode === "subscribe" ? (
                   <Rss className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 ) : (
                   <Download className="h-4 w-4 text-green-600 dark:text-green-400" />
                 )}
                 <p className="text-sm font-medium text-foreground">
-                  {row.mode === "subscribe" ? "Calendar Subscription" : "Calendar Download"}
+                  {entry.mode === "subscribe" ? "Calendar Subscription" : "Calendar Download"}
                 </p>
               </div>
               <div className="mt-2 space-y-1">
                 <p className="text-xs text-muted-foreground">
-                  First used: <span className="text-foreground">{formatDate(row.createdAt)}</span>
+                  First used: <span className="text-foreground">{formatDate(entry.createdAt)}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Last active:{" "}
-                  <span className="text-foreground">{formatRelative(row.lastUsedAt)}</span>
+                  <span className="text-foreground">{formatRelative(entry.lastUsedAt)}</span>
                 </p>
               </div>
             </div>
@@ -106,33 +107,29 @@ export default function CalendarUsageSection({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
-            {stats.rows.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/30">
-                <td className="px-3 py-2 text-foreground">{row.userName}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
-                      row.mode === "subscribe"
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                        : "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
-                    }`}
-                  >
-                    {row.mode === "subscribe" ? (
-                      <Rss className="h-3 w-3" />
-                    ) : (
-                      <Download className="h-3 w-3" />
-                    )}
-                    {row.mode === "subscribe" ? "Subscription" : "Download"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">{formatDate(row.createdAt)}</td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {formatRelative(row.lastUsedAt)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          {stats.users.map((user) => (
+            <tbody key={user.userName} className="border-t hover:bg-muted/30">
+              {user.entries.map((entry, entryIdx) => (
+                <tr key={entry.mode}>
+                  {entryIdx === 0 ? (
+                    <td
+                      className="px-3 py-2 text-foreground align-top"
+                      rowSpan={user.entries.length}
+                    >
+                      {user.userName}
+                    </td>
+                  ) : null}
+                  <td className="px-3 py-2">
+                    <ModeBadge entry={entry} />
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">{formatDate(entry.createdAt)}</td>
+                  <td className="px-3 py-2">
+                    <LastActive iso={entry.lastUsedAt} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          ))}
         </table>
       </div>
     </div>
@@ -195,6 +192,32 @@ function CorrelationInsight({ correlation }: { correlation: CalendarCorrelation 
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
+
+function ModeBadge({ entry }: { entry: CalendarUserEntry }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
+        entry.mode === "subscribe"
+          ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+          : "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+      }`}
+    >
+      {entry.mode === "subscribe" ? <Rss className="h-3 w-3" /> : <Download className="h-3 w-3" />}
+      {entry.mode === "subscribe" ? "Subscription" : "Download"}
+    </span>
+  );
+}
+
+function LastActive({ iso }: { iso: string }) {
+  const diffDays = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
+  const isStale = diffDays >= 7;
+
+  return (
+    <span className={isStale ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
+      {formatRelative(iso)}
+    </span>
+  );
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
