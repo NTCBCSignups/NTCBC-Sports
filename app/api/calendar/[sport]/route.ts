@@ -114,7 +114,12 @@ export async function GET(
     void supabase
       .from("calendar_tracking")
       .upsert(
-        { user_id: userId, sport, mode: "subscribe" as const, last_used_at: new Date().toISOString() },
+        {
+          user_id: userId,
+          sport,
+          mode: "subscribe" as const,
+          last_used_at: new Date().toISOString(),
+        },
         { onConflict: "user_id,sport,mode", ignoreDuplicates: false },
       );
   }

@@ -44,7 +44,8 @@ export default function CalendarUsageSection({
                   First used: <span className="text-foreground">{formatDate(row.createdAt)}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Last active: <span className="text-foreground">{formatRelative(row.lastUsedAt)}</span>
+                  Last active:{" "}
+                  <span className="text-foreground">{formatRelative(row.lastUsedAt)}</span>
                 </p>
               </div>
             </div>
@@ -79,16 +80,12 @@ export default function CalendarUsageSection({
             <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Total Users</p>
           </div>
-          <p className="text-xl font-bold text-foreground mt-1">
-            {stats.uniqueUsers}
-          </p>
+          <p className="text-xl font-bold text-foreground mt-1">{stats.uniqueUsers}</p>
         </div>
       </div>
 
       {/* Correlation insight */}
-      {correlation && (
-        <CorrelationInsight correlation={correlation} />
-      )}
+      {correlation && <CorrelationInsight correlation={correlation} />}
 
       {/* User list */}
       <div className="rounded-lg border overflow-hidden">
@@ -129,9 +126,7 @@ export default function CalendarUsageSection({
                     {row.mode === "subscribe" ? "Subscription" : "Download"}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {formatDate(row.createdAt)}
-                </td>
+                <td className="px-3 py-2 text-muted-foreground">{formatDate(row.createdAt)}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {formatRelative(row.lastUsedAt)}
                 </td>
@@ -147,8 +142,13 @@ export default function CalendarUsageSection({
 // ── Correlation insight card ─────────────────────────────────────
 
 function CorrelationInsight({ correlation }: { correlation: CalendarCorrelation }) {
-  const { calendarUsersAvg, nonCalendarUsersAvg, percentDiff, calendarUserCount, nonCalendarUserCount } =
-    correlation;
+  const {
+    calendarUsersAvg,
+    nonCalendarUsersAvg,
+    percentDiff,
+    calendarUserCount,
+    nonCalendarUserCount,
+  } = correlation;
 
   const isPositive = percentDiff !== null && percentDiff > 0;
   const isSignificant = percentDiff !== null && Math.abs(percentDiff) >= 10;
@@ -167,13 +167,20 @@ function CorrelationInsight({ correlation }: { correlation: CalendarCorrelation 
           </p>
           <p className="text-xs text-muted-foreground">
             Calendar users average{" "}
-            <span className="font-medium text-foreground">{calendarUsersAvg}</span> signups
-            {" "}vs{" "}
+            <span className="font-medium text-foreground">{calendarUsersAvg}</span> signups vs{" "}
             <span className="font-medium text-foreground">{nonCalendarUsersAvg}</span> for
             non-calendar users
             {percentDiff !== null && (
-              <span className={isSignificant && isPositive ? "text-green-600 dark:text-green-400 font-medium" : ""}>
-                {" "}({isPositive ? "+" : ""}{percentDiff}%)
+              <span
+                className={
+                  isSignificant && isPositive
+                    ? "text-green-600 dark:text-green-400 font-medium"
+                    : ""
+                }
+              >
+                {" "}
+                ({isPositive ? "+" : ""}
+                {percentDiff}%)
               </span>
             )}
           </p>

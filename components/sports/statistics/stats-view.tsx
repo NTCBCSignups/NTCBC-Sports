@@ -331,7 +331,9 @@ export default function StatsView({
       {filtered.calendarStats && (
         <CollapsibleSection
           title="Calendar Usage"
-          description={isPersonal ? "Your calendar sync status" : "Subscription and download activity"}
+          description={
+            isPersonal ? "Your calendar sync status" : "Subscription and download activity"
+          }
           defaultOpen
         >
           <CalendarUsageSection
