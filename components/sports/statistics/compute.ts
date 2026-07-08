@@ -491,11 +491,12 @@ export function computeCalendarStats(rows: CalendarUsageRow[]): CalendarStats {
   }
 
   // Sort users by most recent activity first; within each user sort entries subscribe-first
+  const modeOrder = { subscribe: 0, download: 1 } as const;
   const users = [...userMap.values()]
     .sort((a, b) => b.latestActivity.localeCompare(a.latestActivity))
     .map((u) => ({
       ...u,
-      entries: u.entries.sort((a, b) => (a.mode === "subscribe" ? -1 : 1)),
+      entries: u.entries.sort((a, b) => modeOrder[a.mode] - modeOrder[b.mode]),
     }));
 
   return {

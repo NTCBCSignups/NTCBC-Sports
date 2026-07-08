@@ -107,29 +107,29 @@ export default function CalendarUsageSection({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
-            {stats.users.map((user) =>
-              user.entries.map((entry, entryIdx) => (
-                <tr key={`${user.userName}-${entry.mode}`} className="hover:bg-muted/30">
-                  {entryIdx === 0 && (
+          {stats.users.map((user) => (
+            <tbody key={user.userName} className="border-t hover:bg-muted/30">
+              {user.entries.map((entry, entryIdx) => (
+                <tr key={entry.mode}>
+                  {entryIdx === 0 ? (
                     <td
                       className="px-3 py-2 text-foreground align-top"
                       rowSpan={user.entries.length}
                     >
                       {user.userName}
                     </td>
-                  )}
+                  ) : null}
                   <td className="px-3 py-2">
                     <ModeBadge entry={entry} />
                   </td>
                   <td className="px-3 py-2 text-muted-foreground">{formatDate(entry.createdAt)}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {formatRelative(entry.lastUsedAt)}
+                  <td className="px-3 py-2">
+                    <LastActive iso={entry.lastUsedAt} />
                   </td>
                 </tr>
-              )),
-            )}
-          </tbody>
+              ))}
+            </tbody>
+          ))}
         </table>
       </div>
     </div>
@@ -204,6 +204,17 @@ function ModeBadge({ entry }: { entry: CalendarUserEntry }) {
     >
       {entry.mode === "subscribe" ? <Rss className="h-3 w-3" /> : <Download className="h-3 w-3" />}
       {entry.mode === "subscribe" ? "Subscription" : "Download"}
+    </span>
+  );
+}
+
+function LastActive({ iso }: { iso: string }) {
+  const diffDays = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
+  const isStale = diffDays >= 7;
+
+  return (
+    <span className={isStale ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
+      {formatRelative(iso)}
     </span>
   );
 }
