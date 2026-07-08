@@ -27,7 +27,7 @@ describe("computeCalendarStats", () => {
     expect(result.activeSubscribers).toBe(0);
     expect(result.totalDownloaders).toBe(0);
     expect(result.uniqueUsers).toBe(0);
-    expect(result.rows).toHaveLength(0);
+    expect(result.users).toHaveLength(0);
   });
 
   it("counts subscribers and downloaders separately", () => {
@@ -69,7 +69,7 @@ describe("computeCalendarStats", () => {
     expect(result.activeSubscribers).toBe(1);
   });
 
-  it("sorts rows by most recent activity first", () => {
+  it("sorts users by most recent activity first", () => {
     const rows = [
       makeCalendarRow({
         userId: "u1",
@@ -84,8 +84,8 @@ describe("computeCalendarStats", () => {
     ];
 
     const result = computeCalendarStats(rows);
-    expect(result.rows[0]!.userName).toBe("Newer");
-    expect(result.rows[1]!.userName).toBe("Older");
+    expect(result.users[0]!.userName).toBe("Newer");
+    expect(result.users[1]!.userName).toBe("Older");
   });
 
   it("does not mutate the original array", () => {
@@ -99,7 +99,7 @@ describe("computeCalendarStats", () => {
     expect(rows[0]).toBe(originalFirst);
   });
 
-  it("handles a user with both subscribe and download as separate entries", () => {
+  it("groups a user with both subscribe and download into one entry", () => {
     const rows = [
       makeCalendarRow({ userId: "u1", userName: "Alice", mode: "subscribe" }),
       makeCalendarRow({ userId: "u1", userName: "Alice", mode: "download" }),
@@ -108,8 +108,11 @@ describe("computeCalendarStats", () => {
     const result = computeCalendarStats(rows);
     expect(result.totalSubscribers).toBe(1);
     expect(result.totalDownloaders).toBe(1);
-    expect(result.uniqueUsers).toBe(1); // same user, counted once
-    expect(result.rows).toHaveLength(2); // but both entries shown in table
+    expect(result.uniqueUsers).toBe(1);
+    expect(result.users).toHaveLength(1); // one user row
+    expect(result.users[0]!.entries).toHaveLength(2); // both modes as entries
+    expect(result.users[0]!.entries[0]!.mode).toBe("subscribe"); // subscribe first
+    expect(result.users[0]!.entries[1]!.mode).toBe("download");
   });
 
   it("boundary: subscriber active exactly 7 days ago is not active", () => {
