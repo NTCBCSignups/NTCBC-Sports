@@ -66,7 +66,7 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
     signupsQuery = signupsQuery.eq("user_id", userId);
   }
 
-  // Parallelize: sessions + signups + config always; user list + calendar tracking only in trend mode
+  // Parallelize: sessions + signups + config always; user list only in trend mode; calendar always
   const [{ data: sessions }, { data: signups }, roleUsersResult, config, calendarResult] =
     await Promise.all([
       supabase
@@ -83,12 +83,14 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
             .select("user_id, profiles!sport_roles_user_id_fkey(id, full_name, email)")
             .eq("sport", sport),
       getResolvedSportConfig(sport),
-      userId
-        ? Promise.resolve({ data: null })
-        : supabase
-            .from("calendar_tracking")
-            .select("user_id, mode, created_at, last_used_at, profiles!inner(full_name, email)")
-            .eq("sport", sport),
+      (() => {
+        let q = supabase
+          .from("calendar_tracking")
+          .select("user_id, mode, created_at, last_used_at, profiles!inner(full_name, email)")
+          .eq("sport", sport);
+        if (userId) q = q.eq("user_id", userId);
+        return q;
+      })(),
     ]);
 
   const sessionRows: SessionRow[] = (sessions ?? []).map((s) => ({
@@ -147,7 +149,7 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
     }
   }
 
-  // Transform calendar tracking rows (admin/trend mode only)
+  // Transform calendar tracking rows
   const calendarUsage: CalendarUsageRow[] = (calendarResult.data ?? []).map((row) => {
     const profile = row.profiles as unknown as {
       full_name: string | null;
