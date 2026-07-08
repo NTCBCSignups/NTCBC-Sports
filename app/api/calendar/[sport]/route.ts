@@ -106,12 +106,13 @@ export async function GET(
     buildSessionUrl: (session) => getSessionUrl(origin, sport, session.id),
   });
 
-  // Fire-and-forget: track subscription access (not downloads — those are tracked client-side).
+  // Track subscription access — awaited because Vercel terminates the function
+  // after the response is sent, so fire-and-forget promises may not complete.
   // PK is (user_id, sport, mode) so subscribe/download are independent rows per user.
   // created_at is intentionally excluded — DB default sets it on first INSERT,
   // and PostgREST only updates payload columns on conflict, preserving the original timestamp.
   if (!isDownload) {
-    void supabase.from("calendar_tracking").upsert(
+    await supabase.from("calendar_tracking").upsert(
       {
         user_id: userId,
         sport,
