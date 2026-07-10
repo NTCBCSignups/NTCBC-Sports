@@ -671,7 +671,7 @@ export default function CcsaSyncButton({
                       setPending(false);
                     }}
                   >
-                    <SelectTrigger className="h-7 w-auto text-xs px-2">
+                    <SelectTrigger className="h-7 w-auto text-base md:text-xs px-2">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
