@@ -478,7 +478,9 @@ export default function CcsaSyncButton({
                 Apply Player Sync ({playersPreview.newCount + playersPreview.updatedCount} changes)
               </Button>
             )}
-            {playersPreview && playersPreview.players.length > 0 && (
+            {playersPreview && playersPreview.players.some(
+              (p) => getAccessStatus(p, teamMembers, allProfiles).status !== "on-team",
+            ) && (
               <Button
                 variant="outline"
                 size="sm"
