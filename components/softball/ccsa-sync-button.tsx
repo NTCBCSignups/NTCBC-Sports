@@ -702,44 +702,44 @@ export default function CcsaSyncButton({
 
           {/* ─── Games Tab ────────────────────────────────────────────────── */}
           <TabsContent value="games" className="space-y-3">
-            {sessionTabs.length > 1 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Sync to:</span>
-                <Select
-                  value={sessionType}
-                  onValueChange={(val) => {
-                    setSessionType(val);
-                    setGamesPreview(null);
-                    // Re-sync with new session type
-                    handleSyncAll();
-                  }}
+            <div className="flex items-center gap-2">
+              {hasGameChanges && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApplyGameSync}
+                  disabled={pending}
+                  className="rounded-full"
                 >
-                  <SelectTrigger className="h-7 w-auto text-xs px-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sessionTabs.map((tab) => (
-                      <SelectItem key={tab.value} value={tab.value}>
-                        {tab.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {hasGameChanges && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleApplyGameSync}
-                disabled={pending}
-                className="rounded-full"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                {pending ? "Applying..." : "Apply Changes"}
-              </Button>
-            )}
+                  <Check className="h-4 w-4 mr-2" />
+                  {pending ? "Applying..." : "Apply Changes"}
+                </Button>
+              )}
+              {sessionTabs.length > 1 && (
+                <>
+                  <span className="text-xs text-muted-foreground">Sync to:</span>
+                  <Select
+                    value={sessionType}
+                    onValueChange={(val) => {
+                      setSessionType(val);
+                      setGamesPreview(null);
+                      handleSyncAll();
+                    }}
+                  >
+                    <SelectTrigger className="h-7 w-auto text-xs px-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sessionTabs.map((tab) => (
+                        <SelectItem key={tab.value} value={tab.value}>
+                          {tab.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+            </div>
 
             {(gamesResult || gamesError) && (
               <div className="flex flex-wrap items-center gap-2">
