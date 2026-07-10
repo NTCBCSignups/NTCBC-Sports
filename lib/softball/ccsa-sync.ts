@@ -8,7 +8,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSportAdmin } from "@/lib/supabase/user";
 import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-server-fetch";
 import { auth, team, sched } from "@/lib/softball/ccsa-api";
-import type { ScheduleGame } from "@/lib/softball/ccsa-types";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { SPORT_TIMEZONE } from "@/lib/timezone";
 import { getScheduledGameSessions } from "@/lib/softball/get-data";
@@ -386,7 +385,6 @@ export async function getCcsaPlayersPreview(): Promise<PlayersPreview | { error:
 
 const GAME_DURATION_HOURS = 2;
 const SYNC_MARKER = "# CCSA Sync — Do Not Edit";
-const GAME_CODE_REGEX = /Game Code:\s*(\S+)/;
 
 export interface GameDiff {
   gamecode: string;
@@ -441,16 +439,34 @@ function mapsLink(parkName: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parkName)}`;
 }
 
-function buildGameNotes(game: ScheduleGame, isHome: boolean): string {
-  const opponent = isHome ? game.away_name : game.home_name;
-  const lines = [SYNC_MARKER, `Game Code: ${game.gamecode}`, `${isHome ? "Home" : "Away"} vs ${opponent}`];
-  if (game.umps_name) lines.push(`Umps: Team ${game.umps_name}`);
+function buildGameNotes(opts: {
+  gamecode: string;
+  isHome: boolean;
+  opponent: string;
+  umps: string | null;
+}): string {
+  const lines = [
+    SYNC_MARKER,
+    `Game Code: ${opts.gamecode}`,
+    `${opts.isHome ? "Home" : "Away"} vs ${opts.opponent}`,
+  ];
+  if (opts.umps) lines.push(`Umps: Team ${opts.umps}`);
   return lines.join("\n");
 }
 
+function getTodayInSportTimezone(): string {
+  // Format current date in sport timezone as YYYY-MM-DD
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SPORT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(new Date());
+}
+
 function isGameInFuture(dateStr: string): boolean {
-  const today = new Date().toISOString().slice(0, 10);
-  return dateStr >= today;
+  return dateStr >= getTodayInSportTimezone();
 }
 
 export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: string }> {
@@ -589,22 +605,12 @@ export async function applyCcsaGameSync(
       player_cap: null,
       signup_open: new Date().toISOString(),
       signup_close: signupClose.toISOString(),
-      notes: buildGameNotes(
-        {
-          gamecode: game.gamecode,
-          date: game.date,
-          time: game.time,
-          park: 0,
-          park_name: game.location,
-          home: game.isHome ? 1 : null,
-          home_name: game.isHome ? "" : game.opponent,
-          away: game.isHome ? null : 1,
-          away_name: game.isHome ? game.opponent : "",
-          umps: null,
-          umps_name: game.umps ?? "",
-        },
-        game.isHome,
-      ),
+      notes: buildGameNotes({
+        gamecode: game.gamecode,
+        isHome: game.isHome,
+        opponent: game.opponent,
+        umps: game.umps,
+      }),
     };
   });
 
@@ -634,24 +640,16 @@ export async function applyCcsaGameSync(
         location_address: game.newLocation,
         location_maps_link: mapsLink(game.newLocation),
         signup_close: signupClose.toISOString(),
-        notes: buildGameNotes(
-          {
-            gamecode: game.gamecode,
-            date: game.newDate,
-            time: game.newTime,
-            park: 0,
-            park_name: game.newLocation,
-            home: game.isHome ? 1 : null,
-            home_name: game.isHome ? "" : game.opponent,
-            away: game.isHome ? null : 1,
-            away_name: game.isHome ? game.opponent : "",
-            umps: null,
-            umps_name: game.umps ?? "",
-          },
-          game.isHome,
-        ),
+        notes: buildGameNotes({
+          gamecode: game.gamecode,
+          isHome: game.isHome,
+          opponent: game.opponent,
+          umps: game.umps,
+        }),
       })
-      .eq("id", game.sessionId);
+      .eq("id", game.sessionId)
+      .eq("sport", SPORT)
+      .eq("session_type", "scheduled_game");
 
     if (error) {
       results.errors.push(`Update ${game.gamecode}: ${error.message}`);
@@ -677,7 +675,9 @@ export async function cancelStaleCcsaGames(sessionIds: string[]) {
       status: "cancelled",
       status_notes: "Removed from CCSA schedule",
     })
-    .in("id", sessionIds);
+    .in("id", sessionIds)
+    .eq("sport", SPORT)
+    .eq("session_type", "scheduled_game");
 
   if (error) return { error: error.message };
 
