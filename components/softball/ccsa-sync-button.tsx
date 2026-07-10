@@ -202,8 +202,8 @@ export default function CcsaSyncButton({
         setLoggedIn(false);
       }
     }
-    if (playersResult.count) {
-      setSyncResult(`Synced ${playersResult.count} players`);
+    if (!playersResult.error && !("error" in gamesResult)) {
+      setSyncResult("Synced just now");
     }
 
     // Handle games result
