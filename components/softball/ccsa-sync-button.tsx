@@ -669,149 +669,163 @@ export default function CcsaSyncButton({
 
             {gamesPreview && (
               <div className="space-y-3">
-                {/* Summary line (matches player sync's "Last synced" style) */}
+                {/* Summary line */}
                 <p className="text-xs text-muted-foreground">
                   {gamesPreview.teamName} · Schedule updated: {gamesPreview.lastupdate} ·{" "}
-                  {gamesPreview.unchanged} unchanged
+                  {gamesPreview.newGames.length + gamesPreview.updated.length + gamesPreview.skipped.length + gamesPreview.unchanged.length + gamesPreview.stale.length} games total
                 </p>
 
-                {/* Games table */}
-                {(gamesPreview.newGames.length > 0 ||
-                  gamesPreview.updated.length > 0 ||
-                  gamesPreview.skipped.length > 0 ||
-                  gamesPreview.stale.length > 0) && (
-                  <div className="rounded-lg border overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
-                        <tr>
-                          <th className="px-4 py-2">Game</th>
-                          <th className="px-4 py-2">Date & Time</th>
-                          <th className="px-4 py-2 hidden md:table-cell">Location</th>
-                          <th className="px-4 py-2">Status</th>
+                {/* Games table — always shown */}
+                <div className="rounded-lg border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
+                      <tr>
+                        <th className="px-4 py-2">Game</th>
+                        <th className="px-4 py-2">Date & Time</th>
+                        <th className="px-4 py-2 hidden md:table-cell">Location</th>
+                        <th className="px-4 py-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {/* Unchanged games */}
+                      {gamesPreview.unchanged.map((g) => (
+                        <tr key={g.gamecode}>
+                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                            {g.date} {g.time}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
+                            {g.location}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`inline-flex items-center gap-1 ${colors.success}`}>
+                              <Check className="h-3.5 w-3.5" />
+                              <span className="text-xs">Synced</span>
+                            </span>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {/* New games */}
-                        {gamesPreview.newGames.map((g) => (
-                          <tr key={g.gamecode}>
-                            <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
-                            <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                              {g.date} {g.time}
-                            </td>
-                            <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                              {g.location}
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
-                                New
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
+                      ))}
 
-                        {/* Rescheduled games */}
-                        {gamesPreview.updated.map((g) => (
-                          <tr key={g.gamecode}>
-                            <td className="px-4 py-2 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
-                                {g.needsConfirmation && (
-                                  <input
-                                    type="checkbox"
-                                    checked={confirmedUpdates.has(g.gamecode)}
-                                    onChange={(e) => {
-                                      setConfirmedUpdates((prev) => {
-                                        const next = new Set(prev);
-                                        if (e.target.checked) next.add(g.gamecode);
-                                        else next.delete(g.gamecode);
-                                        return next;
-                                      });
-                                    }}
-                                    className="rounded"
-                                  />
-                                )}
-                                {g.title}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2 whitespace-nowrap">
-                              <div className="text-muted-foreground line-through text-xs">
-                                {g.oldDate} {g.oldTime}
-                              </div>
-                              <div className={`text-xs ${colors.success}`}>
-                                {g.newDate} {g.newTime}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2 hidden md:table-cell">
-                              <div className="text-muted-foreground line-through text-xs">
-                                {g.oldLocation}
-                              </div>
-                              <div className={`text-xs ${colors.success}`}>
-                                {g.newLocation}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
-                                {g.needsConfirmation ? "Confirm?" : "Rescheduled"}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
+                      {/* New games */}
+                      {gamesPreview.newGames.map((g) => (
+                        <tr key={g.gamecode}>
+                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                            {g.date} {g.time}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
+                            {g.location}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
+                              New
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
 
-                        {/* Skipped (cancelled on our side) */}
-                        {gamesPreview.skipped.map((g) => (
-                          <tr key={g.gamecode}>
-                            <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
-                            <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                              {g.date} {g.time}
-                            </td>
-                            <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                              {g.location}
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge variant="outline" className="text-muted-foreground">
-                                Skipped
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-
-                        {/* Stale games */}
-                        {gamesPreview.stale.map((g) => (
-                          <tr key={g.sessionId}>
-                            <td className="px-4 py-2 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
+                      {/* Rescheduled games */}
+                      {gamesPreview.updated.map((g) => (
+                        <tr key={g.gamecode}>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {g.needsConfirmation && (
                                 <input
                                   type="checkbox"
-                                  checked={selectedStale.has(g.sessionId)}
+                                  checked={confirmedUpdates.has(g.gamecode)}
                                   onChange={(e) => {
-                                    setSelectedStale((prev) => {
+                                    setConfirmedUpdates((prev) => {
                                       const next = new Set(prev);
-                                      if (e.target.checked) next.add(g.sessionId);
-                                      else next.delete(g.sessionId);
+                                      if (e.target.checked) next.add(g.gamecode);
+                                      else next.delete(g.gamecode);
                                       return next;
                                     });
                                   }}
                                   className="rounded"
                                 />
-                                {g.title ?? g.gamecode}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                              {g.date}
-                            </td>
-                            <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                              —
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge variant="destructive">Stale</Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                              )}
+                              {g.title}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <div className="text-muted-foreground line-through text-xs">
+                              {g.oldDate} {g.oldTime}
+                            </div>
+                            <div className={`text-xs ${colors.success}`}>
+                              {g.newDate} {g.newTime}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 hidden md:table-cell">
+                            <div className="text-muted-foreground line-through text-xs">
+                              {g.oldLocation}
+                            </div>
+                            <div className={`text-xs ${colors.success}`}>
+                              {g.newLocation}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2">
+                            <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
+                              {g.needsConfirmation ? "Confirm?" : "Rescheduled"}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
 
-                {/* Stale cancel button (mirrors "Delete All" pattern from players) */}
+                      {/* Skipped (cancelled on our side) */}
+                      {gamesPreview.skipped.map((g) => (
+                        <tr key={g.gamecode}>
+                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                            {g.date} {g.time}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
+                            {g.location}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Badge variant="outline" className="text-muted-foreground">
+                              Skipped
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {/* Stale games */}
+                      {gamesPreview.stale.map((g) => (
+                        <tr key={g.sessionId}>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedStale.has(g.sessionId)}
+                                onChange={(e) => {
+                                  setSelectedStale((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(g.sessionId);
+                                    else next.delete(g.sessionId);
+                                    return next;
+                                  });
+                                }}
+                                className="rounded"
+                              />
+                              {g.title ?? g.gamecode}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                            {g.date}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
+                            —
+                          </td>
+                          <td className="px-4 py-2">
+                            <Badge variant="destructive">Stale</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Stale cancel button */}
                 {gamesPreview.stale.length > 0 && selectedStale.size > 0 && (
                   <Button
                     variant="destructive"

@@ -76,7 +76,7 @@ export interface GamesPreview {
   updated: GameUpdate[];
   stale: StaleGame[];
   skipped: GameDiff[];
-  unchanged: number;
+  unchanged: GameDiff[];
   lastupdate: string;
   teamName: string;
 }

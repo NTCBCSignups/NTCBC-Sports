@@ -453,7 +453,7 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
     const newGames: GameDiff[] = [];
     const updated: GameUpdate[] = [];
     const skipped: GameDiff[] = [];
-    let unchanged = 0;
+    const unchanged: GameDiff[] = [];
 
     const ccsaGamecodes = new Set<string>();
     const claimedIds = new Set<string>();
@@ -528,7 +528,7 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
           });
           break;
         case "unchanged":
-          unchanged++;
+          unchanged.push(diff);
           break;
       }
     }
