@@ -7,7 +7,7 @@ import {
   findMatchForGame,
   classifyMatch,
   findStaleGames,
-} from "@/lib/softball/ccsa-sync";
+} from "@/lib/softball/ccsa-game-reconcile";
 import type { ScheduledGameSession } from "@/lib/softball/get-data";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
