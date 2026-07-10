@@ -303,26 +303,27 @@ export async function applyCcsaGameSync(
   newGames: GameDiff[],
   updatedGames: GameUpdate[],
   skippedGames: GameDiff[],
+  allTeamGamecodes: string[],
 ) {
   await ensureSportAdmin();
 
   const admin = createAdminClient();
 
-  // Count existing scheduled_game sessions for numbering new games
-  const { count } = await admin
-    .from("sessions")
-    .select("id", { count: "exact", head: true })
-    .eq("sport", SPORT)
-    .eq("session_type", "scheduled_game");
-
-  let gameNumber = (count ?? 0) + 1;
+  // Compute game number from gamecode suffix rank among all team games
+  const sortedCodes = [...allTeamGamecodes].sort((a, b) => {
+    const suffixA = parseInt(a.slice(-3));
+    const suffixB = parseInt(b.slice(-3));
+    return suffixA - suffixB;
+  });
+  const gameNumberByCode = new Map(sortedCodes.map((code, i) => [code, i + 1]));
 
   // Build rows for new games (including skipped ones that need new sessions)
   const allNew = [...newGames, ...skippedGames];
   const insertRows = allNew.map((game) => {
     const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
     const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
-    const title = `Game ${gameNumber++}: ${game.title}`;
+    const num = gameNumberByCode.get(game.gamecode) ?? "?";
+    const title = `Game ${num}: ${game.title}`;
 
     return {
       sport: SPORT,

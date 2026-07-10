@@ -274,10 +274,19 @@ export default function CcsaSyncButton({
       (g) => !g.needsConfirmation || confirmedUpdates.has(g.gamecode),
     );
 
+    // Collect all team gamecodes for correct numbering
+    const allTeamGamecodes = [
+      ...gamesPreview.newGames,
+      ...gamesPreview.updated,
+      ...gamesPreview.skipped,
+      ...gamesPreview.unchanged,
+    ].map((g) => g.gamecode);
+
     const result = await applyCcsaGameSync(
       gamesPreview.newGames,
       updatesToApply,
       gamesPreview.skipped,
+      allTeamGamecodes,
     );
 
     if (result.errors.length > 0) {
