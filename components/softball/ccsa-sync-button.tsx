@@ -487,20 +487,21 @@ export default function CcsaSyncButton({
                 Apply Player Sync ({playersPreview.newCount + playersPreview.updatedCount} changes)
               </Button>
             )}
-            {playersPreview && playersPreview.players.some(
-              (p) => getAccessStatus(p, teamMembers, allProfiles).status !== "on-team",
-            ) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleApproveAll}
-                disabled={pending}
-                className="rounded-full"
-              >
-                <UserCheck className="h-4 w-4 mr-2" />
-                {pending ? "Approving..." : "Approve All for Team Access"}
-              </Button>
-            )}
+            {playersPreview &&
+              playersPreview.players.some(
+                (p) => getAccessStatus(p, teamMembers, allProfiles).status !== "on-team",
+              ) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApproveAll}
+                  disabled={pending}
+                  className="rounded-full"
+                >
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  {pending ? "Approving..." : "Approve All for Team Access"}
+                </Button>
+              )}
             {approveResult && <p className={feedback.success}>{approveResult}</p>}
 
             {playersPreview && playersPreview.players.length > 0 && (
