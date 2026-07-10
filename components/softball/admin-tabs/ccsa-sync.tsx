@@ -1,5 +1,9 @@
 import CcsaSyncButton from "@/components/softball/ccsa-sync-button";
-import { hasCcsaSession } from "@/lib/softball/ccsa-sync";
+import {
+  hasCcsaSession,
+  getCcsaGamesPreview,
+} from "@/lib/softball/ccsa-sync";
+import type { GamesPreview } from "@/lib/softball/ccsa-sync";
 import {
   getCcsaLastSyncedAt,
   getCcsaPlayers,
@@ -18,6 +22,14 @@ export default async function CcsaAdminTab({ sport }: AdminTabProps) {
     getTeamMembersWithProfiles(sport),
   ]);
 
+  // Eagerly load game schedule preview if already authenticated with CCSA
+  let gamesPreview: GamesPreview | null = null;
+
+  if (sessionResult.hasCookies) {
+    const gResult = await getCcsaGamesPreview();
+    if (!("error" in gResult)) gamesPreview = gResult;
+  }
+
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold text-foreground">CCSA Sync</h2>
@@ -29,6 +41,7 @@ export default async function CcsaAdminTab({ sport }: AdminTabProps) {
           initialPlayers={ccsaPlayers}
           teamMembers={teamMembers}
           allProfiles={allProfiles}
+          gamesPreview={gamesPreview}
         />
       </div>
     </section>

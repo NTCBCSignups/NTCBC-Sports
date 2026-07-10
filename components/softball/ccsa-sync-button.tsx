@@ -24,7 +24,11 @@ import {
   logoutCcsa,
   approveCcsaPlayersForTeam,
   deleteAllCcsaPlayers,
+  getCcsaGamesPreview,
+  applyCcsaGameSync,
+  cancelStaleCcsaGames,
 } from "@/lib/softball/ccsa-sync";
+import type { GamesPreview } from "@/lib/softball/ccsa-sync";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +65,7 @@ interface CcsaSyncButtonProps {
   initialPlayers?: SyncedPlayer[];
   teamMembers?: TeamMember[];
   allProfiles?: ProfileEntry[];
+  gamesPreview?: GamesPreview | null;
 }
 
 type AccessStatus =
@@ -147,6 +152,7 @@ export default function CcsaSyncButton({
   initialPlayers = [],
   teamMembers = [],
   allProfiles = [],
+  gamesPreview: initialGamesPreview = null,
 }: CcsaSyncButtonProps) {
   const [step, setStep] = useState<"idle" | "email" | "otp">("idle");
   const [email, setEmail] = useState("");
@@ -159,6 +165,13 @@ export default function CcsaSyncButton({
   const [loggedInEmail, setLoggedInEmail] = useState(sessionEmail ?? "");
   const [players, setPlayers] = useState<SyncedPlayer[]>(initialPlayers);
   const [dismissedMatches, setDismissedMatches] = useState<Set<string>>(new Set());
+
+  // Game sync state
+  const [gamesPreview, setGamesPreview] = useState<GamesPreview | null>(initialGamesPreview);
+  const [gamesPending, setGamesPending] = useState(false);
+  const [gamesError, setGamesError] = useState<string | null>(null);
+  const [gamesResult, setGamesResult] = useState<string | null>(null);
+  const [selectedStale, setSelectedStale] = useState<Set<string>>(new Set());
 
   const handleQuickSync = async () => {
     setPending(true);
@@ -221,6 +234,79 @@ export default function CcsaSyncButton({
     }
     setPending(false);
   };
+
+  // ─── Game Sync Handlers ───────────────────────────────────────────────────
+
+  const handleRefreshGamesPreview = async () => {
+    setGamesPending(true);
+    setGamesError(null);
+    setGamesResult(null);
+    const result = await getCcsaGamesPreview();
+    if ("error" in result) {
+      setGamesError(result.error);
+      if (result.error.includes("session") || result.error.includes("expired")) {
+        setLoggedIn(false);
+      }
+    } else {
+      setGamesPreview(result);
+      setSelectedStale(new Set());
+    }
+    setGamesPending(false);
+  };
+
+  const handleApplyGameSync = async () => {
+    if (!gamesPreview) return;
+    setGamesPending(true);
+    setGamesError(null);
+    setGamesResult(null);
+
+    const result = await applyCcsaGameSync(
+      gamesPreview.newGames,
+      gamesPreview.updated,
+      gamesPreview.skipped,
+    );
+
+    if (result.errors.length > 0) {
+      setGamesError(result.errors.join("; "));
+    }
+
+    const parts: string[] = [];
+    if (result.created > 0) parts.push(`${result.created} created`);
+    if (result.updated > 0) parts.push(`${result.updated} updated`);
+    if (parts.length > 0) setGamesResult(parts.join(", "));
+
+    // Refresh preview to reflect new state
+    const refreshed = await getCcsaGamesPreview();
+    if (!("error" in refreshed)) {
+      setGamesPreview(refreshed);
+      setSelectedStale(new Set());
+    }
+    setGamesPending(false);
+  };
+
+  const handleCancelStale = async () => {
+    if (selectedStale.size === 0) return;
+    setGamesPending(true);
+    setGamesError(null);
+    const result = await cancelStaleCcsaGames(Array.from(selectedStale));
+    if (result.error) {
+      setGamesError(result.error);
+    } else {
+      setGamesResult(`Cancelled ${result.count} stale game(s)`);
+      // Remove cancelled from preview
+      if (gamesPreview) {
+        setGamesPreview({
+          ...gamesPreview,
+          stale: gamesPreview.stale.filter((s) => !selectedStale.has(s.sessionId)),
+        });
+      }
+      setSelectedStale(new Set());
+    }
+    setGamesPending(false);
+  };
+
+  const hasGameChanges =
+    gamesPreview && (gamesPreview.newGames.length > 0 || gamesPreview.updated.length > 0 || gamesPreview.skipped.length > 0);
 
   return (
     <div className="space-y-4">
@@ -538,6 +624,180 @@ export default function CcsaSyncButton({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+        </div>
+      )}
+
+      {/* ─── Game Schedule Sync ───────────────────────────────────────────── */}
+      {loggedIn && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Game Schedule</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshGamesPreview}
+              disabled={gamesPending}
+              className="rounded-full"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${gamesPending ? "animate-spin" : ""}`} />
+              {gamesPending ? "Loading..." : "Refresh"}
+            </Button>
+          </div>
+
+          {gamesError && <p className={feedback.error}>{gamesError}</p>}
+          {gamesResult && <p className={feedback.success}>{gamesResult}</p>}
+
+          {gamesPreview && (
+            <div className="space-y-3">
+              {/* Summary badges */}
+              <div className="flex flex-wrap gap-2 text-xs">
+                {gamesPreview.newGames.length > 0 && (
+                  <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
+                    {gamesPreview.newGames.length} new
+                  </Badge>
+                )}
+                {gamesPreview.updated.length > 0 && (
+                  <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
+                    {gamesPreview.updated.length} rescheduled
+                  </Badge>
+                )}
+                {gamesPreview.stale.length > 0 && (
+                  <Badge variant="destructive">
+                    {gamesPreview.stale.length} stale
+                  </Badge>
+                )}
+                {gamesPreview.skipped.length > 0 && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    {gamesPreview.skipped.length} skipped (cancelled)
+                  </Badge>
+                )}
+                {gamesPreview.unchanged > 0 && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    {gamesPreview.unchanged} unchanged
+                  </Badge>
+                )}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                CCSA schedule last updated: {gamesPreview.lastupdate} · Team: {gamesPreview.teamName}
+              </p>
+
+              {/* New games */}
+              {gamesPreview.newGames.length > 0 && (
+                <details className="text-sm">
+                  <summary className="cursor-pointer font-medium text-foreground">
+                    New games ({gamesPreview.newGames.length})
+                  </summary>
+                  <ul className="mt-1 space-y-1 pl-4 text-xs text-muted-foreground">
+                    {gamesPreview.newGames.map((g) => (
+                      <li key={g.gamecode}>
+                        {g.date} {g.time} — {g.title} @ {g.location}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {/* Rescheduled games */}
+              {gamesPreview.updated.length > 0 && (
+                <details className="text-sm">
+                  <summary className="cursor-pointer font-medium text-foreground">
+                    Rescheduled games ({gamesPreview.updated.length})
+                  </summary>
+                  <ul className="mt-1 space-y-2 pl-4 text-xs">
+                    {gamesPreview.updated.map((g) => (
+                      <li key={g.gamecode}>
+                        <span className="font-medium text-foreground">{g.title}</span>
+                        <div className="text-muted-foreground line-through">
+                          {g.oldDate} {g.oldTime} @ {g.oldLocation}
+                        </div>
+                        <div className={colors.success}>
+                          {g.newDate} {g.newTime} @ {g.newLocation}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {/* Skipped (cancelled on our side) */}
+              {gamesPreview.skipped.length > 0 && (
+                <details className="text-sm">
+                  <summary className="cursor-pointer font-medium text-muted-foreground">
+                    Skipped — cancelled on our side ({gamesPreview.skipped.length})
+                  </summary>
+                  <p className="mt-1 pl-4 text-xs text-muted-foreground">
+                    These games are cancelled in our system. New sessions will be created for them.
+                  </p>
+                  <ul className="mt-1 space-y-1 pl-4 text-xs text-muted-foreground">
+                    {gamesPreview.skipped.map((g) => (
+                      <li key={g.gamecode}>
+                        {g.date} {g.time} — {g.title} @ {g.location}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {/* Stale games */}
+              {gamesPreview.stale.length > 0 && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+                  <p className="text-sm font-medium text-destructive">
+                    ⚠ Stale games (not in CCSA schedule)
+                  </p>
+                  <ul className="space-y-1 text-xs">
+                    {gamesPreview.stale.map((g) => (
+                      <li key={g.sessionId} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedStale.has(g.sessionId)}
+                          onChange={(e) => {
+                            setSelectedStale((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(g.sessionId);
+                              else next.delete(g.sessionId);
+                              return next;
+                            });
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-foreground">
+                          {g.title ?? g.gamecode} — {g.date}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleCancelStale}
+                    disabled={gamesPending || selectedStale.size === 0}
+                    className="rounded-full"
+                  >
+                    Cancel {selectedStale.size} Selected
+                  </Button>
+                </div>
+              )}
+
+              {/* Apply button */}
+              {hasGameChanges && (
+                <Button
+                  onClick={handleApplyGameSync}
+                  disabled={gamesPending}
+                  className="rounded-full"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${gamesPending ? "animate-spin" : ""}`} />
+                  {gamesPending ? "Applying..." : "Apply Game Sync"}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {!gamesPreview && !gamesError && (
+            <p className="text-xs text-muted-foreground">
+              Click Refresh to load the CCSA game schedule.
+            </p>
+          )}
         </div>
       )}
     </div>
