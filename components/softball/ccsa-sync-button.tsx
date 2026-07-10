@@ -4,12 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, UserCheck, LogOut, Trash2, Check } from "lucide-react";
+import { RefreshCw, UserCheck, LogOut, Trash2, Check, Calendar, Users } from "lucide-react";
 import { WaiverBadge } from "@/components/sports/badges";
 import { formatTimestamp } from "@/lib/format";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { colors, statusColors, feedback } from "@/lib/styles";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -323,27 +324,12 @@ export default function CcsaSyncButton({
           {loggedIn ? (
             <>
               <p className="text-sm text-muted-foreground">
-                CCSA logged in as <span className="font-medium">{loggedInEmail}</span>. Sync to pull
-                the latest roster and waiver data.
+                CCSA logged in as <span className="font-medium">{loggedInEmail}</span>.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={handleQuickSync} disabled={pending} className="rounded-full">
-                  <RefreshCw className={`h-4 w-4 mr-2 ${pending ? "animate-spin" : ""}`} />
-                  {pending ? "Syncing..." : "Sync"}
-                </Button>
-                {players.length > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={handleApproveAll}
-                    disabled={pending}
-                    className="rounded-full"
-                  >
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    {pending ? "Approving..." : "Approve All for Team Access"}
-                  </Button>
-                )}
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={async () => {
                     await logoutCcsa();
                     setLoggedIn(false);
@@ -360,24 +346,11 @@ export default function CcsaSyncButton({
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Log in to CCSA to pull the latest roster and waiver data.
+                Log in to CCSA to pull the latest roster and game schedule.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => setStep("email")} className="rounded-full">
-                  Log in to CCSA
-                </Button>
-                {players.length > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={handleApproveAll}
-                    disabled={pending}
-                    className="rounded-full"
-                  >
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    {pending ? "Approving..." : "Approve All for Team Access"}
-                  </Button>
-                )}
-              </div>
+              <Button variant="outline" onClick={() => setStep("email")} className="rounded-full">
+                Log in to CCSA
+              </Button>
             </>
           )}
         </div>
@@ -445,362 +418,391 @@ export default function CcsaSyncButton({
         </div>
       )}
 
-      {(syncResult || error) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {syncResult && <p className={feedback.success}>{syncResult}</p>}
-          {error && <p className={feedback.error}>{error}</p>}
-        </div>
-      )}
-      {approveResult && <p className={feedback.success}>{approveResult}</p>}
+      {/* ─── Tabbed Content: Players / Games ─────────────────────────────── */}
+      {loggedIn && step === "idle" && (
+        <Tabs defaultValue="players" className="mt-2">
+          <TabsList>
+            <TabsTrigger value="players">
+              <Users className="h-3.5 w-3.5 mr-1.5" />
+              Players
+            </TabsTrigger>
+            <TabsTrigger value="games">
+              <Calendar className="h-3.5 w-3.5 mr-1.5" />
+              Games
+            </TabsTrigger>
+          </TabsList>
 
-      {players.length > 0 && (
-        <div className="space-y-3">
-          <div className="rounded-lg border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
-                <tr>
-                  <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2 hidden xl:table-cell">CCSA Email</th>
-                  <th className="px-4 py-2">Waiver</th>
-                  <th className="px-4 py-2">Team Access</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {players.map((p) => {
-                  const isDismissed = dismissedMatches.has(p.email);
-                  const rawAccess = getAccessStatus(p, teamMembers, allProfiles);
-                  const access: AccessStatus =
-                    isDismissed && rawAccess.status !== "none" && rawAccess.via === "suggested"
-                      ? getDismissedFallback(p, teamMembers, allProfiles)
-                      : rawAccess;
-
-                  const isSuggested = rawAccess.status !== "none" && rawAccess.via === "suggested";
-
-                  return (
-                    <tr key={p.email}>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        {p.first_name} {p.last_name}
-                      </td>
-                      <td className="px-4 py-2 text-muted-foreground hidden xl:table-cell">
-                        {p.email}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <WaiverBadge status={p.waiver_status as WaiverStatus} />
-                      </td>
-                      <td className="px-4 py-2">
-                        {/* On team — exact email */}
-                        {access.status === "on-team" && access.via === "exact" && (
-                          <span className={`inline-flex items-center gap-1 ${colors.success}`}>
-                            <Check className="h-4 w-4 shrink-0" />
-                            <span className="text-xs">On team</span>
-                          </span>
-                        )}
-
-                        {/* On team — suggested name match (dropdown to dismiss) */}
-                        {access.status === "on-team" && access.via === "suggested" && (
-                          <Select
-                            defaultValue="match"
-                            onValueChange={(val) => {
-                              if (val === "no-match") {
-                                setDismissedMatches((prev) => new Set(prev).add(p.email));
-                              }
-                            }}
-                          >
-                            <SelectTrigger
-                              className={`h-7 w-auto gap-1 text-xs ${statusColors.green.text} ${statusColors.green.border} ${statusColors.green.bg} px-2 [&>svg]:h-3 [&>svg]:w-3`}
-                            >
-                              <Check className="h-3 w-3 shrink-0" />
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="match">
-                                Likely {access.match.full_name} ({access.match.email})
-                              </SelectItem>
-                              <SelectItem value="no-match">Not the same person</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-
-                        {/* Has account — exact email, not on team */}
-                        {access.status === "has-account" && access.via === "exact" && (
-                          <span className={`inline-flex items-center gap-1 ${colors.warning}`}>
-                            <UserCheck className="h-4 w-4" />
-                            <span className="text-xs">Has account</span>
-                          </span>
-                        )}
-
-                        {/* Has account — suggested name match (dropdown to dismiss) */}
-                        {access.status === "has-account" && access.via === "suggested" && (
-                          <Select
-                            defaultValue="match"
-                            onValueChange={(val) => {
-                              if (val === "no-match") {
-                                setDismissedMatches((prev) => new Set(prev).add(p.email));
-                              }
-                            }}
-                          >
-                            <SelectTrigger
-                              className={`h-7 w-auto gap-1 text-xs ${statusColors.amber.text} ${statusColors.amber.border} ${statusColors.amber.bg} px-2 [&>svg]:h-3 [&>svg]:w-3`}
-                            >
-                              <UserCheck className="h-3 w-3 shrink-0" />
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="match">
-                                Likely {access.match.full_name} ({access.match.email})
-                              </SelectItem>
-                              <SelectItem value="no-match">Not the same person</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-
-                        {/* No match — with undo if was dismissed */}
-                        {access.status === "none" && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-muted-foreground border-border"
-                            >
-                              No account
-                            </Badge>
-                            {isDismissed && isSuggested && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setDismissedMatches((prev) => {
-                                    const next = new Set(prev);
-                                    next.delete(p.email);
-                                    return next;
-                                  })
-                                }
-                                className="text-xs text-info hover:text-info/80 hover:underline"
-                              >
-                                Undo
-                              </button>
-                            )}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" disabled={pending} className="rounded-full">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete All Synced Data
+          {/* ─── Players Tab ─────────────────────────────────────────────── */}
+          <TabsContent value="players" className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleQuickSync} disabled={pending} className="rounded-full">
+                <RefreshCw className={`h-4 w-4 mr-2 ${pending ? "animate-spin" : ""}`} />
+                {pending ? "Syncing..." : "Sync Players"}
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete all CCSA synced data?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently remove all {players.length} synced players from the
-                  database. Waiver badges will no longer appear until you sync again.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={async () => {
-                    setPending(true);
-                    setError(null);
-                    setSyncResult(null);
-                    const result = await deleteAllCcsaPlayers();
-                    if (result.error) {
-                      setError(result.error);
-                    } else {
-                      setPlayers([]);
-                      setSyncResult("All synced data deleted");
-                    }
-                    setPending(false);
-                  }}
-                >
-                  Delete All
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      )}
-
-      {/* ─── Game Schedule Sync ───────────────────────────────────────────── */}
-      {loggedIn && (
-        <div className="space-y-3 border-t pt-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Game Schedule</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefreshGamesPreview}
-              disabled={gamesPending}
-              className="rounded-full"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${gamesPending ? "animate-spin" : ""}`} />
-              {gamesPending ? "Loading..." : "Refresh"}
-            </Button>
-          </div>
-
-          {gamesError && <p className={feedback.error}>{gamesError}</p>}
-          {gamesResult && <p className={feedback.success}>{gamesResult}</p>}
-
-          {gamesPreview && (
-            <div className="space-y-3">
-              {/* Summary badges */}
-              <div className="flex flex-wrap gap-2 text-xs">
-                {gamesPreview.newGames.length > 0 && (
-                  <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
-                    {gamesPreview.newGames.length} new
-                  </Badge>
-                )}
-                {gamesPreview.updated.length > 0 && (
-                  <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
-                    {gamesPreview.updated.length} rescheduled
-                  </Badge>
-                )}
-                {gamesPreview.stale.length > 0 && (
-                  <Badge variant="destructive">
-                    {gamesPreview.stale.length} stale
-                  </Badge>
-                )}
-                {gamesPreview.skipped.length > 0 && (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    {gamesPreview.skipped.length} skipped (cancelled)
-                  </Badge>
-                )}
-                {gamesPreview.unchanged > 0 && (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    {gamesPreview.unchanged} unchanged
-                  </Badge>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                CCSA schedule last updated: {gamesPreview.lastupdate} · Team: {gamesPreview.teamName}
-              </p>
-
-              {/* New games */}
-              {gamesPreview.newGames.length > 0 && (
-                <details className="text-sm">
-                  <summary className="cursor-pointer font-medium text-foreground">
-                    New games ({gamesPreview.newGames.length})
-                  </summary>
-                  <ul className="mt-1 space-y-1 pl-4 text-xs text-muted-foreground">
-                    {gamesPreview.newGames.map((g) => (
-                      <li key={g.gamecode}>
-                        {g.date} {g.time} — {g.title} @ {g.location}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-
-              {/* Rescheduled games */}
-              {gamesPreview.updated.length > 0 && (
-                <details className="text-sm">
-                  <summary className="cursor-pointer font-medium text-foreground">
-                    Rescheduled games ({gamesPreview.updated.length})
-                  </summary>
-                  <ul className="mt-1 space-y-2 pl-4 text-xs">
-                    {gamesPreview.updated.map((g) => (
-                      <li key={g.gamecode}>
-                        <span className="font-medium text-foreground">{g.title}</span>
-                        <div className="text-muted-foreground line-through">
-                          {g.oldDate} {g.oldTime} @ {g.oldLocation}
-                        </div>
-                        <div className={colors.success}>
-                          {g.newDate} {g.newTime} @ {g.newLocation}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-
-              {/* Skipped (cancelled on our side) */}
-              {gamesPreview.skipped.length > 0 && (
-                <details className="text-sm">
-                  <summary className="cursor-pointer font-medium text-muted-foreground">
-                    Skipped — cancelled on our side ({gamesPreview.skipped.length})
-                  </summary>
-                  <p className="mt-1 pl-4 text-xs text-muted-foreground">
-                    These games are cancelled in our system. New sessions will be created for them.
-                  </p>
-                  <ul className="mt-1 space-y-1 pl-4 text-xs text-muted-foreground">
-                    {gamesPreview.skipped.map((g) => (
-                      <li key={g.gamecode}>
-                        {g.date} {g.time} — {g.title} @ {g.location}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-
-              {/* Stale games */}
-              {gamesPreview.stale.length > 0 && (
-                <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
-                  <p className="text-sm font-medium text-destructive">
-                    ⚠ Stale games (not in CCSA schedule)
-                  </p>
-                  <ul className="space-y-1 text-xs">
-                    {gamesPreview.stale.map((g) => (
-                      <li key={g.sessionId} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedStale.has(g.sessionId)}
-                          onChange={(e) => {
-                            setSelectedStale((prev) => {
-                              const next = new Set(prev);
-                              if (e.target.checked) next.add(g.sessionId);
-                              else next.delete(g.sessionId);
-                              return next;
-                            });
-                          }}
-                          className="rounded"
-                        />
-                        <span className="text-foreground">
-                          {g.title ?? g.gamecode} — {g.date}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleCancelStale}
-                    disabled={gamesPending || selectedStale.size === 0}
-                    className="rounded-full"
-                  >
-                    Cancel {selectedStale.size} Selected
-                  </Button>
-                </div>
-              )}
-
-              {/* Apply button */}
-              {hasGameChanges && (
+              {players.length > 0 && (
                 <Button
-                  onClick={handleApplyGameSync}
-                  disabled={gamesPending}
+                  variant="outline"
+                  onClick={handleApproveAll}
+                  disabled={pending}
                   className="rounded-full"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${gamesPending ? "animate-spin" : ""}`} />
-                  {gamesPending ? "Applying..." : "Apply Game Sync"}
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  {pending ? "Approving..." : "Approve All for Team Access"}
                 </Button>
               )}
             </div>
-          )}
 
-          {!gamesPreview && !gamesError && (
-            <p className="text-xs text-muted-foreground">
-              Click Refresh to load the CCSA game schedule.
-            </p>
-          )}
-        </div>
+            {(syncResult || error) && (
+              <div className="flex flex-wrap items-center gap-2">
+                {syncResult && <p className={feedback.success}>{syncResult}</p>}
+                {error && <p className={feedback.error}>{error}</p>}
+              </div>
+            )}
+            {approveResult && <p className={feedback.success}>{approveResult}</p>}
+
+            {players.length > 0 && (
+              <div className="space-y-3">
+                <div className="rounded-lg border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
+                      <tr>
+                        <th className="px-4 py-2">Name</th>
+                        <th className="px-4 py-2 hidden xl:table-cell">CCSA Email</th>
+                        <th className="px-4 py-2">Waiver</th>
+                        <th className="px-4 py-2">Team Access</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {players.map((p) => {
+                        const isDismissed = dismissedMatches.has(p.email);
+                        const rawAccess = getAccessStatus(p, teamMembers, allProfiles);
+                        const access: AccessStatus =
+                          isDismissed && rawAccess.status !== "none" && rawAccess.via === "suggested"
+                            ? getDismissedFallback(p, teamMembers, allProfiles)
+                            : rawAccess;
+
+                        const isSuggested = rawAccess.status !== "none" && rawAccess.via === "suggested";
+
+                        return (
+                          <tr key={p.email}>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              {p.first_name} {p.last_name}
+                            </td>
+                            <td className="px-4 py-2 text-muted-foreground hidden xl:table-cell">
+                              {p.email}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              <WaiverBadge status={p.waiver_status as WaiverStatus} />
+                            </td>
+                            <td className="px-4 py-2">
+                              {access.status === "on-team" && access.via === "exact" && (
+                                <span className={`inline-flex items-center gap-1 ${colors.success}`}>
+                                  <Check className="h-4 w-4 shrink-0" />
+                                  <span className="text-xs">On team</span>
+                                </span>
+                              )}
+
+                              {access.status === "on-team" && access.via === "suggested" && (
+                                <Select
+                                  defaultValue="match"
+                                  onValueChange={(val) => {
+                                    if (val === "no-match") {
+                                      setDismissedMatches((prev) => new Set(prev).add(p.email));
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger
+                                    className={`h-7 w-auto gap-1 text-xs ${statusColors.green.text} ${statusColors.green.border} ${statusColors.green.bg} px-2 [&>svg]:h-3 [&>svg]:w-3`}
+                                  >
+                                    <Check className="h-3 w-3 shrink-0" />
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="match">
+                                      Likely {access.match.full_name} ({access.match.email})
+                                    </SelectItem>
+                                    <SelectItem value="no-match">Not the same person</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+
+                              {access.status === "has-account" && access.via === "exact" && (
+                                <span className={`inline-flex items-center gap-1 ${colors.warning}`}>
+                                  <UserCheck className="h-4 w-4" />
+                                  <span className="text-xs">Has account</span>
+                                </span>
+                              )}
+
+                              {access.status === "has-account" && access.via === "suggested" && (
+                                <Select
+                                  defaultValue="match"
+                                  onValueChange={(val) => {
+                                    if (val === "no-match") {
+                                      setDismissedMatches((prev) => new Set(prev).add(p.email));
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger
+                                    className={`h-7 w-auto gap-1 text-xs ${statusColors.amber.text} ${statusColors.amber.border} ${statusColors.amber.bg} px-2 [&>svg]:h-3 [&>svg]:w-3`}
+                                  >
+                                    <UserCheck className="h-3 w-3 shrink-0" />
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="match">
+                                      Likely {access.match.full_name} ({access.match.email})
+                                    </SelectItem>
+                                    <SelectItem value="no-match">Not the same person</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+
+                              {access.status === "none" && (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs text-muted-foreground border-border"
+                                  >
+                                    No account
+                                  </Badge>
+                                  {isDismissed && isSuggested && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setDismissedMatches((prev) => {
+                                          const next = new Set(prev);
+                                          next.delete(p.email);
+                                          return next;
+                                        })
+                                      }
+                                      className="text-xs text-info hover:text-info/80 hover:underline"
+                                    >
+                                      Undo
+                                    </button>
+                                  )}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={pending} className="rounded-full">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete All Synced Data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete all CCSA synced data?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently remove all {players.length} synced players from the
+                        database. Waiver badges will no longer appear until you sync again.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-red-600 hover:bg-red-700"
+                        onClick={async () => {
+                          setPending(true);
+                          setError(null);
+                          setSyncResult(null);
+                          const result = await deleteAllCcsaPlayers();
+                          if (result.error) {
+                            setError(result.error);
+                          } else {
+                            setPlayers([]);
+                            setSyncResult("All synced data deleted");
+                          }
+                          setPending(false);
+                        }}
+                      >
+                        Delete All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ─── Games Tab ────────────────────────────────────────────────── */}
+          <TabsContent value="games" className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshGamesPreview}
+                disabled={gamesPending}
+                className="rounded-full"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${gamesPending ? "animate-spin" : ""}`} />
+                {gamesPending ? "Loading..." : "Refresh Schedule"}
+              </Button>
+            </div>
+
+            {gamesError && <p className={feedback.error}>{gamesError}</p>}
+            {gamesResult && <p className={feedback.success}>{gamesResult}</p>}
+
+            {gamesPreview && (
+              <div className="space-y-3">
+                {/* Summary badges */}
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {gamesPreview.newGames.length > 0 && (
+                    <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
+                      {gamesPreview.newGames.length} new
+                    </Badge>
+                  )}
+                  {gamesPreview.updated.length > 0 && (
+                    <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
+                      {gamesPreview.updated.length} rescheduled
+                    </Badge>
+                  )}
+                  {gamesPreview.stale.length > 0 && (
+                    <Badge variant="destructive">
+                      {gamesPreview.stale.length} stale
+                    </Badge>
+                  )}
+                  {gamesPreview.skipped.length > 0 && (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {gamesPreview.skipped.length} skipped (cancelled)
+                    </Badge>
+                  )}
+                  {gamesPreview.unchanged > 0 && (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {gamesPreview.unchanged} unchanged
+                    </Badge>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  CCSA schedule last updated: {gamesPreview.lastupdate} · Team: {gamesPreview.teamName}
+                </p>
+
+                {/* New games */}
+                {gamesPreview.newGames.length > 0 && (
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium text-foreground">
+                      New games ({gamesPreview.newGames.length})
+                    </summary>
+                    <ul className="mt-1 space-y-1 pl-4 text-xs text-muted-foreground">
+                      {gamesPreview.newGames.map((g) => (
+                        <li key={g.gamecode}>
+                          {g.date} {g.time} — {g.title} @ {g.location}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+
+                {/* Rescheduled games */}
+                {gamesPreview.updated.length > 0 && (
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium text-foreground">
+                      Rescheduled games ({gamesPreview.updated.length})
+                    </summary>
+                    <ul className="mt-1 space-y-2 pl-4 text-xs">
+                      {gamesPreview.updated.map((g) => (
+                        <li key={g.gamecode}>
+                          <span className="font-medium text-foreground">{g.title}</span>
+                          <div className="text-muted-foreground line-through">
+                            {g.oldDate} {g.oldTime} @ {g.oldLocation}
+                          </div>
+                          <div className={colors.success}>
+                            {g.newDate} {g.newTime} @ {g.newLocation}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+
+                {/* Skipped (cancelled on our side) */}
+                {gamesPreview.skipped.length > 0 && (
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium text-muted-foreground">
+                      Skipped — cancelled on our side ({gamesPreview.skipped.length})
+                    </summary>
+                    <p className="mt-1 pl-4 text-xs text-muted-foreground">
+                      These games are cancelled in our system. New sessions will be created for them.
+                    </p>
+                    <ul className="mt-1 space-y-1 pl-4 text-xs text-muted-foreground">
+                      {gamesPreview.skipped.map((g) => (
+                        <li key={g.gamecode}>
+                          {g.date} {g.time} — {g.title} @ {g.location}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+
+                {/* Stale games */}
+                {gamesPreview.stale.length > 0 && (
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+                    <p className="text-sm font-medium text-destructive">
+                      ⚠ Stale games (not in CCSA schedule)
+                    </p>
+                    <ul className="space-y-1 text-xs">
+                      {gamesPreview.stale.map((g) => (
+                        <li key={g.sessionId} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedStale.has(g.sessionId)}
+                            onChange={(e) => {
+                              setSelectedStale((prev) => {
+                                const next = new Set(prev);
+                                if (e.target.checked) next.add(g.sessionId);
+                                else next.delete(g.sessionId);
+                                return next;
+                              });
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-foreground">
+                            {g.title ?? g.gamecode} — {g.date}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleCancelStale}
+                      disabled={gamesPending || selectedStale.size === 0}
+                      className="rounded-full"
+                    >
+                      Cancel {selectedStale.size} Selected
+                    </Button>
+                  </div>
+                )}
+
+                {/* Apply button */}
+                {hasGameChanges && (
+                  <Button
+                    onClick={handleApplyGameSync}
+                    disabled={gamesPending}
+                    className="rounded-full"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${gamesPending ? "animate-spin" : ""}`} />
+                    {gamesPending ? "Applying..." : "Apply Game Sync"}
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {!gamesPreview && !gamesError && (
+              <p className="text-xs text-muted-foreground">
+                Click Refresh to load the CCSA game schedule.
+              </p>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

@@ -369,7 +369,13 @@ export async function getCcsaPlayersPreview(): Promise<PlayersPreview | { error:
         unchangedCount++;
       }
 
-      return { email, first_name: p.firstname, last_name: p.lastname, waiver_status: waiver, change };
+      return {
+        email,
+        first_name: p.firstname,
+        last_name: p.lastname,
+        waiver_status: waiver,
+        change,
+      };
     });
 
     return { players, newCount, updatedCount, unchangedCount, teamName };
@@ -557,7 +563,9 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
 
     // Stale: in our DB but not in CCSA, and game is in the future
     const stale: StaleGame[] = existingSessions
-      .filter((s) => !ccsaGamecodes.has(s.gamecode) && isGameInFuture(s.date) && s.status !== "cancelled")
+      .filter(
+        (s) => !ccsaGamecodes.has(s.gamecode) && isGameInFuture(s.date) && s.status !== "cancelled",
+      )
       .map((s) => ({ sessionId: s.id, title: s.title, date: s.date, gamecode: s.gamecode }));
 
     return { newGames, updated, stale, skipped, unchanged, lastupdate, teamName };
