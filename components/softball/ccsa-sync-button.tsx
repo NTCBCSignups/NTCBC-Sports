@@ -472,6 +472,8 @@ export default function CcsaSyncButton({
             </div>
           )}
 
+          <div className="border-t" />
+
           {/* ─── Players Tab ─────────────────────────────────────────────── */}
           <TabsContent value="players" className="space-y-3">
             {playersPreview && (playersPreview.newCount > 0 || playersPreview.updatedCount > 0) && (
