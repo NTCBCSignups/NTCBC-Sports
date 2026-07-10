@@ -1,5 +1,41 @@
 import { createClient } from "@/lib/supabase/server";
 
+const SPORT = "softball";
+const GAME_CODE_REGEX = /Game Code:\s*(\S+)/;
+
+export interface ScheduledGameSession {
+  id: string;
+  title: string | null;
+  date: string;
+  time_start: string;
+  time_end: string;
+  location_name: string;
+  notes: string | null;
+  status: string;
+  gamecode: string;
+}
+
+/** All softball scheduled_game sessions with extracted gamecodes. */
+export async function getScheduledGameSessions(): Promise<ScheduledGameSession[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sessions")
+    .select("id, title, date, time_start, time_end, location_name, notes, status")
+    .eq("sport", SPORT)
+    .eq("session_type", "scheduled_game");
+
+  if (!data) return [];
+
+  const sessions: ScheduledGameSession[] = [];
+  for (const s of data) {
+    const match = s.notes?.match(GAME_CODE_REGEX);
+    if (match?.[1]) {
+      sessions.push({ ...s, gamecode: match[1] });
+    }
+  }
+  return sessions;
+}
+
 /** Most recent CCSA sync timestamp. */
 export async function getCcsaLastSyncedAt(): Promise<string | null> {
   const supabase = await createClient();

@@ -2,12 +2,16 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { fromZonedTime } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSportAdmin } from "@/lib/supabase/user";
 import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-server-fetch";
-import { auth, team } from "@/lib/softball/ccsa-api";
+import { auth, team, sched } from "@/lib/softball/ccsa-api";
+import type { ScheduleGame } from "@/lib/softball/ccsa-types";
 import type { WaiverStatus } from "@/lib/supabase/types";
+import { SPORT_TIMEZONE } from "@/lib/timezone";
+import { getScheduledGameSessions } from "@/lib/softball/get-data";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -291,4 +295,393 @@ export async function deleteAllCcsaPlayers() {
   revalidatePath(`/${SPORT}/admin`);
   revalidatePath(`/${SPORT}`);
   return { success: true };
+}
+
+// ─── Player Preview (read-only) ─────────────────────────────────────────────
+
+export interface PlayerPreviewEntry {
+  email: string;
+  first_name: string;
+  last_name: string;
+  waiver_status: WaiverStatus;
+  change: "new" | "updated" | "unchanged";
+}
+
+export interface PlayersPreview {
+  players: PlayerPreviewEntry[];
+  newCount: number;
+  updatedCount: number;
+  unchangedCount: number;
+  teamName: string;
+}
+
+export async function getCcsaPlayersPreview(): Promise<PlayersPreview | { error: string }> {
+  await ensureSportAdmin();
+
+  const existing = await loadCcsaCookies();
+  if (existing.length === 0) {
+    return { error: "No CCSA session. Please log in first." };
+  }
+
+  installCookieFetch(existing);
+  try {
+    const userTeam = await team.userTeam();
+    const teamId = userTeam?.teamid;
+    const teamName = userTeam?.name ?? "Unknown Team";
+    if (!teamId) {
+      return { error: "Could not determine CCSA team ID" };
+    }
+
+    const roster = await team.allPlayerInfo(teamId);
+    await saveCcsaCookies(getCapturedCookies());
+
+    if (!roster || roster.length === 0) {
+      return { error: "No players found on CCSA team" };
+    }
+
+    // Get current DB state for comparison
+    const supabase = await createClient();
+    const { data: currentPlayers } = await supabase
+      .from("ccsa_players")
+      .select("email, waiver_status");
+
+    const currentByEmail = new Map(
+      (currentPlayers ?? []).map((p) => [p.email.toLowerCase(), p.waiver_status]),
+    );
+
+    let newCount = 0;
+    let updatedCount = 0;
+    let unchangedCount = 0;
+
+    const players: PlayerPreviewEntry[] = roster.map((p) => {
+      const email = p.email.toLowerCase();
+      const waiver = mapWaiverStatus(p.needwaiver);
+      const currentWaiver = currentByEmail.get(email);
+
+      let change: "new" | "updated" | "unchanged";
+      if (currentWaiver === undefined) {
+        change = "new";
+        newCount++;
+      } else if (currentWaiver !== waiver) {
+        change = "updated";
+        updatedCount++;
+      } else {
+        change = "unchanged";
+        unchangedCount++;
+      }
+
+      return { email, first_name: p.firstname, last_name: p.lastname, waiver_status: waiver, change };
+    });
+
+    return { players, newCount, updatedCount, unchangedCount, teamName };
+  } catch (e) {
+    await clearCcsaCookies();
+    return {
+      error: e instanceof Error ? e.message : "Preview failed — CCSA session may have expired",
+    };
+  }
+}
+
+// ─── Game Schedule Sync ─────────────────────────────────────────────────────
+
+const GAME_DURATION_HOURS = 2;
+const SYNC_MARKER = "# CCSA Sync — Do Not Edit";
+const GAME_CODE_REGEX = /Game Code:\s*(\S+)/;
+
+export interface GameDiff {
+  gamecode: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  opponent: string;
+  isHome: boolean;
+  umps: string | null;
+}
+
+export interface GameUpdate {
+  sessionId: string;
+  gamecode: string;
+  title: string;
+  oldDate: string;
+  oldTime: string;
+  oldLocation: string;
+  newDate: string;
+  newTime: string;
+  newLocation: string;
+  opponent: string;
+  isHome: boolean;
+  umps: string | null;
+}
+
+export interface StaleGame {
+  sessionId: string;
+  title: string | null;
+  date: string;
+  gamecode: string;
+}
+
+export interface GamesPreview {
+  newGames: GameDiff[];
+  updated: GameUpdate[];
+  stale: StaleGame[];
+  skipped: GameDiff[];
+  unchanged: number;
+  lastupdate: string;
+  teamName: string;
+}
+
+function computeEndTime(startTime: string): string {
+  const [h, m] = startTime.split(":").map(Number) as [number, number];
+  const endHour = (h + GAME_DURATION_HOURS) % 24;
+  return `${String(endHour).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function mapsLink(parkName: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parkName)}`;
+}
+
+function buildGameNotes(game: ScheduleGame, isHome: boolean): string {
+  const opponent = isHome ? game.away_name : game.home_name;
+  const lines = [SYNC_MARKER, `Game Code: ${game.gamecode}`, `${isHome ? "Home" : "Away"} vs ${opponent}`];
+  if (game.umps_name) lines.push(`Umps: Team ${game.umps_name}`);
+  return lines.join("\n");
+}
+
+function isGameInFuture(dateStr: string): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  return dateStr >= today;
+}
+
+export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: string }> {
+  await ensureSportAdmin();
+
+  const existing = await loadCcsaCookies();
+  if (existing.length === 0) {
+    return { error: "No CCSA session. Please log in first." };
+  }
+
+  installCookieFetch(existing);
+  try {
+    const userTeam = await team.userTeam();
+    const teamId = userTeam?.teamid;
+    const teamName = userTeam?.name ?? "Unknown Team";
+    if (!teamId) {
+      return { error: "Could not determine CCSA team ID" };
+    }
+
+    const { schedule, lastupdate } = await sched.getSchedule();
+    await saveCcsaCookies(getCapturedCookies());
+
+    // Filter to our team's games and sort chronologically
+    const ourGames = schedule
+      .filter((g) => g.home === teamId || g.away === teamId)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+    // Fetch existing sessions from DB
+    const existingSessions = await getScheduledGameSessions();
+    const sessionsByGamecode = new Map(existingSessions.map((s) => [s.gamecode, s]));
+
+    // Build the diff
+    const newGames: GameDiff[] = [];
+    const updated: GameUpdate[] = [];
+    const skipped: GameDiff[] = [];
+    let unchanged = 0;
+
+    const ccsaGamecodes = new Set<string>();
+
+    for (const game of ourGames) {
+      ccsaGamecodes.add(game.gamecode);
+      const isHome = game.home === teamId;
+      const opponent = isHome ? game.away_name : game.home_name;
+      const existing = sessionsByGamecode.get(game.gamecode);
+
+      const diff: GameDiff = {
+        gamecode: game.gamecode,
+        title: `${isHome ? "Home" : "Away"} vs ${opponent}`,
+        date: game.date,
+        time: game.time,
+        location: game.park_name,
+        opponent,
+        isHome,
+        umps: game.umps_name || null,
+      };
+
+      if (!existing) {
+        newGames.push(diff);
+      } else if (existing.status === "cancelled") {
+        // Our session is cancelled — skip it, we'll create a new one
+        skipped.push(diff);
+      } else if (
+        isGameInFuture(game.date) &&
+        (existing.date !== game.date ||
+          existing.time_start !== game.time ||
+          existing.location_name !== game.park_name)
+      ) {
+        updated.push({
+          sessionId: existing.id,
+          gamecode: game.gamecode,
+          title: existing.title ?? diff.title,
+          oldDate: existing.date,
+          oldTime: existing.time_start,
+          oldLocation: existing.location_name,
+          newDate: game.date,
+          newTime: game.time,
+          newLocation: game.park_name,
+          opponent,
+          isHome,
+          umps: game.umps_name || null,
+        });
+      } else {
+        unchanged++;
+      }
+    }
+
+    // Stale: in our DB but not in CCSA, and game is in the future
+    const stale: StaleGame[] = existingSessions
+      .filter((s) => !ccsaGamecodes.has(s.gamecode) && isGameInFuture(s.date) && s.status !== "cancelled")
+      .map((s) => ({ sessionId: s.id, title: s.title, date: s.date, gamecode: s.gamecode }));
+
+    return { newGames, updated, stale, skipped, unchanged, lastupdate, teamName };
+  } catch (e) {
+    await clearCcsaCookies();
+    return {
+      error: e instanceof Error ? e.message : "Preview failed — CCSA session may have expired",
+    };
+  }
+}
+
+export async function applyCcsaGameSync(
+  newGames: GameDiff[],
+  updatedGames: GameUpdate[],
+  skippedGames: GameDiff[],
+) {
+  await ensureSportAdmin();
+
+  const admin = createAdminClient();
+
+  // Count existing scheduled_game sessions for numbering new games
+  const { count } = await admin
+    .from("sessions")
+    .select("id", { count: "exact", head: true })
+    .eq("sport", SPORT)
+    .eq("session_type", "scheduled_game");
+
+  let gameNumber = (count ?? 0) + 1;
+
+  // Build rows for new games (including skipped ones that need new sessions)
+  const allNew = [...newGames, ...skippedGames];
+  const insertRows = allNew.map((game) => {
+    const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
+    const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
+    const title = `Game ${gameNumber++}: ${game.title}`;
+
+    return {
+      sport: SPORT,
+      session_type: "scheduled_game" as const,
+      title,
+      date: game.date,
+      time_start: game.time,
+      time_end: computeEndTime(game.time),
+      location_name: game.location,
+      location_address: game.location,
+      location_maps_link: mapsLink(game.location),
+      player_cap: null,
+      signup_open: new Date().toISOString(),
+      signup_close: signupClose.toISOString(),
+      notes: buildGameNotes(
+        {
+          gamecode: game.gamecode,
+          date: game.date,
+          time: game.time,
+          park: 0,
+          park_name: game.location,
+          home: game.isHome ? 1 : null,
+          home_name: game.isHome ? "" : game.opponent,
+          away: game.isHome ? null : 1,
+          away_name: game.isHome ? game.opponent : "",
+          umps: null,
+          umps_name: game.umps ?? "",
+        },
+        game.isHome,
+      ),
+    };
+  });
+
+  const results = { created: 0, updated: 0, errors: [] as string[] };
+
+  if (insertRows.length > 0) {
+    const { error } = await admin.from("sessions").insert(insertRows);
+    if (error) {
+      results.errors.push(`Insert failed: ${error.message}`);
+    } else {
+      results.created = insertRows.length;
+    }
+  }
+
+  // Update rescheduled games
+  for (const game of updatedGames) {
+    const timeForParse = game.newTime.length <= 5 ? `${game.newTime}:00` : game.newTime;
+    const signupClose = fromZonedTime(`${game.newDate}T${timeForParse}`, SPORT_TIMEZONE);
+
+    const { error } = await admin
+      .from("sessions")
+      .update({
+        date: game.newDate,
+        time_start: game.newTime,
+        time_end: computeEndTime(game.newTime),
+        location_name: game.newLocation,
+        location_address: game.newLocation,
+        location_maps_link: mapsLink(game.newLocation),
+        signup_close: signupClose.toISOString(),
+        notes: buildGameNotes(
+          {
+            gamecode: game.gamecode,
+            date: game.newDate,
+            time: game.newTime,
+            park: 0,
+            park_name: game.newLocation,
+            home: game.isHome ? 1 : null,
+            home_name: game.isHome ? "" : game.opponent,
+            away: game.isHome ? null : 1,
+            away_name: game.isHome ? game.opponent : "",
+            umps: null,
+            umps_name: game.umps ?? "",
+          },
+          game.isHome,
+        ),
+      })
+      .eq("id", game.sessionId);
+
+    if (error) {
+      results.errors.push(`Update ${game.gamecode}: ${error.message}`);
+    } else {
+      results.updated++;
+    }
+  }
+
+  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${SPORT}`);
+  return results;
+}
+
+export async function cancelStaleCcsaGames(sessionIds: string[]) {
+  await ensureSportAdmin();
+
+  if (sessionIds.length === 0) return { success: true, count: 0 };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("sessions")
+    .update({
+      status: "cancelled",
+      status_notes: "Removed from CCSA schedule",
+    })
+    .in("id", sessionIds);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${SPORT}`);
+  return { success: true, count: sessionIds.length };
 }
