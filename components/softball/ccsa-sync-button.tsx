@@ -173,6 +173,7 @@ export default function CcsaSyncButton({
   const [gamesError, setGamesError] = useState<string | null>(null);
   const [gamesResult, setGamesResult] = useState<string | null>(null);
   const [selectedStale, setSelectedStale] = useState<Set<string>>(new Set());
+  const [confirmedUpdates, setConfirmedUpdates] = useState<Set<string>>(new Set());
 
   const handleQuickSync = async () => {
     setPending(true);
@@ -253,6 +254,7 @@ export default function CcsaSyncButton({
     } else {
       setGamesPreview(result);
       setSelectedStale(new Set());
+      setConfirmedUpdates(new Set());
     }
     setGamesPending(false);
   };
@@ -263,9 +265,14 @@ export default function CcsaSyncButton({
     setGamesError(null);
     setGamesResult(null);
 
+    // Only include updates that don't need confirmation, or that are explicitly confirmed
+    const updatesToApply = gamesPreview.updated.filter(
+      (g) => !g.needsConfirmation || confirmedUpdates.has(g.gamecode),
+    );
+
     const result = await applyCcsaGameSync(
       gamesPreview.newGames,
-      gamesPreview.updated,
+      updatesToApply,
       gamesPreview.skipped,
     );
 
@@ -283,6 +290,7 @@ export default function CcsaSyncButton({
     if (!("error" in refreshed)) {
       setGamesPreview(refreshed);
       setSelectedStale(new Set());
+      setConfirmedUpdates(new Set());
     }
     setGamesPending(false);
   };
@@ -703,19 +711,43 @@ export default function CcsaSyncButton({
 
                 {/* Rescheduled games */}
                 {gamesPreview.updated.length > 0 && (
-                  <details className="text-sm">
+                  <details className="text-sm" open>
                     <summary className="cursor-pointer font-medium text-foreground">
                       Rescheduled games ({gamesPreview.updated.length})
                     </summary>
                     <ul className="mt-1 space-y-2 pl-4 text-xs">
                       {gamesPreview.updated.map((g) => (
-                        <li key={g.gamecode}>
-                          <span className="font-medium text-foreground">{g.title}</span>
-                          <div className="text-muted-foreground line-through">
-                            {g.oldDate} {g.oldTime} @ {g.oldLocation}
-                          </div>
-                          <div className={colors.success}>
-                            {g.newDate} {g.newTime} @ {g.newLocation}
+                        <li key={g.gamecode} className="flex items-start gap-2">
+                          {g.needsConfirmation && (
+                            <input
+                              type="checkbox"
+                              checked={confirmedUpdates.has(g.gamecode)}
+                              onChange={(e) => {
+                                setConfirmedUpdates((prev) => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(g.gamecode);
+                                  else next.delete(g.gamecode);
+                                  return next;
+                                });
+                              }}
+                              className="rounded mt-0.5"
+                            />
+                          )}
+                          <div>
+                            <span className="font-medium text-foreground">
+                              {g.title}
+                              {g.needsConfirmation && (
+                                <Badge variant="outline" className="ml-2 text-[10px] text-amber-600 border-amber-300">
+                                  Matched by time — confirm?
+                                </Badge>
+                              )}
+                            </span>
+                            <div className="text-muted-foreground line-through">
+                              {g.oldDate} {g.oldTime} @ {g.oldLocation}
+                            </div>
+                            <div className={colors.success}>
+                              {g.newDate} {g.newTime} @ {g.newLocation}
+                            </div>
                           </div>
                         </li>
                       ))}

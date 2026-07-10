@@ -12,10 +12,10 @@ export interface ScheduledGameSession {
   location_name: string;
   notes: string | null;
   status: string;
-  gamecode: string;
+  gamecode: string | null;
 }
 
-/** All softball scheduled_game sessions with extracted gamecodes. */
+/** All softball scheduled_game sessions, with gamecode extracted from notes if present. */
 export async function getScheduledGameSessions(): Promise<ScheduledGameSession[]> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -26,14 +26,10 @@ export async function getScheduledGameSessions(): Promise<ScheduledGameSession[]
 
   if (!data) return [];
 
-  const sessions: ScheduledGameSession[] = [];
-  for (const s of data) {
+  return data.map((s) => {
     const match = s.notes?.match(GAME_CODE_REGEX);
-    if (match?.[1]) {
-      sessions.push({ ...s, gamecode: match[1] });
-    }
-  }
-  return sessions;
+    return { ...s, gamecode: match?.[1] ?? null };
+  });
 }
 
 /** Most recent CCSA sync timestamp. */

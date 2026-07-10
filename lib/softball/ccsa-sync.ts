@@ -10,7 +10,10 @@ import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-serv
 import { auth, team, sched } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { SPORT_TIMEZONE } from "@/lib/timezone";
-import { getScheduledGameSessions } from "@/lib/softball/get-data";
+import {
+  getScheduledGameSessions,
+  type ScheduledGameSession,
+} from "@/lib/softball/get-data";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -390,6 +393,32 @@ export async function getCcsaPlayersPreview(): Promise<PlayersPreview | { error:
 }
 
 // ─── Game Schedule Sync ─────────────────────────────────────────────────────
+//
+// Algorithm: Three-phase reconciliation
+//   Phase 1 — MATCH: Associate each CCSA game with a local session (or null)
+//     Priority 1: Gamecode in notes (definitive, previously synced)
+//     Priority 2: Same date + overlapping time (heuristic, manually created)
+//   Phase 2 — CLASSIFY: Determine action for each (CcsaGame, LocalSession?) pair
+//     - No match → create
+//     - Match is in the past → unchanged (never modify history)
+//     - Match is cancelled → skip (leave it, create fresh session)
+//     - Date differs OR times don't overlap → update (rescheduled)
+//     - Same date + overlapping times → unchanged
+//   Phase 3 — DETECT ORPHANS: Local sessions with gamecodes not in CCSA schedule
+//     - Future + active → stale (warn admin)
+//
+// Scenarios handled:
+//   1. Fresh game on CCSA, no local session → CREATE
+//   2. CCSA game matches gamecode, same date+time → UNCHANGED
+//   3. CCSA game matches gamecode, different date → UPDATE
+//   4. CCSA game matches gamecode, same date, non-overlapping time → UPDATE
+//   5. Game removed from CCSA, local has gamecode, active+future → STALE
+//   6. CCSA game matches gamecode, local is cancelled → SKIP (create new)
+//   7. CCSA game matches gamecode, local is in past → UNCHANGED (no touch)
+//   8. CCSA game matches manually-created by date+time → UPDATE (needsConfirmation)
+//   9. Cancelled local, no gamecode, CCSA on same date+time → not matched (manual cancelled is invisible)
+//  10. Past sessions without gamecode → not matched (ignored)
+// ─────────────────────────────────────────────────────────────────────────────
 
 const GAME_DURATION_HOURS = 2;
 const SYNC_MARKER = "# CCSA Sync — Do Not Edit";
@@ -418,6 +447,8 @@ export interface GameUpdate {
   opponent: string;
   isHome: boolean;
   umps: string | null;
+  /** True if matched by date+time overlap (not gamecode) — admin should confirm */
+  needsConfirmation: boolean;
 }
 
 export interface StaleGame {
@@ -437,7 +468,9 @@ export interface GamesPreview {
   teamName: string;
 }
 
-function computeEndTime(startTime: string): string {
+// ─── Pure utility functions (testable) ──────────────────────────────────────
+
+export function computeEndTime(startTime: string): string {
   const [h, m] = startTime.split(":").map(Number) as [number, number];
   const endHour = (h + GAME_DURATION_HOURS) % 24;
   return `${String(endHour).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -447,7 +480,7 @@ function mapsLink(parkName: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parkName)}`;
 }
 
-function buildGameNotes(opts: {
+export function buildGameNotes(opts: {
   gamecode: string;
   isHome: boolean;
   opponent: string;
@@ -463,7 +496,6 @@ function buildGameNotes(opts: {
 }
 
 function getTodayInSportTimezone(): string {
-  // Format current date in sport timezone as YYYY-MM-DD
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: SPORT_TIMEZONE,
     year: "numeric",
@@ -473,8 +505,126 @@ function getTodayInSportTimezone(): string {
   return formatter.format(new Date());
 }
 
-function isGameInFuture(dateStr: string): boolean {
-  return dateStr >= getTodayInSportTimezone();
+export function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number) as [number, number];
+  return h * 60 + m;
+}
+
+export function timesOverlap(
+  startA: string,
+  endA: string,
+  startB: string,
+  endB: string,
+): boolean {
+  const a0 = timeToMinutes(startA);
+  const a1 = timeToMinutes(endA);
+  const b0 = timeToMinutes(startB);
+  const b1 = timeToMinutes(endB);
+  return a0 < b1 && b0 < a1;
+}
+
+// ─── Phase 1: MATCH ─────────────────────────────────────────────────────────
+
+type MatchResult = {
+  session: ScheduledGameSession;
+  matchedByTime: boolean;
+} | null;
+
+/**
+ * Find the local session that corresponds to a CCSA game.
+ * Priority 1: Gamecode match (definitive).
+ * Priority 2: Same date + overlapping time on an unmatched, active session (heuristic).
+ */
+function findMatchForGame(
+  gamecode: string,
+  gameDate: string,
+  gameTime: string,
+  gameEndTime: string,
+  sessionsByGamecode: Map<string, ScheduledGameSession>,
+  unmatchedSessions: ScheduledGameSession[],
+  claimedIds: Set<string>,
+): MatchResult {
+  // Priority 1: definitive gamecode match
+  const byCode = sessionsByGamecode.get(gamecode);
+  if (byCode) {
+    return { session: byCode, matchedByTime: false };
+  }
+
+  // Priority 2: same date + overlapping time on unclaimed, active sessions
+  const byTime = unmatchedSessions.find(
+    (s) =>
+      s.status !== "cancelled" &&
+      s.date === gameDate &&
+      !claimedIds.has(s.id) &&
+      timesOverlap(gameTime, gameEndTime, s.time_start, s.time_end),
+  );
+  if (byTime) {
+    return { session: byTime, matchedByTime: true };
+  }
+
+  return null;
+}
+
+// ─── Phase 2: CLASSIFY ──────────────────────────────────────────────────────
+
+type SyncAction =
+  | { type: "create" }
+  | { type: "unchanged" }
+  | { type: "skip" }
+  | { type: "update"; needsConfirmation: boolean };
+
+/**
+ * Given a matched (CcsaGame → LocalSession) pair, determine the sync action.
+ * Only considers date and time overlap — ignores title, location, notes.
+ */
+function classifyMatch(
+  session: ScheduledGameSession,
+  gameDate: string,
+  gameTime: string,
+  gameEndTime: string,
+  matchedByTime: boolean,
+  today: string,
+): SyncAction {
+  // Never modify past sessions
+  if (session.date < today) {
+    return { type: "unchanged" };
+  }
+
+  // Cancelled locally → leave it, create a fresh session
+  if (session.status === "cancelled") {
+    return { type: "skip" };
+  }
+
+  // Date changed → definitively rescheduled
+  if (session.date !== gameDate) {
+    return { type: "update", needsConfirmation: matchedByTime };
+  }
+
+  // Same date but times don't overlap → time changed significantly
+  if (!timesOverlap(gameTime, gameEndTime, session.time_start, session.time_end)) {
+    return { type: "update", needsConfirmation: matchedByTime };
+  }
+
+  // Same date + overlapping times → same slot, no meaningful change
+  return { type: "unchanged" };
+}
+
+// ─── Phase 3: DETECT ORPHANS ────────────────────────────────────────────────
+
+function findStaleGames(
+  sessions: ScheduledGameSession[],
+  ccsaGamecodes: Set<string>,
+  today: string,
+): StaleGame[] {
+  return sessions
+    .filter(
+      (s) =>
+        s.gamecode !== null &&
+        !ccsaGamecodes.has(s.gamecode) &&
+        s.date >= today &&
+        s.status !== "cancelled",
+    )
+    .map((s) => ({ sessionId: s.id, title: s.title, date: s.date, gamecode: s.gamecode! }));
 }
 
 export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: string }> {
@@ -504,21 +654,29 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
 
     // Fetch existing sessions from DB
     const existingSessions = await getScheduledGameSessions();
-    const sessionsByGamecode = new Map(existingSessions.map((s) => [s.gamecode, s]));
 
-    // Build the diff
+    // Partition sessions for matching
+    const sessionsByGamecode = new Map(
+      existingSessions.filter((s) => s.gamecode).map((s) => [s.gamecode!, s]),
+    );
+    const unmatchedSessions = existingSessions.filter((s) => !s.gamecode);
+
+    const today = getTodayInSportTimezone();
+
+    // Reconcile: match → classify → collect results
     const newGames: GameDiff[] = [];
     const updated: GameUpdate[] = [];
     const skipped: GameDiff[] = [];
     let unchanged = 0;
 
     const ccsaGamecodes = new Set<string>();
+    const claimedIds = new Set<string>();
 
     for (const game of ourGames) {
       ccsaGamecodes.add(game.gamecode);
       const isHome = game.home === teamId;
       const opponent = isHome ? game.away_name : game.home_name;
-      const existing = sessionsByGamecode.get(game.gamecode);
+      const gameEndTime = computeEndTime(game.time);
 
       const diff: GameDiff = {
         gamecode: game.gamecode,
@@ -531,42 +689,66 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
         umps: game.umps_name || null,
       };
 
-      if (!existing) {
+      // Phase 1: Match
+      const match = findMatchForGame(
+        game.gamecode,
+        game.date,
+        game.time,
+        gameEndTime,
+        sessionsByGamecode,
+        unmatchedSessions,
+        claimedIds,
+      );
+
+      if (!match) {
         newGames.push(diff);
-      } else if (existing.status === "cancelled") {
-        // Our session is cancelled — skip it, we'll create a new one
-        skipped.push(diff);
-      } else if (
-        isGameInFuture(game.date) &&
-        (existing.date !== game.date ||
-          existing.time_start !== game.time ||
-          existing.location_name !== game.park_name)
-      ) {
-        updated.push({
-          sessionId: existing.id,
-          gamecode: game.gamecode,
-          title: existing.title ?? diff.title,
-          oldDate: existing.date,
-          oldTime: existing.time_start,
-          oldLocation: existing.location_name,
-          newDate: game.date,
-          newTime: game.time,
-          newLocation: game.park_name,
-          opponent,
-          isHome,
-          umps: game.umps_name || null,
-        });
-      } else {
-        unchanged++;
+        continue;
+      }
+
+      claimedIds.add(match.session.id);
+
+      // Phase 2: Classify
+      const action = classifyMatch(
+        match.session,
+        game.date,
+        game.time,
+        gameEndTime,
+        match.matchedByTime,
+        today,
+      );
+
+      switch (action.type) {
+        case "create":
+          newGames.push(diff);
+          break;
+        case "skip":
+          skipped.push(diff);
+          break;
+        case "update":
+          updated.push({
+            sessionId: match.session.id,
+            gamecode: game.gamecode,
+            title: match.session.title ?? diff.title,
+            oldDate: match.session.date,
+            oldTime: match.session.time_start,
+            oldLocation: match.session.location_name,
+            newDate: game.date,
+            newTime: game.time,
+            newLocation: game.park_name,
+            opponent,
+            isHome,
+            umps: game.umps_name || null,
+            needsConfirmation: action.needsConfirmation,
+          });
+          break;
+        case "unchanged":
+          unchanged++;
+          break;
       }
     }
 
-    // Stale: in our DB but not in CCSA, and game is in the future
-    const stale: StaleGame[] = existingSessions
-      .filter(
-        (s) => !ccsaGamecodes.has(s.gamecode) && isGameInFuture(s.date) && s.status !== "cancelled",
-      )
-      .map((s) => ({ sessionId: s.id, title: s.title, date: s.date, gamecode: s.gamecode }));
+    // Phase 3: Detect orphans
+    const stale = findStaleGames(existingSessions, ccsaGamecodes, today);
 
     return { newGames, updated, stale, skipped, unchanged, lastupdate, teamName };
   } catch (e) {
