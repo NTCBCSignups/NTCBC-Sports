@@ -1,9 +1,6 @@
 import CcsaSyncButton from "@/components/softball/ccsa-sync-button";
 import { hasCcsaSession } from "@/lib/softball/ccsa-sync";
-import {
-  getCcsaPlayersPreview,
-  getCcsaGamesPreview,
-} from "@/lib/softball/ccsa-preview";
+import { getCcsaPlayersPreview, getCcsaGamesPreview } from "@/lib/softball/ccsa-preview";
 import type { PlayersPreview, GamesPreview } from "@/lib/softball/ccsa-preview";
 import { getAllProfiles, getTeamMembersWithProfiles } from "@/lib/softball/get-data";
 
@@ -21,10 +18,7 @@ export default async function CcsaAdminTab({ sport }: AdminTabProps) {
   let gamesPreview: GamesPreview | null = null;
 
   if (sessionResult.hasCookies) {
-    const [pResult, gResult] = await Promise.all([
-      getCcsaPlayersPreview(),
-      getCcsaGamesPreview(),
-    ]);
+    const [pResult, gResult] = await Promise.all([getCcsaPlayersPreview(), getCcsaGamesPreview()]);
     if (!("error" in pResult)) playersPreview = pResult;
     if (!("error" in gResult)) gamesPreview = gResult;
   }

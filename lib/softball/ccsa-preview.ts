@@ -1,9 +1,9 @@
+"use server";
+
 /**
- * Read-only preview functions for CCSA sync.
- * These are NOT server actions — they can be called from server components
- * and client-triggered server actions alike.
- *
- * They read from the CCSA API + local DB but never write.
+ * Read-only server actions for CCSA sync previews.
+ * These fetch from the CCSA API + local DB but never write/mutate.
+ * Marked "use server" because they use server-only APIs (cookies, DB client).
  */
 
 import { cookies } from "next/headers";
@@ -22,7 +22,12 @@ import {
 } from "@/lib/softball/ccsa-game-reconcile";
 import type { GameDiff, GameUpdate, GamesPreview } from "@/lib/softball/ccsa-game-reconcile";
 
-export type { GamesPreview, GameDiff, GameUpdate, StaleGame } from "@/lib/softball/ccsa-game-reconcile";
+export type {
+  GamesPreview,
+  GameDiff,
+  GameUpdate,
+  StaleGame,
+} from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -131,7 +136,13 @@ export async function getCcsaPlayersPreview(): Promise<PlayersPreview | { error:
         unchangedCount++;
       }
 
-      return { email, first_name: p.firstname, last_name: p.lastname, waiver_status: waiver, change };
+      return {
+        email,
+        first_name: p.firstname,
+        last_name: p.lastname,
+        waiver_status: waiver,
+        change,
+      };
     });
 
     return { players, newCount, updatedCount, unchangedCount, teamName };

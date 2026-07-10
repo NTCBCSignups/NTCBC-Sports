@@ -27,10 +27,7 @@ import {
   applyCcsaGameSync,
   cancelStaleCcsaGames,
 } from "@/lib/softball/ccsa-sync";
-import {
-  getCcsaPlayersPreview,
-  getCcsaGamesPreview,
-} from "@/lib/softball/ccsa-preview";
+import { getCcsaPlayersPreview, getCcsaGamesPreview } from "@/lib/softball/ccsa-preview";
 import type { GamesPreview, PlayersPreview } from "@/lib/softball/ccsa-preview";
 import {
   AlertDialog,
@@ -158,7 +155,9 @@ export default function CcsaSyncButton({
   const [approveResult, setApproveResult] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(hasSession);
   const [loggedInEmail, setLoggedInEmail] = useState(sessionEmail ?? "");
-  const [playersPreview, setPlayersPreview] = useState<PlayersPreview | null>(initialPlayersPreview);
+  const [playersPreview, setPlayersPreview] = useState<PlayersPreview | null>(
+    initialPlayersPreview,
+  );
   const [dismissedMatches, setDismissedMatches] = useState<Set<string>>(new Set());
 
   // Game sync state
@@ -179,10 +178,7 @@ export default function CcsaSyncButton({
     setGamesError(null);
     setGamesResult(null);
 
-    const [pResult, gResult] = await Promise.all([
-      getCcsaPlayersPreview(),
-      getCcsaGamesPreview(),
-    ]);
+    const [pResult, gResult] = await Promise.all([getCcsaPlayersPreview(), getCcsaGamesPreview()]);
 
     // Handle players preview
     if ("error" in pResult) {
@@ -319,7 +315,10 @@ export default function CcsaSyncButton({
   };
 
   const hasGameChanges =
-    gamesPreview && (gamesPreview.newGames.length > 0 || gamesPreview.updated.length > 0 || gamesPreview.skipped.length > 0);
+    gamesPreview &&
+    (gamesPreview.newGames.length > 0 ||
+      gamesPreview.updated.length > 0 ||
+      gamesPreview.skipped.length > 0);
 
   return (
     <div className="space-y-4">
@@ -513,11 +512,14 @@ export default function CcsaSyncButton({
                         const isDismissed = dismissedMatches.has(p.email);
                         const rawAccess = getAccessStatus(p, teamMembers, allProfiles);
                         const access: AccessStatus =
-                          isDismissed && rawAccess.status !== "none" && rawAccess.via === "suggested"
+                          isDismissed &&
+                          rawAccess.status !== "none" &&
+                          rawAccess.via === "suggested"
                             ? getDismissedFallback(p, teamMembers, allProfiles)
                             : rawAccess;
 
-                        const isSuggested = rawAccess.status !== "none" && rawAccess.via === "suggested";
+                        const isSuggested =
+                          rawAccess.status !== "none" && rawAccess.via === "suggested";
 
                         return (
                           <tr key={p.email}>
@@ -532,7 +534,9 @@ export default function CcsaSyncButton({
                             </td>
                             <td className="px-4 py-2">
                               {access.status === "on-team" && access.via === "exact" && (
-                                <span className={`inline-flex items-center gap-1 ${colors.success}`}>
+                                <span
+                                  className={`inline-flex items-center gap-1 ${colors.success}`}
+                                >
                                   <Check className="h-4 w-4 shrink-0" />
                                   <span className="text-xs">On team</span>
                                 </span>
@@ -563,7 +567,9 @@ export default function CcsaSyncButton({
                               )}
 
                               {access.status === "has-account" && access.via === "exact" && (
-                                <span className={`inline-flex items-center gap-1 ${colors.warning}`}>
+                                <span
+                                  className={`inline-flex items-center gap-1 ${colors.warning}`}
+                                >
                                   <UserCheck className="h-4 w-4" />
                                   <span className="text-xs">Has account</span>
                                 </span>
@@ -628,7 +634,12 @@ export default function CcsaSyncButton({
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" disabled={pending} className="rounded-full">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={pending}
+                      className="rounded-full"
+                    >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete All Synced Data
                     </Button>
@@ -637,8 +648,8 @@ export default function CcsaSyncButton({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete all CCSA synced data?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently remove all synced players from the
-                        database. Waiver badges will no longer appear until you sync again.
+                        This will permanently remove all synced players from the database. Waiver
+                        badges will no longer appear until you sync again.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -695,7 +706,12 @@ export default function CcsaSyncButton({
                 {/* Summary line */}
                 <p className="text-xs text-muted-foreground">
                   {gamesPreview.teamName} · Schedule updated: {gamesPreview.lastupdate} ·{" "}
-                  {gamesPreview.newGames.length + gamesPreview.updated.length + gamesPreview.skipped.length + gamesPreview.unchanged.length + gamesPreview.stale.length} games total
+                  {gamesPreview.newGames.length +
+                    gamesPreview.updated.length +
+                    gamesPreview.skipped.length +
+                    gamesPreview.unchanged.length +
+                    gamesPreview.stale.length}{" "}
+                  games total
                 </p>
 
                 {/* Games table — always shown */}
@@ -740,7 +756,9 @@ export default function CcsaSyncButton({
                             {g.location}
                           </td>
                           <td className="px-4 py-2">
-                            <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
+                            <Badge
+                              className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}
+                            >
                               New
                             </Badge>
                           </td>
@@ -782,12 +800,12 @@ export default function CcsaSyncButton({
                             <div className="text-muted-foreground line-through text-xs">
                               {g.oldLocation}
                             </div>
-                            <div className={`text-xs ${colors.success}`}>
-                              {g.newLocation}
-                            </div>
+                            <div className={`text-xs ${colors.success}`}>{g.newLocation}</div>
                           </td>
                           <td className="px-4 py-2">
-                            <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
+                            <Badge
+                              className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}
+                            >
                               {g.needsConfirmation ? "Confirm?" : "Rescheduled"}
                             </Badge>
                           </td>

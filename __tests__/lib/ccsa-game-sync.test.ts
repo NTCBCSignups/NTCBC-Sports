@@ -384,13 +384,39 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
 
   const sessions: ScheduledGameSession[] = [
     // Game 1: synced, still active, unchanged
-    makeSession({ id: "g1", date: FUTURE_DATE, time_start: "14:00", time_end: "16:00", gamecode: "CODE-1" }),
+    makeSession({
+      id: "g1",
+      date: FUTURE_DATE,
+      time_start: "14:00",
+      time_end: "16:00",
+      gamecode: "CODE-1",
+    }),
     // Game 2: was synced, admin cancelled it (game was rained out)
-    makeSession({ id: "g2", date: FUTURE_DATE, time_start: "16:00", time_end: "18:00", gamecode: "CODE-2", status: "cancelled" }),
+    makeSession({
+      id: "g2",
+      date: FUTURE_DATE,
+      time_start: "16:00",
+      time_end: "18:00",
+      gamecode: "CODE-2",
+      status: "cancelled",
+    }),
     // Game 3: admin manually created a rescheduled session (no gamecode)
-    makeSession({ id: "g3", date: "2026-07-25", time_start: "14:00", time_end: "16:00", gamecode: null, notes: null }),
+    makeSession({
+      id: "g3",
+      date: "2026-07-25",
+      time_start: "14:00",
+      time_end: "16:00",
+      gamecode: null,
+      notes: null,
+    }),
     // Game 4: synced long ago, already played
-    makeSession({ id: "g4", date: PAST_DATE, time_start: "14:00", time_end: "16:00", gamecode: "CODE-4" }),
+    makeSession({
+      id: "g4",
+      date: PAST_DATE,
+      time_start: "14:00",
+      time_end: "16:00",
+      gamecode: "CODE-4",
+    }),
   ];
 
   const sessionsByGamecode = new Map(
@@ -399,7 +425,15 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
   const unmatchedSessions = sessions.filter((s) => !s.gamecode);
 
   it("Game 1 (unchanged): matches by gamecode, same date+time → unchanged", () => {
-    const match = findMatchForGame("CODE-1", FUTURE_DATE, "14:00", "16:00", sessionsByGamecode, unmatchedSessions, new Set());
+    const match = findMatchForGame(
+      "CODE-1",
+      FUTURE_DATE,
+      "14:00",
+      "16:00",
+      sessionsByGamecode,
+      unmatchedSessions,
+      new Set(),
+    );
     expect(match).not.toBeNull();
     expect(match!.matchedByTime).toBe(false);
 
@@ -409,7 +443,15 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
 
   it("Game 2 (cancelled + rescheduled on CCSA): matches gamecode but cancelled → skip", () => {
     // CCSA now shows CODE-2 on a new date (it was rescheduled after rainout)
-    const match = findMatchForGame("CODE-2", "2026-07-25", "16:00", "18:00", sessionsByGamecode, unmatchedSessions, new Set());
+    const match = findMatchForGame(
+      "CODE-2",
+      "2026-07-25",
+      "16:00",
+      "18:00",
+      sessionsByGamecode,
+      unmatchedSessions,
+      new Set(),
+    );
     expect(match).not.toBeNull();
     expect(match!.session.id).toBe("g2"); // matches the cancelled one
 
@@ -420,7 +462,15 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
   it("Game 3 (manual session matches new CCSA game by time): needs confirmation", () => {
     // A new CCSA game CODE-NEW is on 2026-07-25 14:00-16:00 — matches the manual session
     const claimed = new Set<string>();
-    const match = findMatchForGame("CODE-NEW", "2026-07-25", "14:00", "16:00", sessionsByGamecode, unmatchedSessions, claimed);
+    const match = findMatchForGame(
+      "CODE-NEW",
+      "2026-07-25",
+      "14:00",
+      "16:00",
+      sessionsByGamecode,
+      unmatchedSessions,
+      claimed,
+    );
     expect(match).not.toBeNull();
     expect(match!.session.id).toBe("g3");
     expect(match!.matchedByTime).toBe(true);
@@ -432,7 +482,15 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
 
   it("Game 4 (past): never modified regardless of CCSA state", () => {
     // CCSA shows CODE-4 moved to a different date (data correction)
-    const match = findMatchForGame("CODE-4", "2026-08-15", "14:00", "16:00", sessionsByGamecode, unmatchedSessions, new Set());
+    const match = findMatchForGame(
+      "CODE-4",
+      "2026-08-15",
+      "14:00",
+      "16:00",
+      sessionsByGamecode,
+      unmatchedSessions,
+      new Set(),
+    );
     expect(match).not.toBeNull();
     expect(match!.session.id).toBe("g4");
 

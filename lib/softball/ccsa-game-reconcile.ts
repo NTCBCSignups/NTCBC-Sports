@@ -124,12 +124,7 @@ export function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function timesOverlap(
-  startA: string,
-  endA: string,
-  startB: string,
-  endB: string,
-): boolean {
+export function timesOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
   const a0 = timeToMinutes(startA);
   const a1 = timeToMinutes(endA);
   const b0 = timeToMinutes(startB);
