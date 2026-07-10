@@ -441,8 +441,8 @@ export default function CcsaSyncButton({
 
       {/* ─── Tabbed Content: Players / Games ─────────────────────────────── */}
       {loggedIn && step === "idle" && (
-        <Tabs defaultValue="players" className="mt-2">
-          <div className="flex items-center justify-between mb-2">
+        <Tabs defaultValue="players" className="mt-4 gap-4">
+          <div className="flex items-center justify-between">
             <TabsList>
               <TabsTrigger value="players">
                 <Users className="h-3.5 w-3.5 mr-1.5" />
@@ -466,7 +466,7 @@ export default function CcsaSyncButton({
           </div>
 
           {(syncResult || error) && (
-            <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2">
               {syncResult && <p className={feedback.success}>{syncResult}</p>}
               {error && <p className={feedback.error}>{error}</p>}
             </div>

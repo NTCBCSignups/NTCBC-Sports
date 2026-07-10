@@ -8,7 +8,9 @@ import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import type { AdminTabProps } from "@/config/admin-tab-registry";
 
 /** Pick the most likely session type for game sync (restricted-access or "game" in the name). */
-function guessDefaultSessionType(tabs: { value: string; label: string; restrictedAccess?: boolean }[]): string {
+function guessDefaultSessionType(
+  tabs: { value: string; label: string; restrictedAccess?: boolean }[],
+): string {
   const restricted = tabs.find((t) => t.restrictedAccess);
   if (restricted) return restricted.value;
   const gameTab = tabs.find((t) => /game/i.test(t.label) || /game/i.test(t.value));
