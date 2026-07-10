@@ -374,7 +374,9 @@ export async function getCcsaPlayersPreview(): Promise<PlayersPreview | { error:
 
     return { players, newCount, updatedCount, unchangedCount, teamName };
   } catch (e) {
-    await clearCcsaCookies();
+    // Don't clear cookies here — preview may be called from a server component
+    // where cookie mutation is not allowed. Expired sessions will be caught on
+    // the next client-triggered action.
     return {
       error: e instanceof Error ? e.message : "Preview failed — CCSA session may have expired",
     };
@@ -560,7 +562,9 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
 
     return { newGames, updated, stale, skipped, unchanged, lastupdate, teamName };
   } catch (e) {
-    await clearCcsaCookies();
+    // Don't clear cookies here — preview may be called from a server component
+    // where cookie mutation is not allowed. Expired sessions will be caught on
+    // the next client-triggered action.
     return {
       error: e instanceof Error ? e.message : "Preview failed — CCSA session may have expired",
     };

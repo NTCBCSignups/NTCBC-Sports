@@ -218,6 +218,8 @@ export default function CcsaSyncButton({
       setLoggedIn(true);
       setLoggedInEmail(email);
       setStep("idle");
+      // Eagerly load game schedule preview after login
+      handleRefreshGamesPreview();
     }
     setPending(false);
   };
