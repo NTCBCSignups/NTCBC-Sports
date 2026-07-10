@@ -525,7 +525,7 @@ export function timesOverlap(
 
 // ─── Phase 1: MATCH ─────────────────────────────────────────────────────────
 
-type MatchResult = {
+export type MatchResult = {
   session: ScheduledGameSession;
   matchedByTime: boolean;
 } | null;
@@ -535,7 +535,7 @@ type MatchResult = {
  * Priority 1: Gamecode match (definitive).
  * Priority 2: Same date + overlapping time on an unmatched, active session (heuristic).
  */
-function findMatchForGame(
+export function findMatchForGame(
   gamecode: string,
   gameDate: string,
   gameTime: string,
@@ -567,7 +567,7 @@ function findMatchForGame(
 
 // ─── Phase 2: CLASSIFY ──────────────────────────────────────────────────────
 
-type SyncAction =
+export type SyncAction =
   | { type: "create" }
   | { type: "unchanged" }
   | { type: "skip" }
@@ -577,7 +577,7 @@ type SyncAction =
  * Given a matched (CcsaGame → LocalSession) pair, determine the sync action.
  * Only considers date and time overlap — ignores title, location, notes.
  */
-function classifyMatch(
+export function classifyMatch(
   session: ScheduledGameSession,
   gameDate: string,
   gameTime: string,
@@ -611,7 +611,7 @@ function classifyMatch(
 
 // ─── Phase 3: DETECT ORPHANS ────────────────────────────────────────────────
 
-function findStaleGames(
+export function findStaleGames(
   sessions: ScheduledGameSession[],
   ccsaGamecodes: Set<string>,
   today: string,
