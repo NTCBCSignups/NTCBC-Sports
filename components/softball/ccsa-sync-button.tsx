@@ -176,7 +176,7 @@ export default function CcsaSyncButton({
   const hasSynced = useRef(false);
 
   /** Fetch read-only previews for players + games in parallel. No DB writes. */
-  const handleSyncAll = async () => {
+  const handleSyncAll = async (sessionTypeOverride?: string) => {
     setPending(true);
     setError(null);
     setSyncResult(null);
@@ -185,7 +185,7 @@ export default function CcsaSyncButton({
 
     const [pResult, gResult] = await Promise.all([
       getCcsaPlayersPreview(),
-      getCcsaGamesPreview(sessionType),
+      getCcsaGamesPreview(sessionTypeOverride ?? sessionType),
     ]);
 
     // Handle players preview
@@ -456,7 +456,7 @@ export default function CcsaSyncButton({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSyncAll}
+              onClick={() => handleSyncAll()}
               disabled={pending}
               className="rounded-full"
             >
@@ -725,7 +725,7 @@ export default function CcsaSyncButton({
                     onValueChange={(val) => {
                       setSessionType(val);
                       setGamesPreview(null);
-                      handleSyncAll();
+                      handleSyncAll(val);
                     }}
                   >
                     <SelectTrigger className="h-7 w-auto text-xs px-2">
