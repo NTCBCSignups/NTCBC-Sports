@@ -473,7 +473,9 @@ export default function CcsaSyncButton({
                         <th className="px-4 py-2">Name</th>
                         <th className="px-4 py-2 hidden xl:table-cell">CCSA Email</th>
                         <th className="px-4 py-2">Waiver</th>
-                        <th className="px-4 py-2">Team Access</th>
+                        <th className="sticky right-0 bg-muted px-3 py-2 border-l max-w-[120px] sm:max-w-none">
+                          Team Access
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -501,7 +503,7 @@ export default function CcsaSyncButton({
                             <td className="px-4 py-2 whitespace-nowrap">
                               <WaiverBadge status={p.waiver_status as WaiverStatus} />
                             </td>
-                            <td className="px-4 py-2">
+                            <td className="sticky right-0 bg-card border-l px-3 py-2 max-w-[120px] sm:max-w-none overflow-x-auto">
                               {access.status === "on-team" && access.via === "exact" && (
                                 <span
                                   className={`inline-flex items-center gap-1 ${colors.success}`}
@@ -527,9 +529,7 @@ export default function CcsaSyncButton({
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="match">
-                                      Likely {access.match.full_name} ({access.match.email})
-                                    </SelectItem>
+                                    <SelectItem value="match">{access.match.email}</SelectItem>
                                     <SelectItem value="no-match">Not the same person</SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -560,9 +560,7 @@ export default function CcsaSyncButton({
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="match">
-                                      Likely {access.match.full_name} ({access.match.email})
-                                    </SelectItem>
+                                    <SelectItem value="match">{access.match.email}</SelectItem>
                                     <SelectItem value="no-match">Not the same person</SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -755,7 +753,7 @@ export default function CcsaSyncButton({
                         <th className="px-4 py-2">Game</th>
                         <th className="px-4 py-2">Date & Time</th>
                         <th className="px-4 py-2 hidden md:table-cell">Location</th>
-                        <th className="px-4 py-2">Status</th>
+                        <th className="sticky right-0 bg-muted px-4 py-2 border-l">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -769,7 +767,7 @@ export default function CcsaSyncButton({
                           <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
                             {g.location}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="sticky right-0 bg-card border-l px-4 py-2">
                             <span className={`inline-flex items-center gap-1 ${colors.success}`}>
                               <Check className="h-3.5 w-3.5" />
                               <span className="text-xs">Synced</span>
@@ -788,7 +786,7 @@ export default function CcsaSyncButton({
                           <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
                             {g.location}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="sticky right-0 bg-card border-l px-4 py-2">
                             <Badge
                               className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}
                             >
@@ -835,7 +833,7 @@ export default function CcsaSyncButton({
                             </div>
                             <div className={`text-xs ${colors.success}`}>{g.newLocation}</div>
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="sticky right-0 bg-card border-l px-4 py-2">
                             <Badge
                               className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}
                             >
@@ -855,7 +853,7 @@ export default function CcsaSyncButton({
                           <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
                             {g.location}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="sticky right-0 bg-card border-l px-4 py-2">
                             <Badge variant="outline" className="text-muted-foreground">
                               Skipped
                             </Badge>
@@ -890,7 +888,7 @@ export default function CcsaSyncButton({
                           <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
                             —
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="sticky right-0 bg-card border-l px-4 py-2">
                             <Badge variant="destructive">Stale</Badge>
                           </td>
                         </tr>
