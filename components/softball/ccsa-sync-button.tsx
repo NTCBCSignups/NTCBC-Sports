@@ -722,10 +722,21 @@ export default function CcsaSyncButton({
                   <span className="text-xs text-muted-foreground">Sync to:</span>
                   <Select
                     value={sessionType}
-                    onValueChange={(val) => {
+                    onValueChange={async (val) => {
                       setSessionType(val);
                       setGamesPreview(null);
-                      handleSyncAll(val);
+                      setGamesError(null);
+                      setGamesResult(null);
+                      setPending(true);
+                      const gResult = await getCcsaGamesPreview(val);
+                      if ("error" in gResult) {
+                        setGamesError(gResult.error);
+                      } else {
+                        setGamesPreview(gResult);
+                        setSelectedStale(new Set());
+                        setConfirmedUpdates(new Set());
+                      }
+                      setPending(false);
                     }}
                   >
                     <SelectTrigger className="h-7 w-auto text-xs px-2">
