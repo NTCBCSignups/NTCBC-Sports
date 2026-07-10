@@ -13,7 +13,7 @@ import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-serv
 import { team, sched } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { SPORT_TIMEZONE } from "@/lib/timezone";
-import { getScheduledGameSessions } from "@/lib/softball/get-data";
+import { getSyncedSessions } from "@/lib/softball/get-data";
 import {
   computeEndTime,
   findMatchForGame,
@@ -165,7 +165,9 @@ function getTodayInSportTimezone(): string {
   return formatter.format(new Date());
 }
 
-export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: string }> {
+export async function getCcsaGamesPreview(
+  sessionType: string,
+): Promise<GamesPreview | { error: string }> {
   const supabase = await createClient();
   const adminCheck = await requireSportAdmin(supabase, SPORT);
   if (!adminCheck.success) return { error: adminCheck.error };
@@ -191,7 +193,7 @@ export async function getCcsaGamesPreview(): Promise<GamesPreview | { error: str
       .filter((g) => g.home === teamId || g.away === teamId)
       .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
-    const existingSessions = await getScheduledGameSessions();
+    const existingSessions = await getSyncedSessions(SPORT, sessionType);
 
     const sessionsByGamecode = new Map(
       existingSessions.filter((s) => s.gamecode).map((s) => [s.gamecode!, s]),

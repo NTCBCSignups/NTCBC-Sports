@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 
-const SPORT = "softball";
 const GAME_CODE_REGEX = /Game Code:\s*(\S+)/;
 
 export interface ScheduledGameSession {
@@ -15,14 +14,17 @@ export interface ScheduledGameSession {
   gamecode: string | null;
 }
 
-/** All softball scheduled_game sessions, with gamecode extracted from notes if present. */
-export async function getScheduledGameSessions(): Promise<ScheduledGameSession[]> {
+/** Sessions for a sport+type, with gamecode extracted from notes if present. */
+export async function getSyncedSessions(
+  sport: string,
+  sessionType: string,
+): Promise<ScheduledGameSession[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("sessions")
     .select("id, title, date, time_start, time_end, location_name, notes, status")
-    .eq("sport", SPORT)
-    .eq("session_type", "scheduled_game");
+    .eq("sport", sport)
+    .eq("session_type", sessionType);
 
   if (!data) return [];
 

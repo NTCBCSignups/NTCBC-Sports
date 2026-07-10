@@ -300,6 +300,7 @@ export async function deleteAllCcsaPlayers() {
 // ─── Game Schedule Mutations ────────────────────────────────────────────────
 
 export async function applyCcsaGameSync(
+  sessionType: string,
   newGames: GameDiff[],
   updatedGames: GameUpdate[],
   skippedGames: GameDiff[],
@@ -327,7 +328,7 @@ export async function applyCcsaGameSync(
 
     return {
       sport: SPORT,
-      session_type: "scheduled_game" as const,
+      session_type: sessionType,
       title,
       date: game.date,
       time_start: game.time,
@@ -382,7 +383,7 @@ export async function applyCcsaGameSync(
       })
       .eq("id", game.sessionId)
       .eq("sport", SPORT)
-      .eq("session_type", "scheduled_game");
+      .eq("session_type", sessionType);
 
     if (error) {
       results.errors.push(`Update ${game.gamecode}: ${error.message}`);
@@ -396,7 +397,7 @@ export async function applyCcsaGameSync(
   return results;
 }
 
-export async function cancelStaleCcsaGames(sessionIds: string[]) {
+export async function cancelStaleCcsaGames(sessionType: string, sessionIds: string[]) {
   await ensureSportAdmin();
 
   if (sessionIds.length === 0) return { success: true, count: 0 };
@@ -410,7 +411,7 @@ export async function cancelStaleCcsaGames(sessionIds: string[]) {
     })
     .in("id", sessionIds)
     .eq("sport", SPORT)
-    .eq("session_type", "scheduled_game");
+    .eq("session_type", sessionType);
 
   if (error) return { error: error.message };
 

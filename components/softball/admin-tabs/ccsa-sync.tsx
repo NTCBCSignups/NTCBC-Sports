@@ -3,22 +3,42 @@ import { hasCcsaSession } from "@/lib/softball/ccsa-sync";
 import { getCcsaPlayersPreview, getCcsaGamesPreview } from "@/lib/softball/ccsa-preview";
 import type { PlayersPreview, GamesPreview } from "@/lib/softball/ccsa-preview";
 import { getAllProfiles, getTeamMembersWithProfiles } from "@/lib/softball/get-data";
+import { getResolvedSportConfig } from "@/lib/get-sport-config";
 
 import type { AdminTabProps } from "@/config/admin-tab-registry";
 
+/** Pick the most likely session type for game sync (restricted-access or "game" in the name). */
+function guessDefaultSessionType(tabs: { value: string; label: string; restrictedAccess?: boolean }[]): string {
+  const restricted = tabs.find((t) => t.restrictedAccess);
+  if (restricted) return restricted.value;
+  const gameTab = tabs.find((t) => /game/i.test(t.label) || /game/i.test(t.value));
+  if (gameTab) return gameTab.value;
+  return tabs[0]?.value ?? "scheduled_game";
+}
+
 export default async function CcsaAdminTab({ sport }: AdminTabProps) {
-  const [sessionResult, allProfiles, teamMembers] = await Promise.all([
+  const [sessionResult, allProfiles, teamMembers, config] = await Promise.all([
     hasCcsaSession(),
     getAllProfiles(),
     getTeamMembersWithProfiles(sport),
+    getResolvedSportConfig(sport),
   ]);
+
+  const sessionTabs = (config?.tabs ?? []).map((t) => ({
+    value: t.value,
+    label: t.label,
+  }));
+  const defaultSessionType = guessDefaultSessionType(config?.tabs ?? []);
 
   // Eagerly load read-only previews if already authenticated with CCSA
   let playersPreview: PlayersPreview | null = null;
   let gamesPreview: GamesPreview | null = null;
 
   if (sessionResult.hasCookies) {
-    const [pResult, gResult] = await Promise.all([getCcsaPlayersPreview(), getCcsaGamesPreview()]);
+    const [pResult, gResult] = await Promise.all([
+      getCcsaPlayersPreview(),
+      getCcsaGamesPreview(defaultSessionType),
+    ]);
     if (!("error" in pResult)) playersPreview = pResult;
     if (!("error" in gResult)) gamesPreview = gResult;
   }
@@ -34,6 +54,8 @@ export default async function CcsaAdminTab({ sport }: AdminTabProps) {
           allProfiles={allProfiles}
           playersPreview={playersPreview}
           gamesPreview={gamesPreview}
+          sessionTabs={sessionTabs}
+          defaultSessionType={defaultSessionType}
         />
       </div>
     </section>

@@ -59,6 +59,8 @@ interface CcsaSyncButtonProps {
   allProfiles?: ProfileEntry[];
   playersPreview?: PlayersPreview | null;
   gamesPreview?: GamesPreview | null;
+  sessionTabs?: { value: string; label: string }[];
+  defaultSessionType?: string;
 }
 
 type AccessStatus =
@@ -145,6 +147,8 @@ export default function CcsaSyncButton({
   allProfiles = [],
   playersPreview: initialPlayersPreview = null,
   gamesPreview: initialGamesPreview = null,
+  sessionTabs = [],
+  defaultSessionType = "scheduled_game",
 }: CcsaSyncButtonProps) {
   const [step, setStep] = useState<"idle" | "email" | "otp">("idle");
   const [email, setEmail] = useState("");
@@ -161,6 +165,7 @@ export default function CcsaSyncButton({
   const [dismissedMatches, setDismissedMatches] = useState<Set<string>>(new Set());
 
   // Game sync state
+  const [sessionType, setSessionType] = useState(defaultSessionType);
   const [gamesPreview, setGamesPreview] = useState<GamesPreview | null>(initialGamesPreview);
   const [gamesError, setGamesError] = useState<string | null>(null);
   const [gamesResult, setGamesResult] = useState<string | null>(null);
@@ -178,7 +183,10 @@ export default function CcsaSyncButton({
     setGamesError(null);
     setGamesResult(null);
 
-    const [pResult, gResult] = await Promise.all([getCcsaPlayersPreview(), getCcsaGamesPreview()]);
+    const [pResult, gResult] = await Promise.all([
+      getCcsaPlayersPreview(),
+      getCcsaGamesPreview(sessionType),
+    ]);
 
     // Handle players preview
     if ("error" in pResult) {
@@ -283,6 +291,7 @@ export default function CcsaSyncButton({
     ].map((g) => g.gamecode);
 
     const result = await applyCcsaGameSync(
+      sessionType,
       gamesPreview.newGames,
       updatesToApply,
       gamesPreview.skipped,
@@ -307,7 +316,7 @@ export default function CcsaSyncButton({
     if (selectedStale.size === 0) return;
     setPending(true);
     setGamesError(null);
-    const result = await cancelStaleCcsaGames(Array.from(selectedStale));
+    const result = await cancelStaleCcsaGames(sessionType, Array.from(selectedStale));
     if (result.error) {
       setGamesError(result.error);
     } else {
@@ -693,6 +702,32 @@ export default function CcsaSyncButton({
 
           {/* ─── Games Tab ────────────────────────────────────────────────── */}
           <TabsContent value="games" className="space-y-3">
+            {sessionTabs.length > 1 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Sync to:</span>
+                <Select
+                  value={sessionType}
+                  onValueChange={(val) => {
+                    setSessionType(val);
+                    setGamesPreview(null);
+                    // Re-sync with new session type
+                    handleSyncAll();
+                  }}
+                >
+                  <SelectTrigger className="h-7 w-auto text-xs px-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sessionTabs.map((tab) => (
+                      <SelectItem key={tab.value} value={tab.value}>
+                        {tab.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {hasGameChanges && (
               <Button
                 variant="outline"
