@@ -2,12 +2,16 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { fromZonedTime } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSportAdmin } from "@/lib/supabase/user";
 import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-server-fetch";
 import { auth, team } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
+import { SPORT_TIMEZONE } from "@/lib/timezone";
+import { computeEndTime, mapsLink, buildGameNotes } from "@/lib/softball/ccsa-game-reconcile";
+import type { GameDiff, GameUpdate } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -291,4 +295,127 @@ export async function deleteAllCcsaPlayers() {
   revalidatePath(`/${SPORT}/admin`);
   revalidatePath(`/${SPORT}`);
   return { success: true };
+}
+
+// ─── Game Schedule Mutations ────────────────────────────────────────────────
+
+export async function applyCcsaGameSync(
+  sessionType: string,
+  newGames: GameDiff[],
+  updatedGames: GameUpdate[],
+  skippedGames: GameDiff[],
+  allTeamGamecodes: string[],
+) {
+  await ensureSportAdmin();
+
+  const admin = createAdminClient();
+
+  // Compute game number from gamecode suffix rank among all team games
+  const sortedCodes = [...allTeamGamecodes].sort((a, b) => {
+    const suffixA = parseInt(a.slice(-3));
+    const suffixB = parseInt(b.slice(-3));
+    return suffixA - suffixB;
+  });
+  const gameNumberByCode = new Map(sortedCodes.map((code, i) => [code, i + 1]));
+
+  // Build rows for new games (including skipped ones that need new sessions)
+  const allNew = [...newGames, ...skippedGames];
+  const insertRows = allNew.map((game) => {
+    const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
+    const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
+    const num = gameNumberByCode.get(game.gamecode) ?? "?";
+    const title = `Game ${num}: ${game.title}`;
+
+    return {
+      sport: SPORT,
+      session_type: sessionType,
+      title,
+      date: game.date,
+      time_start: game.time,
+      time_end: computeEndTime(game.time),
+      location_name: game.location,
+      location_address: game.location,
+      location_maps_link: mapsLink(game.location),
+      player_cap: null,
+      signup_open: new Date().toISOString(),
+      signup_close: signupClose.toISOString(),
+      notes: buildGameNotes({
+        gamecode: game.gamecode,
+        isHome: game.isHome,
+        opponent: game.opponent,
+        umps: game.umps,
+      }),
+    };
+  });
+
+  const results = { created: 0, updated: 0, errors: [] as string[] };
+
+  if (insertRows.length > 0) {
+    const { error } = await admin.from("sessions").insert(insertRows);
+    if (error) {
+      results.errors.push(`Insert failed: ${error.message}`);
+    } else {
+      results.created = insertRows.length;
+    }
+  }
+
+  // Update rescheduled games
+  for (const game of updatedGames) {
+    const timeForParse = game.newTime.length <= 5 ? `${game.newTime}:00` : game.newTime;
+    const signupClose = fromZonedTime(`${game.newDate}T${timeForParse}`, SPORT_TIMEZONE);
+
+    const { error } = await admin
+      .from("sessions")
+      .update({
+        date: game.newDate,
+        time_start: game.newTime,
+        time_end: computeEndTime(game.newTime),
+        location_name: game.newLocation,
+        location_address: game.newLocation,
+        location_maps_link: mapsLink(game.newLocation),
+        signup_close: signupClose.toISOString(),
+        notes: buildGameNotes({
+          gamecode: game.gamecode,
+          isHome: game.isHome,
+          opponent: game.opponent,
+          umps: game.umps,
+        }),
+      })
+      .eq("id", game.sessionId)
+      .eq("sport", SPORT)
+      .eq("session_type", sessionType);
+
+    if (error) {
+      results.errors.push(`Update ${game.gamecode}: ${error.message}`);
+    } else {
+      results.updated++;
+    }
+  }
+
+  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${SPORT}`);
+  return results;
+}
+
+export async function cancelStaleCcsaGames(sessionType: string, sessionIds: string[]) {
+  await ensureSportAdmin();
+
+  if (sessionIds.length === 0) return { success: true, count: 0 };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("sessions")
+    .update({
+      status: "cancelled",
+      status_notes: "Removed from CCSA schedule",
+    })
+    .in("id", sessionIds)
+    .eq("sport", SPORT)
+    .eq("session_type", sessionType);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${SPORT}`);
+  return { success: true, count: sessionIds.length };
 }
