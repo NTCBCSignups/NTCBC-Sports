@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RefreshCw, UserCheck, LogOut, Trash2, Check, Calendar, Users } from "lucide-react";
 import { WaiverBadge } from "@/components/sports/badges";
-import { formatTimestamp } from "@/lib/format";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { colors, statusColors, feedback } from "@/lib/styles";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +24,14 @@ import {
   logoutCcsa,
   approveCcsaPlayersForTeam,
   deleteAllCcsaPlayers,
-  getCcsaGamesPreview,
   applyCcsaGameSync,
   cancelStaleCcsaGames,
 } from "@/lib/softball/ccsa-sync";
-import type { GamesPreview } from "@/lib/softball/ccsa-sync";
+import {
+  getCcsaPlayersPreview,
+  getCcsaGamesPreview,
+} from "@/lib/softball/ccsa-preview";
+import type { GamesPreview, PlayersPreview } from "@/lib/softball/ccsa-preview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,13 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-interface SyncedPlayer {
-  email: string;
-  first_name: string;
-  last_name: string;
-  waiver_status: string;
-}
+import type { PlayerPreviewEntry } from "@/lib/softball/ccsa-preview";
 
 interface TeamMember {
   email: string;
@@ -60,12 +56,11 @@ interface ProfileEntry {
 }
 
 interface CcsaSyncButtonProps {
-  lastSyncedAt: string | null;
   hasSession: boolean;
   sessionEmail?: string;
-  initialPlayers?: SyncedPlayer[];
   teamMembers?: TeamMember[];
   allProfiles?: ProfileEntry[];
+  playersPreview?: PlayersPreview | null;
   gamesPreview?: GamesPreview | null;
 }
 
@@ -76,7 +71,7 @@ type AccessStatus =
 
 /** Fuzzy-match a CCSA player name against a list of profiles/members. */
 function fuzzyNameMatch<T extends { full_name: string }>(
-  player: SyncedPlayer,
+  player: PlayerPreviewEntry,
   list: T[],
 ): T | undefined {
   const pFirst = player.first_name.toLowerCase().trim();
@@ -102,7 +97,7 @@ function fuzzyNameMatch<T extends { full_name: string }>(
  * 5. Nothing → none
  */
 function getAccessStatus(
-  player: SyncedPlayer,
+  player: PlayerPreviewEntry,
   teamMembers: TeamMember[],
   allProfiles: ProfileEntry[],
 ): AccessStatus {
@@ -129,7 +124,7 @@ function getAccessStatus(
  * When a suggested match is dismissed, fall back to exact-email-only matching.
  */
 function getDismissedFallback(
-  player: SyncedPlayer,
+  player: PlayerPreviewEntry,
   teamMembers: TeamMember[],
   allProfiles: ProfileEntry[],
 ): AccessStatus {
@@ -147,12 +142,11 @@ function getDismissedFallback(
 }
 
 export default function CcsaSyncButton({
-  lastSyncedAt,
   hasSession,
   sessionEmail,
-  initialPlayers = [],
   teamMembers = [],
   allProfiles = [],
+  playersPreview: initialPlayersPreview = null,
   gamesPreview: initialGamesPreview = null,
 }: CcsaSyncButtonProps) {
   const [step, setStep] = useState<"idle" | "email" | "otp">("idle");
@@ -164,7 +158,7 @@ export default function CcsaSyncButton({
   const [approveResult, setApproveResult] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(hasSession);
   const [loggedInEmail, setLoggedInEmail] = useState(sessionEmail ?? "");
-  const [players, setPlayers] = useState<SyncedPlayer[]>(initialPlayers);
+  const [playersPreview, setPlayersPreview] = useState<PlayersPreview | null>(initialPlayersPreview);
   const [dismissedMatches, setDismissedMatches] = useState<Set<string>>(new Set());
 
   // Game sync state
@@ -174,10 +168,10 @@ export default function CcsaSyncButton({
   const [selectedStale, setSelectedStale] = useState<Set<string>>(new Set());
   const [confirmedUpdates, setConfirmedUpdates] = useState<Set<string>>(new Set());
 
-  // Unified sync: auto-sync once when component mounts (if logged in)
+  // Auto-preview once when component mounts (if logged in)
   const hasSynced = useRef(false);
 
-  /** Single unified sync: fetches players + games in parallel. */
+  /** Fetch read-only previews for players + games in parallel. No DB writes. */
   const handleSyncAll = async () => {
     setPending(true);
     setError(null);
@@ -185,48 +179,46 @@ export default function CcsaSyncButton({
     setGamesError(null);
     setGamesResult(null);
 
-    const [playersResult, gamesResult] = await Promise.all([
-      syncCcsaWaivers(),
+    const [pResult, gResult] = await Promise.all([
+      getCcsaPlayersPreview(),
       getCcsaGamesPreview(),
     ]);
 
-    // Handle players result
-    if (playersResult.players) setPlayers(playersResult.players);
-    if (playersResult.error) {
-      setError(playersResult.error);
-      if (
-        playersResult.error.includes("session") ||
-        playersResult.error.includes("expired") ||
-        playersResult.error.includes("log in")
-      ) {
-        setLoggedIn(false);
-      }
-    }
-    if (!playersResult.error && !("error" in gamesResult)) {
-      setSyncResult("Synced just now");
-    }
-
-    // Handle games result
-    if ("error" in gamesResult) {
-      setGamesError(gamesResult.error);
-      if (gamesResult.error.includes("session") || gamesResult.error.includes("expired")) {
+    // Handle players preview
+    if ("error" in pResult) {
+      setError(pResult.error);
+      if (pResult.error.includes("session") || pResult.error.includes("expired")) {
         setLoggedIn(false);
       }
     } else {
-      setGamesPreview(gamesResult);
+      setPlayersPreview(pResult);
+    }
+
+    // Handle games preview
+    if ("error" in gResult) {
+      setGamesError(gResult.error);
+      if (gResult.error.includes("session") || gResult.error.includes("expired")) {
+        setLoggedIn(false);
+      }
+    } else {
+      setGamesPreview(gResult);
       setSelectedStale(new Set());
       setConfirmedUpdates(new Set());
+    }
+
+    if (!("error" in pResult) && !("error" in gResult)) {
+      setSyncResult("Synced just now");
     }
 
     setPending(false);
     hasSynced.current = true;
   };
 
-  // Auto-sync on mount when logged in and not already synced
+  // Auto-preview on mount when logged in and not already fetched
   useEffect(() => {
-    if (loggedIn && !hasSynced.current && !initialGamesPreview) {
+    if (loggedIn && !hasSynced.current && !initialPlayersPreview && !initialGamesPreview) {
       handleSyncAll();
-    } else if (initialGamesPreview) {
+    } else if (initialPlayersPreview || initialGamesPreview) {
       // Server already eagerly loaded — mark as synced
       hasSynced.current = true;
     }
@@ -331,12 +323,6 @@ export default function CcsaSyncButton({
 
   return (
     <div className="space-y-4">
-      {lastSyncedAt && (
-        <p className="text-xs text-muted-foreground">
-          Last synced: {formatTimestamp(lastSyncedAt)}
-        </p>
-      )}
-
       {step === "idle" && (
         <div className="space-y-3">
           {loggedIn ? (
@@ -471,7 +457,29 @@ export default function CcsaSyncButton({
 
           {/* ─── Players Tab ─────────────────────────────────────────────── */}
           <TabsContent value="players" className="space-y-3">
-            {players.length > 0 && (
+            {playersPreview && (playersPreview.newCount > 0 || playersPreview.updatedCount > 0) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  setPending(true);
+                  setError(null);
+                  const result = await syncCcsaWaivers();
+                  if (result.error) {
+                    setError(result.error);
+                  } else {
+                    setSyncResult(`Applied ${result.count} players to database`);
+                  }
+                  setPending(false);
+                }}
+                disabled={pending}
+                className="rounded-full"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Apply Player Sync ({playersPreview.newCount + playersPreview.updatedCount} changes)
+              </Button>
+            )}
+            {playersPreview && playersPreview.players.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
@@ -485,8 +493,11 @@ export default function CcsaSyncButton({
             )}
             {approveResult && <p className={feedback.success}>{approveResult}</p>}
 
-            {players.length > 0 && (
+            {playersPreview && playersPreview.players.length > 0 && (
               <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  {playersPreview.teamName} · {playersPreview.players.length} players total
+                </p>
                 <div className="rounded-lg border overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
@@ -498,7 +509,7 @@ export default function CcsaSyncButton({
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {players.map((p) => {
+                      {playersPreview.players.map((p) => {
                         const isDismissed = dismissedMatches.has(p.email);
                         const rawAccess = getAccessStatus(p, teamMembers, allProfiles);
                         const access: AccessStatus =
@@ -626,7 +637,7 @@ export default function CcsaSyncButton({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete all CCSA synced data?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently remove all {players.length} synced players from the
+                        This will permanently remove all synced players from the
                         database. Waiver badges will no longer appear until you sync again.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -642,7 +653,7 @@ export default function CcsaSyncButton({
                           if (result.error) {
                             setError(result.error);
                           } else {
-                            setPlayers([]);
+                            setPlayersPreview(null);
                             setSyncResult("All synced data deleted");
                           }
                           setPending(false);

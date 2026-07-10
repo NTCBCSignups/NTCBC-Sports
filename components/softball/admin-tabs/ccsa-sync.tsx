@@ -1,32 +1,31 @@
 import CcsaSyncButton from "@/components/softball/ccsa-sync-button";
+import { hasCcsaSession } from "@/lib/softball/ccsa-sync";
 import {
-  hasCcsaSession,
+  getCcsaPlayersPreview,
   getCcsaGamesPreview,
-} from "@/lib/softball/ccsa-sync";
-import type { GamesPreview } from "@/lib/softball/ccsa-sync";
-import {
-  getCcsaLastSyncedAt,
-  getCcsaPlayers,
-  getAllProfiles,
-  getTeamMembersWithProfiles,
-} from "@/lib/softball/get-data";
+} from "@/lib/softball/ccsa-preview";
+import type { PlayersPreview, GamesPreview } from "@/lib/softball/ccsa-preview";
+import { getAllProfiles, getTeamMembersWithProfiles } from "@/lib/softball/get-data";
 
 import type { AdminTabProps } from "@/config/admin-tab-registry";
 
 export default async function CcsaAdminTab({ sport }: AdminTabProps) {
-  const [lastSyncedAt, ccsaPlayers, sessionResult, allProfiles, teamMembers] = await Promise.all([
-    getCcsaLastSyncedAt(),
-    getCcsaPlayers(),
+  const [sessionResult, allProfiles, teamMembers] = await Promise.all([
     hasCcsaSession(),
     getAllProfiles(),
     getTeamMembersWithProfiles(sport),
   ]);
 
-  // Eagerly load game schedule preview if already authenticated with CCSA
+  // Eagerly load read-only previews if already authenticated with CCSA
+  let playersPreview: PlayersPreview | null = null;
   let gamesPreview: GamesPreview | null = null;
 
   if (sessionResult.hasCookies) {
-    const gResult = await getCcsaGamesPreview();
+    const [pResult, gResult] = await Promise.all([
+      getCcsaPlayersPreview(),
+      getCcsaGamesPreview(),
+    ]);
+    if (!("error" in pResult)) playersPreview = pResult;
     if (!("error" in gResult)) gamesPreview = gResult;
   }
 
@@ -35,12 +34,11 @@ export default async function CcsaAdminTab({ sport }: AdminTabProps) {
       <h2 className="text-lg font-semibold text-foreground">CCSA Sync</h2>
       <div className="rounded-lg border bg-card p-6">
         <CcsaSyncButton
-          lastSyncedAt={lastSyncedAt}
           hasSession={sessionResult.hasCookies}
           sessionEmail={sessionResult.email ?? undefined}
-          initialPlayers={ccsaPlayers}
           teamMembers={teamMembers}
           allProfiles={allProfiles}
+          playersPreview={playersPreview}
           gamesPreview={gamesPreview}
         />
       </div>
