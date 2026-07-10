@@ -271,47 +271,6 @@ export default function CcsaSyncButton({
 
   // ─── Game Sync Handlers ───────────────────────────────────────────────────
 
-  const handleApplyGameSync = async () => {
-    if (!gamesPreview) return;
-    setPending(true);
-    setGamesError(null);
-    setGamesResult(null);
-
-    // Only include updates that don't need confirmation, or that are explicitly confirmed
-    const updatesToApply = gamesPreview.updated.filter(
-      (g) => !g.needsConfirmation || confirmedUpdates.has(g.gamecode),
-    );
-
-    // Collect all team gamecodes for correct numbering
-    const allTeamGamecodes = [
-      ...gamesPreview.newGames,
-      ...gamesPreview.updated,
-      ...gamesPreview.skipped,
-      ...gamesPreview.unchanged,
-    ].map((g) => g.gamecode);
-
-    const result = await applyCcsaGameSync(
-      sessionType,
-      gamesPreview.newGames,
-      updatesToApply,
-      gamesPreview.skipped,
-      allTeamGamecodes,
-    );
-
-    if (result.errors.length > 0) {
-      setGamesError(result.errors.join("; "));
-    }
-
-    const parts: string[] = [];
-    if (result.created > 0) parts.push(`${result.created} created`);
-    if (result.updated > 0) parts.push(`${result.updated} updated`);
-    if (parts.length > 0) setGamesResult(parts.join(", "));
-
-    // Re-sync to reflect new state
-    await handleSyncAll();
-    setPending(false);
-  };
-
   const handleCancelStale = async () => {
     if (selectedStale.size === 0) return;
     setPending(true);
@@ -337,6 +296,61 @@ export default function CcsaSyncButton({
     (gamesPreview.newGames.length > 0 ||
       gamesPreview.updated.length > 0 ||
       gamesPreview.skipped.length > 0);
+
+  const hasPlayerChanges =
+    playersPreview && (playersPreview.newCount > 0 || playersPreview.updatedCount > 0);
+
+  const hasAnyChanges = hasGameChanges || hasPlayerChanges;
+
+  const handleApplyAll = async () => {
+    setPending(true);
+    setError(null);
+    setSyncResult(null);
+    setGamesError(null);
+    setGamesResult(null);
+
+    const promises: Promise<unknown>[] = [];
+
+    // Apply player sync if there are changes
+    if (hasPlayerChanges) {
+      promises.push(
+        syncCcsaWaivers().then((result) => {
+          if (result.error) setError(result.error);
+        }),
+      );
+    }
+
+    // Apply game sync if there are changes
+    if (hasGameChanges && gamesPreview) {
+      const updatesToApply = gamesPreview.updated.filter(
+        (g) => !g.needsConfirmation || confirmedUpdates.has(g.gamecode),
+      );
+      const allTeamGamecodes = [
+        ...gamesPreview.newGames,
+        ...gamesPreview.updated,
+        ...gamesPreview.skipped,
+        ...gamesPreview.unchanged,
+      ].map((g) => g.gamecode);
+
+      promises.push(
+        applyCcsaGameSync(sessionType, gamesPreview.newGames, updatesToApply, gamesPreview.skipped, allTeamGamecodes).then(
+          (result) => {
+            if (result.errors.length > 0) setGamesError(result.errors.join("; "));
+            const parts: string[] = [];
+            if (result.created > 0) parts.push(`${result.created} created`);
+            if (result.updated > 0) parts.push(`${result.updated} updated`);
+            if (parts.length > 0) setGamesResult(parts.join(", "));
+          },
+        ),
+      );
+    }
+
+    await Promise.all(promises);
+    setSyncResult("Applied successfully");
+    // Re-fetch previews to reflect new state
+    await handleSyncAll();
+    setPending(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -453,16 +467,29 @@ export default function CcsaSyncButton({
                 Games
               </TabsTrigger>
             </TabsList>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleSyncAll()}
-              disabled={pending}
-              className="rounded-full"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${pending ? "animate-spin" : ""}`} />
-              {pending ? "Syncing..." : "Refresh"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSyncAll()}
+                disabled={pending}
+                className="rounded-full"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${pending ? "animate-spin" : ""}`} />
+                {pending ? "Syncing..." : "Refresh"}
+              </Button>
+              {hasAnyChanges && (
+                <Button
+                  size="sm"
+                  onClick={handleApplyAll}
+                  disabled={pending}
+                  className="rounded-full"
+                >
+                  <Check className="h-3.5 w-3.5 mr-1.5" />
+                  {pending ? "Applying..." : "Apply"}
+                </Button>
+              )}
+            </div>
           </div>
 
           {(syncResult || error) && (
@@ -476,28 +503,6 @@ export default function CcsaSyncButton({
 
           {/* ─── Players Tab ─────────────────────────────────────────────── */}
           <TabsContent value="players" className="space-y-3">
-            {playersPreview && (playersPreview.newCount > 0 || playersPreview.updatedCount > 0) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  setPending(true);
-                  setError(null);
-                  const result = await syncCcsaWaivers();
-                  if (result.error) {
-                    setError(result.error);
-                  } else {
-                    setSyncResult(`Applied ${result.count} players to database`);
-                  }
-                  setPending(false);
-                }}
-                disabled={pending}
-                className="rounded-full"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Apply Player Sync ({playersPreview.newCount + playersPreview.updatedCount} changes)
-              </Button>
-            )}
             {playersPreview &&
               playersPreview.players.some(
                 (p) => getAccessStatus(p, teamMembers, allProfiles).status !== "on-team",
@@ -705,18 +710,6 @@ export default function CcsaSyncButton({
           {/* ─── Games Tab ────────────────────────────────────────────────── */}
           <TabsContent value="games" className="space-y-3">
             <div className="flex items-center gap-2">
-              {hasGameChanges && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApplyGameSync}
-                  disabled={pending}
-                  className="rounded-full"
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  {pending ? "Applying..." : "Apply Changes"}
-                </Button>
-              )}
               {sessionTabs.length > 1 && (
                 <>
                   <span className="text-xs text-muted-foreground">Sync to:</span>
