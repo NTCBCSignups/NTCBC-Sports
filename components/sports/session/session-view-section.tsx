@@ -24,7 +24,7 @@ interface SessionViewSectionProps {
   playerCap: number | null;
   currentUserId: string | null;
   viewData: StoredViewInstance[];
-  isAdmin: boolean;
+  isSessionAdmin: boolean;
 }
 
 /**
@@ -43,7 +43,7 @@ export default function SessionViewSection({
   playerCap,
   currentUserId,
   viewData,
-  isAdmin,
+  isSessionAdmin,
 }: SessionViewSectionProps) {
   const searchParams = useSearchParams();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -82,7 +82,7 @@ export default function SessionViewSection({
 
   // Shared admin action buttons — rendered in both branches
   const hasDevo = viewData.some((v) => v.type === "devotionalView");
-  const adminButtons = isAdmin ? (
+  const adminButtons = isSessionAdmin ? (
     <div className="flex items-center gap-2">
       <Button
         variant="outline"
@@ -118,7 +118,7 @@ export default function SessionViewSection({
           playerCap={playerCap}
           currentUserId={currentUserId}
           viewData={null}
-          isAdmin={isAdmin}
+          isSessionAdmin={isSessionAdmin}
           sport={sport}
           sessionId={sessionId}
         />
@@ -156,7 +156,7 @@ export default function SessionViewSection({
               {configuredViews[0]?.label ?? "Attendance"}
             </h2>
           )}
-          {activeInstance && (
+          {activeInstance && isSessionAdmin && (
             <Button
               variant="ghost"
               size="icon"
@@ -178,7 +178,7 @@ export default function SessionViewSection({
           playerCap={playerCap}
           currentUserId={currentUserId}
           viewData={activeInstance!.data}
-          isAdmin={isAdmin}
+          isSessionAdmin={isSessionAdmin}
           sport={sport}
           sessionId={sessionId}
         />

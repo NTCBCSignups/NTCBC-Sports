@@ -21,7 +21,7 @@ export default function AttendanceView({
   teamMemberIds,
   playerCap,
   currentUserId,
-  isAdmin,
+  isSessionAdmin: isAdmin,
   sport,
   sessionId,
 }: SessionViewProps) {

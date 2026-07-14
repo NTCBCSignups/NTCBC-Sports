@@ -51,7 +51,7 @@ async function SessionSignupsContent({
   signupRole,
   playerCap,
   viewData,
-  isAdmin,
+  isSessionAdmin,
   tabLabel,
   signupConfirmationDialog,
 }: {
@@ -63,7 +63,7 @@ async function SessionSignupsContent({
   signupRole: Role;
   playerCap: number | null;
   viewData: StoredViewInstance[];
-  isAdmin: boolean;
+  isSessionAdmin: boolean;
   tabLabel: string;
   signupConfirmationDialog?: SignupConfirmationDialog;
 }) {
@@ -122,7 +122,7 @@ async function SessionSignupsContent({
             playerCap={playerCap}
             currentUserId={userId}
             viewData={viewData}
-            isAdmin={isAdmin}
+            isSessionAdmin={isSessionAdmin}
           />
         </div>
       )}
@@ -213,7 +213,7 @@ export default async function SessionDetailPage({
                   sessionTabs={sessionTabs}
                   defaultTab={config.defaultTab}
                   session={session}
-                  sportUsers={sportUsers}
+                  sportUsers={isAdmin ? sportUsers : undefined}
                 />
                 <CancelSessionButton sport={sport} sessionId={session.id} variant="full" />
                 {isAdmin && sportUsers && (
@@ -354,7 +354,7 @@ export default async function SessionDetailPage({
           signupRole={tab.permissions[AccessLevel.signup]}
           playerCap={session.player_cap}
           viewData={Array.isArray(session.alt_session_views) ? session.alt_session_views : []}
-          isAdmin={isSessionAdmin}
+          isSessionAdmin={isSessionAdmin}
           tabLabel={tab.label}
           signupConfirmationDialog={tab.signupConfirmationDialog}
         />
