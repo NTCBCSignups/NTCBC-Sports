@@ -233,6 +233,12 @@ async function SportSessionsContent({
     const label =
       restrictedTabs.length === 1 ? restrictedTabs[0]!.tab.label.toLowerCase() : "some sessions";
 
+    const unrestrictedTabs = tabAccess.filter((a) => a.unmetLevel === null);
+    const unrestrictedLabel =
+      unrestrictedTabs.length > 2
+        ? "other sessions"
+        : unrestrictedTabs.map((a) => a.tab.label.toLowerCase()).join(" and ");
+
     if (!userId) {
       return <SignInToSignupBanner title={text.title(label)} message={text.message(label)} />;
     }
@@ -242,7 +248,7 @@ async function SportSessionsContent({
         requestStatus={accessRequestStatus}
         sport={sport}
         label={label}
-        bannerMessage={text.message(label)}
+        bannerMessage={`You can still sign up for ${unrestrictedLabel} without membership.`}
       />
     );
   })();

@@ -109,7 +109,7 @@ export default function TeamAccessBanner({
     <StatusBanner
       variant="info"
       icon={<Shield className="h-5 w-5 text-info shrink-0 mt-0.5" />}
-      title="Membership required"
+      title={`Membership required for ${restrictedLabels}`}
       message={
         <>
           {bannerMessage || (
