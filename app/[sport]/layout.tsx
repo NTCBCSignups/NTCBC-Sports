@@ -28,7 +28,7 @@ export default async function SportLayout({
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <Image src="/favicon.ico" alt="NTCBC" width={18} height={18} className="rounded-sm" />
-          NTCBC Sports
+          NTCBC Signups
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />

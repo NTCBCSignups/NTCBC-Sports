@@ -15,17 +15,15 @@ export default async function Home() {
       <div>
         <h1 className="text-4xl font-bold text-foreground mb-4 flex items-center gap-3">
           <Image src="/favicon.ico" alt="NTCBC" width={36} height={36} className="rounded-sm" />
-          NTCBC Sports
+          NTCBC Signups
         </h1>
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-semibold text-foreground">About Sports Ministry</h2>
         <p className="text-sm text-muted-foreground">
-          Our sports programs are part of North Toronto Chinese Baptist Church&apos;s (NTCBC)
-          ministry to build community and share the gospel through recreation. Everyone is welcome
-          regardless of skill level or faith background. Come join us for great games and
-          fellowship!
+          Sign up for North Toronto Chinese Baptist Church&apos;s (NTCBC) events! Our ministries and
+          activities build community and share the gospel. Everyone is welcome regardless of faith
+          background or for sports - skill level. Come join us for great vibes and fellowship!
         </p>
       </div>
 
