@@ -1,17 +1,20 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AttendanceView from "@/components/sports/session/session-views/attendance-view";
 import ViewToggle from "@/components/sports/session/view-toggle";
 import EditViewsDialog from "@/components/sports/session/edit-views-dialog";
 import type { EditViewsDialogHandle } from "@/components/sports/session/edit-views-dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus } from "lucide-react";
+import { Link as LinkIcon, Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { getSessionView } from "@/components/sports/session/session-views/registry";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
+
+const SECTION_ANCHOR = "session-views";
 
 interface SessionViewSectionProps {
   sport: string;
@@ -43,8 +46,16 @@ export default function SessionViewSection({
   isAdmin,
 }: SessionViewSectionProps) {
   const searchParams = useSearchParams();
+  const sectionRef = useRef<HTMLDivElement>(null);
   const [activeView, setActiveView] = useState<string | null>(searchParams.get("view"));
   const editViewsRef = useRef<EditViewsDialogHandle>(null);
+
+  // Scroll to section on mount if hash matches anchor
+  useEffect(() => {
+    if (window.location.hash === `#${SECTION_ANCHOR}`) {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   const handleViewChange = (viewId: string | null) => {
     setActiveView(viewId);
@@ -54,8 +65,19 @@ export default function SessionViewSection({
     } else {
       params.delete("view");
     }
-    const newUrl = `${window.location.pathname}${params.size ? `?${params}` : ""}`;
+    const qs = params.size ? `?${params}` : "";
+    const newUrl = `${window.location.pathname}${qs}${viewId ? `#${SECTION_ANCHOR}` : ""}`;
     window.history.replaceState(null, "", newUrl);
+  };
+
+  const copyViewLink = (instance: StoredViewInstance) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", String(instance.id));
+    const url = `${window.location.origin}${window.location.pathname}?${params}#${SECTION_ANCHOR}`;
+    navigator.clipboard.writeText(url).then(
+      () => toast.success("Link copied to clipboard"),
+      () => toast.error("Failed to copy link"),
+    );
   };
 
   // Shared admin action buttons — rendered in both branches
@@ -85,7 +107,7 @@ export default function SessionViewSection({
   // Empty viewData = no views configured yet → fall back to attendance view
   if (viewData.length === 0) {
     return (
-      <div className="space-y-2">
+      <div ref={sectionRef} id={SECTION_ANCHOR} className="space-y-2 scroll-mt-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Attendance</h2>
           {adminButtons}
@@ -120,19 +142,32 @@ export default function SessionViewSection({
   const entry = activeInstance ? getSessionView(activeInstance.type) : undefined;
 
   return (
-    <div className="space-y-4">
+    <div ref={sectionRef} id={SECTION_ANCHOR} className="space-y-4 scroll-mt-4">
       <div className="flex items-center justify-between">
-        {configuredViews.length > 1 ? (
-          <ViewToggle
-            views={configuredViews}
-            activeView={resolvedView}
-            onViewChange={handleViewChange}
-          />
-        ) : (
-          <h2 className="font-semibold text-foreground">
-            {configuredViews[0]?.label ?? "Attendance"}
-          </h2>
-        )}
+        <div className="flex items-center gap-1.5">
+          {configuredViews.length > 1 ? (
+            <ViewToggle
+              views={configuredViews}
+              activeView={resolvedView}
+              onViewChange={handleViewChange}
+            />
+          ) : (
+            <h2 className="font-semibold text-foreground">
+              {configuredViews[0]?.label ?? "Attendance"}
+            </h2>
+          )}
+          {activeInstance && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={() => copyViewLink(activeInstance)}
+              title="Copy link to this view"
+            >
+              <LinkIcon className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
         {adminButtons}
       </div>
 
