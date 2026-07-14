@@ -168,10 +168,27 @@ function EditViewsDialogContent({
     updateDraft,
     isDirty,
     save,
-  } = useConfigurator<StoredViewInstance[]>();
+    meta: restoredStep,
+    setMeta: persistStep,
+  } = useConfigurator<StoredViewInstance[], DialogStep>();
   const [newName, setNewName] = useState("");
   const [isPending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Restore step from persisted meta on mount (if draft was restored)
+  const didRestoreStep = useRef(false);
+  useEffect(() => {
+    if (didRestoreStep.current) return;
+    didRestoreStep.current = true;
+    if (restoredStep && restoredStep.kind !== "list") {
+      setStep(restoredStep);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- only on mount
+
+  // Persist step changes to meta so it survives draft restoration
+  useEffect(() => {
+    persistStep(step);
+  }, [step, persistStep]);
 
   const allTypes = getAllSessionViews();
 
