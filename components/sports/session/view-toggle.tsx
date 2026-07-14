@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ScrollablePills } from "@/components/ui/scrollable-pills";
 
 interface ViewToggleProps {
   views: { id: string; label: string }[];
@@ -15,27 +9,13 @@ interface ViewToggleProps {
 }
 
 /**
- * Lets users switch between configured session views.
+ * Scrollable segmented control for switching between session views.
  * Only rendered when there are 2+ views.
  */
 export default function ViewToggle({ views, activeView, onViewChange }: ViewToggleProps) {
   if (views.length < 2) return null;
 
-  return (
-    <Select value={activeView ?? views[0]!.id} onValueChange={(v) => onViewChange(v)}>
-      <SelectTrigger
-        size="sm"
-        className="text-sm w-auto text-foreground font-semibold underline underline-offset-4"
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {views.map((view) => (
-          <SelectItem key={view.id} value={view.id}>
-            {view.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
+  const resolvedValue = activeView ?? views[0]!.id;
+
+  return <ScrollablePills items={views} value={resolvedValue} onValueChange={onViewChange} />;
 }

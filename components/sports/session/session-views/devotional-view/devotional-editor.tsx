@@ -227,6 +227,7 @@ function SectionEditor({
   const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         paragraph: false,
