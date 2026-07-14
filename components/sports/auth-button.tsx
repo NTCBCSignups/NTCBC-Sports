@@ -13,7 +13,7 @@ import type { User } from "@supabase/supabase-js";
 
 interface AuthButtonProps {
   user: User | null;
-  sport: string;
+  sport?: string;
 }
 
 export default function AuthButton({ user, sport }: AuthButtonProps) {
@@ -30,7 +30,7 @@ export default function AuthButton({ user, sport }: AuthButtonProps) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = `/${sport}`;
+    window.location.href = sport ? `/${sport}` : "/";
   };
 
   if (!user) {

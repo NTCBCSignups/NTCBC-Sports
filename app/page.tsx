@@ -5,21 +5,29 @@ import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
+import AuthButton from "@/components/sports/auth-button";
+import { getUser } from "@/lib/supabase/user";
 
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
   const sports = Object.values(dbSportsBySlug);
+  const user = await getUser();
 
   return (
-    <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold text-foreground mb-4 flex items-center gap-3">
+    <div className="max-w-4xl mx-auto mb-12 space-y-8 pt-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
           <Image src="/favicon.ico" alt="NTCBC" width={36} height={36} className="rounded-sm" />
           NTCBC Signups
         </h1>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <AuthButton user={user} />
+        </div>
       </div>
 
-      <div className="space-y-2">
+      <div>
         <p className="text-sm text-muted-foreground">
           Sign up for North Toronto Chinese Baptist Church&apos;s (NTCBC) events! Our ministries and
           activities build community and share the gospel. Everyone is welcome regardless of faith
@@ -27,7 +35,7 @@ export default async function Home() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 pt-2">
         {sports.map((sport) => (
           <Link key={sport.id} href={`/${sport.id}`} className="block">
             <Card className="flex h-full flex-col overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
