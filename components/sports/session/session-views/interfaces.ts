@@ -10,7 +10,7 @@ export interface SessionViewProps {
   /** The stored data for this view. */
   viewData: unknown;
   /** Optional admin context — when present, views may render admin actions. */
-  isAdmin?: boolean;
+  isSessionAdmin?: boolean;
   sport?: string;
   sessionId?: string;
 }

@@ -110,7 +110,7 @@ function DevotionalSectionView({
   );
 }
 
-export default function DevotionalView({ viewData, isAdmin }: SessionViewProps) {
+export default function DevotionalView({ viewData, isSessionAdmin: isAdmin }: SessionViewProps) {
   const data = viewData as DevotionalViewData | null;
 
   const [facilitatorView, setFacilitatorView] = useState(true);
