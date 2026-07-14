@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NTCBC Sports",
-  description: "Sign-ups for NTCBC Sports",
+  title: "NTCBC Signups",
+  description: "Sign-ups for NTCBC Programs",
 };
 
 export default function RootLayout({
