@@ -167,6 +167,57 @@
   --status-info-border: oklch(0.4 0.07 250);
 }
 
+.cherry-blossom {
+  --background: oklch(0.98 0.015 330);
+  --foreground: oklch(0.2 0.05 320);
+  --card: oklch(0.99 0.008 325);
+  --card-foreground: oklch(0.2 0.05 320);
+  --popover: oklch(0.99 0.008 325);
+  --popover-foreground: oklch(0.2 0.05 320);
+  --primary: oklch(0.7 0.14 350);
+  --primary-foreground: oklch(0.98 0.01 320);
+  --secondary: oklch(0.92 0.05 300);
+  --secondary-foreground: oklch(0.3 0.1 310);
+  --muted: oklch(0.94 0.03 315);
+  --muted-foreground: oklch(0.45 0.06 315);
+  --accent: oklch(0.52 0.17 335);
+  --accent-foreground: oklch(0.98 0.01 320);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.9 0.04 325);
+  --input: oklch(0.9 0.04 325);
+  --ring: oklch(0.62 0.14 335);
+  --chart-1: oklch(0.65 0.2 350);
+  --chart-2: oklch(0.7 0.13 295);
+  --chart-3: oklch(0.6 0.1 175);
+  --chart-4: oklch(0.75 0.12 55);
+  --chart-5: oklch(0.52 0.17 320);
+  --sidebar: oklch(0.97 0.02 325);
+  --sidebar-foreground: oklch(0.2 0.05 320);
+  --sidebar-primary: oklch(0.52 0.17 335);
+  --sidebar-primary-foreground: oklch(0.98 0.01 320);
+  --sidebar-accent: oklch(0.92 0.05 300);
+  --sidebar-accent-foreground: oklch(0.25 0.06 320);
+  --sidebar-border: oklch(0.9 0.04 325);
+  --sidebar-ring: oklch(0.62 0.14 335);
+  /* Semantic status text */
+  --success: oklch(0.55 0.1 175);
+  --warning: oklch(0.55 0.14 65);
+  --info: oklch(0.55 0.15 300);
+  /* Status surfaces */
+  --status-success: oklch(0.95 0.03 175);
+  --status-success-foreground: oklch(0.38 0.08 175);
+  --status-success-border: oklch(0.87 0.05 175);
+  --status-warning: oklch(0.95 0.04 85);
+  --status-warning-foreground: oklch(0.4 0.12 65);
+  --status-warning-border: oklch(0.87 0.06 80);
+  --status-destructive: oklch(0.95 0.03 25);
+  --status-destructive-foreground: oklch(0.4 0.15 25);
+  --status-destructive-border: oklch(0.87 0.06 25);
+  --status-info: oklch(0.94 0.04 300);
+  --status-info-foreground: oklch(0.4 0.12 300);
+  --status-info-border: oklch(0.85 0.06 300);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -182,4 +233,54 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Cherry Blossom theme — glitter shimmer effect */
+@keyframes cherry-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.cherry-blossom .cherry-glitter {
+  background-image: linear-gradient(
+    110deg,
+    transparent 25%,
+    oklch(0.95 0.05 340 / 0.6) 37%,
+    oklch(0.92 0.08 300 / 0.5) 50%,
+    oklch(0.95 0.05 340 / 0.6) 63%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: cherry-shimmer 3s ease-in-out infinite;
+}
+
+/* Floating petal decorations for cherry blossom theme */
+@keyframes petal-fall {
+  0% {
+    transform: translateY(-10%) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.35;
+  }
+  90% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.cherry-blossom .petal {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  animation: petal-fall linear infinite;
+  font-size: 1rem;
+  opacity: 0;
 }
