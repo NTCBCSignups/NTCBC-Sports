@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Contrast, Moon, Sun, Monitor } from "lucide-react";
+import { Contrast, Moon, Sun, Monitor, Flower2 } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,13 @@ export function ThemeToggle() {
         >
           <Moon className="h-4 w-4 mr-2" />
           Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setTheme("cherry-blossom")}
+          className={theme === "cherry-blossom" ? "bg-status-info" : ""}
+        >
+          <Flower2 className="h-4 w-4 mr-2" />
+          Cherry Blossom
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("system")}
