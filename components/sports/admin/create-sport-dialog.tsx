@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createSportConfig } from "@/lib/actions/create-sport-config";
+import { createSportConfig, type CreateSportConfigInput } from "@/lib/actions/create-sport-config";
 import { toastClasses } from "@/lib/styles";
 
-const PLACEHOLDERS = {
+const PLACEHOLDERS: CreateSportConfigInput = {
   id: "badminton",
   emoji: "🏸",
   name: "Badminton",
@@ -30,52 +30,41 @@ const PLACEHOLDERS = {
   locationAddress: "88 Finch Ave W, North York, ON M2N 1Y9",
 };
 
+const EMPTY_FORM: CreateSportConfigInput = {
+  id: "",
+  emoji: "",
+  name: "",
+  type: "",
+  day: "",
+  organizers: "",
+  locationName: "",
+  locationAddress: "",
+};
+
 export default function CreateSportDialog() {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [form, setForm] = useState(EMPTY_FORM);
 
-  const [id, setId] = useState("");
-  const [emoji, setEmoji] = useState("");
-  const [name, setName] = useState("");
-  const [type, setType] = useState("");
-  const [day, setDay] = useState("");
-  const [organizers, setOrganizers] = useState("");
-  const [locationName, setLocationName] = useState("");
-  const [locationAddress, setLocationAddress] = useState("");
-
-  const resetForm = () => {
-    setId("");
-    setEmoji("");
-    setName("");
-    setType("");
-    setDay("");
-    setOrganizers("");
-    setLocationName("");
-    setLocationAddress("");
-  };
+  const set = (field: keyof CreateSportConfigInput, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
     startTransition(async () => {
-      const result = await createSportConfig({
-        id: id.trim(),
-        emoji: emoji.trim(),
-        name: name.trim(),
-        type: type.trim(),
-        day: day.trim(),
-        organizers: organizers.trim(),
-        locationName: locationName.trim(),
-        locationAddress: locationAddress.trim(),
-      });
+      const trimmed: CreateSportConfigInput = Object.fromEntries(
+        Object.entries(form).map(([k, v]) => [k, v.trim()]),
+      ) as CreateSportConfigInput;
+      const result = await createSportConfig(trimmed);
 
       if (result.success) {
         toast.success("Sport created! Redirecting to settings…", {
           className: toastClasses.green,
         });
         setOpen(false);
-        resetForm();
+        setForm(EMPTY_FORM);
         router.push(`/${result.id}/admin`);
       } else {
         toast.error(result.error, { className: toastClasses.red });
@@ -105,21 +94,21 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-id"
                 placeholder={`e.g. ${PLACEHOLDERS.id}`}
-                value={id}
-                onChange={(e) => setId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                value={form.id}
+                onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                 required
-              />{" "}
+              />
               <p className="text-xs text-muted-foreground">
                 Used in the URL (e.g. /{PLACEHOLDERS.id}). Cannot be changed after creation.
-              </p>{" "}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="create-sport-emoji">Emoji</Label>
               <Input
                 id="create-sport-emoji"
                 placeholder={`e.g. ${PLACEHOLDERS.emoji}`}
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
+                value={form.emoji}
+                onChange={(e) => set("emoji", e.target.value)}
                 required
               />
             </div>
@@ -128,8 +117,8 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-name"
                 placeholder={`e.g. ${PLACEHOLDERS.name}`}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
                 required
               />
             </div>
@@ -138,8 +127,8 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-type"
                 placeholder={`e.g. ${PLACEHOLDERS.type}`}
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+                value={form.type}
+                onChange={(e) => set("type", e.target.value)}
                 required
               />
             </div>
@@ -148,8 +137,8 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-day"
                 placeholder={`e.g. ${PLACEHOLDERS.day}`}
-                value={day}
-                onChange={(e) => setDay(e.target.value)}
+                value={form.day}
+                onChange={(e) => set("day", e.target.value)}
                 required
               />
             </div>
@@ -158,8 +147,8 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-organizers"
                 placeholder={`e.g. ${PLACEHOLDERS.organizers}`}
-                value={organizers}
-                onChange={(e) => setOrganizers(e.target.value)}
+                value={form.organizers}
+                onChange={(e) => set("organizers", e.target.value)}
                 required
               />
             </div>
@@ -168,8 +157,8 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-location"
                 placeholder={`e.g. ${PLACEHOLDERS.locationName}`}
-                value={locationName}
-                onChange={(e) => setLocationName(e.target.value)}
+                value={form.locationName}
+                onChange={(e) => set("locationName", e.target.value)}
                 required
               />
             </div>
@@ -178,8 +167,8 @@ export default function CreateSportDialog() {
               <Input
                 id="create-sport-address"
                 placeholder={`e.g. ${PLACEHOLDERS.locationAddress}`}
-                value={locationAddress}
-                onChange={(e) => setLocationAddress(e.target.value)}
+                value={form.locationAddress}
+                onChange={(e) => set("locationAddress", e.target.value)}
                 required
               />
             </div>
@@ -188,14 +177,14 @@ export default function CreateSportDialog() {
             <Card className="max-w-sm overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-2xl">
-                  {emoji || PLACEHOLDERS.emoji} {name || PLACEHOLDERS.name}
+                  {form.emoji || PLACEHOLDERS.emoji} {form.name || PLACEHOLDERS.name}
                 </CardTitle>
-                <CardDescription>{type || PLACEHOLDERS.type}</CardDescription>
+                <CardDescription>{form.type || PLACEHOLDERS.type}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
-                  <span>{day || PLACEHOLDERS.day}</span>
+                  <span>{form.day || PLACEHOLDERS.day}</span>
                 </div>
               </CardContent>
             </Card>

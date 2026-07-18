@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/supabase/user";
+import { requireGlobalAdmin } from "@/lib/supabase/user";
 import { buildDefaultSportConfigPayload } from "@/config/admin-tab-metadata";
 
 const createSportConfigSchema = z.object({
@@ -34,23 +34,10 @@ export async function createSportConfig(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const user = await getUser();
-  if (!user) {
-    return { success: false, error: "Not authenticated" };
-  }
-
   const supabase = await createClient();
-
-  // Verify global admin via profiles table
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return { success: false, error: "Not authorized" };
-  }
+  const auth = await requireGlobalAdmin(supabase);
+  if (!auth.success) return { success: false, error: auth.error };
+  const { user } = auth;
 
   const config = buildDefaultSportConfigPayload({
     day: parsed.data.day,

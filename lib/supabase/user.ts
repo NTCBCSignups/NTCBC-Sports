@@ -106,6 +106,32 @@ export async function requireSportAdmin(
 }
 
 /**
+ * Checks whether a user holds the platform-wide admin role (profiles.role = 'admin').
+ */
+export async function checkGlobalAdmin(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  return profile?.role === "admin";
+}
+
+/**
+ * Asserts the current user is a platform-wide admin.
+ * Returns the authenticated user on success, or an error object on failure.
+ */
+export async function requireGlobalAdmin(
+  supabase: SupabaseClient,
+): Promise<{ success: true; user: User } | { success: false; error: string }> {
+  const user = await getUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+  const isAdmin = await checkGlobalAdmin(supabase, user.id);
+  if (!isAdmin) return { success: false, error: "Not authorized" };
+  return { success: true, user };
+}
+
+/**
  * Asserts the current user is either a sport admin or the facilitator
  * for the given session. Returns the authenticated user on success.
  */
