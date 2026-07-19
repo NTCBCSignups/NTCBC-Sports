@@ -150,7 +150,7 @@ function itemsToHtml(items: DevotionalItem[]): string {
 function formatContent(text: string): string {
   if (!text) return "<br>";
   const escaped = escapeHtml(text);
-  return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
 }
 
 function escapeHtml(text: string): string {
@@ -191,6 +191,7 @@ function nodeToText(node: TiptapNode): string {
         }
         return text;
       }
+      if (child.type === "hardBreak") return "\n";
       return "";
     })
     .join("");
@@ -645,7 +646,7 @@ export default function DevotionalEditor({ viewData, ref }: SessionViewEditorPro
                 .devotional-tiptap p[data-indent="2"]::before { left: 2rem; }
                 .devotional-tiptap p[data-indent="3"]::before { left: 3.5rem; }
                 .devotional-tiptap p[data-indent="4"]::before { left: 5rem; }
-                .devotional-tiptap p.is-editor-empty:first-child::before {
+                .devotional-tiptap p.is-editor-empty:first-child:not([data-indent])::before {
                     content: attr(data-placeholder) !important;
                     float: left;
                     color: hsl(var(--muted-foreground));
