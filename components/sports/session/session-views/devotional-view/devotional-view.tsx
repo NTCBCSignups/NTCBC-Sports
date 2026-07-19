@@ -12,13 +12,22 @@ import { getSectionTitle, getSectionEmoji } from "./types";
  * Returns an array of React nodes for safe rendering.
  */
 function renderBoldText(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    return <span key={i}>{part}</span>;
+  // Split by newlines first, then handle bold markers within each line
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  lines.forEach((line, lineIdx) => {
+    if (lineIdx > 0) nodes.push(<br key={`br-${lineIdx}`} />);
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    parts.forEach((part, partIdx) => {
+      const key = `${lineIdx}-${partIdx}`;
+      if (part.startsWith("**") && part.endsWith("**")) {
+        nodes.push(<strong key={key}>{part.slice(2, -2)}</strong>);
+      } else {
+        nodes.push(<span key={key}>{part}</span>);
+      }
+    });
   });
+  return nodes;
 }
 
 /** Indent padding classes by level (relative to list container). */

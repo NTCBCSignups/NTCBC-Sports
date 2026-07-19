@@ -73,9 +73,9 @@ export function getSectionEmoji(type: DevotionalSectionType): string {
   return SECTION_META[type].emoji;
 }
 
-/** Generates a short random ID. */
+/** Generates a unique random ID. */
 export function generateId(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 /** Creates a default empty DevotionalViewData for new views. */

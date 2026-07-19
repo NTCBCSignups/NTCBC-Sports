@@ -9,7 +9,7 @@ import { Extension, InputRule } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { GripVertical, Plus, Eye, EyeOff, MoreVertical, Sparkles } from "lucide-react";
-import { DraggableList } from "@/components/ui/draggable-list";
+import { DraggableList, type DragHandleProps } from "@/components/ui/draggable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -133,7 +133,7 @@ const FacilitatorHighlight = Extension.create({
 
 // ── Data conversion: DevotionalItem[] ↔ Tiptap ──────────────────
 
-function itemsToHtml(items: DevotionalItem[]): string {
+export function itemsToHtml(items: DevotionalItem[]): string {
   if (items.length === 0) return "<p></p>";
   return items
     .map((item) => {
@@ -147,17 +147,17 @@ function itemsToHtml(items: DevotionalItem[]): string {
     .join("");
 }
 
-function formatContent(text: string): string {
+export function formatContent(text: string): string {
   if (!text) return "<br>";
   const escaped = escapeHtml(text);
-  return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
 }
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-interface TiptapNode {
+export interface TiptapNode {
   type: string;
   attrs?: Record<string, unknown>;
   content?: TiptapNode[];
@@ -165,7 +165,7 @@ interface TiptapNode {
   marks?: { type: string }[];
 }
 
-function docToItems(doc: TiptapNode): DevotionalItem[] {
+export function docToItems(doc: TiptapNode): DevotionalItem[] {
   const items: DevotionalItem[] = [];
   for (const child of doc.content ?? []) {
     if (child.type === "paragraph") {
@@ -180,7 +180,7 @@ function docToItems(doc: TiptapNode): DevotionalItem[] {
   return items;
 }
 
-function nodeToText(node: TiptapNode): string {
+export function nodeToText(node: TiptapNode): string {
   if (!node.content) return "";
   return node.content
     .map((child) => {
@@ -191,6 +191,7 @@ function nodeToText(node: TiptapNode): string {
         }
         return text;
       }
+      if (child.type === "hardBreak") return "\n";
       return "";
     })
     .join("");
@@ -221,8 +222,7 @@ function SectionEditor({
   isLast: boolean;
   isDragging: boolean;
   handleRef: (node: HTMLElement | null) => void;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- dnd-kit listener map
-  handleListeners: Record<string, Function> | undefined;
+  handleListeners: DragHandleProps["listeners"];
 }) {
   const editorRef = useRef<Editor | null>(null);
 
@@ -376,9 +376,6 @@ function SectionEditor({
       .run();
   }, [editor, section.items]);
 
-  const allFacilitatorOnly =
-    section.items.length > 0 && section.items.every((i) => i.facilitatorOnly);
-
   return (
     <div className={cn("rounded-lg border bg-card transition-opacity", isDragging && "opacity-50")}>
       {/* Section header */}
@@ -410,7 +407,7 @@ function SectionEditor({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={toggleAllLines}>
-              {allFacilitatorOnly ? (
+              {allHiddenFromPlayers ? (
                 <>
                   <Eye className="h-3.5 w-3.5 mr-2" /> Show section
                 </>
