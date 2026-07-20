@@ -15,12 +15,14 @@ interface Petal {
   size: number;
 }
 
-export function CherryBlossomDecor() {
-  const { theme } = useTheme();
+export function SakuraDecor() {
+  const { resolvedTheme } = useTheme();
   const [petals, setPetals] = useState<Petal[]>([]);
 
+  const isSakura = resolvedTheme === "sakura";
+
   useEffect(() => {
-    if (theme !== "cherry-blossom") {
+    if (!isSakura) {
       setPetals([]);
       return;
     }
@@ -34,19 +36,19 @@ export function CherryBlossomDecor() {
       size: 0.7 + Math.random() * 0.6,
     }));
     setPetals(generated);
-  }, [theme]);
+  }, [isSakura]);
 
-  if (theme !== "cherry-blossom" || petals.length === 0) return null;
+  if (!isSakura || petals.length === 0) return null;
 
   return (
     <>
       {/* Side glitter strips */}
       <div
-        className="cherry-glitter fixed left-0 top-0 h-full w-3 pointer-events-none z-0"
+        className="sakura-glitter fixed left-0 top-0 h-full w-3 pointer-events-none z-0"
         style={{ opacity: 0.18 }}
       />
       <div
-        className="cherry-glitter fixed right-0 top-0 h-full w-3 pointer-events-none z-0"
+        className="sakura-glitter fixed right-0 top-0 h-full w-3 pointer-events-none z-0"
         style={{ opacity: 0.18 }}
       />
       {/* Floating petals */}

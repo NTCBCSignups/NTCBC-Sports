@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { CherryBlossomDecor } from "@/components/cherry-blossom-decor";
+import { SakuraDecor } from "@/components/sakura-decor";
+import { getClientMigrationScript } from "@/lib/client-migrations";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,16 +29,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <script dangerouslySetInnerHTML={{ __html: getClientMigrationScript() }} />
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
-          themes={["light", "dark", "cherry-blossom", "system"]}
+          themes={["light", "dark", "sakura", "system"]}
+          value={{
+            light: "light",
+            dark: "dark",
+            sakura: "sakura",
+          }}
           disableTransitionOnChange
         >
           <div className="min-h-screen bg-background">
-            <CherryBlossomDecor />
+            <SakuraDecor />
             <div className="container mx-auto px-4 py-8">{children}</div>
           </div>
           <Toaster />

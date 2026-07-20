@@ -16,12 +16,12 @@ export default async function Home() {
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-8 pt-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
           <Image src="/favicon.ico" alt="NTCBC" width={36} height={36} className="rounded-sm" />
           NTCBC Signups
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <ThemeToggle />
           <AuthButton user={user} />
         </div>

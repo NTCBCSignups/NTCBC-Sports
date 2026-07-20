@@ -142,11 +142,25 @@ export default function DevotionalView({ viewData, isSessionAdmin: isAdmin }: Se
 
   return (
     <div className="space-y-4">
-      {/* Header row: title + facilitator toggle */}
+      {/* Mobile: toggle on its own row above title; Desktop: inline with title */}
+      {isAdmin && (
+        <div className="flex justify-end sm:hidden">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs text-muted-foreground">
+              {facilitatorView ? "Facilitator View" : "Player View"}
+            </span>
+            <Switch
+              checked={facilitatorView}
+              onCheckedChange={setFacilitatorView}
+              aria-label="Toggle between facilitator and player view"
+            />
+          </label>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-3">
         {data.title && <h2 className="font-bold text-lg text-foreground">{data.title}</h2>}
         {isAdmin && (
-          <label className="flex items-center gap-2 shrink-0 cursor-pointer">
+          <label className="hidden sm:flex items-center gap-2 shrink-0 cursor-pointer">
             <span className="text-xs text-muted-foreground">
               {facilitatorView ? "Facilitator View" : "Player View"}
             </span>

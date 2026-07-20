@@ -21,9 +21,11 @@ import {
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [_mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
 
   return (
     <DropdownMenu>
@@ -49,11 +51,11 @@ export function ThemeToggle() {
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme("cherry-blossom")}
-          className={theme === "cherry-blossom" ? "bg-status-info" : ""}
+          onClick={() => setTheme("sakura")}
+          className={theme === "sakura" ? "bg-status-info" : ""}
         >
           <Flower2 className="h-4 w-4 mr-2" />
-          Cherry Blossom
+          Sakura
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("system")}

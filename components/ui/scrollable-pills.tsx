@@ -49,7 +49,10 @@ export function ScrollablePills({
     <Tabs value={value} onValueChange={onValueChange} className={cn("gap-0", className)}>
       <TabsList
         ref={listRef}
-        className={cn("justify-start overflow-x-auto scrollbar-hide flex-nowrap", maxWidth)}
+        className={cn(
+          "justify-start overflow-x-auto overflow-y-hidden scrollbar-hide flex-nowrap",
+          maxWidth,
+        )}
       >
         {items.map((item) => (
           <TabsTrigger key={item.id} value={item.id} className="shrink-0">
