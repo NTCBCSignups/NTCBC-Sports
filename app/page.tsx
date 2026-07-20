@@ -4,15 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
+import { createClient } from "@/lib/supabase/server";
+import { checkGlobalAdmin, getUser } from "@/lib/supabase/user";
+import CreateSportDialog from "@/components/sports/admin/create-sport-dialog";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import AuthButton from "@/components/sports/auth-button";
-import { getUser } from "@/lib/supabase/user";
 
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
   const sports = Object.values(dbSportsBySlug);
   const user = await getUser();
+  const isAdmin = user ? await checkGlobalAdmin(await createClient(), user.id) : false;
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-8 pt-4">
@@ -22,6 +25,7 @@ export default async function Home() {
           NTCBC Signups
         </h1>
         <div className="flex items-center gap-2">
+          {isAdmin && <CreateSportDialog />}
           <ThemeToggle />
           <AuthButton user={user} />
         </div>
