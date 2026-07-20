@@ -113,8 +113,8 @@ export default function EditViewsDialog({
       )}
       trigger={
         <Button variant="outline" size="sm" className="text-xs h-7">
-          <Pencil className="h-3 w-3 mr-1" />
-          Views
+          <Pencil className="h-3 w-3 sm:mr-1" />
+          <span className="hidden sm:inline">Edit</span>
         </Button>
       }
     >
