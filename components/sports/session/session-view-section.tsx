@@ -7,7 +7,7 @@ import ViewToggle from "@/components/sports/session/view-toggle";
 import EditViewsDialog from "@/components/sports/session/edit-views-dialog";
 import type { EditViewsDialogHandle } from "@/components/sports/session/edit-views-dialog";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Link as LinkIcon, Plus } from "lucide-react";
+import { BookOpen, Link as LinkIcon, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   getSessionView,
@@ -97,7 +97,12 @@ export default function SessionViewSection({
         className="text-xs h-7"
         onClick={() => editViewsRef.current?.openToType("devotionalView")}
       >
-        {hasDevo ? <BookOpen className="h-3 w-3 sm:mr-1" /> : <Plus className="h-3 w-3 sm:mr-1" />}
+        <BookOpen className="h-3 w-3 sm:hidden" />
+        {hasDevo ? (
+          <Pencil className="hidden sm:block h-3 w-3 sm:mr-1" />
+        ) : (
+          <Plus className="hidden sm:block h-3 w-3 sm:mr-1" />
+        )}
         <span className="hidden sm:inline">Devo</span>
       </Button>
       <EditViewsDialog
