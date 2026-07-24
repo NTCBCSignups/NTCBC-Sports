@@ -32,7 +32,7 @@ import type { ScheduledGameSession } from "@/lib/softball/get-data";
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const GAME_DURATION_HOURS = 2;
-const SYNC_MARKER = "# CCSA Sync — Do Not Edit";
+const SYNC_MARKER = "# CCSA Sync";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

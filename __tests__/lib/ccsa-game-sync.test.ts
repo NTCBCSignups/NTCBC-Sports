@@ -127,8 +127,7 @@ describe("mergeGameNotes", () => {
   });
 
   it("replaces sync block when marker exists, preserves text after", () => {
-    const existing =
-      "# CCSA Sync — Do Not Edit\nGame Code: OLD-CODE\nHome vs Old Team\n\nAdmin note: important";
+    const existing = "# CCSA Sync\nGame Code: OLD-CODE\nHome vs Old Team\n\nAdmin note: important";
     const result = mergeGameNotes(existing, SYNC_OPTS);
     expect(result).toContain("Game Code: GC-1");
     expect(result).not.toContain("OLD-CODE");
@@ -137,7 +136,7 @@ describe("mergeGameNotes", () => {
   });
 
   it("preserves text before the sync block", () => {
-    const existing = "Pre-sync note\n\n# CCSA Sync — Do Not Edit\nGame Code: OLD\nAway vs X";
+    const existing = "Pre-sync note\n\n# CCSA Sync\nGame Code: OLD\nAway vs X";
     const result = mergeGameNotes(existing, SYNC_OPTS);
     expect(result).toContain("Pre-sync note");
     expect(result).toContain("Game Code: GC-1");
@@ -145,7 +144,7 @@ describe("mergeGameNotes", () => {
   });
 
   it("never removes admin content", () => {
-    const existing = "Note 1\n# CCSA Sync — Do Not Edit\nGame Code: X\nHome vs Y\n\nNote 2\nNote 3";
+    const existing = "Note 1\n# CCSA Sync\nGame Code: X\nHome vs Y\n\nNote 2\nNote 3";
     const result = mergeGameNotes(existing, SYNC_OPTS);
     expect(result).toContain("Note 1");
     expect(result).toContain("Note 2");
