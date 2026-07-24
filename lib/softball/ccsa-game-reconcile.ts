@@ -36,7 +36,9 @@ const SYNC_MARKER = "# CCSA Sync — Do Not Edit";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export interface GameDiff {
+export type GameStatus = "synced" | "new" | "recreate" | "update" | "stale" | "past";
+
+export interface GameRow {
   gamecode: string;
   title: string;
   date: string;
@@ -45,45 +47,22 @@ export interface GameDiff {
   opponent: string;
   isHome: boolean;
   umps: string | null;
-}
-
-export interface GameUpdate {
-  sessionId: string;
-  gamecode: string;
-  title: string;
-  oldDate: string;
-  oldTime: string;
-  oldLocation: string;
-  newDate: string;
-  newTime: string;
-  newLocation: string;
-  opponent: string;
-  isHome: boolean;
-  umps: string | null;
-  /** True if matched by date+time overlap (not gamecode) — admin should confirm */
-  needsConfirmation: boolean;
-}
-
-export interface StaleGame {
-  sessionId: string;
-  title: string | null;
-  date: string;
-  gamecode: string;
+  status: GameStatus;
+  /** Present for "update" — the session being modified in place */
+  sessionId?: string;
+  /** Present for "update" — old values before reschedule */
+  oldDate?: string;
+  oldTime?: string;
+  oldLocation?: string;
+  /** Present for "stale" — the orphaned session ID */
+  staleSessionId?: string;
+  /** Present for "update" matched by time overlap (not gamecode) */
+  needsConfirmation?: boolean;
 }
 
 export interface GamesPreview {
-  /** Brand new games not in our DB */
-  newGames: GameDiff[];
-  /** Past/cancelled sessions left untouched — new sessions will be created */
-  recreated: GameDiff[];
-  /** Active future sessions with changed date/time — modified in place */
-  updated: GameUpdate[];
-  /** Gamecodes in our DB but missing from CCSA (future + active only) */
-  stale: StaleGame[];
-  /** No differences — same date+time slot */
-  unchanged: GameDiff[];
-  /** Both local and CCSA in the past — no action */
-  past: GameDiff[];
+  /** All games sorted by date ascending, with their sync status */
+  games: GameRow[];
   lastupdate: string;
   teamName: string;
 }
@@ -164,13 +143,15 @@ export function findMatchForGame(
   unmatchedSessions: ScheduledGameSession[],
   claimedIds: Set<string>,
 ): MatchResult {
-  // Priority 1: definitive gamecode match
   const byCode = sessionsByGamecode.get(gamecode);
-  if (byCode) {
+
+  // If gamecode match is active, use it directly (Priority 1)
+  if (byCode && byCode.status !== "cancelled") {
     return { session: byCode, matchedByTime: false };
   }
 
-  // Priority 2: same date + overlapping time on unclaimed, active sessions
+  // If gamecode match is cancelled (or missing), check for an active session
+  // on the same date+time — this catches manually-created replacements (Priority 2)
   const byTime = unmatchedSessions.find(
     (s) =>
       s.status !== "cancelled" &&
@@ -180,6 +161,11 @@ export function findMatchForGame(
   );
   if (byTime) {
     return { session: byTime, matchedByTime: true };
+  }
+
+  // Fall back to cancelled gamecode match for proper "recreate" classification
+  if (byCode) {
+    return { session: byCode, matchedByTime: false };
   }
 
   return null;
@@ -229,7 +215,7 @@ export function findStaleGames(
   sessions: ScheduledGameSession[],
   ccsaGamecodes: Set<string>,
   today: string,
-): StaleGame[] {
+): GameRow[] {
   return sessions
     .filter(
       (s) =>
@@ -238,5 +224,16 @@ export function findStaleGames(
         s.date >= today &&
         s.status !== "cancelled",
     )
-    .map((s) => ({ sessionId: s.id, title: s.title, date: s.date, gamecode: s.gamecode! }));
+    .map((s) => ({
+      gamecode: s.gamecode!,
+      title: s.title ?? s.gamecode!,
+      date: s.date,
+      time: s.time_start,
+      location: s.location_name,
+      opponent: "",
+      isHome: false,
+      umps: null,
+      status: "stale" as const,
+      staleSessionId: s.id,
+    }));
 }

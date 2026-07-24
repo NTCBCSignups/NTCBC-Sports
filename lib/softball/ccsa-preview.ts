@@ -20,14 +20,9 @@ import {
   classifyMatch,
   findStaleGames,
 } from "@/lib/softball/ccsa-game-reconcile";
-import type { GameDiff, GameUpdate, GamesPreview } from "@/lib/softball/ccsa-game-reconcile";
+import type { GameRow, GamesPreview } from "@/lib/softball/ccsa-game-reconcile";
 
-export type {
-  GamesPreview,
-  GameDiff,
-  GameUpdate,
-  StaleGame,
-} from "@/lib/softball/ccsa-game-reconcile";
+export type { GamesPreview, GameRow, GameStatus } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -202,12 +197,7 @@ export async function getCcsaGamesPreview(
 
     const today = getTodayInSportTimezone();
 
-    const newGames: GameDiff[] = [];
-    const recreated: GameDiff[] = [];
-    const updated: GameUpdate[] = [];
-    const unchanged: GameDiff[] = [];
-    const past: GameDiff[] = [];
-
+    const games: GameRow[] = [];
     const ccsaGamecodes = new Set<string>();
     const claimedIds = new Set<string>();
 
@@ -217,7 +207,7 @@ export async function getCcsaGamesPreview(
       const opponent = isHome ? game.away_name : game.home_name;
       const gameEndTime = computeEndTime(game.time);
 
-      const diff: GameDiff = {
+      const base: Omit<GameRow, "status"> = {
         gamecode: game.gamecode,
         title: `${isHome ? "Home" : "Away"} vs ${opponent}`,
         date: game.date,
@@ -239,7 +229,7 @@ export async function getCcsaGamesPreview(
       );
 
       if (!match) {
-        newGames.push(diff);
+        games.push({ ...base, status: "new" });
         continue;
       }
 
@@ -256,40 +246,39 @@ export async function getCcsaGamesPreview(
 
       switch (action.type) {
         case "create":
-          newGames.push(diff);
+          games.push({ ...base, status: "new" });
           break;
         case "recreate":
-          recreated.push(diff);
+          games.push({ ...base, status: "recreate" });
           break;
         case "skip":
-          past.push(diff);
+          games.push({ ...base, status: "past" });
           break;
         case "update":
-          updated.push({
+          games.push({
+            ...base,
+            status: "update",
             sessionId: match.session.id,
-            gamecode: game.gamecode,
-            title: match.session.title ?? diff.title,
             oldDate: match.session.date,
             oldTime: match.session.time_start,
             oldLocation: match.session.location_name,
-            newDate: game.date,
-            newTime: game.time,
-            newLocation: game.park_name,
-            opponent,
-            isHome,
-            umps: game.umps_name || null,
             needsConfirmation: action.needsConfirmation,
           });
           break;
         case "unchanged":
-          unchanged.push(diff);
+          games.push({ ...base, status: "synced" });
           break;
       }
     }
 
+    // Add stale games (in our DB but not in CCSA schedule)
     const stale = findStaleGames(existingSessions, ccsaGamecodes, today);
+    games.push(...stale);
 
-    return { newGames, recreated, updated, stale, unchanged, past, lastupdate, teamName };
+    // Sort all by date ascending
+    games.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+    return { games, lastupdate, teamName };
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Preview failed — CCSA session may have expired",

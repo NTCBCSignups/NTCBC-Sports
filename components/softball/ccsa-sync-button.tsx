@@ -269,7 +269,9 @@ export default function CcsaSyncButton({
       if (gamesPreview) {
         setGamesPreview({
           ...gamesPreview,
-          stale: gamesPreview.stale.filter((s) => !selectedStale.has(s.sessionId)),
+          games: gamesPreview.games.filter(
+            (g) => g.status !== "stale" || !selectedStale.has(g.staleSessionId!),
+          ),
         });
       }
       setSelectedStale(new Set());
@@ -278,10 +280,7 @@ export default function CcsaSyncButton({
   };
 
   const hasGameChanges =
-    gamesPreview &&
-    (gamesPreview.newGames.length > 0 ||
-      gamesPreview.updated.length > 0 ||
-      gamesPreview.recreated.length > 0);
+    gamesPreview?.games.some((g) => g.status === "new" || g.status === "update" || g.status === "recreate");
 
   const hasPlayerChanges =
     playersPreview &&
@@ -692,22 +691,15 @@ export default function CcsaSyncButton({
                     setPending(true);
                     setGamesError(null);
                     setGamesResult(null);
-                    const updatesToApply = gamesPreview.updated.filter(
-                      (g) => !g.needsConfirmation || confirmedUpdates.has(g.gamecode),
-                    );
-                    const allTeamGamecodes = [
-                      ...gamesPreview.newGames,
-                      ...gamesPreview.updated,
-                      ...gamesPreview.recreated,
-                      ...gamesPreview.unchanged,
-                    ].map((g) => g.gamecode);
-                    const result = await applyCcsaGameSync(
-                      sessionType,
-                      gamesPreview.newGames,
-                      updatesToApply,
-                      gamesPreview.recreated,
-                      allTeamGamecodes,
-                    );
+                    // Filter: apply all new/recreate, and only confirmed updates
+                    const toApply = gamesPreview.games.filter((g) => {
+                      if (g.status === "new" || g.status === "recreate") return true;
+                      if (g.status === "update") {
+                        return !g.needsConfirmation || confirmedUpdates.has(g.gamecode);
+                      }
+                      return false;
+                    });
+                    const result = await applyCcsaGameSync(sessionType, toApply);
                     if (result.errors.length > 0) setGamesError(result.errors.join("; "));
                     const parts: string[] = [];
                     if (result.created > 0) parts.push(`${result.created} created`);
@@ -734,19 +726,11 @@ export default function CcsaSyncButton({
 
             {gamesPreview && (
               <div className="space-y-3">
-                {/* Summary line */}
                 <p className="text-xs text-muted-foreground">
                   {gamesPreview.teamName} · Schedule updated: {gamesPreview.lastupdate} ·{" "}
-                  {gamesPreview.newGames.length +
-                    gamesPreview.updated.length +
-                    gamesPreview.recreated.length +
-                    gamesPreview.unchanged.length +
-                    gamesPreview.past.length +
-                    gamesPreview.stale.length}{" "}
-                  games total
+                  {gamesPreview.games.length} games
                 </p>
 
-                {/* Games table — always shown */}
                 <div className="rounded-lg border overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-muted text-left text-xs text-muted-foreground uppercase">
@@ -758,157 +742,96 @@ export default function CcsaSyncButton({
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {/* Unchanged games */}
-                      {gamesPreview.unchanged.map((g) => (
-                        <tr key={g.gamecode}>
-                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                            {g.date} {g.time}
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                            {g.location}
-                          </td>
-                          <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <span className={`inline-flex items-center gap-1 ${colors.success}`}>
-                              <Check className="h-3.5 w-3.5" />
-                              <span className="text-xs">Synced</span>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {/* New games */}
-                      {gamesPreview.newGames.map((g) => (
-                        <tr key={g.gamecode}>
-                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                            {g.date} {g.time}
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                            {g.location}
-                          </td>
-                          <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <Badge
-                              className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}
-                            >
-                              New
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {/* Rescheduled games */}
-                      {gamesPreview.updated.map((g) => (
-                        <tr key={g.gamecode}>
+                      {gamesPreview.games.map((row) => (
+                        <tr key={row.gamecode} className={row.status === "past" ? "opacity-50" : undefined}>
                           <td className="px-4 py-2 whitespace-nowrap">
                             <div className="flex items-center gap-2">
-                              {g.needsConfirmation && (
+                              {row.status === "stale" && row.staleSessionId && (
                                 <input
                                   type="checkbox"
-                                  checked={confirmedUpdates.has(g.gamecode)}
+                                  checked={selectedStale.has(row.staleSessionId)}
                                   onChange={(e) => {
-                                    setConfirmedUpdates((prev) => {
+                                    const sid = row.staleSessionId!;
+                                    setSelectedStale((prev) => {
                                       const next = new Set(prev);
-                                      if (e.target.checked) next.add(g.gamecode);
-                                      else next.delete(g.gamecode);
+                                      if (e.target.checked) next.add(sid);
+                                      else next.delete(sid);
                                       return next;
                                     });
                                   }}
                                   className="rounded"
                                 />
                               )}
-                              {g.title}
+                              {row.status === "update" && row.needsConfirmation && (
+                                <input
+                                  type="checkbox"
+                                  checked={confirmedUpdates.has(row.gamecode)}
+                                  onChange={(e) => {
+                                    setConfirmedUpdates((prev) => {
+                                      const next = new Set(prev);
+                                      if (e.target.checked) next.add(row.gamecode);
+                                      else next.delete(row.gamecode);
+                                      return next;
+                                    });
+                                  }}
+                                  className="rounded"
+                                />
+                              )}
+                              {row.title}
                             </div>
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap">
-                            <div className="text-muted-foreground line-through text-xs">
-                              {g.oldDate} {g.oldTime}
-                            </div>
-                            <div className={`text-xs ${colors.success}`}>
-                              {g.newDate} {g.newTime}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2 hidden md:table-cell">
-                            <div className="text-muted-foreground line-through text-xs">
-                              {g.oldLocation}
-                            </div>
-                            <div className={`text-xs ${colors.success}`}>{g.newLocation}</div>
-                          </td>
-                          <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <Badge
-                              className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}
-                            >
-                              {g.needsConfirmation ? "Confirm?" : "Rescheduled"}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {/* Recreated (past/cancelled — new session will be created) */}
-                      {gamesPreview.recreated.map((g) => (
-                        <tr key={g.gamecode}>
-                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                            {g.date} {g.time}
+                            {row.status === "update" && row.oldDate ? (
+                              <>
+                                <div className="text-muted-foreground line-through text-xs">
+                                  {row.oldDate} {row.oldTime}
+                                </div>
+                                <div className={`text-xs ${colors.success}`}>
+                                  {row.date} {row.time}
+                                </div>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">{row.date} {row.time}</span>
+                            )}
                           </td>
                           <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                            {g.location}
+                            {row.status === "update" && row.oldLocation ? (
+                              <>
+                                <div className="line-through text-xs">{row.oldLocation}</div>
+                                <div className={`text-xs ${colors.success}`}>{row.location}</div>
+                              </>
+                            ) : (
+                              row.location || "—"
+                            )}
                           </td>
                           <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <Badge
-                              className={`${statusColors.info.bg} ${statusColors.info.text} ${statusColors.info.border}`}
-                            >
-                              Recreate
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {/* Stale games */}
-                      {gamesPreview.stale.map((g) => (
-                        <tr key={g.sessionId}>
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={selectedStale.has(g.sessionId)}
-                                onChange={(e) => {
-                                  setSelectedStale((prev) => {
-                                    const next = new Set(prev);
-                                    if (e.target.checked) next.add(g.sessionId);
-                                    else next.delete(g.sessionId);
-                                    return next;
-                                  });
-                                }}
-                                className="rounded"
-                              />
-                              {g.title ?? g.gamecode}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                            {g.date}
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                            —
-                          </td>
-                          <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <Badge variant="destructive">Stale</Badge>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {/* Past games */}
-                      {gamesPreview.past.map((g) => (
-                        <tr key={g.gamecode} className="opacity-50">
-                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                            {g.date} {g.time}
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
-                            {g.location}
-                          </td>
-                          <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <span className="text-xs text-muted-foreground">Played</span>
+                            {row.status === "synced" && (
+                              <span className={`inline-flex items-center gap-1 ${colors.success}`}>
+                                <Check className="h-3.5 w-3.5" />
+                                <span className="text-xs">Synced</span>
+                              </span>
+                            )}
+                            {row.status === "new" && (
+                              <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
+                                New
+                              </Badge>
+                            )}
+                            {row.status === "update" && (
+                              <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
+                                {row.needsConfirmation ? "Confirm?" : "Rescheduled"}
+                              </Badge>
+                            )}
+                            {row.status === "recreate" && (
+                              <Badge className={`${statusColors.info.bg} ${statusColors.info.text} ${statusColors.info.border}`}>
+                                Recreate
+                              </Badge>
+                            )}
+                            {row.status === "stale" && (
+                              <Badge variant="destructive">Stale</Badge>
+                            )}
+                            {row.status === "past" && (
+                              <span className="text-xs text-muted-foreground">Played</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -916,8 +839,7 @@ export default function CcsaSyncButton({
                   </table>
                 </div>
 
-                {/* Stale cancel button */}
-                {gamesPreview.stale.length > 0 && selectedStale.size > 0 && (
+                {gamesPreview.games.some((g) => g.status === "stale") && selectedStale.size > 0 && (
                   <Button
                     variant="destructive"
                     size="sm"

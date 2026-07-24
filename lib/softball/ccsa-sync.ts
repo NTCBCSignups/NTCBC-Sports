@@ -11,7 +11,7 @@ import { auth, team } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { SPORT_TIMEZONE } from "@/lib/timezone";
 import { computeEndTime, mapsLink, buildGameNotes } from "@/lib/softball/ccsa-game-reconcile";
-import type { GameDiff, GameUpdate } from "@/lib/softball/ccsa-game-reconcile";
+import type { GameRow } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -299,28 +299,29 @@ export async function deleteAllCcsaPlayers() {
 
 // ─── Game Schedule Mutations ────────────────────────────────────────────────
 
-export async function applyCcsaGameSync(
-  sessionType: string,
-  newGames: GameDiff[],
-  updatedGames: GameUpdate[],
-  recreatedGames: GameDiff[],
-  allTeamGamecodes: string[],
-) {
+/**
+ * Apply game sync: creates new sessions and updates rescheduled ones.
+ * Only processes rows with actionable statuses (new, recreate, update).
+ */
+export async function applyCcsaGameSync(sessionType: string, games: GameRow[]) {
   await ensureSportAdmin();
 
   const admin = createAdminClient();
 
-  // Compute game number from gamecode suffix rank among all team games
-  const sortedCodes = [...allTeamGamecodes].sort((a, b) => {
+  // Compute game number from gamecode suffix rank among all games in the batch
+  const allCodes = games.map((g) => g.gamecode);
+  const sortedCodes = [...allCodes].sort((a, b) => {
     const suffixA = parseInt(a.slice(-3));
     const suffixB = parseInt(b.slice(-3));
     return suffixA - suffixB;
   });
   const gameNumberByCode = new Map(sortedCodes.map((code, i) => [code, i + 1]));
 
-  // Build rows for new + recreated games (both result in new session inserts)
-  const allNew = [...newGames, ...recreatedGames];
-  const insertRows = allNew.map((game) => {
+  const toInsert = games.filter((g) => g.status === "new" || g.status === "recreate");
+  const toUpdate = games.filter((g) => g.status === "update");
+
+  // Build insert rows
+  const insertRows = toInsert.map((game) => {
     const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
     const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
     const num = gameNumberByCode.get(game.gamecode) ?? "?";
@@ -359,20 +360,21 @@ export async function applyCcsaGameSync(
     }
   }
 
-  // Update rescheduled games
-  for (const game of updatedGames) {
-    const timeForParse = game.newTime.length <= 5 ? `${game.newTime}:00` : game.newTime;
-    const signupClose = fromZonedTime(`${game.newDate}T${timeForParse}`, SPORT_TIMEZONE);
+  // Update rescheduled games in place
+  for (const game of toUpdate) {
+    if (!game.sessionId) continue;
+    const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
+    const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
 
     const { error } = await admin
       .from("sessions")
       .update({
-        date: game.newDate,
-        time_start: game.newTime,
-        time_end: computeEndTime(game.newTime),
-        location_name: game.newLocation,
-        location_address: game.newLocation,
-        location_maps_link: mapsLink(game.newLocation),
+        date: game.date,
+        time_start: game.time,
+        time_end: computeEndTime(game.time),
+        location_name: game.location,
+        location_address: game.location,
+        location_maps_link: mapsLink(game.location),
         signup_close: signupClose.toISOString(),
         notes: buildGameNotes({
           gamecode: game.gamecode,
