@@ -10,8 +10,13 @@ import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-serv
 import { auth, team } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { SPORT_TIMEZONE } from "@/lib/timezone";
-import { computeEndTime, mapsLink, buildGameNotes } from "@/lib/softball/ccsa-game-reconcile";
-import type { GameDiff, GameUpdate } from "@/lib/softball/ccsa-game-reconcile";
+import {
+  computeEndTime,
+  mapsLink,
+  buildGameNotes,
+  mergeGameNotes,
+} from "@/lib/softball/ccsa-game-reconcile";
+import type { GameRow } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
 const CCSA_COOKIE_NAME = "ccsa_session";
@@ -299,28 +304,29 @@ export async function deleteAllCcsaPlayers() {
 
 // ─── Game Schedule Mutations ────────────────────────────────────────────────
 
-export async function applyCcsaGameSync(
-  sessionType: string,
-  newGames: GameDiff[],
-  updatedGames: GameUpdate[],
-  skippedGames: GameDiff[],
-  allTeamGamecodes: string[],
-) {
+/**
+ * Apply game sync: creates new sessions and updates rescheduled ones.
+ * Only processes rows with actionable statuses (new, recreate, update).
+ */
+export async function applyCcsaGameSync(sessionType: string, games: GameRow[]) {
   await ensureSportAdmin();
 
   const admin = createAdminClient();
 
-  // Compute game number from gamecode suffix rank among all team games
-  const sortedCodes = [...allTeamGamecodes].sort((a, b) => {
+  // Compute game number from gamecode suffix rank among all games in the batch
+  const allCodes = games.map((g) => g.gamecode);
+  const sortedCodes = [...allCodes].sort((a, b) => {
     const suffixA = parseInt(a.slice(-3));
     const suffixB = parseInt(b.slice(-3));
     return suffixA - suffixB;
   });
   const gameNumberByCode = new Map(sortedCodes.map((code, i) => [code, i + 1]));
 
-  // Build rows for new games (including skipped ones that need new sessions)
-  const allNew = [...newGames, ...skippedGames];
-  const insertRows = allNew.map((game) => {
+  const toInsert = games.filter((g) => g.status === "new" || g.status === "recreate");
+  const toUpdate = games.filter((g) => g.status === "update");
+
+  // Build insert rows
+  const insertRows = toInsert.map((game) => {
     const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
     const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
     const num = gameNumberByCode.get(game.gamecode) ?? "?";
@@ -359,36 +365,55 @@ export async function applyCcsaGameSync(
     }
   }
 
-  // Update rescheduled games
-  for (const game of updatedGames) {
-    const timeForParse = game.newTime.length <= 5 ? `${game.newTime}:00` : game.newTime;
-    const signupClose = fromZonedTime(`${game.newDate}T${timeForParse}`, SPORT_TIMEZONE);
-
-    const { error } = await admin
+  // Update rescheduled games in place (preserving admin notes)
+  if (toUpdate.length > 0) {
+    // Batch fetch existing notes for all sessions being updated
+    const updateIds = toUpdate.filter((g) => g.sessionId).map((g) => g.sessionId!);
+    const { data: existingRows } = await admin
       .from("sessions")
-      .update({
-        date: game.newDate,
-        time_start: game.newTime,
-        time_end: computeEndTime(game.newTime),
-        location_name: game.newLocation,
-        location_address: game.newLocation,
-        location_maps_link: mapsLink(game.newLocation),
-        signup_close: signupClose.toISOString(),
-        notes: buildGameNotes({
-          gamecode: game.gamecode,
-          isHome: game.isHome,
-          opponent: game.opponent,
-          umps: game.umps,
-        }),
-      })
-      .eq("id", game.sessionId)
-      .eq("sport", SPORT)
-      .eq("session_type", sessionType);
+      .select("id, notes")
+      .in("id", updateIds);
 
-    if (error) {
-      results.errors.push(`Update ${game.gamecode}: ${error.message}`);
-    } else {
-      results.updated++;
+    const notesBySessionId = new Map(
+      (existingRows ?? []).map((r) => [r.id, r.notes as string | null]),
+    );
+
+    const updateResults = await Promise.all(
+      toUpdate
+        .filter((g) => g.sessionId)
+        .map(async (game) => {
+          const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
+          const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
+          const existingNotes = notesBySessionId.get(game.sessionId!) ?? null;
+
+          const { error } = await admin
+            .from("sessions")
+            .update({
+              date: game.date,
+              time_start: game.time,
+              time_end: computeEndTime(game.time),
+              location_name: game.location,
+              location_address: game.location,
+              location_maps_link: mapsLink(game.location),
+              signup_close: signupClose.toISOString(),
+              notes: mergeGameNotes(existingNotes, {
+                gamecode: game.gamecode,
+                isHome: game.isHome,
+                opponent: game.opponent,
+                umps: game.umps,
+              }),
+            })
+            .eq("id", game.sessionId!)
+            .eq("sport", SPORT)
+            .eq("session_type", sessionType);
+
+          return { gamecode: game.gamecode, error };
+        }),
+    );
+
+    for (const { gamecode, error } of updateResults) {
+      if (error) results.errors.push(`Update ${gamecode}: ${error.message}`);
+      else results.updated++;
     }
   }
 
@@ -418,4 +443,49 @@ export async function cancelStaleCcsaGames(sessionType: string, sessionIds: stri
   revalidatePath(`/${SPORT}/admin`);
   revalidatePath(`/${SPORT}`);
   return { success: true, count: sessionIds.length };
+}
+
+/**
+ * Write the CCSA sync header into sessions that were matched by time
+ * but don't yet have the gamecode in their notes.
+ */
+export async function syncCcsaGameNotes(games: GameRow[]) {
+  await ensureSportAdmin();
+
+  const toSync = games.filter((g) => g.needsNoteSync && g.sessionId);
+  if (toSync.length === 0) return { success: true, count: 0 };
+
+  const admin = createAdminClient();
+
+  // Batch fetch existing notes
+  const ids = toSync.map((g) => g.sessionId!);
+  const { data: existingRows } = await admin.from("sessions").select("id, notes").in("id", ids);
+  const notesBySessionId = new Map(
+    (existingRows ?? []).map((r) => [r.id, r.notes as string | null]),
+  );
+
+  // Parallel updates
+  const results = await Promise.all(
+    toSync.map(async (game) => {
+      const existingNotes = notesBySessionId.get(game.sessionId!) ?? null;
+      const { error } = await admin
+        .from("sessions")
+        .update({
+          notes: mergeGameNotes(existingNotes, {
+            gamecode: game.gamecode,
+            isHome: game.isHome,
+            opponent: game.opponent,
+            umps: game.umps,
+          }),
+        })
+        .eq("id", game.sessionId!);
+      return !error;
+    }),
+  );
+
+  const count = results.filter(Boolean).length;
+
+  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${SPORT}`);
+  return { success: true, count };
 }
