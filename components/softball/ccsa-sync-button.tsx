@@ -279,8 +279,9 @@ export default function CcsaSyncButton({
     setPending(false);
   };
 
-  const hasGameChanges =
-    gamesPreview?.games.some((g) => g.status === "new" || g.status === "update" || g.status === "recreate");
+  const hasGameChanges = gamesPreview?.games.some(
+    (g) => g.status === "new" || g.status === "update" || g.status === "recreate",
+  );
 
   const hasPlayerChanges =
     playersPreview &&
@@ -743,7 +744,14 @@ export default function CcsaSyncButton({
                     </thead>
                     <tbody className="divide-y">
                       {gamesPreview.games.map((row) => (
-                        <tr key={row.gamecode} className={row.status === "past" ? "opacity-50" : undefined}>
+                        <tr
+                          key={row.gamecode}
+                          className={
+                            row.status === "past" || row.status === "not_found"
+                              ? "opacity-50"
+                              : undefined
+                          }
+                        >
                           <td className="px-4 py-2 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               {row.status === "stale" && row.staleSessionId && (
@@ -791,7 +799,9 @@ export default function CcsaSyncButton({
                                 </div>
                               </>
                             ) : (
-                              <span className="text-muted-foreground">{row.date} {row.time}</span>
+                              <span className="text-muted-foreground">
+                                {row.date} {row.time}
+                              </span>
                             )}
                           </td>
                           <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
@@ -812,25 +822,37 @@ export default function CcsaSyncButton({
                               </span>
                             )}
                             {row.status === "new" && (
-                              <Badge className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}>
+                              <Badge
+                                className={`${statusColors.green.bg} ${statusColors.green.text} ${statusColors.green.border}`}
+                              >
                                 New
                               </Badge>
                             )}
                             {row.status === "update" && (
-                              <Badge className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}>
+                              <Badge
+                                className={`${statusColors.amber.bg} ${statusColors.amber.text} ${statusColors.amber.border}`}
+                              >
                                 {row.needsConfirmation ? "Confirm?" : "Rescheduled"}
                               </Badge>
                             )}
                             {row.status === "recreate" && (
-                              <Badge className={`${statusColors.info.bg} ${statusColors.info.text} ${statusColors.info.border}`}>
+                              <Badge
+                                className={`${statusColors.info.bg} ${statusColors.info.text} ${statusColors.info.border}`}
+                              >
                                 Recreate
                               </Badge>
                             )}
-                            {row.status === "stale" && (
-                              <Badge variant="destructive">Stale</Badge>
-                            )}
+                            {row.status === "stale" && <Badge variant="destructive">Stale</Badge>}
                             {row.status === "past" && (
                               <span className="text-xs text-muted-foreground">Played</span>
+                            )}
+                            {row.status === "not_found" && (
+                              <span className="text-xs text-muted-foreground">Not synced</span>
+                            )}
+                            {row.status === "mismatch" && (
+                              <Badge variant="outline" className="text-amber-600 border-amber-300">
+                                Mismatch
+                              </Badge>
                             )}
                           </td>
                         </tr>

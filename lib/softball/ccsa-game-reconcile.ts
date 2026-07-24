@@ -36,7 +36,15 @@ const SYNC_MARKER = "# CCSA Sync — Do Not Edit";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type GameStatus = "synced" | "new" | "recreate" | "update" | "stale" | "past";
+export type GameStatus =
+  | "synced"
+  | "new"
+  | "recreate"
+  | "update"
+  | "stale"
+  | "past"
+  | "not_found"
+  | "mismatch";
 
 export interface GameRow {
   gamecode: string;
@@ -74,18 +82,22 @@ export type MatchResult = {
 
 /**
  * Sync actions — each is semantically distinct:
- * - create:    No local match. Insert a brand new session.
- * - recreate:  Matched a past/cancelled session. Leave it alone, create a new session.
- * - update:    Matched an active future session. Modify in place (preserves signups).
+ * - create:    No local match, CCSA is future. Insert a new session.
+ * - not_found: No local match, CCSA is past. Never synced, too late now.
+ * - recreate:  Matched a past/cancelled session, CCSA is future. Create new.
+ * - update:    Matched an active future session. Modify in place.
  * - unchanged: Matched, same date+time slot. No action needed.
- * - skip:      Both local and CCSA dates are in the past. Ignore entirely.
+ * - skip:      Both local and CCSA in the past. Normal completed game.
+ * - mismatch:  CCSA is past but local is active+future. Data anomaly.
  */
 export type SyncAction =
   | { type: "create" }
+  | { type: "not_found" }
   | { type: "recreate" }
   | { type: "update"; needsConfirmation: boolean }
   | { type: "unchanged" }
-  | { type: "skip" };
+  | { type: "skip" }
+  | { type: "mismatch" };
 
 // ─── Pure utility functions ─────────────────────────────────────────────────
 
@@ -185,13 +197,24 @@ export function classifyMatch(
   matchedByTime: boolean,
   today: string,
 ): SyncAction {
-  // Both local and CCSA in the past → nothing to do
-  if (session.date < today && gameDate < today) {
+  const ccsaIsPast = gameDate < today;
+  const localIsPast = session.date < today;
+  const localIsCancelled = session.status === "cancelled";
+
+  // ── CCSA game is in the past ──────────────────────────────────────────
+  if (ccsaIsPast) {
+    // Local is active + future but CCSA is past → data anomaly
+    if (!localIsCancelled && !localIsPast) {
+      return { type: "mismatch" };
+    }
+    // Both past, or local cancelled → completed game, nothing to do
     return { type: "skip" };
   }
 
+  // ── CCSA game is in the future ────────────────────────────────────────
+
   // Past or cancelled local session → leave it, create a fresh one
-  if (session.status === "cancelled" || session.date < today) {
+  if (localIsCancelled || localIsPast) {
     return { type: "recreate" };
   }
 

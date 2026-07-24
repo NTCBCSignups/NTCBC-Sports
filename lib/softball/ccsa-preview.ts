@@ -229,7 +229,7 @@ export async function getCcsaGamesPreview(
       );
 
       if (!match) {
-        games.push({ ...base, status: "new" });
+        games.push({ ...base, status: game.date < today ? "not_found" : "new" });
         continue;
       }
 
@@ -248,11 +248,17 @@ export async function getCcsaGamesPreview(
         case "create":
           games.push({ ...base, status: "new" });
           break;
+        case "not_found":
+          games.push({ ...base, status: "not_found" });
+          break;
         case "recreate":
           games.push({ ...base, status: "recreate" });
           break;
         case "skip":
           games.push({ ...base, status: "past" });
+          break;
+        case "mismatch":
+          games.push({ ...base, status: "mismatch" });
           break;
         case "update":
           games.push({
