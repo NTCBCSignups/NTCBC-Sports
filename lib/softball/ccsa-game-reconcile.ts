@@ -129,6 +129,38 @@ export function buildGameNotes(opts: {
   return lines.join("\n");
 }
 
+/**
+ * Merge sync header into existing notes without destroying admin content.
+ * - If no existing notes: returns fresh sync notes.
+ * - If sync marker already present: replaces the sync block, preserves the rest.
+ * - If no sync marker: prepends sync block above existing notes.
+ */
+export function mergeGameNotes(
+  existingNotes: string | null,
+  opts: { gamecode: string; isHome: boolean; opponent: string; umps: string | null },
+): string {
+  const syncBlock = buildGameNotes(opts);
+
+  if (!existingNotes?.trim()) return syncBlock;
+
+  // If sync marker exists, replace everything from marker to next blank line (or end)
+  if (existingNotes.includes(SYNC_MARKER)) {
+    const lines = existingNotes.split("\n");
+    const markerIdx = lines.findIndex((l) => l.includes(SYNC_MARKER));
+    // Find end of sync block: next empty line or end of file
+    let endIdx = markerIdx + 1;
+    while (endIdx < lines.length && lines[endIdx]!.trim() !== "") {
+      endIdx++;
+    }
+    const before = lines.slice(0, markerIdx);
+    const after = lines.slice(endIdx);
+    return [...before, syncBlock, ...after].join("\n");
+  }
+
+  // No marker — prepend sync block above existing notes
+  return `${syncBlock}\n\n${existingNotes}`;
+}
+
 export function timeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number) as [number, number];
   return h * 60 + m;

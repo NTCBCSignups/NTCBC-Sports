@@ -10,7 +10,12 @@ import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-serv
 import { auth, team } from "@/lib/softball/ccsa-api";
 import type { WaiverStatus } from "@/lib/supabase/types";
 import { SPORT_TIMEZONE } from "@/lib/timezone";
-import { computeEndTime, mapsLink, buildGameNotes } from "@/lib/softball/ccsa-game-reconcile";
+import {
+  computeEndTime,
+  mapsLink,
+  buildGameNotes,
+  mergeGameNotes,
+} from "@/lib/softball/ccsa-game-reconcile";
 import type { GameRow } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
@@ -360,11 +365,25 @@ export async function applyCcsaGameSync(sessionType: string, games: GameRow[]) {
     }
   }
 
-  // Update rescheduled games in place
+  // Update rescheduled games in place (preserving admin notes)
   for (const game of toUpdate) {
     if (!game.sessionId) continue;
     const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
     const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
+
+    // Fetch existing notes to merge sync header without destroying admin content
+    const { data: existing } = await admin
+      .from("sessions")
+      .select("notes")
+      .eq("id", game.sessionId)
+      .single();
+
+    const syncOpts = {
+      gamecode: game.gamecode,
+      isHome: game.isHome,
+      opponent: game.opponent,
+      umps: game.umps,
+    };
 
     const { error } = await admin
       .from("sessions")
@@ -376,12 +395,7 @@ export async function applyCcsaGameSync(sessionType: string, games: GameRow[]) {
         location_address: game.location,
         location_maps_link: mapsLink(game.location),
         signup_close: signupClose.toISOString(),
-        notes: buildGameNotes({
-          gamecode: game.gamecode,
-          isHome: game.isHome,
-          opponent: game.opponent,
-          umps: game.umps,
-        }),
+        notes: mergeGameNotes(existing?.notes ?? null, syncOpts),
       })
       .eq("id", game.sessionId)
       .eq("sport", SPORT)

@@ -4,6 +4,7 @@ import {
   timeToMinutes,
   computeEndTime,
   buildGameNotes,
+  mergeGameNotes,
   findMatchForGame,
   classifyMatch,
   findStaleGames,
@@ -97,6 +98,58 @@ describe("buildGameNotes", () => {
     });
     expect(notes).toContain("Away vs Team B");
     expect(notes).not.toContain("Umps");
+  });
+});
+
+const SYNC_OPTS = { gamecode: "GC-1", isHome: true, opponent: "Team B", umps: null };
+
+describe("mergeGameNotes", () => {
+  it("returns fresh sync notes when existing is null", () => {
+    const result = mergeGameNotes(null, SYNC_OPTS);
+    expect(result).toContain("# CCSA Sync");
+    expect(result).toContain("Game Code: GC-1");
+  });
+
+  it("returns fresh sync notes when existing is empty", () => {
+    const result = mergeGameNotes("", SYNC_OPTS);
+    expect(result).toContain("Game Code: GC-1");
+  });
+
+  it("prepends sync block when no marker exists", () => {
+    const result = mergeGameNotes("Admin note: bring extra balls", SYNC_OPTS);
+    expect(result).toContain("# CCSA Sync");
+    expect(result).toContain("Game Code: GC-1");
+    expect(result).toContain("Admin note: bring extra balls");
+    // Sync block should come before admin note
+    const syncIdx = result.indexOf("# CCSA Sync");
+    const adminIdx = result.indexOf("Admin note");
+    expect(syncIdx).toBeLessThan(adminIdx);
+  });
+
+  it("replaces sync block when marker exists, preserves text after", () => {
+    const existing =
+      "# CCSA Sync — Do Not Edit\nGame Code: OLD-CODE\nHome vs Old Team\n\nAdmin note: important";
+    const result = mergeGameNotes(existing, SYNC_OPTS);
+    expect(result).toContain("Game Code: GC-1");
+    expect(result).not.toContain("OLD-CODE");
+    expect(result).not.toContain("Old Team");
+    expect(result).toContain("Admin note: important");
+  });
+
+  it("preserves text before the sync block", () => {
+    const existing = "Pre-sync note\n\n# CCSA Sync — Do Not Edit\nGame Code: OLD\nAway vs X";
+    const result = mergeGameNotes(existing, SYNC_OPTS);
+    expect(result).toContain("Pre-sync note");
+    expect(result).toContain("Game Code: GC-1");
+    expect(result).not.toContain("OLD");
+  });
+
+  it("never removes admin content", () => {
+    const existing = "Note 1\n# CCSA Sync — Do Not Edit\nGame Code: X\nHome vs Y\n\nNote 2\nNote 3";
+    const result = mergeGameNotes(existing, SYNC_OPTS);
+    expect(result).toContain("Note 1");
+    expect(result).toContain("Note 2");
+    expect(result).toContain("Note 3");
   });
 });
 
