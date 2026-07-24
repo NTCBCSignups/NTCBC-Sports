@@ -150,6 +150,14 @@ describe("mergeGameNotes", () => {
     expect(result).toContain("Note 2");
     expect(result).toContain("Note 3");
   });
+
+  it("handles corrupted notes with duplicate sync markers (replaces first only)", () => {
+    const existing = "# CCSA Sync\nGame Code: A\nHome vs X\n\n# CCSA Sync\nGame Code: B\nAway vs Y";
+    const result = mergeGameNotes(existing, SYNC_OPTS);
+    expect(result).toContain("Game Code: GC-1");
+    // Second marker block preserved as-is (it's after the blank line separator)
+    expect(result).toContain("# CCSA Sync\nGame Code: B");
+  });
 });
 
 // ─── Phase 1: findMatchForGame ───────────────────────────────────────────────

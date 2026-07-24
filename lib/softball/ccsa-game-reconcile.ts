@@ -5,26 +5,17 @@
  *   Phase 1 — MATCH: Associate each CCSA game with a local session (or null)
  *     Priority 1: Gamecode in notes (definitive, previously synced)
  *     Priority 2: Same date + overlapping time (heuristic, manually created)
- *   Phase 2 — CLASSIFY: Determine action for each (CcsaGame, LocalSession?) pair
- *     - No match → create
- *     - Match is in the past → unchanged (never modify history)
- *     - Match is cancelled → skip (leave it, create fresh session)
- *     - Date differs OR times don't overlap → update (rescheduled)
- *     - Same date + overlapping times → unchanged
- *   Phase 3 — DETECT ORPHANS: Local sessions with gamecodes not in CCSA schedule
- *     - Future + active → stale (warn admin)
- *
- * Scenarios handled:
- *   1. Fresh game on CCSA, no local session → CREATE
- *   2. CCSA game matches gamecode, same date+time → UNCHANGED
- *   3. CCSA game matches gamecode, different date → UPDATE
- *   4. CCSA game matches gamecode, same date, non-overlapping time → UPDATE
- *   5. Game removed from CCSA, local has gamecode, active+future → STALE
- *   6. CCSA game matches gamecode, local is cancelled → SKIP (create new)
- *   7. CCSA game matches gamecode, local is in past → UNCHANGED (no touch)
- *   8. CCSA game matches manually-created by date+time → UPDATE (needsConfirmation)
- *   9. Cancelled local, no gamecode, CCSA on same date+time → not matched
- *  10. Past sessions without gamecode → not matched (ignored)
+ *   Phase 2 — CLASSIFY: Determine action based on CCSA date vs local state
+ *     CCSA future + no match       → create
+ *     CCSA future + active future  → unchanged or update (date/time differs)
+ *     CCSA future + active past    → recreate (don't modify past)
+ *     CCSA future + cancelled      → recreate (don't modify cancelled)
+ *     CCSA past   + no match       → not_found
+ *     CCSA past   + active past    → skip (game played)
+ *     CCSA past   + active future  → mismatch (data anomaly)
+ *     CCSA past   + cancelled      → cancelled (awaiting reschedule)
+ *   Phase 3 — DETECT ORPHANS: gamecodes in DB but absent from CCSA
+ *     Future + active → stale
  */
 
 import type { ScheduledGameSession } from "@/lib/softball/get-data";

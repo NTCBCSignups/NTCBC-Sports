@@ -366,45 +366,54 @@ export async function applyCcsaGameSync(sessionType: string, games: GameRow[]) {
   }
 
   // Update rescheduled games in place (preserving admin notes)
-  for (const game of toUpdate) {
-    if (!game.sessionId) continue;
-    const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
-    const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
-
-    // Fetch existing notes to merge sync header without destroying admin content
-    const { data: existing } = await admin
+  if (toUpdate.length > 0) {
+    // Batch fetch existing notes for all sessions being updated
+    const updateIds = toUpdate.filter((g) => g.sessionId).map((g) => g.sessionId!);
+    const { data: existingRows } = await admin
       .from("sessions")
-      .select("notes")
-      .eq("id", game.sessionId)
-      .single();
+      .select("id, notes")
+      .in("id", updateIds);
 
-    const syncOpts = {
-      gamecode: game.gamecode,
-      isHome: game.isHome,
-      opponent: game.opponent,
-      umps: game.umps,
-    };
+    const notesBySessionId = new Map(
+      (existingRows ?? []).map((r) => [r.id, r.notes as string | null]),
+    );
 
-    const { error } = await admin
-      .from("sessions")
-      .update({
-        date: game.date,
-        time_start: game.time,
-        time_end: computeEndTime(game.time),
-        location_name: game.location,
-        location_address: game.location,
-        location_maps_link: mapsLink(game.location),
-        signup_close: signupClose.toISOString(),
-        notes: mergeGameNotes(existing?.notes ?? null, syncOpts),
-      })
-      .eq("id", game.sessionId)
-      .eq("sport", SPORT)
-      .eq("session_type", sessionType);
+    const updateResults = await Promise.all(
+      toUpdate
+        .filter((g) => g.sessionId)
+        .map(async (game) => {
+          const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
+          const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);
+          const existingNotes = notesBySessionId.get(game.sessionId!) ?? null;
 
-    if (error) {
-      results.errors.push(`Update ${game.gamecode}: ${error.message}`);
-    } else {
-      results.updated++;
+          const { error } = await admin
+            .from("sessions")
+            .update({
+              date: game.date,
+              time_start: game.time,
+              time_end: computeEndTime(game.time),
+              location_name: game.location,
+              location_address: game.location,
+              location_maps_link: mapsLink(game.location),
+              signup_close: signupClose.toISOString(),
+              notes: mergeGameNotes(existingNotes, {
+                gamecode: game.gamecode,
+                isHome: game.isHome,
+                opponent: game.opponent,
+                umps: game.umps,
+              }),
+            })
+            .eq("id", game.sessionId!)
+            .eq("sport", SPORT)
+            .eq("session_type", sessionType);
+
+          return { gamecode: game.gamecode, error };
+        }),
+    );
+
+    for (const { gamecode, error } of updateResults) {
+      if (error) results.errors.push(`Update ${gamecode}: ${error.message}`);
+      else results.updated++;
     }
   }
 
@@ -447,29 +456,34 @@ export async function syncCcsaGameNotes(games: GameRow[]) {
   if (toSync.length === 0) return { success: true, count: 0 };
 
   const admin = createAdminClient();
-  let count = 0;
 
-  for (const game of toSync) {
-    const { data: existing } = await admin
-      .from("sessions")
-      .select("notes")
-      .eq("id", game.sessionId!)
-      .single();
+  // Batch fetch existing notes
+  const ids = toSync.map((g) => g.sessionId!);
+  const { data: existingRows } = await admin.from("sessions").select("id, notes").in("id", ids);
+  const notesBySessionId = new Map(
+    (existingRows ?? []).map((r) => [r.id, r.notes as string | null]),
+  );
 
-    const { error } = await admin
-      .from("sessions")
-      .update({
-        notes: mergeGameNotes(existing?.notes ?? null, {
-          gamecode: game.gamecode,
-          isHome: game.isHome,
-          opponent: game.opponent,
-          umps: game.umps,
-        }),
-      })
-      .eq("id", game.sessionId!);
+  // Parallel updates
+  const results = await Promise.all(
+    toSync.map(async (game) => {
+      const existingNotes = notesBySessionId.get(game.sessionId!) ?? null;
+      const { error } = await admin
+        .from("sessions")
+        .update({
+          notes: mergeGameNotes(existingNotes, {
+            gamecode: game.gamecode,
+            isHome: game.isHome,
+            opponent: game.opponent,
+            umps: game.umps,
+          }),
+        })
+        .eq("id", game.sessionId!);
+      return !error;
+    }),
+  );
 
-    if (!error) count++;
-  }
+  const count = results.filter(Boolean).length;
 
   revalidatePath(`/${SPORT}/admin`);
   revalidatePath(`/${SPORT}`);
