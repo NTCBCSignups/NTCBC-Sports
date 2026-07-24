@@ -203,9 +203,10 @@ export async function getCcsaGamesPreview(
     const today = getTodayInSportTimezone();
 
     const newGames: GameDiff[] = [];
+    const recreated: GameDiff[] = [];
     const updated: GameUpdate[] = [];
-    const skipped: GameDiff[] = [];
     const unchanged: GameDiff[] = [];
+    const past: GameDiff[] = [];
 
     const ccsaGamecodes = new Set<string>();
     const claimedIds = new Set<string>();
@@ -257,8 +258,11 @@ export async function getCcsaGamesPreview(
         case "create":
           newGames.push(diff);
           break;
+        case "recreate":
+          recreated.push(diff);
+          break;
         case "skip":
-          skipped.push(diff);
+          past.push(diff);
           break;
         case "update":
           updated.push({
@@ -285,7 +289,7 @@ export async function getCcsaGamesPreview(
 
     const stale = findStaleGames(existingSessions, ccsaGamecodes, today);
 
-    return { newGames, updated, stale, skipped, unchanged, lastupdate, teamName };
+    return { newGames, recreated, updated, stale, unchanged, past, lastupdate, teamName };
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Preview failed — CCSA session may have expired",

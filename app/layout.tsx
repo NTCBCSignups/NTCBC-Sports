@@ -29,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <script dangerouslySetInnerHTML={{ __html: getClientMigrationScript() }} />
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: getClientMigrationScript() }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"

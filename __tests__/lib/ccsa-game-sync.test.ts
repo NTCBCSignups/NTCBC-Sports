@@ -272,24 +272,24 @@ describe("classifyMatch", () => {
     expect(action).toEqual({ type: "update", needsConfirmation: false });
   });
 
-  it("Scenario 6: local session is cancelled → skip", () => {
+  it("Scenario 6: local session is cancelled → recreate", () => {
     const session = makeSession({ date: FUTURE_DATE, status: "cancelled" });
     const action = classifyMatch(session, FUTURE_DATE, "14:00", "16:00", false, TODAY);
+    expect(action).toEqual({ type: "recreate" });
+  });
+
+  it("Scenario 7: both local and CCSA in past → skip (nothing to do)", () => {
+    const session = makeSession({ date: PAST_DATE, time_start: "14:00", time_end: "16:00" });
+    // Both dates in the past — ignore entirely
+    const action = classifyMatch(session, PAST_DATE, "14:00", "16:00", false, TODAY);
     expect(action).toEqual({ type: "skip" });
   });
 
-  it("Scenario 7: both local and CCSA in past → unchanged (never modify history)", () => {
+  it("Scenario 7b: local date past but CCSA date future → recreate (don't modify past)", () => {
     const session = makeSession({ date: PAST_DATE, time_start: "14:00", time_end: "16:00" });
-    // Both dates in the past — leave it alone
-    const action = classifyMatch(session, PAST_DATE, "14:00", "16:00", false, TODAY);
-    expect(action).toEqual({ type: "unchanged" });
-  });
-
-  it("Scenario 7b: local date past but CCSA date future → update (rescheduled)", () => {
-    const session = makeSession({ date: PAST_DATE, time_start: "14:00", time_end: "16:00" });
-    // CCSA moved the game to a future date — this is a reschedule
+    // CCSA moved the game to a future date — create new, leave past untouched
     const action = classifyMatch(session, "2026-08-01", "14:00", "16:00", false, TODAY);
-    expect(action).toEqual({ type: "update", needsConfirmation: false });
+    expect(action).toEqual({ type: "recreate" });
   });
 
   it("Scenario 8: time-matched session rescheduled → update with confirmation", () => {
@@ -304,10 +304,10 @@ describe("classifyMatch", () => {
     expect(action).toEqual({ type: "unchanged" });
   });
 
-  it("cancelled session in the past, CCSA future → skip (cancelled takes priority)", () => {
+  it("cancelled session in the past, CCSA future → recreate", () => {
     const session = makeSession({ date: PAST_DATE, status: "cancelled" });
     const action = classifyMatch(session, FUTURE_DATE, "14:00", "16:00", false, TODAY);
-    expect(action).toEqual({ type: "skip" });
+    expect(action).toEqual({ type: "recreate" });
   });
 
   it("location change only (same date + overlapping time) → unchanged", () => {
@@ -463,7 +463,7 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
     expect(match!.session.id).toBe("g2"); // matches the cancelled one
 
     const action = classifyMatch(match!.session, "2026-07-25", "16:00", "18:00", false, TODAY);
-    expect(action).toEqual({ type: "skip" }); // will create new session
+    expect(action).toEqual({ type: "recreate" }); // will create new session
   });
 
   it("Game 3 (manual session matches new CCSA game by time): needs confirmation", () => {
@@ -487,8 +487,8 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
     expect(action).toEqual({ type: "unchanged" }); // same slot, no reschedule
   });
 
-  it("Game 4 (past local, future CCSA): rescheduled to future → update", () => {
-    // CCSA shows CODE-4 moved to a future date (rescheduled)
+  it("Game 4 (past local, future CCSA): rescheduled → recreate (don't modify past)", () => {
+    // CCSA shows CODE-4 moved to a future date — create new, leave past session alone
     const match = findMatchForGame(
       "CODE-4",
       "2026-08-15",
@@ -502,7 +502,7 @@ describe("full scenario: sync → cancel → manual reschedule → re-sync", () 
     expect(match!.session.id).toBe("g4");
 
     const action = classifyMatch(match!.session, "2026-08-15", "14:00", "16:00", false, TODAY);
-    expect(action).toEqual({ type: "update", needsConfirmation: false });
+    expect(action).toEqual({ type: "recreate" });
   });
 
   it("Stale detection: CODE-4 is past so not stale, CODE-1 is in CCSA so not stale", () => {

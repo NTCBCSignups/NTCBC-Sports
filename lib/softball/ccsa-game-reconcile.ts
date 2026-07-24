@@ -72,11 +72,18 @@ export interface StaleGame {
 }
 
 export interface GamesPreview {
+  /** Brand new games not in our DB */
   newGames: GameDiff[];
+  /** Past/cancelled sessions left untouched — new sessions will be created */
+  recreated: GameDiff[];
+  /** Active future sessions with changed date/time — modified in place */
   updated: GameUpdate[];
+  /** Gamecodes in our DB but missing from CCSA (future + active only) */
   stale: StaleGame[];
-  skipped: GameDiff[];
+  /** No differences — same date+time slot */
   unchanged: GameDiff[];
+  /** Both local and CCSA in the past — no action */
+  past: GameDiff[];
   lastupdate: string;
   teamName: string;
 }
@@ -86,11 +93,20 @@ export type MatchResult = {
   matchedByTime: boolean;
 } | null;
 
+/**
+ * Sync actions — each is semantically distinct:
+ * - create:    No local match. Insert a brand new session.
+ * - recreate:  Matched a past/cancelled session. Leave it alone, create a new session.
+ * - update:    Matched an active future session. Modify in place (preserves signups).
+ * - unchanged: Matched, same date+time slot. No action needed.
+ * - skip:      Both local and CCSA dates are in the past. Ignore entirely.
+ */
 export type SyncAction =
   | { type: "create" }
+  | { type: "recreate" }
+  | { type: "update"; needsConfirmation: boolean }
   | { type: "unchanged" }
-  | { type: "skip" }
-  | { type: "update"; needsConfirmation: boolean };
+  | { type: "skip" };
 
 // ─── Pure utility functions ─────────────────────────────────────────────────
 
@@ -183,17 +199,17 @@ export function classifyMatch(
   matchedByTime: boolean,
   today: string,
 ): SyncAction {
-  // If BOTH the local session AND the CCSA game are in the past, don't touch
+  // Both local and CCSA in the past → nothing to do
   if (session.date < today && gameDate < today) {
-    return { type: "unchanged" };
-  }
-
-  // Cancelled locally → leave it, create a fresh session
-  if (session.status === "cancelled") {
     return { type: "skip" };
   }
 
-  // Date changed → definitively rescheduled
+  // Past or cancelled local session → leave it, create a fresh one
+  if (session.status === "cancelled" || session.date < today) {
+    return { type: "recreate" };
+  }
+
+  // Date changed → rescheduled, modify in place
   if (session.date !== gameDate) {
     return { type: "update", needsConfirmation: matchedByTime };
   }

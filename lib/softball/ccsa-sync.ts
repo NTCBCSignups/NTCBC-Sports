@@ -303,7 +303,7 @@ export async function applyCcsaGameSync(
   sessionType: string,
   newGames: GameDiff[],
   updatedGames: GameUpdate[],
-  skippedGames: GameDiff[],
+  recreatedGames: GameDiff[],
   allTeamGamecodes: string[],
 ) {
   await ensureSportAdmin();
@@ -318,8 +318,8 @@ export async function applyCcsaGameSync(
   });
   const gameNumberByCode = new Map(sortedCodes.map((code, i) => [code, i + 1]));
 
-  // Build rows for new games (including skipped ones that need new sessions)
-  const allNew = [...newGames, ...skippedGames];
+  // Build rows for new + recreated games (both result in new session inserts)
+  const allNew = [...newGames, ...recreatedGames];
   const insertRows = allNew.map((game) => {
     const timeForParse = game.time.length <= 5 ? `${game.time}:00` : game.time;
     const signupClose = fromZonedTime(`${game.date}T${timeForParse}`, SPORT_TIMEZONE);

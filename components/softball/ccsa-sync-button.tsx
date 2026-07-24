@@ -281,7 +281,7 @@ export default function CcsaSyncButton({
     gamesPreview &&
     (gamesPreview.newGames.length > 0 ||
       gamesPreview.updated.length > 0 ||
-      gamesPreview.skipped.length > 0);
+      gamesPreview.recreated.length > 0);
 
   const hasPlayerChanges =
     playersPreview &&
@@ -698,14 +698,14 @@ export default function CcsaSyncButton({
                     const allTeamGamecodes = [
                       ...gamesPreview.newGames,
                       ...gamesPreview.updated,
-                      ...gamesPreview.skipped,
+                      ...gamesPreview.recreated,
                       ...gamesPreview.unchanged,
                     ].map((g) => g.gamecode);
                     const result = await applyCcsaGameSync(
                       sessionType,
                       gamesPreview.newGames,
                       updatesToApply,
-                      gamesPreview.skipped,
+                      gamesPreview.recreated,
                       allTeamGamecodes,
                     );
                     if (result.errors.length > 0) setGamesError(result.errors.join("; "));
@@ -739,8 +739,9 @@ export default function CcsaSyncButton({
                   {gamesPreview.teamName} · Schedule updated: {gamesPreview.lastupdate} ·{" "}
                   {gamesPreview.newGames.length +
                     gamesPreview.updated.length +
-                    gamesPreview.skipped.length +
+                    gamesPreview.recreated.length +
                     gamesPreview.unchanged.length +
+                    gamesPreview.past.length +
                     gamesPreview.stale.length}{" "}
                   games total
                 </p>
@@ -843,8 +844,8 @@ export default function CcsaSyncButton({
                         </tr>
                       ))}
 
-                      {/* Skipped (cancelled on our side) */}
-                      {gamesPreview.skipped.map((g) => (
+                      {/* Recreated (past/cancelled — new session will be created) */}
+                      {gamesPreview.recreated.map((g) => (
                         <tr key={g.gamecode}>
                           <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
                           <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
@@ -854,8 +855,10 @@ export default function CcsaSyncButton({
                             {g.location}
                           </td>
                           <td className="sticky right-0 bg-card border-l px-4 py-2">
-                            <Badge variant="outline" className="text-muted-foreground">
-                              Skipped
+                            <Badge
+                              className={`${statusColors.info.bg} ${statusColors.info.text} ${statusColors.info.border}`}
+                            >
+                              Recreate
                             </Badge>
                           </td>
                         </tr>
@@ -890,6 +893,22 @@ export default function CcsaSyncButton({
                           </td>
                           <td className="sticky right-0 bg-card border-l px-4 py-2">
                             <Badge variant="destructive">Stale</Badge>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {/* Past games */}
+                      {gamesPreview.past.map((g) => (
+                        <tr key={g.gamecode} className="opacity-50">
+                          <td className="px-4 py-2 whitespace-nowrap">{g.title}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                            {g.date} {g.time}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground hidden md:table-cell">
+                            {g.location}
+                          </td>
+                          <td className="sticky right-0 bg-card border-l px-4 py-2">
+                            <span className="text-xs text-muted-foreground">Played</span>
                           </td>
                         </tr>
                       ))}
