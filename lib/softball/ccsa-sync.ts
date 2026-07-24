@@ -435,3 +435,43 @@ export async function cancelStaleCcsaGames(sessionType: string, sessionIds: stri
   revalidatePath(`/${SPORT}`);
   return { success: true, count: sessionIds.length };
 }
+
+/**
+ * Write the CCSA sync header into sessions that were matched by time
+ * but don't yet have the gamecode in their notes.
+ */
+export async function syncCcsaGameNotes(games: GameRow[]) {
+  await ensureSportAdmin();
+
+  const toSync = games.filter((g) => g.needsNoteSync && g.sessionId);
+  if (toSync.length === 0) return { success: true, count: 0 };
+
+  const admin = createAdminClient();
+  let count = 0;
+
+  for (const game of toSync) {
+    const { data: existing } = await admin
+      .from("sessions")
+      .select("notes")
+      .eq("id", game.sessionId!)
+      .single();
+
+    const { error } = await admin
+      .from("sessions")
+      .update({
+        notes: mergeGameNotes(existing?.notes ?? null, {
+          gamecode: game.gamecode,
+          isHome: game.isHome,
+          opponent: game.opponent,
+          umps: game.umps,
+        }),
+      })
+      .eq("id", game.sessionId!);
+
+    if (!error) count++;
+  }
+
+  revalidatePath(`/${SPORT}/admin`);
+  revalidatePath(`/${SPORT}`);
+  return { success: true, count };
+}

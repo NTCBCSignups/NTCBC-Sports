@@ -255,13 +255,18 @@ export async function getCcsaGamesPreview(
           games.push({ ...base, status: "recreate" });
           break;
         case "skip":
-          games.push({ ...base, status: "past" });
+          games.push({
+            ...base,
+            status: "past",
+            sessionId: match.session.id,
+            needsNoteSync: match.matchedByTime,
+          });
           break;
         case "cancelled":
-          games.push({ ...base, status: "cancelled" });
+          games.push({ ...base, status: "cancelled", sessionId: match.session.id });
           break;
         case "mismatch":
-          games.push({ ...base, status: "mismatch" });
+          games.push({ ...base, status: "mismatch", sessionId: match.session.id });
           break;
         case "update":
           games.push({
@@ -271,11 +276,17 @@ export async function getCcsaGamesPreview(
             oldDate: match.session.date,
             oldTime: match.session.time_start,
             oldLocation: match.session.location_name,
-            needsConfirmation: action.needsConfirmation,
+            needsConfirmation: match.matchedByTime,
+            needsNoteSync: match.matchedByTime,
           });
           break;
         case "unchanged":
-          games.push({ ...base, status: "synced" });
+          games.push({
+            ...base,
+            status: "synced",
+            sessionId: match.session.id,
+            needsNoteSync: match.matchedByTime,
+          });
           break;
       }
     }

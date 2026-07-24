@@ -26,6 +26,7 @@ import {
   deleteAllCcsaPlayers,
   applyCcsaGameSync,
   cancelStaleCcsaGames,
+  syncCcsaGameNotes,
 } from "@/lib/softball/ccsa-sync";
 import { getCcsaPlayersPreview, getCcsaGamesPreview } from "@/lib/softball/ccsa-preview";
 import type { GamesPreview, PlayersPreview } from "@/lib/softball/ccsa-preview";
@@ -282,6 +283,8 @@ export default function CcsaSyncButton({
   const hasGameChanges = gamesPreview?.games.some(
     (g) => g.status === "new" || g.status === "update" || g.status === "recreate",
   );
+
+  const hasNoteSync = gamesPreview?.games.some((g) => g.needsNoteSync);
 
   const hasPlayerChanges =
     playersPreview &&
@@ -714,6 +717,27 @@ export default function CcsaSyncButton({
                 >
                   <Check className="h-3.5 w-3.5 mr-1.5" />
                   {pending ? "Applying..." : "Apply"}
+                </Button>
+              )}
+              {!hasGameChanges && hasNoteSync && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    if (!gamesPreview) return;
+                    setPending(true);
+                    setGamesError(null);
+                    setGamesResult(null);
+                    const result = await syncCcsaGameNotes(gamesPreview.games);
+                    setGamesResult(`Synced notes for ${result.count} game(s)`);
+                    await handleSyncAll();
+                    setPending(false);
+                  }}
+                  disabled={pending}
+                  className="rounded-full ml-auto"
+                >
+                  <Check className="h-3.5 w-3.5 mr-1.5" />
+                  {pending ? "Syncing..." : "Sync Notes"}
                 </Button>
               )}
             </div>

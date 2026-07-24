@@ -57,7 +57,7 @@ export interface GameRow {
   isHome: boolean;
   umps: string | null;
   status: GameStatus;
-  /** Present for "update" — the session being modified in place */
+  /** Session ID when matched to a local session */
   sessionId?: string;
   /** Present for "update" — old values before reschedule */
   oldDate?: string;
@@ -67,6 +67,8 @@ export interface GameRow {
   staleSessionId?: string;
   /** Present for "update" matched by time overlap (not gamecode) */
   needsConfirmation?: boolean;
+  /** True when the matched session's notes are missing the sync header/gamecode */
+  needsNoteSync?: boolean;
 }
 
 export interface GamesPreview {
