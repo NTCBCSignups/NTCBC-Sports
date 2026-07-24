@@ -43,6 +43,7 @@ export type GameStatus =
   | "update"
   | "stale"
   | "past"
+  | "cancelled"
   | "not_found"
   | "mismatch";
 
@@ -88,6 +89,7 @@ export type MatchResult = {
  * - update:    Matched an active future session. Modify in place.
  * - unchanged: Matched, same date+time slot. No action needed.
  * - skip:      Both local and CCSA in the past. Normal completed game.
+ * - cancelled: CCSA is past and local was cancelled. Awaiting reschedule.
  * - mismatch:  CCSA is past but local is active+future. Data anomaly.
  */
 export type SyncAction =
@@ -97,6 +99,7 @@ export type SyncAction =
   | { type: "update"; needsConfirmation: boolean }
   | { type: "unchanged" }
   | { type: "skip" }
+  | { type: "cancelled" }
   | { type: "mismatch" };
 
 // ─── Pure utility functions ─────────────────────────────────────────────────
@@ -207,7 +210,11 @@ export function classifyMatch(
     if (!localIsCancelled && !localIsPast) {
       return { type: "mismatch" };
     }
-    // Both past, or local cancelled → completed game, nothing to do
+    // Local was cancelled → awaiting reschedule from CCSA
+    if (localIsCancelled) {
+      return { type: "cancelled" };
+    }
+    // Both past + active → completed game
     return { type: "skip" };
   }
 

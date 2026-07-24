@@ -257,6 +257,9 @@ export async function getCcsaGamesPreview(
         case "skip":
           games.push({ ...base, status: "past" });
           break;
+        case "cancelled":
+          games.push({ ...base, status: "cancelled" });
+          break;
         case "mismatch":
           games.push({ ...base, status: "mismatch" });
           break;

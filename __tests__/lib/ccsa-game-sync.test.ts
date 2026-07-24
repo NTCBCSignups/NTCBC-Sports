@@ -268,14 +268,14 @@ describe("classifyMatch", () => {
     expect(classifyMatch(s, PAST, "14:00", "16:00", false, TODAY)).toEqual({ type: "mismatch" });
   });
 
-  it("#9: past + cancelled past -> skip", () => {
+  it("#9: past + cancelled past -> cancelled (awaiting reschedule)", () => {
     const s = session({ date: PAST, status: "cancelled" });
-    expect(classifyMatch(s, PAST, "14:00", "16:00", false, TODAY)).toEqual({ type: "skip" });
+    expect(classifyMatch(s, PAST, "14:00", "16:00", false, TODAY)).toEqual({ type: "cancelled" });
   });
 
-  it("#10: past + cancelled future -> skip", () => {
+  it("#10: past + cancelled future -> cancelled (awaiting reschedule)", () => {
     const s = session({ date: FUTURE, status: "cancelled" });
-    expect(classifyMatch(s, PAST, "14:00", "16:00", false, TODAY)).toEqual({ type: "skip" });
+    expect(classifyMatch(s, PAST, "14:00", "16:00", false, TODAY)).toEqual({ type: "cancelled" });
   });
 
   // ── Invariant: location/title never triggers update ──

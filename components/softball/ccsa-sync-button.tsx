@@ -747,7 +747,9 @@ export default function CcsaSyncButton({
                         <tr
                           key={row.gamecode}
                           className={
-                            row.status === "past" || row.status === "not_found"
+                            row.status === "past" ||
+                            row.status === "not_found" ||
+                            row.status === "cancelled"
                               ? "opacity-50"
                               : undefined
                           }
@@ -845,6 +847,14 @@ export default function CcsaSyncButton({
                             {row.status === "stale" && <Badge variant="destructive">Stale</Badge>}
                             {row.status === "past" && (
                               <span className="text-xs text-muted-foreground">Played</span>
+                            )}
+                            {row.status === "cancelled" && (
+                              <Badge
+                                variant="outline"
+                                className="text-destructive border-destructive/30"
+                              >
+                                Cancelled
+                              </Badge>
                             )}
                             {row.status === "not_found" && (
                               <span className="text-xs text-muted-foreground">Not synced</span>
