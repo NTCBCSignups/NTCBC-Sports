@@ -183,8 +183,8 @@ export function classifyMatch(
   matchedByTime: boolean,
   today: string,
 ): SyncAction {
-  // Never modify past sessions
-  if (session.date < today) {
+  // If BOTH the local session AND the CCSA game are in the past, don't touch
+  if (session.date < today && gameDate < today) {
     return { type: "unchanged" };
   }
 
