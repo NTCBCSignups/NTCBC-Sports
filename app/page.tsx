@@ -6,8 +6,10 @@ import { ArrowRight, CalendarDays, Clock, Users } from "lucide-react";
 import { getResolvedSportsConfigBySport } from "@/lib/get-sport-config";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ChangelogWidget } from "@/components/sports/changelog-widget";
 import AuthButton from "@/components/sports/auth-button";
 import { getUser } from "@/lib/supabase/user";
+import { CHANGELOG } from "@/config/changelog";
 
 export default async function Home() {
   const dbSportsBySlug = await getResolvedSportsConfigBySport();
@@ -22,6 +24,7 @@ export default async function Home() {
           NTCBC Signups
         </h1>
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          {user && <ChangelogWidget entries={CHANGELOG.slice(0, 10)} />}
           <ThemeToggle />
           <AuthButton user={user} />
         </div>
