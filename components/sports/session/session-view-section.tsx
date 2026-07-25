@@ -9,7 +9,10 @@ import type { EditViewsDialogHandle } from "@/components/sports/session/edit-vie
 import { Button } from "@/components/ui/button";
 import { BookOpen, Link as LinkIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { getSessionView } from "@/components/sports/session/session-views/registry";
+import {
+  getSessionView,
+  DEFAULT_VIEW_TYPE,
+} from "@/components/sports/session/session-views/registry";
 import { Role } from "@/config/config-resolver";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session/session-signups-table";
@@ -85,6 +88,7 @@ export default function SessionViewSection({
 
   // Shared admin action buttons — rendered in both branches
   const hasDevo = viewData.some((v) => v.type === "devotionalView");
+  const defaultViewAccess = getSessionView(DEFAULT_VIEW_TYPE)?.requiredAccess ?? Role.user;
   const adminButtons = isSessionAdmin ? (
     <div className="flex items-center gap-2">
       <Button
@@ -107,9 +111,9 @@ export default function SessionViewSection({
     </div>
   ) : null;
 
-  // Empty viewData = no views configured yet → fall back to attendance view (requires sign-in)
+  // Empty viewData = no views configured yet → fall back to attendance view
   if (viewData.length === 0) {
-    if (userRole < Role.user) return null;
+    if (userRole < defaultViewAccess) return null;
     return (
       <div ref={sectionRef} id={SECTION_ANCHOR} className="space-y-2 scroll-mt-4">
         <div className="flex items-center justify-between">
@@ -195,7 +199,7 @@ export default function SessionViewSection({
           sport={sport}
           sessionId={sessionId}
         />
-      ) : configuredViews.length === 0 && userRole >= Role.user ? (
+      ) : configuredViews.length === 0 && userRole >= defaultViewAccess ? (
         <CollapsedAttendanceHint
           signups={signups}
           playerCap={playerCap}
