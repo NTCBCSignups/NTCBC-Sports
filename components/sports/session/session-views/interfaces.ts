@@ -1,5 +1,6 @@
 import type { ComponentType, Ref } from "react";
 import type { SignupRow } from "@/components/sports/session/session-signups-table";
+import { Role } from "@/config/config-resolver";
 
 /** Props passed to every session view component (read-only viewer). */
 export interface SessionViewProps {
@@ -56,5 +57,11 @@ export class SessionView {
     public readonly EditorComponent: EditorComponentType,
     /** Default name used when creating the first instance of this view type. */
     public readonly defaultName: string = label,
+    /**
+     * Minimum role required to see this view. Defaults to Role.user
+     * (sign-in required), matching the previous implicit `{user && ...}` guard.
+     * Content-only views (e.g. devotional) can override to Role.anon.
+     */
+    public readonly requiredAccess: Role = Role.user,
   ) {}
 }

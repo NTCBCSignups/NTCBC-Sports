@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Link as LinkIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { getSessionView } from "@/components/sports/session/session-views/registry";
+import { Role } from "@/config/config-resolver";
 import { displayName } from "@/lib/format";
 import type { SignupRow } from "@/components/sports/session/session-signups-table";
 import type { StoredViewInstance } from "@/lib/supabase/types";
@@ -25,6 +26,7 @@ interface SessionViewSectionProps {
   currentUserId: string | null;
   viewData: StoredViewInstance[];
   isSessionAdmin: boolean;
+  userRole: Role;
 }
 
 /**
@@ -44,6 +46,7 @@ export default function SessionViewSection({
   currentUserId,
   viewData,
   isSessionAdmin,
+  userRole,
 }: SessionViewSectionProps) {
   const searchParams = useSearchParams();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -104,8 +107,9 @@ export default function SessionViewSection({
     </div>
   ) : null;
 
-  // Empty viewData = no views configured yet → fall back to attendance view
+  // Empty viewData = no views configured yet → fall back to attendance view (requires sign-in)
   if (viewData.length === 0) {
+    if (userRole < Role.user) return null;
     return (
       <div ref={sectionRef} id={SECTION_ANCHOR} className="space-y-2 scroll-mt-4">
         <div className="flex items-center justify-between">
@@ -126,8 +130,17 @@ export default function SessionViewSection({
     );
   }
 
-  // Non-empty viewData: use configured views
-  const configuredViews = viewData
+  // Filter to views the user can access based on each view type's requiredAccess
+  const accessibleViews = viewData.filter((v) => {
+    const entry = getSessionView(v.type);
+    return entry ? userRole >= entry.requiredAccess : false;
+  });
+
+  // No accessible views → render nothing
+  if (accessibleViews.length === 0) return null;
+
+  // From accessible views, filter to enabled ones for the toggle
+  const configuredViews = accessibleViews
     .filter((v) => v.enabled !== false)
     .map((v) => ({ id: String(v.id), label: v.label }));
 
