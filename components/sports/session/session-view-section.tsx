@@ -195,7 +195,7 @@ export default function SessionViewSection({
           sport={sport}
           sessionId={sessionId}
         />
-      ) : configuredViews.length === 0 ? (
+      ) : configuredViews.length === 0 && userRole >= Role.user ? (
         <CollapsedAttendanceHint
           signups={signups}
           playerCap={playerCap}
