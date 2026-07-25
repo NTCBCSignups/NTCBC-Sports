@@ -112,20 +112,17 @@ async function SessionSignupsContent({
         )}
       </div>
 
-      {user && (
-        <div className="space-y-2">
-          <SessionViewSection
-            sport={sport}
-            sessionId={sessionId}
-            signups={rawSignups}
-            teamMemberIds={teamMemberIds}
-            playerCap={playerCap}
-            currentUserId={userId}
-            viewData={viewData}
-            isSessionAdmin={isSessionAdmin}
-          />
-        </div>
-      )}
+      <SessionViewSection
+        sport={sport}
+        sessionId={sessionId}
+        signups={rawSignups}
+        teamMemberIds={teamMemberIds}
+        playerCap={playerCap}
+        currentUserId={userId}
+        viewData={viewData}
+        isSessionAdmin={isSessionAdmin}
+        userRole={userRole}
+      />
     </div>
   );
 }

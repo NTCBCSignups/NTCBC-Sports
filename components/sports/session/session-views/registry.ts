@@ -5,6 +5,7 @@ import SoftballFieldingView, {
   SoftballFieldingEditor,
 } from "@/components/softball/session-views/fielding-view";
 import { SessionView } from "./interfaces";
+import { Role } from "@/config/config-resolver";
 
 /**
  * Registry of all available session view types.
@@ -19,7 +20,13 @@ const sessionViewRegistry: Record<string, SessionView> = {
     CustomOrderedEditor,
     "Lineup",
   ),
-  devotionalView: new SessionView("Devotional", DevotionalView, DevotionalEditor, "Devotional"),
+  devotionalView: new SessionView(
+    "Devotional",
+    DevotionalView,
+    DevotionalEditor,
+    "Devotional",
+    Role.anon,
+  ),
   softballFieldingView: new SessionView(
     "CCSA Softball - Fielding View",
     SoftballFieldingView,
