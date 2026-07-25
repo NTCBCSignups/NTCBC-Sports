@@ -20,7 +20,7 @@ export default async function SportLayout({
   const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
 
-  const user = config.authEnabled ? await getUser() : null;
+  const user = await getUser();
 
   return (
     <>
@@ -35,7 +35,7 @@ export default async function SportLayout({
         <div className="flex items-center gap-2">
           {user && <ChangelogWidget entries={CHANGELOG.slice(0, 10)} />}
           <ThemeToggle />
-          {config.authEnabled && <AuthButton user={user} sport={sport} />}
+          <AuthButton user={user} sport={sport} />
         </div>
       </LayoutHeader>
       {children}

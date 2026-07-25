@@ -354,7 +354,7 @@ export default async function SportAuthPage({
 
   // ── Auth ───────────────────────────────────────────────────────
   // Middleware validates the JWT and forwards the user via request header.
-  const user = config.authEnabled ? await getUser() : null;
+  const user = await getUser();
 
   return (
     <SportPageShell

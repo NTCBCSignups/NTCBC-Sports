@@ -28,12 +28,17 @@ const tabSchema = z.object({
   label: z.string().min(1),
   defaultTitlePrefix: z.string().optional(),
   sessionPillColor: z.enum(PillColor),
-  permissions: z.object({
-    [AccessLevel.overview]: roleSchema,
-    [AccessLevel.view]: roleSchema,
-    [AccessLevel.signup]: roleSchema,
-    [AccessLevel.admin]: roleSchema,
-  }),
+  permissions: z
+    .object({
+      [AccessLevel.overview]: roleSchema,
+      [AccessLevel.view]: roleSchema,
+      [AccessLevel.signup]: roleSchema,
+      [AccessLevel.admin]: roleSchema,
+    })
+    .refine((p) => p[AccessLevel.signup] !== Role.anon, {
+      message: "Anonymous signup is not allowed",
+      path: [AccessLevel.signup],
+    }),
   signupConfirmationDialog: signupDialogSchema.optional(),
 });
 
@@ -46,7 +51,6 @@ const adminTabSchema = z.object({
 const updateSportConfigInputSchema = z
   .object({
     id: z.string().min(1),
-    authEnabled: z.boolean(),
     emoji: z.string().min(1),
     name: z.string().min(1),
     type: z.string().min(1),
@@ -206,7 +210,6 @@ export async function updateSportConfig(
   const { error } = await supabase
     .from("sport_configs")
     .update({
-      auth_enabled: parsed.data.authEnabled,
       emoji: parsed.data.emoji,
       name: parsed.data.name,
       type: parsed.data.type,

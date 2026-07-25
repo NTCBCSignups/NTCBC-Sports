@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PillColor, Role } from "@/config/config-resolver";
+import { PillColor, AccessLevel, Role } from "@/config/config-resolver";
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
 import { sessionPillClassFromColor } from "@/lib/session-type-pill";
 import { cn } from "@/lib/utils";
@@ -330,35 +330,50 @@ export function PermissionsDialog({
         </DialogHeader>
 
         <div className="space-y-3">
-          {ACCESS_LEVEL_OPTIONS.map((accessLevel) => (
-            <div key={`permission-${accessLevel.value}`} className="space-y-2">
-              <Label>{accessLevel.label}</Label>
-              <p className="text-xs text-muted-foreground">{accessLevel.description}</p>
-              <Select
-                value={String(permissionsDraft[accessLevel.value])}
-                onValueChange={(value) =>
-                  setPermissionsDraft((prev) => ({
-                    ...prev,
-                    [accessLevel.value]: Number(value) as Role,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((roleOption) => (
-                    <SelectItem
-                      key={`${accessLevel.value}-${roleOption.value}`}
-                      value={String(roleOption.value)}
-                    >
-                      {roleOption.label} - {roleOption.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
+          {ACCESS_LEVEL_OPTIONS.map((accessLevel) => {
+            const isSignup = accessLevel.value === AccessLevel.signup;
+            const roleOptions = isSignup
+              ? ROLE_OPTIONS.filter((o) => o.value !== Role.anon)
+              : ROLE_OPTIONS;
+            const selectedRole = permissionsDraft[accessLevel.value];
+            const showAnonHint = !isSignup && selectedRole === Role.anon;
+
+            return (
+              <div key={`permission-${accessLevel.value}`} className="space-y-2">
+                <Label>{accessLevel.label}</Label>
+                <p className="text-xs text-muted-foreground">{accessLevel.description}</p>
+                <Select
+                  value={String(selectedRole)}
+                  onValueChange={(value) =>
+                    setPermissionsDraft((prev) => ({
+                      ...prev,
+                      [accessLevel.value]: Number(value) as Role,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roleOptions.map((roleOption) => (
+                      <SelectItem
+                        key={`${accessLevel.value}-${roleOption.value}`}
+                        value={String(roleOption.value)}
+                      >
+                        {roleOption.label} - {roleOption.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {showAnonHint && (
+                  <p className="text-xs text-muted-foreground">
+                    Users not signed in can only see static session content (e.g. devotionals). User
+                    data like signups and names will be hidden.
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <DialogFooter>

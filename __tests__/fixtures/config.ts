@@ -47,7 +47,6 @@ export const BASE_CONFIG: SportConfig = {
 
 export const VALID_DB_ROW: SportConfigDbRow = {
   id: "volleyball",
-  auth_enabled: true,
   emoji: "🏐",
   name: "Volleyball",
   type: "volleyball",
