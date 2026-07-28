@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { asNameProfile } from "@/lib/supabase/join-guards";
 
 const GAME_CODE_REGEX = /Game Code:\s*(\S+)/;
 
@@ -82,8 +83,11 @@ export async function getTeamMembersWithProfiles(sport: string) {
     .eq("sport", sport)
     .eq("is_team_member", true);
 
-  return (data ?? []).map((m) => ({
-    email: (m.profiles as unknown as { email: string | null })?.email ?? "",
-    full_name: (m.profiles as unknown as { full_name: string })?.full_name ?? "",
-  }));
+  return (data ?? []).map((m) => {
+    const p = asNameProfile(m.profiles);
+    return {
+      email: p?.email ?? "",
+      full_name: p?.full_name ?? "",
+    };
+  });
 }

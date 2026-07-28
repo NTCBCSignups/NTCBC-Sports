@@ -1,6 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { fromZonedTime } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/server";
@@ -17,10 +16,15 @@ import {
   mergeGameNotes,
 } from "@/lib/softball/ccsa-game-reconcile";
 import type { GameRow } from "@/lib/softball/ccsa-game-reconcile";
+import {
+  loadCcsaCookies,
+  saveCcsaCookies,
+  clearCcsaCookies,
+  saveCcsaEmail,
+  loadCcsaEmail,
+} from "@/lib/softball/ccsa-cookies";
 
 const SPORT = "softball";
-const CCSA_COOKIE_NAME = "ccsa_session";
-const CCSA_EMAIL_COOKIE = "ccsa_email";
 
 async function ensureSportAdmin() {
   const supabase = await createClient();
@@ -33,51 +37,6 @@ function mapWaiverStatus(needwaiver: false | "paper" | "online"): WaiverStatus {
   if (needwaiver === false) return "valid";
   if (needwaiver === "paper") return "needs_paper";
   return "needs_online";
-}
-
-async function loadCcsaCookies(): Promise<string[]> {
-  const cookieStore = await cookies();
-  const stored = cookieStore.get(CCSA_COOKIE_NAME)?.value;
-  if (!stored) return [];
-  try {
-    const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveCcsaCookies(ccsaCookies: string[]): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set(CCSA_COOKIE_NAME, JSON.stringify(ccsaCookies), {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: "/",
-  });
-}
-
-async function clearCcsaCookies(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(CCSA_COOKIE_NAME);
-  cookieStore.delete(CCSA_EMAIL_COOKIE);
-}
-
-async function saveCcsaEmail(email: string): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set(CCSA_EMAIL_COOKIE, email, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
-}
-
-async function loadCcsaEmail(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(CCSA_EMAIL_COOKIE)?.value ?? null;
 }
 
 export async function requestCcsaLogin(email: string) {

@@ -20,7 +20,12 @@ export const createSessionInputSchema = z
     time_end: z.string().min(1, { error: "End time is required." }),
     location_name: z.string().min(1, { error: "Location name is required." }),
     location_address: z.string().min(1, { error: "Location address is required." }),
-    location_maps_link: optionalString,
+    location_maps_link: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v?.trim() || null)
+      .pipe(z.string().url().nullable()),
     player_cap: z.number().int().positive().nullable().optional(),
     signup_open: z.string().min(1, { error: "Sign-up open time is required." }),
     signup_close: z.string().min(1, { error: "Sign-up close time is required." }),

@@ -144,11 +144,12 @@ export default async function SessionDetailPage({
 
   const user = await getUser();
 
-  const [session, roleResult] = await Promise.all([
+  const [session, roleResult, sportUsers] = await Promise.all([
     getSession(id),
     user
       ? getUserSportRole(supabase, user.id, sport)
       : Promise.resolve({ role: Role.anon, isAdmin: false, isTeamMember: false }),
+    getSportUsers(sport),
   ]);
 
   // Redirect to sport page if session doesn't exist or user lacks view access
@@ -162,9 +163,6 @@ export default async function SessionDetailPage({
   const isAdmin = userRole >= tab.permissions[AccessLevel.admin];
   const isFacilitator = !!user && session.facilitator_id === user.id;
   const isSessionAdmin = isAdmin || isFacilitator;
-
-  // Fetch sport users for facilitator dropdown (only needed for admins editing sessions)
-  const sportUsers = isAdmin ? await getSportUsers(sport) : undefined;
 
   const isOpen = session.status !== SESSION_STATUS.cancelled && isSignupOpen(session);
   const sessionTypeLabel = tab.label;

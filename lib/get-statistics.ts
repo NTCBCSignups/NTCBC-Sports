@@ -1,6 +1,8 @@
+import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInSportTimezone } from "@/lib/timezone";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
+import { asNameProfile, asMinimalProfile } from "@/lib/supabase/join-guards";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -107,10 +109,7 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
       session_type: string;
       player_cap: number | null;
     };
-    const profile = s.profiles as unknown as {
-      full_name: string | null;
-      email: string | null;
-    } | null;
+    const profile = asNameProfile(s.profiles);
     return {
       sessionId: s.session_id,
       sessionDate: sess.date,
@@ -126,11 +125,7 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
   const roleUsers = roleUsersResult.data;
   if (roleUsers) {
     for (const r of roleUsers) {
-      const p = r.profiles as unknown as {
-        id: string;
-        full_name: string | null;
-        email: string | null;
-      } | null;
+      const p = asMinimalProfile(r.profiles);
       if (p) userMap.set(p.id, p.full_name ?? p.email ?? "Unknown");
     }
     for (const s of signupRows) {
@@ -152,13 +147,10 @@ export async function getStatsData(sport: string, userId?: string): Promise<Stat
 
   // Transform calendar tracking rows
   const calendarUsage: CalendarUsageRow[] = (calendarResult.data ?? []).map((row) => {
-    const profile = row.profiles as unknown as {
-      full_name: string | null;
-      email: string | null;
-    };
+    const profile = asNameProfile(row.profiles);
     return {
       userId: row.user_id,
-      userName: profile.full_name ?? profile.email ?? "Unknown",
+      userName: profile?.full_name ?? profile?.email ?? "Unknown",
       mode: row.mode as "subscribe" | "download",
       createdAt: row.created_at,
       lastUsedAt: row.last_used_at,
