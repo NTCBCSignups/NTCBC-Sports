@@ -93,7 +93,6 @@ export function buildInitialState(
 ): SportConfigFormState {
   return {
     id: sport,
-    authEnabled: config.authEnabled ?? false,
     emoji: config.emoji,
     name: config.name,
     type: config.type,

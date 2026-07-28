@@ -37,7 +37,6 @@ export interface EditableAdminTab extends AdminTabMeta {
 
 export interface SportConfigFormState {
   id: string;
-  authEnabled: boolean;
   emoji: string;
   name: string;
   type: string;

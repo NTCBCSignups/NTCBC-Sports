@@ -321,7 +321,6 @@ function normalizeSportConfigPayload(payload: unknown): SportConfigPayload {
 
 function mapSportConfigRow(row: {
   id: string;
-  auth_enabled: boolean;
   emoji: string;
   name: string;
   type: string;
@@ -333,7 +332,6 @@ function mapSportConfigRow(row: {
 }): SportConfigDbRow {
   return {
     id: row.id,
-    auth_enabled: row.auth_enabled,
     emoji: row.emoji,
     name: row.name,
     type: row.type,
@@ -350,9 +348,7 @@ export async function getSportConfigRow(sport: string): Promise<SportConfigDbRow
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("sport_configs")
-    .select(
-      "id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at",
-    )
+    .select("id, emoji, name, type, description, config, updated_by, updated_at, created_at")
     .eq("id", sport)
     .maybeSingle();
 
@@ -365,9 +361,7 @@ export async function getSportConfigRows(): Promise<SportConfigDbRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("sport_configs")
-    .select(
-      "id, auth_enabled, emoji, name, type, description, config, updated_by, updated_at, created_at",
-    )
+    .select("id, emoji, name, type, description, config, updated_by, updated_at, created_at")
     .order("created_at", { ascending: true });
 
   if (error || !data) return [];

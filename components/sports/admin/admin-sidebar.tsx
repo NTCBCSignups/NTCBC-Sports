@@ -122,7 +122,7 @@ export default function AdminLayout({
       {/* Content area — show loading instantly on tab switch */}
       <div className="flex-1 min-w-0">
         {isPending && <LoadingAdminContent />}
-        <div className={isPending ? "hidden" : undefined}>{children}</div>
+        {!isPending && children}
       </div>
     </>
   );

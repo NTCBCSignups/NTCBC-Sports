@@ -45,17 +45,6 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
 
   return (
     <CollapsibleSection title="General" description="Basic info and logistics for this sport.">
-      <div className="flex items-center gap-2 pt-4">
-        <input
-          id="auth-enabled"
-          type="checkbox"
-          checked={state.authEnabled}
-          onChange={(event) => setState((prev) => ({ ...prev, authEnabled: event.target.checked }))}
-          className="h-4 w-4 rounded border-input"
-        />
-        <Label htmlFor="auth-enabled">Enable Google Login</Label>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 pt-4 min-w-0">
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>

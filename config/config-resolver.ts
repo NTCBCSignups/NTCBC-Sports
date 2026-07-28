@@ -63,7 +63,6 @@ export function sportConfigFromDbRow(row: SportConfigDbRow): SportConfig | null 
 
   return {
     id: row.id,
-    authEnabled: row.auth_enabled,
     emoji: row.emoji,
     name: row.name,
     type: row.type,

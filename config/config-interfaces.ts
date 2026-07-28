@@ -106,7 +106,6 @@ export interface SportConfig {
   tabs?: SessionTab[];
   defaultTab?: string;
   defaultAdminTab?: string;
-  authEnabled?: boolean;
   /** Extra sport-specific tabs to show in the admin sidebar. */
   adminTabs?: AdminTabMeta[];
 }
@@ -154,7 +153,6 @@ export interface SportConfigPayload {
  */
 export interface SportConfigDbRow {
   id: string;
-  auth_enabled: boolean;
   emoji: string;
   name: string;
   type: string;
