@@ -276,6 +276,7 @@ export function computeGrowth(rows: SignupRow[]): GrowthPoint[] {
   const monthBuckets = new Map<string, number>();
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
+    d.setDate(1); // avoid day-of-month overflow when shifting months
     d.setMonth(d.getMonth() - i);
     monthBuckets.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, 0);
   }
