@@ -638,7 +638,7 @@ function SportConfigFormInner({ sport }: { sport: string }) {
   };
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <RestoreBanner />
 
       <GeneralSettingsSection state={state} setState={setState} />

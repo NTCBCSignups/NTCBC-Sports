@@ -63,44 +63,54 @@ export default function AdminLayout({
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <nav className="hidden md:flex flex-col gap-1 w-56 shrink-0">
-        {allTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => navigate(tab.id)}
-            className={cn(
-              "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
-              activeTab === tab.id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <tab.icon className="h-4 w-4 shrink-0" />
-            <span className="flex-1">{tab.label}</span>
-            {tab.id === badgeTabId && pendingRequestCount > 0 && (
-              <Badge
-                variant={activeTab === tab.id ? "secondary" : "destructive"}
-                className="h-5 min-w-5 flex items-center justify-center px-1.5 text-xs"
-              >
-                {pendingRequestCount}
-              </Badge>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      {/* Mobile horizontal tabs with scroll fade */}
-      <div className="md:hidden relative">
-        <nav className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Desktop sidebar — sticky, themed panel with grouped menu items */}
+      <nav
+        className="hidden md:flex flex-col gap-1 w-56 shrink-0 sticky top-6 self-start"
+        role="navigation"
+        aria-label="Admin navigation"
+      >
+        <div className="rounded-xl border bg-card/50 p-2 space-y-1">
           {allTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => navigate(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[40px]",
+                "flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
                 activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <tab.icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1 truncate">{tab.label}</span>
+              {tab.id === badgeTabId && pendingRequestCount > 0 && (
+                <Badge
+                  variant={activeTab === tab.id ? "secondary" : "destructive"}
+                  className="h-5 min-w-5 flex items-center justify-center px-1.5 text-xs"
+                >
+                  {pendingRequestCount}
+                </Badge>
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Mobile horizontal tabs — 44px touch targets per Apple HIG / WCAG 2.5.5 */}
+      <div className="md:hidden relative">
+        <nav
+          className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="navigation"
+          aria-label="Admin navigation"
+        >
+          {allTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => navigate(tab.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[44px]",
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground bg-muted hover:bg-accent",
               )}
             >
