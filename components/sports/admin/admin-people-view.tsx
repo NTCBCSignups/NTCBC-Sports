@@ -317,7 +317,7 @@ export default function AdminPeopleView({ sport, members, pendingRequests }: Adm
           />
         </div>
         <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="w-full sm:w-auto sm:min-w-[140px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -882,7 +882,7 @@ function AddMemberDialog({
           </div>
 
           <Select value={addLevel} onValueChange={(v) => setAddLevel(v as RoleLevel)}>
-            <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectTrigger className="w-full sm:w-auto sm:min-w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
