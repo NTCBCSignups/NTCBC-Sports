@@ -6,7 +6,6 @@
  * Marked "use server" because they use server-only APIs (cookies, DB client).
  */
 
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
 import { installCookieFetch, getCapturedCookies } from "@/lib/softball/ccsa-server-fetch";
@@ -21,36 +20,11 @@ import {
   findStaleGames,
 } from "@/lib/softball/ccsa-game-reconcile";
 import type { GameRow, GamesPreview } from "@/lib/softball/ccsa-game-reconcile";
+import { loadCcsaCookies, saveCcsaCookies } from "@/lib/softball/ccsa-cookies";
 
 export type { GamesPreview, GameRow, GameStatus } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
-const CCSA_COOKIE_NAME = "ccsa_session";
-
-// ─── Shared cookie helpers (read-only) ──────────────────────────────────────
-
-async function loadCcsaCookies(): Promise<string[]> {
-  const cookieStore = await cookies();
-  const stored = cookieStore.get(CCSA_COOKIE_NAME)?.value;
-  if (!stored) return [];
-  try {
-    const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveCcsaCookies(ccsaCookies: string[]): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set(CCSA_COOKIE_NAME, JSON.stringify(ccsaCookies), {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
-}
 
 // ─── Player Preview ─────────────────────────────────────────────────────────
 

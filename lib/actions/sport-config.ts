@@ -14,7 +14,7 @@ import {
 import { ADMIN_TAB_ICON_NAMES, SETTINGS_TAB_ID } from "@/config/admin-tab-metadata";
 import { validateImmutableSessionTabValues } from "@/config/session-tab-rules";
 
-const roleSchema = z.enum(Role);
+const roleSchema = z.nativeEnum(Role);
 
 const signupDialogSchema = z.object({
   maxRole: roleSchema,
@@ -27,7 +27,7 @@ const tabSchema = z.object({
   value: z.string().min(1),
   label: z.string().min(1),
   defaultTitlePrefix: z.string().optional(),
-  sessionPillColor: z.enum(PillColor),
+  sessionPillColor: z.nativeEnum(PillColor),
   permissions: z
     .object({
       [AccessLevel.overview]: roleSchema,
@@ -60,7 +60,7 @@ const updateSportConfigInputSchema = z
     location: z.object({
       name: z.string().min(1),
       address: z.string().min(1),
-      mapsLink: z.string().optional(),
+      mapsLink: z.string().url().optional(),
     }),
     notes: z.array(z.string().min(1)),
     defaultTab: z.string().optional(),

@@ -1,5 +1,7 @@
+import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInSportTimezone } from "@/lib/timezone";
+import { asProfile, asMinimalProfile } from "@/lib/supabase/join-guards";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AccessRequestStatus,
@@ -17,7 +19,7 @@ import type { SportConfigDbRow, SportConfigPayload } from "@/config/config-resol
 /** Upcoming sessions with signup counts for a sport page. */
 export async function getUpcomingSessions(sport: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("sessions")
     .select("*, signups(count)")
     .eq("sport", sport)
@@ -28,8 +30,6 @@ export async function getUpcomingSessions(sport: string) {
     .order("time_start", { ascending: true })
     .returns<(SportSession & { signups: [{ count: number }] })[]>();
 
-  if (error) console.error("[getUpcomingSessions]", error.message);
-
   return (data ?? []).map((s) => ({
     ...s,
     signup_count: s.signups[0]?.count ?? 0,
@@ -39,14 +39,12 @@ export async function getUpcomingSessions(sport: string) {
 /** All sessions for admin view (upcoming + past). */
 export async function getAllSessions(sport: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("sessions")
     .select("*")
     .eq("sport", sport)
     .order("date", { ascending: false })
     .order("time_start", { ascending: true });
-
-  if (error) console.error("[getAllSessions]", error.message);
 
   return data ?? [];
 }
@@ -74,9 +72,7 @@ export async function getSessionsWithClient(
 /** Single session by ID. */
 export async function getSession(sessionId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("sessions").select("*").eq("id", sessionId).single();
-
-  if (error) console.error("[getSession]", error.message);
+  const { data } = await supabase.from("sessions").select("*").eq("id", sessionId).single();
 
   return data;
 }
@@ -92,7 +88,7 @@ export async function getSessionSignups(sessionId: string) {
 
   return (data ?? []).map((s) => ({
     ...s,
-    profiles: (s.profiles ?? null) as Profile | null,
+    profiles: asProfile(s.profiles),
   }));
 }
 
@@ -109,7 +105,7 @@ export async function getAccessRequests(sport: string) {
 
   return (data ?? []).map((r) => ({
     ...r,
-    profiles: (r.profiles ?? null) as Profile | null,
+    profiles: asProfile(r.profiles),
   }));
 }
 
@@ -144,7 +140,7 @@ export async function getSportUsers(sport: string) {
   const userMap = new Map<string, { id: string; name: string; isTeamMember: boolean }>();
 
   for (const r of roleData ?? []) {
-    const p = r.profiles as unknown as Profile | null;
+    const p = asMinimalProfile(r.profiles);
     if (p) {
       userMap.set(p.id, {
         id: p.id,
@@ -155,7 +151,7 @@ export async function getSportUsers(sport: string) {
   }
 
   for (const s of signupData ?? []) {
-    const p = s.profiles as unknown as Profile | null;
+    const p = asMinimalProfile(s.profiles);
     if (p && !userMap.has(p.id)) {
       userMap.set(p.id, {
         id: p.id,
@@ -219,7 +215,7 @@ export async function getSportMembers(sport: string): Promise<SportMember[]> {
 
   // From sport_roles
   for (const r of roleData ?? []) {
-    const p = r.profiles as unknown as Profile | null;
+    const p = asProfile(r.profiles);
     if (!p) continue;
     const stats = statsMap.get(r.user_id);
     members.push({

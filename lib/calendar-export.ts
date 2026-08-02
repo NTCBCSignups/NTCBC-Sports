@@ -103,13 +103,35 @@ function escapeText(text: string): string {
  * with a CRLF followed by a single whitespace character (space).
  */
 function foldLine(line: string): string {
-  if (line.length <= 75) return line;
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(line);
+  if (bytes.length <= 75) return line;
+
   const chunks: string[] = [];
-  chunks.push(line.slice(0, 75));
-  let i = 75;
-  while (i < line.length) {
-    chunks.push(" " + line.slice(i, i + 74));
-    i += 74;
+  let offset = 0;
+  let isFirst = true;
+
+  while (offset < line.length) {
+    const maxOctets = isFirst ? 75 : 74; // continuation lines have a leading space
+    let end = offset;
+    let byteCount = 0;
+
+    while (end < line.length) {
+      const charBytes = encoder.encode(line[end]).length;
+      if (byteCount + charBytes > maxOctets) break;
+      byteCount += charBytes;
+      end++;
+    }
+
+    if (end === offset) {
+      // Single character exceeds remaining budget — take it anyway to avoid infinite loop
+      end = offset + 1;
+    }
+
+    chunks.push((isFirst ? "" : " ") + line.slice(offset, end));
+    offset = end;
+    isFirst = false;
   }
+
   return chunks.join("\r\n");
 }

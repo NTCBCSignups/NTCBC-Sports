@@ -145,7 +145,6 @@ export interface SportConfigPayload {
   defaultTab?: string;
   defaultAdminTab?: string;
   adminTabs?: AdminTabMeta[];
-  [key: string]: unknown;
 }
 
 /**
