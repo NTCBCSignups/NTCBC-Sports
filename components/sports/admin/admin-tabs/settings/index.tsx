@@ -82,28 +82,13 @@ function SportConfigFormInner({ sport }: { sport: string }) {
   );
   const [isPending, startTransition] = useTransition();
 
-  // Inline validation state — Baymard: validate on blur, clear on correction
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [touchedFields] = useState<TouchedFields>(() => new Set());
+  // Inline validation — Baymard: validate on blur, clear on correction.
+  // touchedFields is state (new Set per update) so useMemo recomputes properly.
+  const [touchedFields, setTouchedFields] = useState<TouchedFields>(() => new Set());
 
-  const handleBlur = useCallback(
-    (field: string) => {
-      touchedFields.add(field);
-      const value = state[field as keyof SportConfigFormState];
-      if (typeof value !== "string") return;
-      const error = validateField(field, value);
-      setFieldErrors((prev) => {
-        if (error) return { ...prev, [field]: error };
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
-    },
-    [state, touchedFields],
-  );
-
-  // Re-validate touched fields on every state change (removes errors on correction)
-  const activeErrors = useMemo(() => {
+  // Derived errors — recomputes when state or touchedFields change.
+  // Errors disappear the moment the user types a valid value (Baymard rule #2).
+  const fieldErrors = useMemo(() => {
     const errors: FieldErrors = {};
     for (const field of touchedFields) {
       const value = state[field as keyof SportConfigFormState];
@@ -113,6 +98,10 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     }
     return errors;
   }, [state, touchedFields]);
+
+  const handleBlur = useCallback((field: string) => {
+    setTouchedFields((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
+  }, []);
 
   const [tabDialogOpen, setTabDialogOpen] = useState(false);
   const [tabDialogMode, setTabDialogMode] = useState<TabDialogMode>("add");
@@ -207,11 +196,12 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     // Validate all required fields on save (not just touched ones)
     const allErrors = validateAllFields(state);
     if (Object.keys(allErrors).length > 0) {
-      // Mark all fields as touched so errors become visible
-      for (const field of Object.keys(allErrors)) {
-        touchedFields.add(field);
-      }
-      setFieldErrors(allErrors);
+      // Mark all error fields as touched so errors become visible
+      setTouchedFields((prev) => {
+        const next = new Set(prev);
+        for (const field of Object.keys(allErrors)) next.add(field);
+        return next;
+      });
       // Scroll to first error field
       const firstErrorField = Object.keys(allErrors)[0];
       if (firstErrorField) {
@@ -701,7 +691,7 @@ function SportConfigFormInner({ sport }: { sport: string }) {
       <GeneralSettingsSection
         state={state}
         setState={setState}
-        fieldErrors={activeErrors}
+        fieldErrors={fieldErrors}
         touchedFields={touchedFields}
         onBlur={handleBlur}
       />

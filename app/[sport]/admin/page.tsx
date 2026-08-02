@@ -87,8 +87,13 @@ export default async function AdminPage({
       <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
 
       {/* Breadcrumb — orientation cue per NNGroup navigation IA research */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>{config.emoji} {config.name}</span>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground"
+      >
+        <span>
+          {config.emoji} {config.name}
+        </span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="font-medium text-foreground">Admin</span>
       </nav>

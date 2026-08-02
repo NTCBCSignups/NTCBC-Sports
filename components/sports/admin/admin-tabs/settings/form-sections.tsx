@@ -95,9 +95,7 @@ export function GeneralSettingsSection({
                   id="name"
                   value={state.name}
                   className={validInputClass("name", fieldErrors, touchedFields)}
-                  onChange={(event) =>
-                    setState((prev) => ({ ...prev, name: event.target.value }))
-                  }
+                  onChange={(event) => setState((prev) => ({ ...prev, name: event.target.value }))}
                   onBlur={() => onBlur("name")}
                 />
                 <FieldError error={fieldErrors.name} />
@@ -108,9 +106,7 @@ export function GeneralSettingsSection({
                   id="emoji"
                   value={state.emoji}
                   className={validInputClass("emoji", fieldErrors, touchedFields)}
-                  onChange={(event) =>
-                    setState((prev) => ({ ...prev, emoji: event.target.value }))
-                  }
+                  onChange={(event) => setState((prev) => ({ ...prev, emoji: event.target.value }))}
                   onBlur={() => onBlur("emoji")}
                 />
                 <FieldError error={fieldErrors.emoji} />
@@ -121,9 +117,7 @@ export function GeneralSettingsSection({
                   id="type"
                   value={state.type}
                   className={validInputClass("type", fieldErrors, touchedFields)}
-                  onChange={(event) =>
-                    setState((prev) => ({ ...prev, type: event.target.value }))
-                  }
+                  onChange={(event) => setState((prev) => ({ ...prev, type: event.target.value }))}
                   onBlur={() => onBlur("type")}
                 />
                 <FieldError error={fieldErrors.type} />
@@ -150,9 +144,7 @@ export function GeneralSettingsSection({
                     <CardTitle className="text-lg">
                       {state.emoji} {state.name || "Sport Name"}
                     </CardTitle>
-                    <CardDescription className="text-xs">
-                      {state.type || "Type"}
-                    </CardDescription>
+                    <CardDescription className="text-xs">{state.type || "Type"}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1.5 text-xs text-muted-foreground pt-0">
                     {state.day && (
@@ -161,9 +153,7 @@ export function GeneralSettingsSection({
                         <span>{state.day}</span>
                       </div>
                     )}
-                    {state.description && (
-                      <p className="line-clamp-2">{state.description}</p>
-                    )}
+                    {state.description && <p className="line-clamp-2">{state.description}</p>}
                   </CardContent>
                 </Card>
               </div>
@@ -246,9 +236,7 @@ export function GeneralSettingsSection({
                 id="day"
                 value={state.day}
                 className={validInputClass("day", fieldErrors, touchedFields)}
-                onChange={(event) =>
-                  setState((prev) => ({ ...prev, day: event.target.value }))
-                }
+                onChange={(event) => setState((prev) => ({ ...prev, day: event.target.value }))}
                 onBlur={() => onBlur("day")}
                 placeholder="e.g. Wednesdays 7pm"
               />
@@ -321,9 +309,7 @@ export function SessionTabsSection({
               id="notes"
               rows={4}
               value={state.notesText}
-              onChange={(event) =>
-                setState((prev) => ({ ...prev, notesText: event.target.value }))
-              }
+              onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
               placeholder="Add notes visible to players on the sport page..."
             />
           </div>
