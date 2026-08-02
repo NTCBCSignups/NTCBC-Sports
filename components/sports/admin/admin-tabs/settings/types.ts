@@ -35,18 +35,6 @@ export interface EditableAdminTab extends AdminTabMeta {
   iconName: string;
 }
 
-/**
- * Inline field validation state.
- * Tracks which fields have been touched (blurred) and their error messages.
- *
- * UX principles (Baymard Institute):
- * - Validate on blur, not while typing (avoid premature validation)
- * - Remove error messages immediately when corrected
- * - Show positive validation on touched valid fields
- */
-export type FieldErrors = Partial<Record<string, string>>;
-export type TouchedFields = Set<string>;
-
 export interface SportConfigFormState {
   id: string;
   emoji: string;

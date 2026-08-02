@@ -32,12 +32,8 @@ import { cn } from "@/lib/utils";
 import { getAdminTabDefinition } from "./admin-tab-ui-metadata";
 import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constants";
 import { summarizePermissions } from "./helpers";
-import type {
-  DefaultAdminTabOption,
-  DefaultTabOption,
-  FieldErrors,
-  SportConfigFormState,
-} from "./types";
+import type { DefaultAdminTabOption, DefaultTabOption, SportConfigFormState } from "./types";
+import type { SportConfigFieldName } from "@/lib/actions/sport-config-validation";
 
 /** Inline error message for a form field — Baymard: show below the field in destructive color */
 function FieldError({ error }: { error?: string }) {
@@ -49,8 +45,15 @@ function FieldError({ error }: { error?: string }) {
   );
 }
 
+/** Zod-validated error map. */
+type FieldErrors = Partial<Record<SportConfigFieldName, string>>;
+
 /** Positive validation indicator — Baymard: green tint on touched valid fields */
-function validInputClass(field: string, errors: FieldErrors, touched: ReadonlySet<string>): string {
+function validInputClass(
+  field: SportConfigFieldName,
+  errors: FieldErrors,
+  touched: ReadonlySet<SportConfigFieldName>,
+): string {
   if (!touched.has(field)) return "";
   return errors[field] ? "border-destructive/50" : "border-success/40";
 }
@@ -59,8 +62,8 @@ interface GeneralSettingsSectionProps {
   state: SportConfigFormState;
   setState: Dispatch<SetStateAction<SportConfigFormState>>;
   fieldErrors: FieldErrors;
-  touchedFields: ReadonlySet<string>;
-  onBlur: (field: string) => void;
+  touchedFields: ReadonlySet<SportConfigFieldName>;
+  onBlur: (field: SportConfigFieldName) => void;
 }
 
 /**

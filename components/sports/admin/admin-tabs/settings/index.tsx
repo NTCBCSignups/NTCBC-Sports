@@ -30,8 +30,9 @@ import {
   createDefaultPermissions,
   createKey,
   updateTabByKey,
-  validateField,
-  validateAllFields,
+  validateConfigField,
+  validateAllConfigFields,
+  type SportConfigFieldName,
 } from "./helpers";
 import type {
   AdminTabDialogMode,
@@ -40,12 +41,10 @@ import type {
   DefaultTabOption,
   EditableTab,
   EditableTabPermissions,
-  FieldErrors,
   PendingDeleteTarget,
   SportConfigFormProps,
   SportConfigFormState,
   TabDialogMode,
-  TouchedFields,
 } from "./types";
 
 export default function SportConfigForm({ sport, initialConfig }: SportConfigFormProps) {
@@ -84,22 +83,23 @@ function SportConfigFormInner({ sport }: { sport: string }) {
 
   // Inline validation — Baymard: validate on blur, clear on correction.
   // touchedFields is state (new Set per update) so useMemo recomputes properly.
-  const [touchedFields, setTouchedFields] = useState<TouchedFields>(() => new Set());
+  const [touchedFields, setTouchedFields] = useState<Set<SportConfigFieldName>>(() => new Set());
 
   // Derived errors — recomputes when state or touchedFields change.
   // Errors disappear the moment the user types a valid value (Baymard rule #2).
+  // Uses Zod schemas from sport-config-validation.ts — single source of truth.
   const fieldErrors = useMemo(() => {
-    const errors: FieldErrors = {};
+    const errors: Partial<Record<SportConfigFieldName, string>> = {};
     for (const field of touchedFields) {
       const value = state[field as keyof SportConfigFormState];
       if (typeof value !== "string") continue;
-      const error = validateField(field, value);
+      const error = validateConfigField(field, value);
       if (error) errors[field] = error;
     }
     return errors;
   }, [state, touchedFields]);
 
-  const handleBlur = useCallback((field: string) => {
+  const handleBlur = useCallback((field: SportConfigFieldName) => {
     setTouchedFields((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
   }, []);
 
@@ -193,23 +193,33 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     : AUTO_DEFAULT_ADMIN_TAB_VALUE;
 
   const handleSave = () => {
-    // Validate all required fields on save (not just touched ones)
-    const allErrors = validateAllFields(state);
-    if (Object.keys(allErrors).length > 0) {
+    // Validate all required fields on save using Zod schemas (single source of truth)
+    const allErrors = validateAllConfigFields({
+      name: state.name,
+      emoji: state.emoji,
+      type: state.type,
+      day: state.day,
+      organizers: state.organizers,
+      locationName: state.locationName,
+      locationAddress: state.locationAddress,
+      locationMapsLink: state.locationMapsLink,
+    });
+    const errorKeys = Object.keys(allErrors) as SportConfigFieldName[];
+    if (errorKeys.length > 0) {
       // Mark all error fields as touched so errors become visible
       setTouchedFields((prev) => {
         const next = new Set(prev);
-        for (const field of Object.keys(allErrors)) next.add(field);
+        for (const field of errorKeys) next.add(field);
         return next;
       });
       // Scroll to first error field
-      const firstErrorField = Object.keys(allErrors)[0];
+      const firstErrorField = errorKeys[0];
       if (firstErrorField) {
         const element = document.getElementById(firstErrorField);
         element?.scrollIntoView({ behavior: "smooth", block: "center" });
         element?.focus();
       }
-      toast.error(`${Object.keys(allErrors).length} field(s) need attention.`, {
+      toast.error(`${errorKeys.length} field(s) need attention.`, {
         className: toastClasses.red,
       });
       return;

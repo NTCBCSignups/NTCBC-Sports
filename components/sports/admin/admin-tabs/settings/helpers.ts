@@ -18,9 +18,14 @@ import type {
   EditableAdminTab,
   EditableTab,
   EditableTabPermissions,
-  FieldErrors,
   SportConfigFormState,
 } from "./types";
+// Re-export Zod-based validation from the shared schema (single source of truth).
+export {
+  validateConfigField,
+  validateAllConfigFields,
+  type SportConfigFieldName,
+} from "@/lib/actions/sport-config-validation";
 
 export function createKey(prefix: string, id?: string): string {
   return id ? `${prefix}-${id}` : `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -136,54 +141,4 @@ export function updateTabByKey(
   updater: (tab: EditableTab) => EditableTab,
 ): EditableTab[] {
   return tabs.map((tab) => (tab.key === key ? updater(tab) : tab));
-}
-
-/**
- * Validate a single field on blur.
- *
- * Baymard Institute inline validation rules:
- * 1. Validate on blur (not while typing — avoid premature validation)
- * 2. Remove error messages as soon as the field is corrected
- * 3. Use positive validation for touched valid fields
- */
-export function validateField(field: string, value: string): string | undefined {
-  const trimmed = value.trim();
-
-  switch (field) {
-    case "name":
-      return trimmed.length === 0 ? "Sport name is required." : undefined;
-    case "emoji":
-      return trimmed.length === 0 ? "Emoji is required." : undefined;
-    case "type":
-      return trimmed.length === 0 ? "Sport type is required." : undefined;
-    case "day":
-      return trimmed.length === 0 ? "Schedule is required." : undefined;
-    case "organizers":
-      return trimmed.length === 0 ? "Organisers field is required." : undefined;
-    case "locationName":
-      return trimmed.length === 0 ? "Venue name is required." : undefined;
-    case "locationMapsLink":
-      if (trimmed.length > 0 && !trimmed.startsWith("http")) {
-        return "Maps link should be a URL starting with http.";
-      }
-      return undefined;
-    default:
-      return undefined;
-  }
-}
-
-/** Validate all fields and return errors map. */
-export function validateAllFields(state: SportConfigFormState): FieldErrors {
-  const errors: FieldErrors = {};
-  const requiredFields = ["name", "emoji", "type", "day", "organizers", "locationName"] as const;
-
-  for (const field of requiredFields) {
-    const error = validateField(field, state[field]);
-    if (error) errors[field] = error;
-  }
-
-  const mapsError = validateField("locationMapsLink", state.locationMapsLink);
-  if (mapsError) errors["locationMapsLink"] = mapsError;
-
-  return errors;
 }
