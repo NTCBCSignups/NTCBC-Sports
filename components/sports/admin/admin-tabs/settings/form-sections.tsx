@@ -1,10 +1,20 @@
 "use client";
 
 import { type Dispatch, type SetStateAction } from "react";
-import { CalendarDays, MapPin, Pencil, Plus, Shield, Trash2, Users2 } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  MapPin,
+  Pencil,
+  Plus,
+  Shield,
+  Trash2,
+  Users2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DraggableList } from "@/components/ui/draggable-list";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +44,56 @@ import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constant
 import { summarizePermissions } from "./helpers";
 import type { DefaultAdminTabOption, DefaultTabOption, SportConfigFormState } from "./types";
 import type { SportConfigFieldName } from "@/lib/actions/sport-config-validation";
+
+/**
+ * Settings section card — collapsible, open by default.
+ *
+ * NNGroup "Accordions on Mobile" (Budiu, 2015):
+ *   "Collapsing each step under an accordion can be an effective way of conveying
+ *    the form workflow without overwhelming them — long forms are often daunting on mobile."
+ *
+ * NNGroup "Accordions on Desktop" (Wang, 2023):
+ *   "When to avoid: When your audience requires all the content — show all at once."
+ *
+ * The hybrid approach: defaultOpen={true} gives desktop users full visibility while
+ * mobile users can collapse finished sections to shorten the page. Section headers
+ * act as a mini-IA (table of contents) per NNGroup mobile accordion research.
+ */
+function SettingsCard({
+  title,
+  description,
+  icon,
+  children,
+}: {
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible defaultOpen asChild>
+      <Card>
+        <CollapsibleTrigger className="flex w-full items-center gap-3 text-left cursor-pointer group [&[data-state=closed]>div>svg.collapse-icon]:rotate-0">
+          <CardHeader className="flex-1">
+            <div className="flex items-center gap-2">
+              {icon}
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-base">{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <div className="pr-6 shrink-0">
+            <ChevronDown className="collapse-icon h-4 w-4 text-muted-foreground transition-transform duration-200 rotate-180" />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>{children}</CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
 
 /** Inline error message for a form field — Baymard: show below the field in destructive color */
 function FieldError({ error }: { error?: string }) {
@@ -83,184 +143,167 @@ export function GeneralSettingsSection({
   return (
     <div className="space-y-4">
       {/* Sport Identity — with always-visible live preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Sport Identity</CardTitle>
-          <CardDescription>Name, branding, and description for this sport.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Form fields */}
-            <div className="flex-1 grid gap-4 sm:grid-cols-2 min-w-0">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={state.name}
-                  className={validInputClass("name", fieldErrors, touchedFields)}
-                  onChange={(event) => setState((prev) => ({ ...prev, name: event.target.value }))}
-                  onBlur={() => onBlur("name")}
-                />
-                <FieldError error={fieldErrors.name} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emoji">Emoji</Label>
-                <Input
-                  id="emoji"
-                  value={state.emoji}
-                  className={validInputClass("emoji", fieldErrors, touchedFields)}
-                  onChange={(event) => setState((prev) => ({ ...prev, emoji: event.target.value }))}
-                  onBlur={() => onBlur("emoji")}
-                />
-                <FieldError error={fieldErrors.emoji} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">Type</Label>
-                <Input
-                  id="type"
-                  value={state.type}
-                  className={validInputClass("type", fieldErrors, touchedFields)}
-                  onChange={(event) => setState((prev) => ({ ...prev, type: event.target.value }))}
-                  onBlur={() => onBlur("type")}
-                />
-                <FieldError error={fieldErrors.type} />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  rows={2}
-                  value={state.description}
-                  onChange={(event) =>
-                    setState((prev) => ({ ...prev, description: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Always-visible live preview — immediate feedback per Nielsen Heuristic #1 */}
-            <div className="lg:w-64 shrink-0">
-              <p className="text-xs text-muted-foreground mb-2">Preview</p>
-              <div className="rounded-lg border border-dashed bg-muted/30 p-3">
-                <Card className="overflow-hidden shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">
-                      {state.emoji} {state.name || "Sport Name"}
-                    </CardTitle>
-                    <CardDescription className="text-xs">{state.type || "Type"}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-1.5 text-xs text-muted-foreground pt-0">
-                    {state.day && (
-                      <div className="flex items-center gap-1.5">
-                        <CalendarDays className="h-3 w-3" />
-                        <span>{state.day}</span>
-                      </div>
-                    )}
-                    {state.description && <p className="line-clamp-2">{state.description}</p>}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Location */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <CardTitle className="text-base">Location</CardTitle>
-              <CardDescription>Where this sport takes place.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 min-w-0">
+      <SettingsCard
+        title="Sport Identity"
+        description="Name, branding, and description for this sport."
+      >
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Form fields */}
+          <div className="flex-1 grid gap-4 sm:grid-cols-2 min-w-0">
             <div className="space-y-2">
-              <Label htmlFor="locationName">Venue name</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="locationName"
-                value={state.locationName}
-                className={validInputClass("locationName", fieldErrors, touchedFields)}
-                onChange={(event) =>
-                  setState((prev) => ({ ...prev, locationName: event.target.value }))
-                }
-                onBlur={() => onBlur("locationName")}
+                id="name"
+                value={state.name}
+                className={validInputClass("name", fieldErrors, touchedFields)}
+                onChange={(event) => setState((prev) => ({ ...prev, name: event.target.value }))}
+                onBlur={() => onBlur("name")}
               />
-              <FieldError error={fieldErrors.locationName} />
+              <FieldError error={fieldErrors.name} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="locationAddress">Address</Label>
+              <Label htmlFor="emoji">Emoji</Label>
               <Input
-                id="locationAddress"
-                value={state.locationAddress}
-                onChange={(event) =>
-                  setState((prev) => ({ ...prev, locationAddress: event.target.value }))
-                }
+                id="emoji"
+                value={state.emoji}
+                className={validInputClass("emoji", fieldErrors, touchedFields)}
+                onChange={(event) => setState((prev) => ({ ...prev, emoji: event.target.value }))}
+                onBlur={() => onBlur("emoji")}
               />
+              <FieldError error={fieldErrors.emoji} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="type">Type</Label>
+              <Input
+                id="type"
+                value={state.type}
+                className={validInputClass("type", fieldErrors, touchedFields)}
+                onChange={(event) => setState((prev) => ({ ...prev, type: event.target.value }))}
+                onBlur={() => onBlur("type")}
+              />
+              <FieldError error={fieldErrors.type} />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="locationMapsLink">Maps link</Label>
-              <Input
-                id="locationMapsLink"
-                type="url"
-                value={state.locationMapsLink}
-                className={validInputClass("locationMapsLink", fieldErrors, touchedFields)}
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                rows={2}
+                value={state.description}
                 onChange={(event) =>
-                  setState((prev) => ({ ...prev, locationMapsLink: event.target.value }))
+                  setState((prev) => ({ ...prev, description: event.target.value }))
                 }
-                onBlur={() => onBlur("locationMapsLink")}
-                placeholder="https://maps.google.com/..."
               />
-              <FieldError error={fieldErrors.locationMapsLink} />
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Always-visible live preview — immediate feedback per Nielsen Heuristic #1 */}
+          <div className="lg:w-64 shrink-0">
+            <p className="text-xs text-muted-foreground mb-2">Preview</p>
+            <div className="rounded-lg border border-dashed bg-muted/30 p-3">
+              <Card className="overflow-hidden shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">
+                    {state.emoji} {state.name || "Sport Name"}
+                  </CardTitle>
+                  <CardDescription className="text-xs">{state.type || "Type"}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1.5 text-xs text-muted-foreground pt-0">
+                  {state.day && (
+                    <div className="flex items-center gap-1.5">
+                      <CalendarDays className="h-3 w-3" />
+                      <span>{state.day}</span>
+                    </div>
+                  )}
+                  {state.description && <p className="line-clamp-2">{state.description}</p>}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </SettingsCard>
+
+      {/* Location */}
+      <SettingsCard
+        title="Location"
+        description="Where this sport takes place."
+        icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
+      >
+        <div className="grid gap-4 sm:grid-cols-2 min-w-0">
+          <div className="space-y-2">
+            <Label htmlFor="locationName">Venue name</Label>
+            <Input
+              id="locationName"
+              value={state.locationName}
+              className={validInputClass("locationName", fieldErrors, touchedFields)}
+              onChange={(event) =>
+                setState((prev) => ({ ...prev, locationName: event.target.value }))
+              }
+              onBlur={() => onBlur("locationName")}
+            />
+            <FieldError error={fieldErrors.locationName} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="locationAddress">Address</Label>
+            <Input
+              id="locationAddress"
+              value={state.locationAddress}
+              onChange={(event) =>
+                setState((prev) => ({ ...prev, locationAddress: event.target.value }))
+              }
+            />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="locationMapsLink">Maps link</Label>
+            <Input
+              id="locationMapsLink"
+              type="url"
+              value={state.locationMapsLink}
+              className={validInputClass("locationMapsLink", fieldErrors, touchedFields)}
+              onChange={(event) =>
+                setState((prev) => ({ ...prev, locationMapsLink: event.target.value }))
+              }
+              onBlur={() => onBlur("locationMapsLink")}
+              placeholder="https://maps.google.com/..."
+            />
+            <FieldError error={fieldErrors.locationMapsLink} />
+          </div>
+        </div>
+      </SettingsCard>
 
       {/* Schedule & Contact */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Users2 className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <CardTitle className="text-base">Schedule & Contact</CardTitle>
-              <CardDescription>When it happens and who to contact.</CardDescription>
-            </div>
+      <SettingsCard
+        title="Schedule & Contact"
+        description="When it happens and who to contact."
+        icon={<Users2 className="h-4 w-4 text-muted-foreground" />}
+      >
+        <div className="grid gap-4 sm:grid-cols-2 min-w-0">
+          <div className="space-y-2">
+            <Label htmlFor="day">Schedule</Label>
+            <Input
+              id="day"
+              value={state.day}
+              className={validInputClass("day", fieldErrors, touchedFields)}
+              onChange={(event) => setState((prev) => ({ ...prev, day: event.target.value }))}
+              onBlur={() => onBlur("day")}
+              placeholder="e.g. Wednesdays 7pm"
+            />
+            <FieldError error={fieldErrors.day} />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 min-w-0">
-            <div className="space-y-2">
-              <Label htmlFor="day">Schedule</Label>
-              <Input
-                id="day"
-                value={state.day}
-                className={validInputClass("day", fieldErrors, touchedFields)}
-                onChange={(event) => setState((prev) => ({ ...prev, day: event.target.value }))}
-                onBlur={() => onBlur("day")}
-                placeholder="e.g. Wednesdays 7pm"
-              />
-              <FieldError error={fieldErrors.day} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="organizers">Organisers</Label>
-              <Input
-                id="organizers"
-                value={state.organizers}
-                className={validInputClass("organizers", fieldErrors, touchedFields)}
-                onChange={(event) =>
-                  setState((prev) => ({ ...prev, organizers: event.target.value }))
-                }
-                onBlur={() => onBlur("organizers")}
-              />
-              <FieldError error={fieldErrors.organizers} />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="organizers">Organisers</Label>
+            <Input
+              id="organizers"
+              value={state.organizers}
+              className={validInputClass("organizers", fieldErrors, touchedFields)}
+              onChange={(event) =>
+                setState((prev) => ({ ...prev, organizers: event.target.value }))
+              }
+              onBlur={() => onBlur("organizers")}
+            />
+            <FieldError error={fieldErrors.organizers} />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsCard>
     </div>
   );
 }
@@ -298,14 +341,11 @@ export function SessionTabsSection({
   return (
     <div className="space-y-4">
       {/* Notes & Defaults */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Sports Page</CardTitle>
-          <CardDescription>
-            Public-facing page content and session tab configuration.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <SettingsCard
+        title="Sports Page"
+        description="Public-facing page content and session tab configuration."
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="notes">Notes (one per line)</Label>
             <Textarea
@@ -341,18 +381,15 @@ export function SessionTabsSection({
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsCard>
 
       {/* Session Tabs List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Session Tabs</CardTitle>
-          <CardDescription>
-            Define the session types players can see and sign up for. Drag to reorder.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <SettingsCard
+        title="Session Tabs"
+        description="Define the session types players can see and sign up for. Drag to reorder."
+      >
+        <div className="space-y-4">
           <DraggableList
             items={state.tabs}
             onReorder={(tabs) => setState((prev) => ({ ...prev, tabs }))}
@@ -494,8 +531,8 @@ export function SessionTabsSection({
               })()}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsCard>
     </div>
   );
 }
@@ -522,14 +559,11 @@ export function AdminTabsSection({
   const SettingsTabIcon = getAdminTabIcon(SETTINGS_TAB_ICON_NAME);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Admin Page</CardTitle>
-        <CardDescription>
-          Choose which admin tabs appear in the sidebar, then drag to reorder them.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SettingsCard
+      title="Admin Page"
+      description="Choose which admin tabs appear in the sidebar, then drag to reorder them."
+    >
+      <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="default-admin-tab">Default admin tab</Label>
           <Select
@@ -631,7 +665,7 @@ export function AdminTabsSection({
           <Plus className="h-3.5 w-3.5 mr-1" />
           Add Admin Tab
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </SettingsCard>
   );
 }
