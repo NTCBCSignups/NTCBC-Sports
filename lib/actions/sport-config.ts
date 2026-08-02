@@ -10,8 +10,6 @@ import {
   type UpdateSportConfigInput,
 } from "@/lib/actions/sport-config-validation";
 
-export type { UpdateSportConfigInput };
-
 export type UpdateSportConfigResult = { success: true } | { success: false; error: string };
 
 export async function updateSportConfig(

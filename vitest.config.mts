@@ -9,7 +9,7 @@ export default defineConfig({
     },
   },
   test: {
-    setupFiles: ["./__tests__/mocks/setup-dom.ts"],
+    setupFiles: ["./__tests__/mocks/setup-dom.ts", "./__tests__/mocks/setup-axe.ts"],
     restoreMocks: true,
     execArgv: ["--disable-warning=ExperimentalWarning"],
     env: {

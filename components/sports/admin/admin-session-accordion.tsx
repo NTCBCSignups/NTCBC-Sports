@@ -76,12 +76,12 @@ export default function SessionAccordion({
             value={session.id}
             className="border-b! rounded-lg border bg-card px-4 overflow-hidden"
           >
-            <AccordionTrigger className="hover:no-underline py-3 min-w-0">
+            <AccordionTrigger className="hover:no-underline py-4 min-w-0">
               <div className="flex min-w-0 flex-1 items-start justify-between gap-3 pr-2 sm:items-center sm:pr-4">
                 <div className="min-w-0 flex-1 text-left overflow-hidden">
                   <div
                     className={cn(
-                      "truncate text-base font-medium sm:text-sm",
+                      "truncate text-sm font-medium sm:text-base",
                       dimmed && "text-muted-foreground",
                       isCancelled && "line-through",
                     )}
@@ -89,14 +89,14 @@ export default function SessionAccordion({
                     {session.title || formatDate(session.date)}
                   </div>
                   <div
-                    className={`mt-1 flex min-w-0 items-center gap-4 text-sm sm:gap-6 sm:text-xs ${dimmed ? "text-muted-foreground/60" : "text-muted-foreground"}`}
+                    className={`mt-1 flex min-w-0 items-center gap-4 text-xs sm:gap-6 sm:text-sm ${dimmed ? "text-muted-foreground/60" : "text-muted-foreground"}`}
                   >
                     <span className="flex shrink-0 items-center gap-2 sm:gap-1">
-                      <CalendarDays className="h-4 w-4 shrink-0 sm:h-3 sm:w-3" />
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                       {formatDate(session.date)}
                     </span>
                     <span className="flex min-w-0 items-center gap-2 sm:gap-1">
-                      <MapPin className="h-4 w-4 shrink-0 sm:h-3 sm:w-3" />
+                      <MapPin className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                       <span className="truncate">{session.location_name}</span>
                     </span>
                   </div>
@@ -141,7 +141,7 @@ export default function SessionAccordion({
                       session={session}
                       sportUsers={sportUsers}
                       trigger={
-                        <Button variant="ghost" size="icon" className="h-9 w-9">
+                        <Button variant="ghost" size="icon" className="h-10 w-10">
                           <Pencil className="h-4 w-4" />
                           <span className="sr-only">Edit {session.title || "session"}</span>
                         </Button>
@@ -160,7 +160,7 @@ export default function SessionAccordion({
                   <div className="md:hidden shrink-0 -mt-1">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10">
+                        <Button variant="ghost" size="icon" className="h-11 w-11">
                           <MoreVertical className="h-5 w-5" />
                           <span className="sr-only">Session actions</span>
                         </Button>

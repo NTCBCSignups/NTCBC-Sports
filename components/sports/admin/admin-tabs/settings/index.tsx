@@ -16,7 +16,8 @@ import {
   SETTINGS_TAB_LABEL,
 } from "@/config/admin-tab-metadata";
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
-import { updateSportConfig, type UpdateSportConfigInput } from "@/lib/actions/sport-config";
+import { updateSportConfig } from "@/lib/actions/sport-config";
+import type { UpdateSportConfigInput } from "@/lib/actions/sport-config-validation";
 import { toastClasses } from "@/lib/styles";
 import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constants";
 import { ADMIN_TAB_DEFINITIONS, ADMIN_TAB_ICON_OPTIONS } from "./admin-tab-ui-metadata";
