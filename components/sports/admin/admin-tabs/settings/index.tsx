@@ -30,6 +30,8 @@ import {
   createDefaultPermissions,
   createKey,
   updateTabByKey,
+  validateField,
+  validateAllFields,
 } from "./helpers";
 import type {
   AdminTabDialogMode,
@@ -38,10 +40,12 @@ import type {
   DefaultTabOption,
   EditableTab,
   EditableTabPermissions,
+  FieldErrors,
   PendingDeleteTarget,
   SportConfigFormProps,
   SportConfigFormState,
   TabDialogMode,
+  TouchedFields,
 } from "./types";
 
 export default function SportConfigForm({ sport, initialConfig }: SportConfigFormProps) {
@@ -77,6 +81,38 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     [updateDraft, setDraft],
   );
   const [isPending, startTransition] = useTransition();
+
+  // Inline validation state — Baymard: validate on blur, clear on correction
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touchedFields] = useState<TouchedFields>(() => new Set());
+
+  const handleBlur = useCallback(
+    (field: string) => {
+      touchedFields.add(field);
+      const value = state[field as keyof SportConfigFormState];
+      if (typeof value !== "string") return;
+      const error = validateField(field, value);
+      setFieldErrors((prev) => {
+        if (error) return { ...prev, [field]: error };
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    },
+    [state, touchedFields],
+  );
+
+  // Re-validate touched fields on every state change (removes errors on correction)
+  const activeErrors = useMemo(() => {
+    const errors: FieldErrors = {};
+    for (const field of touchedFields) {
+      const value = state[field as keyof SportConfigFormState];
+      if (typeof value !== "string") continue;
+      const error = validateField(field, value);
+      if (error) errors[field] = error;
+    }
+    return errors;
+  }, [state, touchedFields]);
 
   const [tabDialogOpen, setTabDialogOpen] = useState(false);
   const [tabDialogMode, setTabDialogMode] = useState<TabDialogMode>("add");
@@ -168,6 +204,27 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     : AUTO_DEFAULT_ADMIN_TAB_VALUE;
 
   const handleSave = () => {
+    // Validate all required fields on save (not just touched ones)
+    const allErrors = validateAllFields(state);
+    if (Object.keys(allErrors).length > 0) {
+      // Mark all fields as touched so errors become visible
+      for (const field of Object.keys(allErrors)) {
+        touchedFields.add(field);
+      }
+      setFieldErrors(allErrors);
+      // Scroll to first error field
+      const firstErrorField = Object.keys(allErrors)[0];
+      if (firstErrorField) {
+        const element = document.getElementById(firstErrorField);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        element?.focus();
+      }
+      toast.error(`${Object.keys(allErrors).length} field(s) need attention.`, {
+        className: toastClasses.red,
+      });
+      return;
+    }
+
     const trimmedTabs = state.tabs.map((tab) => ({
       id: tab.id.trim(),
       value: tab.value.trim(),
@@ -641,7 +698,13 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     <section className="space-y-6">
       <RestoreBanner />
 
-      <GeneralSettingsSection state={state} setState={setState} />
+      <GeneralSettingsSection
+        state={state}
+        setState={setState}
+        fieldErrors={activeErrors}
+        touchedFields={touchedFields}
+        onBlur={handleBlur}
+      />
 
       <SessionTabsSection
         state={state}

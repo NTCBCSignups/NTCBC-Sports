@@ -32,11 +32,35 @@ import { cn } from "@/lib/utils";
 import { getAdminTabDefinition } from "./admin-tab-ui-metadata";
 import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constants";
 import { summarizePermissions } from "./helpers";
-import type { DefaultAdminTabOption, DefaultTabOption, SportConfigFormState } from "./types";
+import type {
+  DefaultAdminTabOption,
+  DefaultTabOption,
+  FieldErrors,
+  SportConfigFormState,
+} from "./types";
+
+/** Inline error message for a form field — Baymard: show below the field in destructive color */
+function FieldError({ error }: { error?: string }) {
+  if (!error) return null;
+  return (
+    <p className="text-xs text-destructive mt-1" role="alert">
+      {error}
+    </p>
+  );
+}
+
+/** Positive validation indicator — Baymard: green tint on touched valid fields */
+function validInputClass(field: string, errors: FieldErrors, touched: ReadonlySet<string>): string {
+  if (!touched.has(field)) return "";
+  return errors[field] ? "border-destructive/50" : "border-success/40";
+}
 
 interface GeneralSettingsSectionProps {
   state: SportConfigFormState;
   setState: Dispatch<SetStateAction<SportConfigFormState>>;
+  fieldErrors: FieldErrors;
+  touchedFields: ReadonlySet<string>;
+  onBlur: (field: string) => void;
 }
 
 /**
@@ -46,7 +70,13 @@ interface GeneralSettingsSectionProps {
  * - Always-visible live preview provides immediate feedback (Nielsen Heuristic #1)
  * - Card boundaries leverage Gestalt common-regions principle for stronger visual grouping
  */
-export function GeneralSettingsSection({ state, setState }: GeneralSettingsSectionProps) {
+export function GeneralSettingsSection({
+  state,
+  setState,
+  fieldErrors,
+  touchedFields,
+  onBlur,
+}: GeneralSettingsSectionProps) {
   return (
     <div className="space-y-4">
       {/* Sport Identity — with always-visible live preview */}
@@ -64,30 +94,39 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
                 <Input
                   id="name"
                   value={state.name}
+                  className={validInputClass("name", fieldErrors, touchedFields)}
                   onChange={(event) =>
                     setState((prev) => ({ ...prev, name: event.target.value }))
                   }
+                  onBlur={() => onBlur("name")}
                 />
+                <FieldError error={fieldErrors.name} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="emoji">Emoji</Label>
                 <Input
                   id="emoji"
                   value={state.emoji}
+                  className={validInputClass("emoji", fieldErrors, touchedFields)}
                   onChange={(event) =>
                     setState((prev) => ({ ...prev, emoji: event.target.value }))
                   }
+                  onBlur={() => onBlur("emoji")}
                 />
+                <FieldError error={fieldErrors.emoji} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="type">Type</Label>
                 <Input
                   id="type"
                   value={state.type}
+                  className={validInputClass("type", fieldErrors, touchedFields)}
                   onChange={(event) =>
                     setState((prev) => ({ ...prev, type: event.target.value }))
                   }
+                  onBlur={() => onBlur("type")}
                 />
+                <FieldError error={fieldErrors.type} />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="description">Description</Label>
@@ -147,19 +186,22 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 min-w-0">
             <div className="space-y-2">
-              <Label htmlFor="location-name">Venue name</Label>
+              <Label htmlFor="locationName">Venue name</Label>
               <Input
-                id="location-name"
+                id="locationName"
                 value={state.locationName}
+                className={validInputClass("locationName", fieldErrors, touchedFields)}
                 onChange={(event) =>
                   setState((prev) => ({ ...prev, locationName: event.target.value }))
                 }
+                onBlur={() => onBlur("locationName")}
               />
+              <FieldError error={fieldErrors.locationName} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location-address">Address</Label>
+              <Label htmlFor="locationAddress">Address</Label>
               <Input
-                id="location-address"
+                id="locationAddress"
                 value={state.locationAddress}
                 onChange={(event) =>
                   setState((prev) => ({ ...prev, locationAddress: event.target.value }))
@@ -167,16 +209,19 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="maps-link">Maps link</Label>
+              <Label htmlFor="locationMapsLink">Maps link</Label>
               <Input
-                id="maps-link"
+                id="locationMapsLink"
                 type="url"
                 value={state.locationMapsLink}
+                className={validInputClass("locationMapsLink", fieldErrors, touchedFields)}
                 onChange={(event) =>
                   setState((prev) => ({ ...prev, locationMapsLink: event.target.value }))
                 }
+                onBlur={() => onBlur("locationMapsLink")}
                 placeholder="https://maps.google.com/..."
               />
+              <FieldError error={fieldErrors.locationMapsLink} />
             </div>
           </div>
         </CardContent>
@@ -200,21 +245,27 @@ export function GeneralSettingsSection({ state, setState }: GeneralSettingsSecti
               <Input
                 id="day"
                 value={state.day}
+                className={validInputClass("day", fieldErrors, touchedFields)}
                 onChange={(event) =>
                   setState((prev) => ({ ...prev, day: event.target.value }))
                 }
+                onBlur={() => onBlur("day")}
                 placeholder="e.g. Wednesdays 7pm"
               />
+              <FieldError error={fieldErrors.day} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="organizers">Organisers</Label>
               <Input
                 id="organizers"
                 value={state.organizers}
+                className={validInputClass("organizers", fieldErrors, touchedFields)}
                 onChange={(event) =>
                   setState((prev) => ({ ...prev, organizers: event.target.value }))
                 }
+                onBlur={() => onBlur("organizers")}
               />
+              <FieldError error={fieldErrors.organizers} />
             </div>
           </div>
         </CardContent>
