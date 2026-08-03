@@ -319,23 +319,29 @@ export function SessionTabsSection({
 }: SessionTabsSectionProps) {
   return (
     <div className="space-y-4">
-      {/* Notes & Defaults */}
+      {/* Notes */}
       <SettingsCard
         title="Sports Page"
-        description="Public-facing page content and session tab configuration."
+        description="Public-facing notes visible to players on the sport page."
+      >
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes (one per line)</Label>
+          <Textarea
+            id="notes"
+            rows={4}
+            value={state.notesText}
+            onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
+            placeholder="Add notes visible to players on the sport page..."
+          />
+        </div>
+      </SettingsCard>
+
+      {/* Session Tabs List */}
+      <SettingsCard
+        title="Session Tabs"
+        description="Define the session types players can see and sign up for. Drag to reorder."
       >
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (one per line)</Label>
-            <Textarea
-              id="notes"
-              rows={4}
-              value={state.notesText}
-              onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
-              placeholder="Add notes visible to players on the sport page..."
-            />
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="default-tab">Default session tab</Label>
             <Select
@@ -360,15 +366,7 @@ export function SessionTabsSection({
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </SettingsCard>
 
-      {/* Session Tabs List */}
-      <SettingsCard
-        title="Session Tabs"
-        description="Define the session types players can see and sign up for. Drag to reorder."
-      >
-        <div className="space-y-4">
           <DraggableList
             items={state.tabs}
             onReorder={(tabs) => setState((prev) => ({ ...prev, tabs }))}
