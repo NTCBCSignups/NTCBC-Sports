@@ -46,7 +46,7 @@ export default function BreadcrumbNav({ items, current, actions }: BreadcrumbNav
             <li
               key={item.href}
               className={
-                items.length > 2 && index < items.length - 1
+                index < items.length - 1
                   ? "hidden sm:flex items-center gap-1"
                   : "flex items-center gap-1"
               }
