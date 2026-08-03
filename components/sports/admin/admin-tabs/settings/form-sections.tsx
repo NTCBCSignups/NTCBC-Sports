@@ -397,7 +397,7 @@ export function SessionTabsSection({
                     <p className="text-xs text-muted-foreground">
                       Auto session title text: {tab.defaultTitlePrefix || "(uses tab name)"}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="hidden sm:block text-xs text-muted-foreground">
                       Permissions: {summarizePermissions(tab.permissions)}
                     </p>
                   </div>
