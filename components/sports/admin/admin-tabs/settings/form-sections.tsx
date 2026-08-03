@@ -46,18 +46,21 @@ import type { DefaultAdminTabOption, DefaultTabOption, SportConfigFormState } fr
 import type { SportConfigFieldName } from "@/lib/actions/sport-config-validation";
 
 /**
- * Settings section card — collapsible, open by default.
+ * Settings section card — collapsible, closed by default (mobile-first).
  *
  * NNGroup "Accordions on Mobile" (Budiu, 2015):
- *   "Collapsing each step under an accordion can be an effective way of conveying
- *    the form workflow without overwhelming them — long forms are often daunting on mobile."
+ *   "Accordions are one of the most useful design elements on mobile, as they
+ *    solve the problem of displaying too much content in too little screen space."
+ *   "Section headings serve as a mini-IA of the page — helping users form a
+ *    mental model of the information available."
  *
  * NNGroup "Accordions on Desktop" (Wang, 2023):
- *   "When to avoid: When your audience requires all the content — show all at once."
+ *   "When users need only a few pieces of information on a single page, hiding
+ *    most content helps users spend their time more efficiently."
  *
- * The hybrid approach: defaultOpen={true} gives desktop users full visibility while
- * mobile users can collapse finished sections to shorten the page. Section headers
- * act as a mini-IA (table of contents) per NNGroup mobile accordion research.
+ * For admin settings: admins typically edit 1-2 sections per visit, not all 6.
+ * Collapsed sections show the full structure at a glance (mini-IA) and users
+ * expand only what they need — reducing cognitive load and page length on mobile.
  */
 function SettingsCard({
   title,
@@ -71,7 +74,7 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <Collapsible defaultOpen asChild>
+    <Collapsible asChild>
       <Card>
         <CollapsibleTrigger className="flex w-full items-center gap-3 text-left cursor-pointer group [&[data-state=closed]>div>svg.collapse-icon]:rotate-0">
           <CardHeader className="flex-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useId, type ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
@@ -137,8 +137,15 @@ export function DraggableList<T>({
 
   // ── Render ───────────────────────────────────────────────────
 
+  const dndId = useId();
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      id={dndId}
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext items={visibleIds} strategy={verticalListSortingStrategy}>
         <div className={cn("space-y-1", className)}>
           {items.map((item, index) =>
