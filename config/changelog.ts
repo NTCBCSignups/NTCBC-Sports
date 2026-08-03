@@ -15,6 +15,13 @@ export interface ChangelogEntry {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: 28,
+    date: "2026-08-03",
+    title: "Easier Navigation",
+    description:
+      "New navigation path at the top of pages lets you jump back to previous sections with a single click!",
+  },
+  {
     id: 27,
     date: "2026-07-16",
     title: "Sakura Theme",

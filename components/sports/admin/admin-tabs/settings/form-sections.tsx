@@ -1,16 +1,7 @@
 "use client";
 
 import { type Dispatch, type SetStateAction } from "react";
-import {
-  CalendarDays,
-  ChevronDown,
-  MapPin,
-  Pencil,
-  Plus,
-  Shield,
-  Trash2,
-  Users2,
-} from "lucide-react";
+import { CalendarDays, ChevronDown, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,12 +56,10 @@ import type { SportConfigFieldName } from "@/lib/actions/sport-config-validation
 function SettingsCard({
   title,
   description,
-  icon,
   children,
 }: {
   title: string;
   description: string;
-  icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -78,13 +67,8 @@ function SettingsCard({
       <Card>
         <CollapsibleTrigger className="flex w-full items-center gap-3 text-left cursor-pointer group [&[data-state=closed]>div>svg.collapse-icon]:rotate-0">
           <CardHeader className="flex-1">
-            <div className="flex items-center gap-2">
-              {icon}
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-base">{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-              </div>
-            </div>
+            <CardTitle className="text-base">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <div className="pr-6 shrink-0">
             <ChevronDown className="collapse-icon h-4 w-4 text-muted-foreground transition-transform duration-200 rotate-180" />
@@ -226,11 +210,7 @@ export function GeneralSettingsSection({
       </SettingsCard>
 
       {/* Location */}
-      <SettingsCard
-        title="Location"
-        description="Where this sport takes place."
-        icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
-      >
+      <SettingsCard title="Location" description="Where this sport takes place.">
         <div className="grid gap-4 sm:grid-cols-2 min-w-0">
           <div className="space-y-2">
             <Label htmlFor="locationName">Venue name</Label>
@@ -274,11 +254,7 @@ export function GeneralSettingsSection({
       </SettingsCard>
 
       {/* Schedule & Contact */}
-      <SettingsCard
-        title="Schedule & Contact"
-        description="When it happens and who to contact."
-        icon={<Users2 className="h-4 w-4 text-muted-foreground" />}
-      >
+      <SettingsCard title="Schedule & Contact" description="When it happens and who to contact.">
         <div className="grid gap-4 sm:grid-cols-2 min-w-0">
           <div className="space-y-2">
             <Label htmlFor="day">Schedule</Label>
