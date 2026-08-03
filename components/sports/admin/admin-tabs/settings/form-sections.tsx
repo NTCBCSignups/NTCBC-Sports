@@ -394,7 +394,7 @@ export function SessionTabsSection({
                       </Badge>
                       {isDefault && <Badge variant="secondary">Default</Badge>}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="hidden sm:block text-xs text-muted-foreground">
                       Auto session title text: {tab.defaultTitlePrefix || "(uses tab name)"}
                     </p>
                     <p className="hidden sm:block text-xs text-muted-foreground">
