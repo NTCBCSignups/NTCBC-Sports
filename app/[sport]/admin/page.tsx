@@ -1,9 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
-import PageHeader from "@/components/sports/page-header";
+import BreadcrumbNav from "@/components/sports/breadcrumb-nav";
 import { type AdminTabMeta, type ResolvedSportConfig, Role } from "@/config/config-resolver";
 import { SETTINGS_ADMIN_TAB } from "@/config/admin-tab-metadata";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
@@ -84,19 +83,13 @@ export default async function AdminPage({
 
   return (
     <div className="max-w-6xl mx-auto mb-12 space-y-6">
-      <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
-
-      {/* Breadcrumb — orientation cue per NNGroup navigation IA research */}
-      <nav
-        aria-label="Breadcrumb"
-        className="flex items-center gap-1.5 text-sm text-muted-foreground"
-      >
-        <span>
-          {config.emoji} {config.name}
-        </span>
-        <ChevronRight className="h-3.5 w-3.5" />
-        <span className="font-medium text-foreground">Admin</span>
-      </nav>
+      <BreadcrumbNav
+        items={[
+          { label: "NTCBC", href: "/" },
+          { label: `${config.emoji} ${config.name}`, href: `/${sport}` },
+        ]}
+        current="Admin"
+      />
 
       <h1 className="text-3xl font-bold text-foreground">{config.name} Admin</h1>
 

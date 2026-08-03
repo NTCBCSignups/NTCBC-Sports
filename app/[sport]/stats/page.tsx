@@ -4,7 +4,7 @@ import { getUser, getCachedUserSportRole } from "@/lib/supabase/user";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
 import { getStatsData } from "@/lib/get-statistics";
 import { Role } from "@/config/config-resolver";
-import PageHeader from "@/components/sports/page-header";
+import BreadcrumbNav from "@/components/sports/breadcrumb-nav";
 import StatsView from "@/components/sports/statistics/stats-view";
 
 export default async function UserStatsPage({ params }: { params: Promise<{ sport: string }> }) {
@@ -24,7 +24,13 @@ export default async function UserStatsPage({ params }: { params: Promise<{ spor
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6 px-4">
-      <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
+      <BreadcrumbNav
+        items={[
+          { label: "NTCBC", href: "/" },
+          { label: `${config.emoji} ${config.name}`, href: `/${sport}` },
+        ]}
+        current="Statistics"
+      />
       <StatsView data={data} defaultMode="personal" userId={user.id} canToggleMode={isAdmin} />
     </div>
   );
