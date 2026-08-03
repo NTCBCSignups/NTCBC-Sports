@@ -1,4 +1,4 @@
-import PageHeader from "@/components/sports/page-header";
+import BreadcrumbNav from "@/components/sports/breadcrumb-nav";
 import type { User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
 import type { ResolvedSportConfig } from "@/config/config-resolver";
@@ -22,7 +22,11 @@ export default function SportPageShell({
 }: SportPageShellProps) {
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <PageHeader backHref="/" backLabel="All Ministries" actions={actions} />
+      <BreadcrumbNav
+        items={[{ label: "NTCBC", href: "/" }]}
+        current={`${config.emoji} ${config.name}`}
+        actions={actions}
+      />
 
       <div className="space-y-2">
         <h1 className="text-4xl font-bold text-foreground">

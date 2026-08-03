@@ -20,6 +20,12 @@ import type {
   EditableTabPermissions,
   SportConfigFormState,
 } from "./types";
+// Re-export Zod-based validation from the shared schema (single source of truth).
+export {
+  validateConfigField,
+  validateAllConfigFields,
+  type SportConfigFieldName,
+} from "@/lib/actions/sport-config-validation";
 
 export function createKey(prefix: string, id?: string): string {
   return id ? `${prefix}-${id}` : `${prefix}-${Math.random().toString(36).slice(2, 10)}`;

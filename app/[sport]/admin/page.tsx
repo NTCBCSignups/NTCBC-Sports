@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
-import PageHeader from "@/components/sports/page-header";
+import BreadcrumbNav from "@/components/sports/breadcrumb-nav";
 import { type AdminTabMeta, type ResolvedSportConfig, Role } from "@/config/config-resolver";
 import { SETTINGS_ADMIN_TAB } from "@/config/admin-tab-metadata";
 import { getResolvedSportConfig } from "@/lib/get-sport-config";
@@ -83,11 +83,17 @@ export default async function AdminPage({
 
   return (
     <div className="max-w-6xl mx-auto mb-12 space-y-6">
-      <PageHeader backHref={`/${sport}`} backLabel={`Back to ${config.name}`} />
+      <BreadcrumbNav
+        items={[
+          { label: "NTCBC", href: "/" },
+          { label: `${config.emoji} ${config.name}`, href: `/${sport}` },
+        ]}
+        current="Admin"
+      />
 
       <h1 className="text-3xl font-bold text-foreground">{config.name} Admin</h1>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         <Suspense fallback={<LoadingAdminContent />}>
           <AdminShell sport={sport} userId={user.id} requestedTab={tab} config={config} />
         </Suspense>

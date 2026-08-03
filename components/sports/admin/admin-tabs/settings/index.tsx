@@ -16,7 +16,8 @@ import {
   SETTINGS_TAB_LABEL,
 } from "@/config/admin-tab-metadata";
 import { SESSION_TAB_RULES } from "@/config/session-tab-rules";
-import { updateSportConfig, type UpdateSportConfigInput } from "@/lib/actions/sport-config";
+import { updateSportConfig } from "@/lib/actions/sport-config";
+import type { UpdateSportConfigInput } from "@/lib/actions/sport-config-validation";
 import { toastClasses } from "@/lib/styles";
 import { AUTO_DEFAULT_ADMIN_TAB_VALUE, AUTO_DEFAULT_TAB_VALUE } from "./constants";
 import { ADMIN_TAB_DEFINITIONS, ADMIN_TAB_ICON_OPTIONS } from "./admin-tab-ui-metadata";
@@ -30,6 +31,9 @@ import {
   createDefaultPermissions,
   createKey,
   updateTabByKey,
+  validateConfigField,
+  validateAllConfigFields,
+  type SportConfigFieldName,
 } from "./helpers";
 import type {
   AdminTabDialogMode,
@@ -77,6 +81,28 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     [updateDraft, setDraft],
   );
   const [isPending, startTransition] = useTransition();
+
+  // Inline validation — Baymard: validate on blur, clear on correction.
+  // touchedFields is state (new Set per update) so useMemo recomputes properly.
+  const [touchedFields, setTouchedFields] = useState<Set<SportConfigFieldName>>(() => new Set());
+
+  // Derived errors — recomputes when state or touchedFields change.
+  // Errors disappear the moment the user types a valid value (Baymard rule #2).
+  // Uses Zod schemas from sport-config-validation.ts — single source of truth.
+  const fieldErrors = useMemo(() => {
+    const errors: Partial<Record<SportConfigFieldName, string>> = {};
+    for (const field of touchedFields) {
+      const value = state[field as keyof SportConfigFormState];
+      if (typeof value !== "string") continue;
+      const error = validateConfigField(field, value);
+      if (error) errors[field] = error;
+    }
+    return errors;
+  }, [state, touchedFields]);
+
+  const handleBlur = useCallback((field: SportConfigFieldName) => {
+    setTouchedFields((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
+  }, []);
 
   const [tabDialogOpen, setTabDialogOpen] = useState(false);
   const [tabDialogMode, setTabDialogMode] = useState<TabDialogMode>("add");
@@ -168,6 +194,38 @@ function SportConfigFormInner({ sport }: { sport: string }) {
     : AUTO_DEFAULT_ADMIN_TAB_VALUE;
 
   const handleSave = () => {
+    // Validate all required fields on save using Zod schemas (single source of truth)
+    const allErrors = validateAllConfigFields({
+      name: state.name,
+      emoji: state.emoji,
+      type: state.type,
+      day: state.day,
+      organizers: state.organizers,
+      locationName: state.locationName,
+      locationAddress: state.locationAddress,
+      locationMapsLink: state.locationMapsLink,
+    });
+    const errorKeys = Object.keys(allErrors) as SportConfigFieldName[];
+    if (errorKeys.length > 0) {
+      // Mark all error fields as touched so errors become visible
+      setTouchedFields((prev) => {
+        const next = new Set(prev);
+        for (const field of errorKeys) next.add(field);
+        return next;
+      });
+      // Scroll to first error field
+      const firstErrorField = errorKeys[0];
+      if (firstErrorField) {
+        const element = document.getElementById(firstErrorField);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+        element?.focus();
+      }
+      toast.error(`${errorKeys.length} field(s) need attention.`, {
+        className: toastClasses.red,
+      });
+      return;
+    }
+
     const trimmedTabs = state.tabs.map((tab) => ({
       id: tab.id.trim(),
       value: tab.value.trim(),
@@ -638,10 +696,16 @@ function SportConfigFormInner({ sport }: { sport: string }) {
   };
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <RestoreBanner />
 
-      <GeneralSettingsSection state={state} setState={setState} />
+      <GeneralSettingsSection
+        state={state}
+        setState={setState}
+        fieldErrors={fieldErrors}
+        touchedFields={touchedFields}
+        onBlur={handleBlur}
+      />
 
       <SessionTabsSection
         state={state}

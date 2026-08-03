@@ -1,129 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
-import {
-  AccessLevel,
-  PillColor,
-  Role,
-  type SessionTab,
-  type SportConfigPayload,
-} from "@/config/config-resolver";
-import { ADMIN_TAB_ICON_NAMES, SETTINGS_TAB_ID } from "@/config/admin-tab-metadata";
+import { type SessionTab, type SportConfigPayload } from "@/config/config-resolver";
 import { validateImmutableSessionTabValues } from "@/config/session-tab-rules";
-
-const roleSchema = z.nativeEnum(Role);
-
-const signupDialogSchema = z.object({
-  maxRole: roleSchema,
-  message: z.string().min(1),
-  rejectedMessage: z.string().min(1),
-});
-
-const tabSchema = z.object({
-  id: z.string().min(1),
-  value: z.string().min(1),
-  label: z.string().min(1),
-  defaultTitlePrefix: z.string().optional(),
-  sessionPillColor: z.nativeEnum(PillColor),
-  permissions: z
-    .object({
-      [AccessLevel.overview]: roleSchema,
-      [AccessLevel.view]: roleSchema,
-      [AccessLevel.signup]: roleSchema,
-      [AccessLevel.admin]: roleSchema,
-    })
-    .refine((p) => p[AccessLevel.signup] !== Role.anon, {
-      message: "Anonymous signup is not allowed",
-      path: [AccessLevel.signup],
-    }),
-  signupConfirmationDialog: signupDialogSchema.optional(),
-});
-
-const adminTabSchema = z.object({
-  id: z.string().min(1),
-  label: z.string().min(1),
-  iconName: z.enum(ADMIN_TAB_ICON_NAMES),
-});
-
-const updateSportConfigInputSchema = z
-  .object({
-    id: z.string().min(1),
-    emoji: z.string().min(1),
-    name: z.string().min(1),
-    type: z.string().min(1),
-    description: z.string().optional(),
-    day: z.string().min(1),
-    organizers: z.string().min(1),
-    location: z.object({
-      name: z.string().min(1),
-      address: z.string().min(1),
-      mapsLink: z.string().url().optional(),
-    }),
-    notes: z.array(z.string().min(1)),
-    defaultTab: z.string().optional(),
-    defaultAdminTab: z.string().optional(),
-    tabs: z.array(tabSchema),
-    adminTabs: z.array(adminTabSchema),
-  })
-  .superRefine((value, context) => {
-    const normalizedTabValues = value.tabs.map((tab) => tab.value.trim().toLowerCase());
-    if (new Set(normalizedTabValues).size !== normalizedTabValues.length) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["tabs"],
-        message: "Session tab values must be unique",
-      });
-    }
-
-    const normalizedTabIds = value.tabs.map((tab) => tab.id.trim());
-    if (new Set(normalizedTabIds).size !== normalizedTabIds.length) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["tabs"],
-        message: "Session tab ids must be unique",
-      });
-    }
-
-    if (
-      value.defaultTab &&
-      !value.tabs.some((tab) => tab.value.trim() === value.defaultTab?.trim())
-    ) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["defaultTab"],
-        message: "Default tab must match one of the session tab values",
-      });
-    }
-
-    const defaultAdminTab = value.defaultAdminTab?.trim();
-    if (defaultAdminTab) {
-      const validAdminTabIds = new Set<string>([
-        SETTINGS_TAB_ID,
-        ...value.adminTabs.map((tab) => tab.id.trim()),
-      ]);
-      if (!validAdminTabIds.has(defaultAdminTab)) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["defaultAdminTab"],
-          message: "Default admin tab must match an available admin tab",
-        });
-      }
-    }
-
-    const adminTabIds = value.adminTabs.map((tab) => tab.id.trim());
-    if (new Set(adminTabIds).size !== adminTabIds.length) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["adminTabs"],
-        message: "Admin tabs cannot include duplicate tab ids",
-      });
-    }
-  });
-
-export type UpdateSportConfigInput = z.infer<typeof updateSportConfigInputSchema>;
+import {
+  updateSportConfigInputSchema,
+  type UpdateSportConfigInput,
+} from "@/lib/actions/sport-config-validation";
 
 export type UpdateSportConfigResult = { success: true } | { success: false; error: string };
 

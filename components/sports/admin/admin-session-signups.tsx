@@ -55,7 +55,7 @@ export default function AdminSessionSignups({
               onClick={() => handlePromote(signup.id)}
               disabled={pending === signup.id}
               title="Promote to confirmed"
-              className="h-9 w-9"
+              className="h-10 w-10"
             >
               <ArrowUp className="h-4 w-4" />
             </Button>
@@ -66,7 +66,7 @@ export default function AdminSessionSignups({
             onClick={() => handleCancel(signup.id)}
             disabled={pending === signup.id}
             title="Remove signup"
-            className={`${colors.destructiveHover} h-9 w-9`}
+            className={`${colors.destructiveHover} h-10 w-10`}
           >
             <X className="h-4 w-4" />
           </Button>

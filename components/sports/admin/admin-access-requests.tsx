@@ -71,7 +71,7 @@ export default function AdminAccessRequests({ sport, requests }: AdminAccessRequ
                   size="sm"
                   onClick={() => handleReview(request.id, "approved")}
                   disabled={pending === request.id || request.status === "approved"}
-                  className={`${colors.successHover} disabled:opacity-20 h-9 px-3`}
+                  className={`${colors.successHover} disabled:opacity-50 h-10 px-3`}
                 >
                   <Check className="h-4 w-4 mr-1.5" />
                   Approve
@@ -81,7 +81,7 @@ export default function AdminAccessRequests({ sport, requests }: AdminAccessRequ
                   size="sm"
                   onClick={() => handleReview(request.id, "rejected")}
                   disabled={pending === request.id || request.status === "rejected"}
-                  className={`${colors.destructiveHover} disabled:opacity-20 h-9 px-3`}
+                  className={`${colors.destructiveHover} disabled:opacity-50 h-10 px-3`}
                 >
                   <X className="h-4 w-4 mr-1.5" />
                   Reject
@@ -124,7 +124,7 @@ export default function AdminAccessRequests({ sport, requests }: AdminAccessRequ
                       size="sm"
                       onClick={() => handleReview(request.id, "approved")}
                       disabled={pending === request.id || request.status === "approved"}
-                      className={`${colors.successHover} disabled:opacity-20 h-8 px-2.5`}
+                      className={`${colors.successHover} disabled:opacity-50 h-10 px-2.5`}
                     >
                       <Check className="h-4 w-4 mr-1" />
                       Approve
@@ -134,7 +134,7 @@ export default function AdminAccessRequests({ sport, requests }: AdminAccessRequ
                       size="sm"
                       onClick={() => handleReview(request.id, "rejected")}
                       disabled={pending === request.id || request.status === "rejected"}
-                      className={`${colors.destructiveHover} disabled:opacity-20 h-8 px-2.5`}
+                      className={`${colors.destructiveHover} disabled:opacity-50 h-10 px-2.5`}
                     >
                       <X className="h-4 w-4 mr-1" />
                       Reject

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole } from "@/lib/supabase/user";
 import { Badge } from "@/components/ui/badge";
 import { Ban, CalendarDays, Clock, MapPin, ShieldCheck, UserStar } from "lucide-react";
-import PageHeader from "@/components/sports/page-header";
+import BreadcrumbNav from "@/components/sports/breadcrumb-nav";
 import SignupButton from "@/components/sports/signup/signup-button";
 import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-banner";
@@ -129,13 +129,10 @@ async function SessionSignupsContent({
 
 export default async function SessionDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ sport: string; id: string }>;
-  searchParams: Promise<{ fromTab?: string }>;
 }) {
   const { sport, id } = await params;
-  const { fromTab } = await searchParams;
   const config = await getResolvedSportConfig(sport);
   if (!config) notFound();
   const sessionTabs = config.tabs.map((tab) => ({ value: tab.value, label: tab.label }));
@@ -166,14 +163,15 @@ export default async function SessionDetailPage({
 
   const isOpen = session.status !== SESSION_STATUS.cancelled && isSignupOpen(session);
   const sessionTypeLabel = tab.label;
-  const backParams = new URLSearchParams({ session: id });
-  if (fromTab) backParams.set("tab", fromTab);
 
   return (
     <div className="max-w-4xl mx-auto mb-12 space-y-6">
-      <PageHeader
-        backHref={`/${sport}?${backParams.toString()}`}
-        backLabel={`Back to ${config.name}`}
+      <BreadcrumbNav
+        items={[
+          { label: "NTCBC", href: "/" },
+          { label: `${config.emoji} ${config.name}`, href: `/${sport}` },
+        ]}
+        current={session.title || `${sessionTypeLabel}: ${formatDate(session.date)}`}
         actions={isAdmin ? <AdminButton sport={sport} /> : null}
       />
 
