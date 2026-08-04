@@ -31,7 +31,7 @@ export enum PillColor {
 // ── Types ────────────────────────────────────────────────────────
 
 /** Maps each access level to the minimum Role required. */
-export type TabPermissions = Record<AccessLevel, Role>;
+type TabPermissions = Record<AccessLevel, Role>;
 
 /** Confirmation dialog shown before signup for users at or below a given role. */
 export interface SignupConfirmationDialog {
@@ -45,12 +45,12 @@ export interface SignupConfirmationDialog {
 
 // ── Raw config interfaces ─────────────────────────────────────────
 
-export interface FormResponseColumn {
+interface FormResponseColumn {
   index: number;
   header: string;
 }
 
-export interface ResponseTableEntry {
+interface ResponseTableEntry {
   time: string;
   playerCap: number;
   description?: string;
@@ -58,7 +58,7 @@ export interface ResponseTableEntry {
   hiddenColumns?: string[];
 }
 
-export interface ResponseTableConfig {
+interface ResponseTableConfig {
   sheetTab: string;
   columns: FormResponseColumn[];
   sessions: ResponseTableEntry[];

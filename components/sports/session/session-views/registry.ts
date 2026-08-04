@@ -43,13 +43,6 @@ const sessionViewRegistry: Record<string, SessionView> = {
   ),
 };
 
-/**
- * Register a session view at runtime (for dynamic/plugin use cases).
- */
-export function registerSessionView(key: string, view: SessionView): void {
-  sessionViewRegistry[key] = view;
-}
-
 /** The registry key for the built-in default view. */
 export const DEFAULT_VIEW_TYPE = "attendanceView";
 

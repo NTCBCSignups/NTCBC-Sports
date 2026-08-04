@@ -35,34 +35,6 @@ export async function getSyncedSessions(
   });
 }
 
-/** Most recent CCSA sync timestamp. */
-export async function getCcsaLastSyncedAt(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("ccsa_players")
-    .select("synced_at")
-    .order("synced_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return data?.synced_at ?? null;
-}
-
-/** All CCSA players with contact info and waiver status. */
-export async function getCcsaPlayers() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("ccsa_players")
-    .select("email, first_name, last_name, waiver_status");
-
-  return (data ?? []).map((p) => ({
-    email: p.email,
-    first_name: p.first_name,
-    last_name: p.last_name,
-    waiver_status: p.waiver_status,
-  }));
-}
-
 /** All user profiles (name and email). */
 export async function getAllProfiles() {
   const supabase = await createClient();

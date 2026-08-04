@@ -424,7 +424,7 @@ export interface CalendarUserEntry {
   lastUsedAt: string;
 }
 
-export interface CalendarUserRow {
+interface CalendarUserRow {
   userName: string;
   /** All modes this user has used (1 or 2 entries). Sorted subscribe-first. */
   entries: CalendarUserEntry[];

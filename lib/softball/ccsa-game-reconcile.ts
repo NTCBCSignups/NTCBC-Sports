@@ -27,7 +27,7 @@ const SYNC_MARKER = "# CCSA Sync";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type GameStatus =
+type GameStatus =
   | "synced"
   | "new"
   | "recreate"

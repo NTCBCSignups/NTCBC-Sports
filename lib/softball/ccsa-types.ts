@@ -27,7 +27,7 @@ export interface PlayerSummary {
   phone: string;
 }
 
-export interface TeamLeader extends PlayerSummary {
+interface TeamLeader extends PlayerSummary {
   role: string;
 }
 
@@ -84,55 +84,10 @@ export interface Park {
   name: string;
 }
 
-export interface UmpTestScore {
-  testdate: string;
-  score: number;
-  totalscore: number;
-  pass: number | null;
-}
-
-export interface ChurchListItem {
-  id: string;
-  name: string;
-  address: string;
-}
-
 export interface Passkey {
   webauthnID: string;
   nickname: string;
   lastUsedAt: string | null;
-}
-
-export interface YecTicket {
-  ytid: number;
-  purchase_date: string;
-  used_date: string | null;
-  sent_to: string | null;
-}
-
-export interface FallballPlayer extends PlayerSummary {
-  summerplayer: boolean;
-  total_amount: number;
-  isleader: boolean;
-  isgov: boolean;
-}
-
-export interface FallballTeam {
-  teampw: string;
-  isleader: boolean | number;
-  isadmin: boolean;
-  players: FallballPlayer[];
-  fees_total: number;
-}
-
-export interface FallballStatus {
-  team: FallballTeam | null;
-  payments: {
-    amount: number;
-    date: string;
-    method: number;
-    receipt_url: string | null;
-  }[];
 }
 
 export interface ScoreSubmission {

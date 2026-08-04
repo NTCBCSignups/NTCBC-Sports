@@ -2,8 +2,6 @@ const API_BASE = "https://dashboard.ccsasoftball.net/api/v2";
 
 import type {
   AdminInfo,
-  ChurchListItem,
-  FallballStatus,
   Park,
   Passkey,
   PlayerProfile,
@@ -12,17 +10,11 @@ import type {
   ScheduleGame,
   TeamDetail,
   TeamListItem,
-  UmpTestScore,
-  YecTicket,
 } from "./ccsa-types";
 
 // export types for external use (e.g. in scripts) without importing from ccsa-types directly
 export type {
   AdminInfo,
-  ChurchListItem,
-  FallballPlayer,
-  FallballStatus,
-  FallballTeam,
   Park,
   Passkey,
   PlayerProfile,
@@ -30,10 +22,7 @@ export type {
   ScoreSubmission,
   ScheduleGame,
   TeamDetail,
-  TeamLeader,
   TeamListItem,
-  UmpTestScore,
-  YecTicket,
 } from "./ccsa-types";
 
 // -----------
@@ -52,7 +41,7 @@ export function setFetchImpl(fn: FetchFn) {
   _fetch = fn;
 }
 
-export function buildUrl(endpoint: string, data?: Record<string, unknown>): string {
+function buildUrl(endpoint: string, data?: Record<string, unknown>): string {
   let url = `${API_BASE}${endpoint}`;
   if (data) {
     const qs = new URLSearchParams(
@@ -111,7 +100,7 @@ function post<T = unknown>(endpoint: string, data?: Record<string, unknown>) {
 // Error class
 // -----------
 
-export class CcsaApiError extends Error {
+class CcsaApiError extends Error {
   constructor(
     public status: number,
     public statusText: string,
@@ -122,14 +111,6 @@ export class CcsaApiError extends Error {
     this.name = "CcsaApiError";
   }
 }
-
-// //////////
-// PARAMS //
-// //////////
-export const params = {
-  deadlines: () => get<Record<string, string>>("/params/deadlines"),
-  get: (key: string) => get<Record<string, unknown>>(`/params/${encodeURIComponent(key)}`),
-};
 
 // ////////
 // AUTH //
@@ -200,37 +181,6 @@ export const auth = {
         target_playerid: targetPlayerId,
       }),
   },
-};
-
-// //////////
-// PLAYER //
-// //////////
-export const player = {
-  create: (formdata: Record<string, unknown>) =>
-    post<{ playerid: number }>("/player/create", formdata),
-  checkEmail: (email: string) => post<{ valid: boolean }>("/player/checkemail", { email }),
-  requestEmailChange: (email: string) =>
-    post<{ success: boolean }>("/player/requestemailchange", { email }),
-  completeEmailChange: (playerId: number, otp: string) =>
-    post<void>("/player/completeemailchange", { playerid: playerId, otp }),
-  update: (formdata: Record<string, unknown>) => post<PlayerProfile>("/player/update", formdata),
-  needWaiver: () => get<{ needwaiver: false | "paper" | "online" }>("/player/needwaiver"),
-  acceptWaiver: (formdata: Record<string, unknown>) =>
-    post<{ success: boolean }>("/player/acceptwaiver", formdata),
-  acceptPaperWaiver: (playerId: number) =>
-    post<{ success: boolean }>("/player/acceptpaperwaiver", { playerid: playerId }),
-  getById: (id: number, type: "ump" | "full" = "full") =>
-    get<PlayerProfile>(`/player/byid/${encodeURIComponent(id)}/${encodeURIComponent(type)}`),
-  getTeam: (id: number) => post<TeamDetail | null>("/player/getteam", { playerid: id }),
-  listWaivers: (id: number) =>
-    get<Record<string, unknown>[]>("/player/listwaivers", { playerid: id }),
-  umpTestScores: () => get<UmpTestScore[]>("/player/umptestscores"),
-  paperWaiverUrl: () => get<{ url: string }>("/player/me/paperwaiverurl"),
-  generateNewPw: () => post<{ newpw: string }>("/player/generatenewpw"),
-  listTeamHistory: (playerId: number) =>
-    get<Record<string, unknown>[]>(`/player/${playerId}/listteamhistory`),
-  listUmpTests: (playerId: number) =>
-    get<Record<string, unknown>[]>(`/player/${playerId}/listumptests`),
 };
 
 // ////////
@@ -326,22 +276,6 @@ export const team = {
   },
 };
 
-// //////////
-// CHURCH //
-// //////////
-export const church = {
-  list: () => get<ChurchListItem[]>("/church/list"),
-  create: (formdata: Record<string, unknown>) =>
-    post<{ churchid: string }>("/church/create", formdata),
-  applyForAdmin: (churchId: string | number, data: Record<string, unknown>) =>
-    post<{ success: boolean }>(`/church/${encodeURIComponent(churchId)}/applyforadmin`, data),
-  listAdminRequests: () => get<Record<string, unknown>[]>("/church/listadminrequests"),
-  approveAdmin: (requestId: number) =>
-    post<{ success: boolean }>("/church/approveadmin", { associd: requestId }),
-  rejectAdmin: (requestId: number) =>
-    post<{ success: boolean }>("/church/rejectadmin", { associd: requestId }),
-};
-
 // /////////
 // SCHED //
 // /////////
@@ -371,223 +305,3 @@ export const sched = {
     noPlayDates: () => get<Record<string, unknown>[]>("/sched/admin/noplaydates"),
   },
 };
-
-// ///////////
-// UMP TEST //
-// ///////////
-export const umptest = {
-  newAttempt: () => get<{ url: string }>("/umptest/newattempt"),
-  reg: {
-    get: () =>
-      get<{
-        registration: Record<string, unknown> | null;
-        scores: UmpTestScore[];
-        max_completions: number;
-      }>("/umptest/reg"),
-    list: () => get<Record<string, unknown>[]>("/umptest/reg/list"),
-    reset: (targetPlayerId: number) =>
-      post<{ success: boolean }>("/umptest/reg/reset", { target_playerid: targetPlayerId }),
-  },
-  scores: {
-    list: () => get<Record<string, unknown>[]>("/umptest/scores/list"),
-    upload: () => get<Record<string, unknown>>("/umptest/scores/upload"),
-    add: (data: unknown) => post<{ success: boolean }>("/umptest/scores/add", { data }),
-    byTeam: () => get<Record<string, unknown>[]>("/umptest/scores/by/team"),
-  },
-};
-
-// ///////////
-// GEAR UP //
-// ///////////
-export const gearup = {
-  reg: {
-    get: () => get<{ data: { mealchoice: string; comments: string } | null }>("/gearup/reg"),
-    register: (meal: string, comments: string) =>
-      post<{ success: boolean }>("/gearup/reg/register", { meal, comments }),
-    cancel: () => post<{ success: boolean }>("/gearup/reg/cancel"),
-    list: () => get<Record<string, unknown>[]>("/gearup/reg/list"),
-    byTeam: () => get<Record<string, unknown>[]>("/gearup/reg/byteam"),
-    getByPlayerId: (playerId: number) =>
-      get<Record<string, unknown>>(`/gearup/reg/playerid/${encodeURIComponent(playerId)}`),
-    checkIn: (playerId: number, action: string) =>
-      post<{ success: boolean }>(
-        `/gearup/reg/playerid/${encodeURIComponent(playerId)}/${encodeURIComponent(action)}`,
-      ),
-  },
-};
-
-// ////////
-// FORMS //
-// ////////
-export const forms = {
-  awards: {
-    submit: (data: Record<string, unknown>) => post<{ success: boolean }>("/forms/awards", data),
-    get: () => get<Record<string, unknown>[]>("/forms/awards"),
-  },
-  noPlayDates: {
-    get: (teamId: number) =>
-      get<Record<string, unknown>>(`/forms/noplaydates/team/${encodeURIComponent(teamId)}`),
-    submit: (teamId: number, data: Record<string, unknown>) =>
-      post<{ success: boolean }>(`/forms/noplaydates/team/${encodeURIComponent(teamId)}`, data),
-  },
-};
-
-// ///////////
-// INFOSYS //
-// ///////////
-export const infosys = {
-  teams: {
-    list: () => get<Record<string, unknown>[]>("/infosys/teams/list"),
-    recordPayment: (teamId: number, amount: number, method: string, notes: string) =>
-      post<{ success: boolean }>("/infosys/teams/recordpayment", {
-        teamid: teamId,
-        amount,
-        method,
-        notes,
-      }),
-    payments: (teamId: number) =>
-      get<Record<string, unknown>[]>(`/infosys/teams/${encodeURIComponent(teamId)}/payments`),
-  },
-  newTeamNames: {
-    get: () => get<Record<string, unknown>[]>("/infosys/newteamnames"),
-    post: (ntnId: number, teamName: string) =>
-      post<{ success: boolean }>("/infosys/newteamnames", {
-        ntn_id: ntnId,
-        teamname: teamName,
-      }),
-  },
-  churches: {
-    list: () => get<Record<string, unknown>[]>("/infosys/churches/list"),
-    leaders: {
-      add: (churchId: string | number, opts: { playerid: number; type: string; contact: string }) =>
-        post<{ success: boolean }>(
-          `/infosys/churches/${encodeURIComponent(churchId)}/leaders/add`,
-          opts,
-        ),
-      edit: (clId: number, opts: { playerid: number; type: string; contact: string }) =>
-        post<{ success: boolean }>(`/infosys/churches/leaders/${encodeURIComponent(clId)}`, opts),
-      del: (clId: number) =>
-        post<{ success: boolean }>(`/infosys/churches/leaders/del/${encodeURIComponent(clId)}`),
-    },
-  },
-  leaderDirectory: () =>
-    get<{
-      team_leaders: Record<string, unknown>[];
-      umpires: Record<string, unknown>[];
-      church_leaders: Record<string, unknown>[];
-    }>("/infosys/leaderdirectory"),
-  searchPlayers: (query: string, limit?: number) =>
-    post<PlayerSummary[]>("/infosys/searchplayers", { query, limit }),
-  recentWaivers: () => get<Record<string, unknown>[]>("/infosys/recentwaivers"),
-  acceptPaperWaiver: (targetPlayerId: number) =>
-    post<{ success: boolean }>("/infosys/acceptpaperwaiver", {
-      target_playerid: targetPlayerId,
-    }),
-  players: {
-    list: () => get<Record<string, unknown>[]>("/infosys/players/list"),
-    listByEmail: (emails: string[]) =>
-      post<Record<string, unknown>[]>("/infosys/players/listbyemail", { emails }),
-  },
-};
-
-// /////////////////////////
-// ANNOUNCEMENTS + EVENTS //
-// /////////////////////////
-export const announcements = {
-  events: () => get<Record<string, unknown>[]>("/ann/events"),
-  announcements: () => get<Record<string, unknown>[]>("/ann/announcements"),
-  all: () => get<Record<string, unknown>>("/ann/all"),
-  editAnnouncement: (data: Record<string, unknown>) =>
-    post<{ success: boolean }>("/ann/editannouncement", data),
-  editEvent: (data: Record<string, unknown>) => post<{ success: boolean }>("/ann/editevent", data),
-};
-
-// ///////
-// YEC //
-// ///////
-export const yec = {
-  get: () => get<YecTicket[]>("/yec/tickets"),
-  buy: (data: Record<string, unknown>) => post<{ success: boolean }>("/yec/buy", data),
-  send: (ticketIds: number[], email: string) =>
-    post<{ success: boolean }>("/yec/send", { ticketids: ticketIds, email }),
-  tickets: {
-    all: () => get<YecTicket[]>("/yec/tickets/all"),
-    get: (code: string) => get<YecTicket>(`/yec/tickets/${encodeURIComponent(code)}`),
-    do: (code: string, action: string) =>
-      post<{ success: boolean }>(
-        `/yec/tickets/${encodeURIComponent(code)}/${encodeURIComponent(action)}`,
-      ),
-    comp: (targetPlayerId: number, numTix: number, refundExisting: boolean) =>
-      post<{ success: boolean }>("/yec/tickets/comp", {
-        target_playerid: targetPlayerId,
-        num_tix: numTix,
-        refund_existing: refundExisting,
-      }),
-  },
-};
-
-// ///////////
-// FALLBALL //
-// ///////////
-export const fallball = {
-  status: () => get<FallballStatus>("/fallball/status"),
-  create: () => post<{ success: boolean }>("/fallball/create"),
-  regeneratePw: () => post<{ success: boolean }>("/fallball/regeneratepw"),
-  processPayment: (payload: Record<string, unknown>) =>
-    post<{ success: boolean; message?: string }>("/fallball/payment", payload),
-  leave: () => post<{ success: boolean }>("/fallball/leave"),
-  join: (teamPw: string) => post<{ success: boolean }>("/fallball/join", { teampw: teamPw }),
-
-  list: {
-    players: () => get<Record<string, unknown>[]>("/fallball/list/players"),
-    teams: () => get<Record<string, unknown>[]>("/fallball/list/teams"),
-    summary: () => get<Record<string, unknown>>("/fallball/list/summary"),
-  },
-
-  admin: {
-    create: (playerId: number, isLeader: boolean) =>
-      post<{ success: boolean }>("/fallball/admin/create", {
-        playerid: playerId,
-        isleader: isLeader,
-      }),
-    addPlayer: (fbTeamId: number, playerId: number, isLeader: boolean) =>
-      post<{ success: boolean }>("/fallball/admin/add_player", {
-        fbteamid: fbTeamId,
-        playerid: playerId,
-        isleader: isLeader,
-      }),
-    removePlayer: (playerId: number) =>
-      post<{ success: boolean }>("/fallball/admin/remove_player", { playerid: playerId }),
-    getTeam: (fbTeamId: number) =>
-      get<Record<string, unknown>>(`/fallball/admin/team/${encodeURIComponent(fbTeamId)}`),
-  },
-};
-
-// /////////
-// ERRORS //
-// /////////
-export const errors = {
-  report: (data: Record<string, unknown>) => post<{ success: boolean }>("/errors/report", data),
-};
-
-// /////////
-// ALERTS //
-// /////////
-export const alert = {
-  previewTeams: (times: unknown, parks: unknown) =>
-    post<Record<string, unknown>>("/alert/previewteams", { times, parks } as Record<
-      string,
-      unknown
-    >),
-  broadcastToLeaders: (teamIds: number[], title: string, message: string) =>
-    post<{ success: boolean }>("/alert/broadcasttoleaders", {
-      teamids: teamIds,
-      title,
-      message,
-    }),
-};
-
-// //////////
-// HEARTBEAT
-// //////////
-export const heartbeat = () => get<{ status: string }>("/heartbeat");

@@ -1,4 +1,4 @@
-export type UserRole = "user" | "admin";
+type UserRole = "user" | "admin";
 
 export interface Profile {
   id: string;
@@ -11,15 +11,6 @@ export interface Profile {
 }
 
 export type SportRoleType = "member" | "admin";
-
-export interface SportRole {
-  id: string;
-  user_id: string;
-  sport: string;
-  role: SportRoleType;
-  is_team_member: boolean;
-  created_at: string;
-}
 
 export type SessionStatus = "active" | "cancelled";
 
@@ -67,27 +58,7 @@ export interface SportSession {
 
 export type SignupStatus = "confirmed" | "waitlisted" | "cancelled" | "declined";
 
-export interface Signup {
-  id: string;
-  session_id: string;
-  user_id: string;
-  status: SignupStatus;
-  created_at: string;
-  profiles?: Profile;
-}
-
 export type AccessRequestStatus = "pending" | "approved" | "rejected";
-
-export interface TeamAccessRequest {
-  id: string;
-  user_id: string;
-  sport: string;
-  status: AccessRequestStatus;
-  reviewed_by: string | null;
-  created_at: string;
-  reviewed_at: string | null;
-  profiles?: Profile;
-}
 
 /** Aggregated member data for the People admin tab. */
 export interface SportMember {
@@ -108,23 +79,3 @@ export interface SportMember {
 }
 
 export type WaiverStatus = "valid" | "needs_paper" | "needs_online";
-
-export interface CcsaPlayer {
-  id: string;
-  email: string;
-  ccsa_player_id: number;
-  first_name: string;
-  last_name: string;
-  waiver_status: WaiverStatus;
-  synced_at: string;
-}
-
-export type CalendarTrackingMode = "subscribe" | "download";
-
-export interface CalendarTracking {
-  user_id: string;
-  sport: string;
-  mode: CalendarTrackingMode;
-  created_at: string;
-  last_used_at: string;
-}

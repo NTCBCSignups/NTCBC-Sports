@@ -1,6 +1,6 @@
 // ── Position definitions ─────────────────────────────────────────
 
-export const POSITIONS = {
+const POSITIONS = {
   batting: [
     { key: "1B_COACH", label: "1B Coach", short: "1B Coach" },
     { key: "3B_COACH", label: "3B Coach", short: "3B Coach" },
@@ -24,8 +24,6 @@ export const POSITIONS = {
 
 export const ALL_POSITIONS = [...POSITIONS.batting, ...POSITIONS.infield, ...POSITIONS.outfield];
 
-export const COACH_KEYS: Set<string> = new Set(POSITIONS.batting.map((p) => p.key));
-
 export const POSITION_GROUPS = [
   { label: "Batting", positions: POSITIONS.batting },
   { label: "Infield", positions: POSITIONS.infield },
@@ -48,7 +46,6 @@ export const DIAMOND_POSITIONS: Record<string, { x: number; y: number }> = {
   "3B_COACH": { x: 16, y: 82 },
 };
 
-export const INFIELD_KEYS: Set<string> = new Set(POSITIONS.infield.map((p) => p.key));
 export const OUTFIELD_KEYS: Set<string> = new Set(POSITIONS.outfield.map((p) => p.key));
 
 /** Offensive positions: batting coaches + pitcher */
@@ -58,7 +55,7 @@ export const OFFENSIVE_KEYS: Set<string> = new Set([
 ]);
 
 /** Defensive positions: infield (minus pitcher) + outfield */
-export const DEFENSIVE_KEYS: Set<string> = new Set([
+const DEFENSIVE_KEYS: Set<string> = new Set([
   ...POSITIONS.infield.filter((p) => p.key !== "PITCHER").map((p) => p.key),
   ...POSITIONS.outfield.map((p) => p.key),
 ]);
@@ -71,7 +68,7 @@ export interface FieldingData {
   assignments: Record<number, Record<string, string | null>>;
 }
 
-export const DEFAULT_INNINGS = 7;
+const DEFAULT_INNINGS = 7;
 
 export function parseData(viewData: unknown): FieldingData {
   if (

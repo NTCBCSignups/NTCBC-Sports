@@ -30,7 +30,7 @@ export interface DragHandleProps {
   "aria-grabbed"?: boolean;
 }
 
-export interface DragItemProps {
+interface DragItemProps {
   ref: (node: HTMLElement | null) => void;
   style: React.CSSProperties;
   role?: string;
@@ -38,7 +38,7 @@ export interface DragItemProps {
   "aria-roledescription"?: string;
 }
 
-export interface NakedItemContext {
+interface NakedItemContext {
   isDragging: boolean;
   dragItemProps: DragItemProps;
   dragHandleProps: DragHandleProps;

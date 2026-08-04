@@ -18,9 +18,8 @@ const config: KnipConfig = {
     dependencies: "error",
     devDependencies: "error",
     unlisted: "error",
-    // Warn only on exports (shadcn re-exports, typed API clients, test-consumed types)
-    exports: "warn",
-    types: "warn",
+    exports: "error",
+    types: "error",
     binaries: "warn",
   },
   next: {

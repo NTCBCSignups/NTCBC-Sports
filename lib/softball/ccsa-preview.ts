@@ -22,7 +22,7 @@ import {
 import type { GameRow, GamesPreview } from "@/lib/softball/ccsa-game-reconcile";
 import { loadCcsaCookies, saveCcsaCookies } from "@/lib/softball/ccsa-cookies";
 
-export type { GamesPreview, GameRow, GameStatus } from "@/lib/softball/ccsa-game-reconcile";
+export type { GamesPreview } from "@/lib/softball/ccsa-game-reconcile";
 
 const SPORT = "softball";
 

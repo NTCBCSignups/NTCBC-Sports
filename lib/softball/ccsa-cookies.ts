@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
-export const CCSA_COOKIE_NAME = "ccsa_session";
-export const CCSA_EMAIL_COOKIE = "ccsa_email";
+const CCSA_COOKIE_NAME = "ccsa_session";
+const CCSA_EMAIL_COOKIE = "ccsa_email";
 
 export async function loadCcsaCookies(): Promise<string[]> {
   const cookieStore = await cookies();
