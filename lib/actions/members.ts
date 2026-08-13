@@ -3,7 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SportRoleType } from "@/lib/supabase/types";
+
+async function isOnlyAdmin(supabase: SupabaseClient, sport: string): Promise<boolean> {
+  const { count } = await supabase
+    .from("sport_roles")
+    .select("*", { count: "exact", head: true })
+    .eq("sport", sport)
+    .eq("role", "admin");
+  return (count ?? 0) <= 1;
+}
 
 // ── Member management actions (admin only) ──────────────────────
 
@@ -16,9 +26,9 @@ export async function updateMemberRole(
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  // Prevent admin from demoting themselves
-  if (userId === result.user.id) {
-    return { error: "Cannot change your own role" };
+  // Prevent the last admin from demoting themselves
+  if (userId === result.user.id && (await isOnlyAdmin(supabase, sport))) {
+    return { error: "Cannot change your own role — you are the only admin" };
   }
 
   // If setting to "no role" (member + not team member), delete the row entirely
@@ -91,9 +101,9 @@ export async function removeMember(sport: string, userId: string) {
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  // Prevent admin from removing themselves
-  if (userId === result.user.id) {
-    return { error: "Cannot remove yourself" };
+  // Prevent the last admin from removing themselves
+  if (userId === result.user.id && (await isOnlyAdmin(supabase, sport))) {
+    return { error: "Cannot remove yourself — you are the only admin" };
   }
 
   const { error } = await supabase
@@ -123,9 +133,9 @@ export async function bulkUpdateMembers(
 
   if (userIds.length === 0) return { error: "No users selected" };
 
-  // Prevent admin from demoting themselves
-  if (userIds.includes(result.user.id)) {
-    return { error: "Cannot change your own role" };
+  // Prevent the last admin from demoting themselves
+  if (userIds.includes(result.user.id) && (await isOnlyAdmin(supabase, sport))) {
+    return { error: "Cannot change your own role — you are the only admin" };
   }
 
   const effectiveRole = updates.role ?? "member";
@@ -167,9 +177,9 @@ export async function bulkRemoveMembers(sport: string, userIds: string[]) {
 
   if (userIds.length === 0) return { error: "No users selected" };
 
-  // Prevent admin from removing themselves
-  if (userIds.includes(result.user.id)) {
-    return { error: "Cannot remove yourself" };
+  // Prevent the last admin from removing themselves
+  if (userIds.includes(result.user.id) && (await isOnlyAdmin(supabase, sport))) {
+    return { error: "Cannot remove yourself — you are the only admin" };
   }
 
   const { error } = await supabase

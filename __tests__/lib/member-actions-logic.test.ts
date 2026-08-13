@@ -7,7 +7,7 @@ import type { SportRoleType } from "@/lib/supabase/types";
  * Key rules:
  * 1. Setting role to "member" + isTeamMember=false means "no role" → DELETE sport_roles row
  * 2. Any other combination → UPSERT sport_roles row
- * 3. Cannot change your own role (self-modification guard)
+ * 3. Cannot change your own role if you're the only admin
  * 4. addMember only inserts if granting elevated access
  */
 
@@ -24,8 +24,13 @@ function shouldInsertOnAdd(options: { role?: SportRoleType; isTeamMember?: boole
   return effectiveRole !== "member" || effectiveTeam;
 }
 
-function validateSelfModification(callerUserId: string, targetUserId: string): string | null {
-  if (callerUserId === targetUserId) return "Cannot change your own role";
+function validateSelfModification(
+  callerUserId: string,
+  targetUserId: string,
+  isOnlyAdmin: boolean,
+): string | null {
+  if (callerUserId === targetUserId && isOnlyAdmin)
+    return "Cannot change your own role — you are the only admin";
   return null;
 }
 
@@ -74,12 +79,19 @@ describe("member action: addMember only inserts for elevated access", () => {
 });
 
 describe("member action: self-modification guard", () => {
-  it("blocks self-modification", () => {
-    expect(validateSelfModification("user-1", "user-1")).toBe("Cannot change your own role");
+  it("blocks self-modification when only admin", () => {
+    expect(validateSelfModification("user-1", "user-1", true)).toBe(
+      "Cannot change your own role — you are the only admin",
+    );
   });
 
-  it("allows modifying others", () => {
-    expect(validateSelfModification("admin-1", "user-2")).toBeNull();
+  it("allows self-modification when other admins exist", () => {
+    expect(validateSelfModification("user-1", "user-1", false)).toBeNull();
+  });
+
+  it("allows modifying others regardless of admin count", () => {
+    expect(validateSelfModification("admin-1", "user-2", true)).toBeNull();
+    expect(validateSelfModification("admin-1", "user-2", false)).toBeNull();
   });
 });
 
