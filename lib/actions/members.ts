@@ -3,37 +3,64 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSportAdmin } from "@/lib/supabase/user";
+import {
+  updateMemberRoleInputSchema,
+  addMemberInputSchema,
+  removeMemberInputSchema,
+  bulkUpdateMembersInputSchema,
+  bulkRemoveMembersInputSchema,
+  searchUsersInputSchema,
+  parseMemberInput,
+} from "@/lib/actions/members-validation";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { SportRoleType } from "@/lib/supabase/types";
 
-async function isOnlyAdmin(supabase: SupabaseClient, sport: string): Promise<boolean> {
+// ── Helpers ──────────────────────────────────────────────────────
+
+/** Would demoting/removing these users leave the sport with zero admins? */
+async function wouldOrphanAdmins(
+  supabase: SupabaseClient,
+  sport: string,
+  userIds: string[],
+): Promise<boolean> {
   const { count } = await supabase
     .from("sport_roles")
     .select("*", { count: "exact", head: true })
     .eq("sport", sport)
-    .eq("role", "admin");
-  return (count ?? 0) <= 1;
+    .eq("role", "admin")
+    .not("user_id", "in", `(${userIds.join(",")})`);
+  return (count ?? 0) === 0;
 }
+
+function revalidateSport(sport: string) {
+  revalidatePath(`/${sport}/admin`);
+  revalidatePath(`/${sport}`);
+}
+
+const ONLY_ADMIN_MSG = "This would leave the sport with no admins";
 
 // ── Member management actions (admin only) ──────────────────────
 
 export async function updateMemberRole(
   sport: string,
   userId: string,
-  updates: { role?: SportRoleType; isTeamMember?: boolean },
+  updates: { role?: string; isTeamMember?: boolean },
 ) {
+  const parsed = parseMemberInput(updateMemberRoleInputSchema, { sport, userId, updates });
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  // Prevent the last admin from demoting themselves
-  if (userId === result.user.id && (await isOnlyAdmin(supabase, sport))) {
-    return { error: "Cannot change your own role — you are the only admin" };
+  const effectiveRole = parsed.data.updates.role ?? "member";
+  const effectiveTeam = parsed.data.updates.isTeamMember ?? false;
+  const isDemotion = effectiveRole !== "admin";
+
+  if (isDemotion && (await wouldOrphanAdmins(supabase, sport, [userId]))) {
+    return { error: ONLY_ADMIN_MSG };
   }
 
   // If setting to "no role" (member + not team member), delete the row entirely
-  const effectiveRole = updates.role ?? "member";
-  const effectiveTeam = updates.isTeamMember ?? false;
   if (effectiveRole === "member" && !effectiveTeam) {
     const { error } = await supabase
       .from("sport_roles")
@@ -43,7 +70,7 @@ export async function updateMemberRole(
 
     if (error) return { error: error.message };
 
-    revalidatePath(`/${sport}/admin`);
+    revalidateSport(sport);
     return { success: true };
   }
 
@@ -57,21 +84,24 @@ export async function updateMemberRole(
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/${sport}/admin`);
+  revalidateSport(sport);
   return { success: true };
 }
 
 export async function addMember(
   sport: string,
   userId: string,
-  options: { role?: SportRoleType; isTeamMember?: boolean } = {},
+  options: { role?: string; isTeamMember?: boolean } = {},
 ) {
+  const parsed = parseMemberInput(addMemberInputSchema, { sport, userId, options });
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  const effectiveRole = options.role ?? "member";
-  const effectiveTeam = options.isTeamMember ?? false;
+  const effectiveRole = parsed.data.options.role ?? "member";
+  const effectiveTeam = parsed.data.options.isTeamMember ?? false;
 
   // Only create a sport_roles row if granting elevated access
   if (effectiveRole !== "member" || effectiveTeam) {
@@ -91,19 +121,20 @@ export async function addMember(
   // Clean up any pending access request for this user
   await supabase.from("team_access_requests").delete().eq("user_id", userId).eq("sport", sport);
 
-  revalidatePath(`/${sport}/admin`);
-  revalidatePath(`/${sport}`);
+  revalidateSport(sport);
   return { success: true };
 }
 
 export async function removeMember(sport: string, userId: string) {
+  const parsed = parseMemberInput(removeMemberInputSchema, { sport, userId });
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  // Prevent the last admin from removing themselves
-  if (userId === result.user.id && (await isOnlyAdmin(supabase, sport))) {
-    return { error: "Cannot remove yourself — you are the only admin" };
+  if (await wouldOrphanAdmins(supabase, sport, [userId])) {
+    return { error: ONLY_ADMIN_MSG };
   }
 
   const { error } = await supabase
@@ -117,29 +148,29 @@ export async function removeMember(sport: string, userId: string) {
   // Also remove any pending access request
   await supabase.from("team_access_requests").delete().eq("user_id", userId).eq("sport", sport);
 
-  revalidatePath(`/${sport}/admin`);
-  revalidatePath(`/${sport}`);
+  revalidateSport(sport);
   return { success: true };
 }
 
 export async function bulkUpdateMembers(
   sport: string,
   userIds: string[],
-  updates: { role?: SportRoleType; isTeamMember?: boolean },
+  updates: { role?: string; isTeamMember?: boolean },
 ) {
+  const parsed = parseMemberInput(bulkUpdateMembersInputSchema, { sport, userIds, updates });
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  if (userIds.length === 0) return { error: "No users selected" };
+  const effectiveRole = parsed.data.updates.role ?? "member";
+  const effectiveTeam = parsed.data.updates.isTeamMember ?? false;
+  const isDemotion = effectiveRole !== "admin";
 
-  // Prevent the last admin from demoting themselves
-  if (userIds.includes(result.user.id) && (await isOnlyAdmin(supabase, sport))) {
-    return { error: "Cannot change your own role — you are the only admin" };
+  if (isDemotion && (await wouldOrphanAdmins(supabase, sport, userIds))) {
+    return { error: ONLY_ADMIN_MSG };
   }
-
-  const effectiveRole = updates.role ?? "member";
-  const effectiveTeam = updates.isTeamMember ?? false;
 
   // If setting to "no role", delete the rows
   if (effectiveRole === "member" && !effectiveTeam) {
@@ -166,20 +197,20 @@ export async function bulkUpdateMembers(
     if (error) return { error: error.message };
   }
 
-  revalidatePath(`/${sport}/admin`);
+  revalidateSport(sport);
   return { success: true };
 }
 
 export async function bulkRemoveMembers(sport: string, userIds: string[]) {
+  const parsed = parseMemberInput(bulkRemoveMembersInputSchema, { sport, userIds });
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error };
 
-  if (userIds.length === 0) return { error: "No users selected" };
-
-  // Prevent the last admin from removing themselves
-  if (userIds.includes(result.user.id) && (await isOnlyAdmin(supabase, sport))) {
-    return { error: "Cannot remove yourself — you are the only admin" };
+  if (await wouldOrphanAdmins(supabase, sport, userIds)) {
+    return { error: ONLY_ADMIN_MSG };
   }
 
   const { error } = await supabase
@@ -193,13 +224,15 @@ export async function bulkRemoveMembers(sport: string, userIds: string[]) {
   // Also remove any pending access requests
   await supabase.from("team_access_requests").delete().in("user_id", userIds).eq("sport", sport);
 
-  revalidatePath(`/${sport}/admin`);
-  revalidatePath(`/${sport}`);
+  revalidateSport(sport);
   return { success: true };
 }
 
 /** Search profiles for the "Add Member" dialog. */
 export async function searchUsersAction(sport: string, query: string) {
+  const parsed = parseMemberInput(searchUsersInputSchema, { sport, query });
+  if (!parsed.success) return { error: parsed.error, data: [] };
+
   const supabase = await createClient();
   const result = await requireSportAdmin(supabase, sport);
   if (!result.success) return { error: result.error, data: [] };

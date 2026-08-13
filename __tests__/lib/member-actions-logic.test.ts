@@ -7,7 +7,7 @@ import type { SportRoleType } from "@/lib/supabase/types";
  * Key rules:
  * 1. Setting role to "member" + isTeamMember=false means "no role" → DELETE sport_roles row
  * 2. Any other combination → UPSERT sport_roles row
- * 3. Cannot change your own role if you're the only admin
+ * 3. Demoting/removing users is blocked when it would leave zero admins
  * 4. addMember only inserts if granting elevated access
  */
 
@@ -24,14 +24,10 @@ function shouldInsertOnAdd(options: { role?: SportRoleType; isTeamMember?: boole
   return effectiveRole !== "member" || effectiveTeam;
 }
 
-function validateSelfModification(
-  callerUserId: string,
-  targetUserId: string,
-  isOnlyAdmin: boolean,
-): string | null {
-  if (callerUserId === targetUserId && isOnlyAdmin)
-    return "Cannot change your own role — you are the only admin";
-  return null;
+/** Simulates wouldOrphanAdmins: would removing targetUserIds from the admin set leave zero? */
+function wouldOrphanAdmins(adminUserIds: string[], targetUserIds: string[]): boolean {
+  const targetSet = new Set(targetUserIds);
+  return adminUserIds.filter((id) => !targetSet.has(id)).length === 0;
 }
 
 describe("member action: no-role = delete", () => {
@@ -78,29 +74,45 @@ describe("member action: addMember only inserts for elevated access", () => {
   });
 });
 
-describe("member action: self-modification guard", () => {
-  it("blocks self-modification when only admin", () => {
-    expect(validateSelfModification("user-1", "user-1", true)).toBe(
-      "Cannot change your own role — you are the only admin",
+describe("member action: orphan-admin guard", () => {
+  it("blocks when demoting the only admin", () => {
+    expect(wouldOrphanAdmins(["admin-1"], ["admin-1"])).toBe(true);
+  });
+
+  it("allows demoting self when other admins exist", () => {
+    expect(wouldOrphanAdmins(["admin-1", "admin-2"], ["admin-1"])).toBe(false);
+  });
+
+  it("blocks bulk demoting all admins at once", () => {
+    expect(wouldOrphanAdmins(["admin-1", "admin-2"], ["admin-1", "admin-2"])).toBe(true);
+  });
+
+  it("allows bulk demoting subset when other admins remain", () => {
+    expect(wouldOrphanAdmins(["admin-1", "admin-2", "admin-3"], ["admin-1", "admin-2"])).toBe(
+      false,
     );
   });
 
-  it("allows self-modification when other admins exist", () => {
-    expect(validateSelfModification("user-1", "user-1", false)).toBeNull();
-  });
-
-  it("allows modifying others regardless of admin count", () => {
-    expect(validateSelfModification("admin-1", "user-2", true)).toBeNull();
-    expect(validateSelfModification("admin-1", "user-2", false)).toBeNull();
+  it("allows removing non-admin users regardless of admin count", () => {
+    expect(wouldOrphanAdmins(["admin-1"], ["user-2"])).toBe(false);
   });
 });
 
 describe("member action: bulk operations", () => {
-  it("bulk with self included is blocked", () => {
+  it("bulk with self included + only admin is blocked", () => {
     const callerUserId = "admin-1";
     const targetUserIds = ["user-1", "user-2", "admin-1"];
     const selfIncluded = targetUserIds.includes(callerUserId);
     expect(selfIncluded).toBe(true);
+    expect(wouldOrphanAdmins(["admin-1"], targetUserIds)).toBe(true);
+  });
+
+  it("bulk with self included + other admins is allowed", () => {
+    const callerUserId = "admin-1";
+    const targetUserIds = ["user-1", "admin-1"];
+    const selfIncluded = targetUserIds.includes(callerUserId);
+    expect(selfIncluded).toBe(true);
+    expect(wouldOrphanAdmins(["admin-1", "admin-2"], targetUserIds)).toBe(false);
   });
 
   it("bulk without self is allowed", () => {
