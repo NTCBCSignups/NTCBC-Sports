@@ -12,13 +12,7 @@ export interface ClientMigration {
   script: string;
 }
 
-export const CLIENT_MIGRATIONS: ClientMigration[] = [
-  {
-    id: "cherry-blossom-to-sakura",
-    expiresAt: "2026-08-20",
-    script: `if(localStorage.getItem("theme")==="cherry-blossom")localStorage.setItem("theme","sakura")`,
-  },
-];
+export const CLIENT_MIGRATIONS: ClientMigration[] = [];
 
 export function getClientMigrationScript(): string {
   return CLIENT_MIGRATIONS.map((m) => m.script).join(";");
