@@ -290,6 +290,9 @@ export function GeneralSettingsSection({
 interface SessionTabsSectionProps {
   state: SportConfigFormState;
   setState: Dispatch<SetStateAction<SportConfigFormState>>;
+  fieldErrors: FieldErrors;
+  touchedFields: ReadonlySet<SportConfigFieldName>;
+  onBlur: (field: SportConfigFieldName) => void;
   defaultTabValue: string;
   defaultTabOptions: DefaultTabOption[];
   openEditTabDialog: (tabKey: string) => void;
@@ -310,6 +313,9 @@ interface SessionTabsSectionProps {
 export function SessionTabsSection({
   state,
   setState,
+  fieldErrors,
+  touchedFields,
+  onBlur,
   defaultTabValue,
   defaultTabOptions,
   openEditTabDialog,
@@ -324,15 +330,36 @@ export function SessionTabsSection({
         title="Sports Page"
         description="Public-facing notes visible to players on the sport page."
       >
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes (one per line)</Label>
-          <Textarea
-            id="notes"
-            rows={4}
-            value={state.notesText}
-            onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
-            placeholder="Add notes visible to players on the sport page..."
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes (one per line)</Label>
+            <Textarea
+              id="notes"
+              rows={4}
+              value={state.notesText}
+              onChange={(event) => setState((prev) => ({ ...prev, notesText: event.target.value }))}
+              placeholder="Add notes visible to players on the sport page..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="waiverLink">Waiver link</Label>
+            <Input
+              id="waiverLink"
+              type="url"
+              value={state.waiverLink}
+              className={validInputClass("waiverLink", fieldErrors, touchedFields)}
+              onChange={(event) =>
+                setState((prev) => ({ ...prev, waiverLink: event.target.value }))
+              }
+              onBlur={() => onBlur("waiverLink")}
+              placeholder="https://forms.gle/..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional. When set, a &quot;View the waiver&quot; button appears under Important Notes
+              on the sport page.
+            </p>
+            <FieldError error={fieldErrors.waiverLink} />
+          </div>
         </div>
       </SettingsCard>
 

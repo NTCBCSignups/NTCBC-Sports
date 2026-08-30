@@ -43,6 +43,7 @@ export interface SportConfigFormState {
   description: string;
   day: string;
   organizers: string;
+  waiverLink: string;
   locationName: string;
   locationAddress: string;
   locationMapsLink: string;

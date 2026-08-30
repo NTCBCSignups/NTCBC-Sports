@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getUser, getUserSportRole, getCachedUserSportRole } from "@/lib/supabase/user";
 import SessionCard from "@/components/sports/session/session-card";
@@ -7,6 +9,12 @@ import SessionFilter from "@/components/sports/session/session-filter";
 import TeamAccessBanner from "@/components/sports/signup/team-access-banner";
 import SignInToSignupBanner from "@/components/sports/signup/sign-in-to-signup-banner";
 import SportPageShell from "@/components/sports/sport-page-shell";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import AdminButton from "@/components/sports/admin/admin-button";
 import CalendarExportButton from "@/components/sports/session/calendar-export-button";
 import MyStatsButton from "@/components/sports/session/my-stats-button";
@@ -377,6 +385,40 @@ export default async function SportAuthPage({
         ) : null
       }
     >
+      {config.notes && config.notes.length > 0 && (
+        <Accordion type="single" collapsible>
+          <AccordionItem
+            value="important-notes"
+            className="border-b! rounded-lg border bg-card px-4 overflow-hidden"
+          >
+            <AccordionTrigger className="font-semibold text-foreground hover:no-underline">
+              <span className="flex items-center gap-2">
+                <span>📌</span>
+                Important Notes
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul className="space-y-2.5 text-muted-foreground">
+                {config.notes.map((note) => (
+                  <li key={note} className="flex items-start text-sm">
+                    <div className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full mr-3 mt-1.5 shrink-0"></div>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+              {config.waiverLink && (
+                <Button asChild variant="outline" size="sm" className="mt-4">
+                  <a href={config.waiverLink} target="_blank" rel="noopener noreferrer">
+                    <ArrowUpRight className="h-4 w-4 shrink-0" />
+                    View the waiver
+                  </a>
+                </Button>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+
       <Suspense fallback={<LoadingContent />}>
         <SportSessionsContent
           config={config}
@@ -387,18 +429,6 @@ export default async function SportAuthPage({
           userId={user?.id ?? null}
         />
       </Suspense>
-
-      <div>
-        <h2 className="font-semibold text-foreground mb-2">Important Notes</h2>
-        <ul className="space-y-2.5 ml-4 text-muted-foreground">
-          {config.notes?.map((note) => (
-            <li key={note} className="flex items-start text-sm">
-              <div className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full mr-3 mt-1.5 shrink-0"></div>
-              <span>{note}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
     </SportPageShell>
   );
 }
