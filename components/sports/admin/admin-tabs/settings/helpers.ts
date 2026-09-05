@@ -105,6 +105,7 @@ export function buildInitialState(
     description: config.description ?? "",
     day: config.day,
     organizers: config.organizers,
+    waiverLink: config.waiverLink ?? "",
     locationName: config.location.name,
     locationAddress: config.location.address,
     locationMapsLink: config.location.mapsLink ?? "",

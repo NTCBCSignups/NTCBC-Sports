@@ -201,6 +201,7 @@ function SportConfigFormInner({ sport }: { sport: string }) {
       type: state.type,
       day: state.day,
       organizers: state.organizers,
+      waiverLink: state.waiverLink,
       locationName: state.locationName,
       locationAddress: state.locationAddress,
       locationMapsLink: state.locationMapsLink,
@@ -359,6 +360,7 @@ function SportConfigFormInner({ sport }: { sport: string }) {
       description: state.description.trim() || undefined,
       day: state.day.trim(),
       organizers: state.organizers.trim(),
+      waiverLink: state.waiverLink.trim() || undefined,
       location: {
         name: state.locationName.trim(),
         address: state.locationAddress.trim(),
@@ -710,6 +712,9 @@ function SportConfigFormInner({ sport }: { sport: string }) {
       <SessionTabsSection
         state={state}
         setState={setState}
+        fieldErrors={fieldErrors}
+        touchedFields={touchedFields}
+        onBlur={handleBlur}
         defaultTabValue={defaultTabValue}
         defaultTabOptions={defaultTabOptions}
         openEditTabDialog={openEditTabDialog}

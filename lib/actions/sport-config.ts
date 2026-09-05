@@ -80,6 +80,7 @@ export async function updateSportConfig(
     ...existingConfig,
     day: parsed.data.day,
     organizers: parsed.data.organizers,
+    waiverLink: parsed.data.waiverLink || undefined,
     location: {
       name: parsed.data.location.name,
       address: parsed.data.location.address,

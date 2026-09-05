@@ -49,6 +49,7 @@ export const updateSportConfigInputSchema = z
     description: z.string().optional(),
     day: z.string().min(1),
     organizers: z.string().min(1),
+    waiverLink: z.string().url().optional(),
     location: z.object({
       name: z.string().min(1),
       address: z.string().min(1),
@@ -132,6 +133,7 @@ export const sportConfigFieldSchemas = {
   type: requiredString,
   day: requiredString,
   organizers: requiredString,
+  waiverLink: z.string().url().optional(),
   locationName: requiredString,
   locationAddress: requiredString,
   locationMapsLink: z.string().url().optional(),
@@ -146,6 +148,7 @@ const FIELD_LABELS: Record<SportConfigFieldName, string> = {
   type: "Sport type",
   day: "Schedule",
   organizers: "Organisers",
+  waiverLink: "Waiver link",
   locationName: "Venue name",
   locationAddress: "Address",
   locationMapsLink: "Maps link",
