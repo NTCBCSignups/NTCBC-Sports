@@ -2,25 +2,42 @@
 
 /**
  * Theme toggle dropdown — positioned fixed top-right in layout.tsx.
- * Offers Light, Dark, and System (default) options.
- * Uses next-themes' setTheme() which updates the class on <html>
- * and persists the choice in localStorage.
+ *
+ * Two independent axes:
+ *   Mode    — Light / Dark / System, owned by next-themes (`light`/`dark` class).
+ *   Palette — Standard / Sakura, owned by PaletteProvider (`sakura` class).
+ *
+ * Both persist to localStorage, so Sakura keeps following the user's mode choice.
  */
 
 import { useState, useEffect } from "react";
-import { Contrast, Moon, Sun, Monitor, Flower2 } from "lucide-react";
+import { Contrast, Moon, Sun, Monitor, Flower2, Circle } from "lucide-react";
 import { useTheme } from "next-themes";
 
+import { usePalette } from "@/components/palette-provider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const MODES = [
+  { value: "light", label: "Light", Icon: Sun },
+  { value: "dark", label: "Dark", Icon: Moon },
+  { value: "system", label: "System", Icon: Monitor },
+] as const;
+
+const PALETTE_OPTIONS = [
+  { value: "default", label: "Standard", Icon: Circle },
+  { value: "sakura", label: "Sakura", Icon: Flower2 },
+] as const;
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const { palette, setPalette } = usePalette();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -35,35 +52,39 @@ export function ThemeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => setTheme("light")}
-          className={theme === "light" ? "bg-status-info" : ""}
-        >
-          <Sun className="h-4 w-4 mr-2" />
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("dark")}
-          className={theme === "dark" ? "bg-status-info" : ""}
-        >
-          <Moon className="h-4 w-4 mr-2" />
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("sakura")}
-          className={theme === "sakura" ? "bg-status-info" : ""}
-        >
-          <Flower2 className="h-4 w-4 mr-2" />
-          Sakura
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("system")}
-          className={theme === "system" ? "bg-status-info" : ""}
-        >
-          <Monitor className="h-4 w-4 mr-2" />
-          System
-        </DropdownMenuItem>
+      <DropdownMenuContent align="end" className="flex gap-1 p-2">
+        <div className="flex flex-col min-w-28">
+          <div className="px-2 py-1.5 text-sm font-medium">Palette</div>
+          {PALETTE_OPTIONS.map(({ value, label, Icon }) => (
+            <DropdownMenuItem
+              key={value}
+              onSelect={(e) => e.preventDefault()}
+              onClick={() => setPalette(value)}
+              className={palette === value ? "bg-status-info" : ""}
+            >
+              <Icon className="h-4 w-4 mr-2" />
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </div>
+        <DropdownMenuSeparator
+          className="mx-0 my-0 h-auto w-px self-stretch"
+          aria-orientation="vertical"
+        />
+        <div className="flex flex-col min-w-28">
+          <div className="px-2 py-1.5 text-sm font-medium">Mode</div>
+          {MODES.map(({ value, label, Icon }) => (
+            <DropdownMenuItem
+              key={value}
+              onSelect={(e) => e.preventDefault()}
+              onClick={() => setTheme(value)}
+              className={theme === value ? "bg-status-info" : ""}
+            >
+              <Icon className="h-4 w-4 mr-2" />
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
