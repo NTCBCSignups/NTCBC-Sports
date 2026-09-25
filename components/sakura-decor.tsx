@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { usePalette } from "@/components/palette-provider";
 import { useEffect, useState } from "react";
 
 const PETAL_COUNT = 12;
@@ -16,10 +16,10 @@ interface Petal {
 }
 
 export function SakuraDecor() {
-  const { resolvedTheme } = useTheme();
+  const { palette } = usePalette();
   const [petals, setPetals] = useState<Petal[]>([]);
 
-  const isSakura = resolvedTheme === "sakura";
+  const isSakura = palette === "sakura";
 
   useEffect(() => {
     if (!isSakura) {

@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PaletteProvider, PALETTE_SCRIPT } from "@/components/palette-provider";
 import { SakuraDecor } from "@/components/sakura-decor";
 import { getClientMigrationScript } from "@/lib/client-migrations";
 import "./globals.css";
@@ -31,10 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Migrations must run before the palette is read — keep them in one script. */}
         <Script
-          id="client-migrations"
+          id="client-init"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: getClientMigrationScript() }}
+          dangerouslySetInnerHTML={{ __html: `${getClientMigrationScript()};${PALETTE_SCRIPT}` }}
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -42,19 +44,20 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          themes={["light", "dark", "sakura", "system"]}
+          themes={["light", "dark", "system"]}
           value={{
             light: "light",
             dark: "dark",
-            sakura: "sakura",
           }}
           disableTransitionOnChange
         >
-          <div className="min-h-screen bg-background">
-            <SakuraDecor />
-            <div className="container mx-auto px-4 py-8">{children}</div>
-          </div>
-          <Toaster />
+          <PaletteProvider>
+            <div className="min-h-screen bg-background">
+              <SakuraDecor />
+              <div className="container mx-auto px-4 py-8">{children}</div>
+            </div>
+            <Toaster />
+          </PaletteProvider>
         </ThemeProvider>
         <Analytics />
       </body>

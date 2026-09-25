@@ -15,6 +15,13 @@ export interface ChangelogEntry {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: 29,
+    date: "2026-09-17",
+    title: "Sakura Night",
+    description:
+      "Sakura is now a palette instead of a separate theme — pick Standard or Sakura, and it follows your Light, Dark or System setting.",
+  },
+  {
     id: 28,
     date: "2026-08-03",
     title: "Easier Navigation",

@@ -12,7 +12,14 @@ export interface ClientMigration {
   script: string;
 }
 
-export const CLIENT_MIGRATIONS: ClientMigration[] = [];
+export const CLIENT_MIGRATIONS: ClientMigration[] = [
+  {
+    // Sakura became a palette (paired light/dark) instead of a standalone theme.
+    id: "sakura-theme-to-palette",
+    expiresAt: "2027-03-17",
+    script: `if(localStorage.getItem("theme")==="sakura"){localStorage.setItem("theme","system");localStorage.setItem("palette","sakura")}`,
+  },
+];
 
 export function getClientMigrationScript(): string {
   return CLIENT_MIGRATIONS.map((m) => m.script).join(";");
